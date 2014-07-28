@@ -44,7 +44,7 @@ td_fit <- function(
   }
   
   stim_times = cbind(cs_times, us_times) #us time is last column
-  names(stim_times) = paste0("CS", 1:ncol(cs_times), "US")
+  colnames(stim_times) = c(paste0("CS", 1:ncol(cs_times)), "US")
   
   nstimuli=ncol(stim_times) #how many stimuli are being tracked
   
@@ -154,6 +154,7 @@ td_fit <- function(
     plot(1:ntimesteps, value[v,], type="l", xlab="timestep", ylab="expected value", ylim=c(floor(min(value)), ceiling(max(value))))
     text(x=ntimesteps, y=max(value), paste0("i=", v)) #add trial number at
     text(x=us_times[v], y=(max(value) - min(value))*0.5, us_times[v])
+    abline(v=c(stim_times[1,-ncol(stim_times)])) #plot cs_times using first row of stim_times (minus us time, the last col)
     vplot[[v]] <- recordPlot()   #ani.record()
   }
  

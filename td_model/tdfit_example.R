@@ -25,12 +25,17 @@ for (r in exSubj$runs) {
   rts = round(r$RTraw/10) #round to 10ms bins
   rewards = r$Reward
   condition = paste(r$rew_function, r$run_condition, sep=".") #name of condition
-  fit_all[[condition]]= td_fit(rewards, rts, cs_times=1, ntimesteps=400)
+  #fit_all[[condition]]= td_fit(rewards, rts, cs_times=c(1), ntimesteps=400) #one CS at onset
+  fit_all[[condition]]= td_fit(rewards, rts, cs_times=c(1, 100), ntimesteps=400) #add second CS at 1000ms
   
 }
 
 #names of fitted objects
 names(fit_all)
 
-replay_fit_plot(fit_all$DEV.scram, fps=2.5) #replay DEV scrambled fit at 2.5 frames per second, loop through twice
-replay_fit_plot(fit_all$IEV.scram, fps=2.5) #replay IEV scrambled fit at 2.5 frames per second, loop through twice
+fit_all$DEV.scram$ms_basisplot #plot basis functions
+
+
+replay_fit_plot(fit_all$DEV.scram, fps=2.5) #replay DEV scrambled fit at 2.5 frames per second
+replay_fit_plot(fit_all$IEV.scram, fps=3.5) #replay IEV scrambled fit at 3.5 frames per second
+
