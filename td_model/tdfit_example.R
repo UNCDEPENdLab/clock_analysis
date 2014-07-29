@@ -26,7 +26,7 @@ for (r in exSubj$runs) {
   rewards = r$Reward
   condition = paste(r$rew_function, r$run_condition, sep=".") #name of condition
   #fit_all[[condition]]= td_fit(rewards, rts, cs_times=c(1), ntimesteps=400) #one CS at onset
-  fit_all[[condition]]= td_fit(rewards, rts, cs_times=c(1, 100), ntimesteps=400) #add second CS at 1000ms
+  fit_all[[condition]]= td_fit(rewards, rts, cs_times=c(1, 100, 200, 300), ntimesteps=400) #add second CS at 1000ms
   
 }
 
@@ -38,4 +38,8 @@ fit_all$DEV.scram$ms_basisplot #plot basis functions
 
 replay_fit_plot(fit_all$DEV.scram, fps=2.5) #replay DEV scrambled fit at 2.5 frames per second
 replay_fit_plot(fit_all$IEV.scram, fps=3.5) #replay IEV scrambled fit at 3.5 frames per second
+
+replay_fit_plot(fit_all$IEV.scram, fps=3.5, display="value") #replay value for IEV scrambled fit at 3.5 frames per second
+replay_fit_plot(fit_all$IEV.scram, fps=2.5, display="delta") #replay td errors for IEV scrambled fit at 3.5 frames per second
+replay_fit_plot(fit_all$IEV.scram, fps=2.5, display="action") #replay action for IEV scrambled fit at 3.5 frames per second
 

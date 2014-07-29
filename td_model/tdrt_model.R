@@ -1,9 +1,16 @@
-replay_fit_plot <- function(outlist, fps=3) { #}, anim_loop=FALSE) {
+replay_fit_plot <- function(outlist, fps=3, display="value") { #}, anim_loop=FALSE) {
   require(animation)
   
   #plot sequential fit across trials
   ani.options(interval=1/fps) #, loop=anim_loop) #nmax=anim_loops)
-  ani.replay(outlist$vplot)
+  if (display=="value") {
+    ani.replay(outlist$vplot)  
+  } else if (display=="action") {
+    ani.replay(outlist$aplot)
+  } else if (display=="delta") {
+    ani.replay(outlist$dplot)
+  }
+  
   
 }
 
@@ -63,7 +70,7 @@ td_fit <- function(
   delta = matrix(data=0, nrow=ntrials, ncol=ntimesteps)    #TD Errors
   value = matrix(data=0, nrow=ntrials, ncol=ntimesteps)    #Value functions
   action = matrix(data=0, nrow=ntrials, ncol=ntimesteps)   #Response Levels
-  ms = matrix(data=0, nrow=ntimesteps, ncol=nbasis)     #Microstimulus levels
+  ms = matrix(data=0, nrow=ntimesteps, ncol=nbasis)        #Microstimulus levels
   #maxaction = rep(0, ntrials)
   
   ## MS is the master matrix of basis functions for any given stimulus
@@ -136,8 +143,8 @@ td_fit <- function(
       
       w = w + (alpha * delta[i, t] * e)       #weight update
       e = xvec + (gamma * lambda * e)         #update eligibility trace
-      wtrial[t, ] = w                        #DEBUG: track weight vector at this timestep
-      etrial[t, ] = e                        #DEBUG: track eligibility trace at this timestep
+      wtrial[t, ] = w                         #DEBUG: track weight vector at this timestep
+      etrial[t, ] = e                         #DEBUG: track eligibility trace at this timestep
       
       oldvalue = crossprod(xvec,w) #Or oldvalue = value. Difference in which weights are used.
       
@@ -157,11 +164,33 @@ td_fit <- function(
     abline(v=c(stim_times[1,-ncol(stim_times)])) #plot cs_times using first row of stim_times (minus us time, the last col)
     vplot[[v]] <- recordPlot()   #ani.record()
   }
- 
+  
+  #action function
+  aplot <- list()
+  for (a in 1:nrow(action)) {
+    plot(1:ntimesteps, action[a,], type="l", xlab="timestep", ylab="action", ylim=c(floor(min(action)), ceiling(max(action))))
+    text(x=ntimesteps, y=max(action), paste0("i=", a)) #add trial number at
+    text(x=us_times[a], y=(max(action) - min(action))*0.5, us_times[a])
+    abline(v=c(stim_times[1,-ncol(stim_times)])) #plot cs_times using first row of stim_times (minus us time, the last col)
+    aplot[[a]] <- recordPlot()   #ani.record()
+  }
+  
+  #td error function
+  dplot <- list()
+  for (d in 1:nrow(delta)) {
+    plot(1:ntimesteps, delta[d,], type="l", xlab="timestep", ylab="delta (td error)", ylim=c(floor(min(delta)), ceiling(max(delta))))
+    text(x=ntimesteps, y=max(delta), paste0("i=", d)) #add trial number at
+    text(x=us_times[d], y=(max(delta) - min(delta))*0.5, us_times[d])
+    abline(v=c(stim_times[1,-ncol(stim_times)])) #plot cs_times using first row of stim_times (minus us time, the last col)
+    dplot[[d]] <- recordPlot()   #ani.record()
+  }
+  
   tracklist$value <- value
   tracklist$delta <- delta
   tracklist$action <- action
   tracklist$vplot <- vplot
+  tracklist$aplot <- aplot
+  tracklist$dplot <- dplot
   
   return(tracklist)  
 }
