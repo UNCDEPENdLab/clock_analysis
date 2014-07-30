@@ -43,3 +43,6 @@ replay_fit_plot(fit_all$IEV.scram, fps=3.5, display="value") #replay value for I
 replay_fit_plot(fit_all$IEV.scram, fps=2.5, display="delta") #replay td errors for IEV scrambled fit at 3.5 frames per second
 replay_fit_plot(fit_all$IEV.scram, fps=2.5, display="action") #replay action for IEV scrambled fit at 3.5 frames per second
 
+replay_fit_plot(fit_all$IEV.scram, fps=2.5, display="uncertainty") #replay action for IEV scrambled fit at 3.5 frames per second
+
+

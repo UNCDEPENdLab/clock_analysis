@@ -3,7 +3,30 @@
 
 library(fitclock)
 library(Rniftilib) #has nice function for just reading header
-source(file.path(getMainDir(), "Miscellaneous", "Global_Functions.R"))
+
+#wrapper for running an fsl command safely within R
+#if FSL does not have its configuration setup properly, commands such as feat don't work, or hang strangely
+runFSLCommand <- function(args, fsldir=NULL, stdout=NULL, stderr=NULL) {
+  #look for FSLDIR in system environment if not passed in
+  if (is.null(fsldir)) {
+    env <- system("env", intern=TRUE)
+    if (length(fsldir <- grep("^FSLDIR=", env, value=TRUE)) > 0L) {
+      fsldir <- sub("^FSLDIR=", "", fsldir)
+    } else {
+      warning("FSLDIR not found in environment. Defaulting to /usr/local/fsl.")
+      fsldir <- "/usr/local/fsl"
+    }
+  }
+  
+  Sys.setenv(FSLDIR=fsldir) #export to R environment
+  fslsetup=paste0("FSLDIR=", fsldir, "; PATH=${FSLDIR}/bin:${PATH}; . ${FSLDIR}/etc/fslconf/fsl.sh; ${FSLDIR}/bin/")
+  fslcmd=paste0(fslsetup, args)
+  if (!is.null(stdout)) { fslcmd=paste(fslcmd, ">", stdout) }
+  if (!is.null(stderr)) { fslcmd=paste(fslcmd, "2>", stderr) }
+  retcode <- system(fslcmd)
+  return(retcode)
+}
+
 
 fslValueModel <- function(mrfiles, fitobj, run=FALSE) {
   require(Rniftilib)
@@ -75,30 +98,22 @@ fslValueModel <- function(mrfiles, fitobj, run=FALSE) {
   }
   
   if (run == TRUE) {
-    #N.B.: for some reason, running feat using a system call hangs, whereas running it in bash is okay
-    #I think it has something to do with trying to open the report in the browser at initialization, but I'm not sure...
-    #looks like it has to do with system2 running a non-interactive shell
-    #force interactive run using bash -i
+    #N.B.: If FSLDIR is not setup properly, running feat using a system call hangs, whereas running it in bash -i is okay
     #for now, generate a bash script to run it.
-#    cat("#!/bin/bash",
-#        paste0(file.path(Sys.getenv("FSLDIR"), "bin", "feat "), allFeatFiles, 
-#            " > ", sapply(allFeatFiles, dirname), "/feat_stdout_", sapply(allFeatFiles, "basename"),
-#            " 2> ", sapply(allFeatFiles, dirname), "/feat_stderr_", sapply(allFeatFiles, "basename"),
-#            " &"),
-#        "wait",
-#        file="runfeat.bash", sep="\n")
-
-    #browser() 
+    #cat("#!/bin/bash",
+    #    paste0(file.path(Sys.getenv("FSLDIR"), "bin", "feat "), allFeatFiles, 
+    #        " > ", sapply(allFeatFiles, dirname), "/feat_stdout_", sapply(allFeatFiles, "basename"),
+    #        " 2> ", sapply(allFeatFiles, dirname), "/feat_stderr_", sapply(allFeatFiles, "basename"),
+    #        " &"),
+    #    "wait",
+    #    file="runfeat.bash", sep="\n")
     #system("bash -i runfeat.bash")
-    #system2("bash", "runfeat.bash")
   
     cl_fork <- makeForkCluster(nnodes=8)
     runfeat <- function(fsf) {
       runname <- basename(fsf)
-      #system2(file.path(Sys.getenv("FSLDIR"), "bin", "feat"), fsf, stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)), stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)))
       runFSLCommand(paste("feat", fsf), stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)), stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)))
     }
-    #browser()
     clusterApply(cl_fork, allFeatFiles, runfeat)
     stopCluster(cl_fork)
   }

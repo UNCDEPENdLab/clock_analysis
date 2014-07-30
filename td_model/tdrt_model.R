@@ -9,8 +9,9 @@ replay_fit_plot <- function(outlist, fps=3, display="value") { #}, anim_loop=FAL
     ani.replay(outlist$aplot)
   } else if (display=="delta") {
     ani.replay(outlist$dplot)
+  } else if (display=="uncertainty") {
+    ani.replay(outlist$uplot)
   }
-  
   
 }
 
@@ -58,6 +59,7 @@ td_fit <- function(
   ## Initialize tracking matrices:
   x = matrix(data=0, nrow=nstimuli, ncol=nbasis)        #Stimulus representation matrix (nstimuli x nbasis)
   w = rep(0, nstimuli*nbasis)                           #Weight vector (length nstimuli x nbasis)
+  w_uncertainty = rep(0, nstimuli*nbasis)               #Weight vector for uncertainty (length nstimuli x nbasis)
   e = rep(0, nstimuli*nbasis)                           #Eligibility Traces (length nstimuli x nbasis)
   
   #older vector-based representation (from Ludvig)
@@ -70,6 +72,7 @@ td_fit <- function(
   delta = matrix(data=0, nrow=ntrials, ncol=ntimesteps)    #TD Errors
   value = matrix(data=0, nrow=ntrials, ncol=ntimesteps)    #Value functions
   action = matrix(data=0, nrow=ntrials, ncol=ntimesteps)   #Response Levels
+  uncertainty = matrix(data=0, nrow=ntrials, ncol=ntimesteps) #new matrix that is updated when subject samples
   ms = matrix(data=0, nrow=ntimesteps, ncol=nbasis)        #Microstimulus levels
   #maxaction = rep(0, ntrials)
   
@@ -101,6 +104,7 @@ td_fit <- function(
   #s stimuli
   for (i in 1:ntrials) {
     oldvalue = 0               # Reset on every trial
+    oldvalue_uncertainty = 0
     #oldreward = 0;
     oldaction = 0
     e = rep(0, nstimuli*nbasis) #reset eligibility trace
@@ -111,8 +115,10 @@ td_fit <- function(
         rewdeliv = rewdeliv + 1
         reward = rewards[i]
         cat("rew count: ", rewdeliv, "\n")
+        timesamp_reward = 1 #sampling gives a unit-magnitude reward
       } else {    
         reward = 0
+        timesamp_reward = 0
       }
       
       #microstimulus representation of stimulus
@@ -133,6 +139,7 @@ td_fit <- function(
       
       xvec = as.vector(x) #flatten x for computation of value, w, and e. (x as mat for ease of indexing/representation above)
       value[i, t] = crossprod(xvec,w) #inner product across all stimuli
+      uncertainty[i, t] = crossprod(xvec, w_uncertainty)
       
       #Action Selection:
       action[i, t] = upsilon * oldaction + max (0, oldvalue - theta)
@@ -140,13 +147,16 @@ td_fit <- function(
       
       #Learning Algorithm:
       delta[i, t] = reward + (gamma * value[i, t]) - oldvalue #TD Learning
+      delta_uncertainty = timesamp_reward + (gamma * uncertainty[i, t]) - oldvalue_uncertainty
       
       w = w + (alpha * delta[i, t] * e)       #weight update
+      w_uncertainty = w_uncertainty + (alpha * delta_uncertainty * e)
       e = xvec + (gamma * lambda * e)         #update eligibility trace
       wtrial[t, ] = w                         #DEBUG: track weight vector at this timestep
       etrial[t, ] = e                         #DEBUG: track eligibility trace at this timestep
       
       oldvalue = crossprod(xvec,w) #Or oldvalue = value. Difference in which weights are used.
+      oldvalue_uncertainty = crossprod(xvec,w_uncertainty) #Or oldvalue = value. Difference in which weights are used.
       
       #cat("range of value: ", range(value), "\n")
       #oldreward = reward
@@ -185,12 +195,23 @@ td_fit <- function(
     dplot[[d]] <- recordPlot()   #ani.record()
   }
   
+  #uncertainty value function
+  uplot <- list()
+  for (u in 1:nrow(uncertainty)) {
+    plot(1:ntimesteps, uncertainty[u,], type="l", xlab="timestep", ylab="uncertainty (value of sampling)", ylim=c(floor(min(uncertainty)), ceiling(max(uncertainty))))
+    text(x=ntimesteps, y=max(uncertainty), paste0("i=", u)) #add trial number at
+    text(x=us_times[u], y=(max(uncertainty) - min(uncertainty))*0.5, us_times[u])
+    abline(v=c(stim_times[1,-ncol(stim_times)])) #plot cs_times using first row of stim_times (minus us time, the last col)
+    uplot[[u]] <- recordPlot()   #ani.record()
+  }
+  
   tracklist$value <- value
   tracklist$delta <- delta
   tracklist$action <- action
   tracklist$vplot <- vplot
   tracklist$aplot <- aplot
   tracklist$dplot <- dplot
+  tracklist$uplot <- uplot
   
   return(tracklist)  
 }
