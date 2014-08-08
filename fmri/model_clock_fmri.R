@@ -28,7 +28,7 @@ runFSLCommand <- function(args, fsldir=NULL, stdout=NULL, stderr=NULL) {
 }
 
 
-fslValueModel <- function(mrfiles, fitobj, run=FALSE) {
+fslValueModel <- function(mrfiles, fitobj, run=FALSE, force=FALSE) {
   require(Rniftilib)
   require(parallel)
   fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl1_clock_template.fsf"))
@@ -92,6 +92,7 @@ fslValueModel <- function(mrfiles, fitobj, run=FALSE) {
     thisTemplate <- gsub(".RPENEG_TIMES.", file.path(timingdir, paste0("run", runnum, "_rpe_neg_FSL3col.txt")), thisTemplate, fixed=TRUE)
     
     featFile <- file.path(fsldir, paste0("FEAT_LVL1_run", runnum, ".fsf"))
+    if (file.exists(featFile) && force==FALSE) { next } #skip re-creation of FSF and do not run below unless force==TRUE 
     cat(thisTemplate, file=featFile, sep="\n")
     
     allFeatFiles[[r]] <- featFile
@@ -99,7 +100,6 @@ fslValueModel <- function(mrfiles, fitobj, run=FALSE) {
   
   if (run == TRUE) {
     #N.B.: If FSLDIR is not setup properly, running feat using a system call hangs, whereas running it in bash -i is okay
-    #for now, generate a bash script to run it.
     #cat("#!/bin/bash",
     #    paste0(file.path(Sys.getenv("FSLDIR"), "bin", "feat "), allFeatFiles, 
     #        " > ", sapply(allFeatFiles, dirname), "/feat_stdout_", sapply(allFeatFiles, "basename"),
@@ -108,7 +108,7 @@ fslValueModel <- function(mrfiles, fitobj, run=FALSE) {
     #    "wait",
     #    file="runfeat.bash", sep="\n")
     #system("bash -i runfeat.bash")
-  
+    
     cl_fork <- makeForkCluster(nnodes=8)
     runfeat <- function(fsf) {
       runname <- basename(fsf)
@@ -216,8 +216,12 @@ posEps$add_params(
     exploreBeta()
 )
 
-behavDir <- "/Volumes/rcn1/bea_res/Data/Tasks/EmoClockfMRI/Basic"
-fmriDir <- "/Volumes/Serena/MMClock/MR_Raw"
+#behavDir <- "/Volumes/rcn1/bea_res/Data/Tasks/EmoClockfMRI/Basic"
+#fmriDir <- "/Volumes/Serena/MMClock/MR_Raw"
+
+behavDir <- "/Users/michael/Dropbox/Hallquist_K01/Data/fMRI"
+fmriDir <- "/Volumes/Serena/SPECC/MR_Raw"
+
 behavFiles <- list.files(path=behavDir, pattern="*tcExport.csv", full.names=TRUE, recursive=TRUE)
 
 for (b in behavFiles) {
@@ -225,7 +229,8 @@ for (b in behavFiles) {
   mrfiles <- c() #force clear of mr files over subjects to avoid potential persistence from one subject to the next
   
   ##identify corresponding fmri directory
-  mrmatch <- grep(paste0(subid, "_\\d+"), list.files(fmriDir, full.names=TRUE), perl=TRUE, value=TRUE)
+  #mrmatch <- grep(paste0(subid, "_\\d+"), list.files(fmriDir, full.names=TRUE), perl=TRUE, value=TRUE) #MMClock Y3 format: 11273_20140610
+  mrmatch <- grep(paste0(sprintf("%03s", subid), "[A-z]{2}_\\d+"), list.files(fmriDir, full.names=TRUE), perl=TRUE, value=TRUE) #SPECC format: 003aa_15Jul2014
   if(length(mrmatch) != 1L) {
     warning("Unable to find fMRI directory for subid: ", subid)
     next
