@@ -1,4 +1,7 @@
-fdfiles <- list.files(path="/Volumes/Serena/MMClock/MR_Raw", pattern="fd\\.txt", full.names=TRUE, recursive=TRUE)
+setwd("/Volumes/Serena/MMClock/MR_Raw")
+fdfiles <- list.files(path=getwd(), pattern="fd\\.txt", full.names=TRUE, recursive=TRUE)
+completedirs <- sapply(fdfiles, function(x) { file.exists(file.path(dirname(x), "../.preprocessfunctional_complete")) })
+fdfiles <- fdfiles[completedirs] #only look at directories where processing is complete
 
 subids <- unique(gsub("^.*/MR_Raw/(\\d+)_\\d+/.*$", "\\1", fdfiles, perl=TRUE))
 nsubj <- length(subids)
@@ -51,5 +54,15 @@ for (f in fdfiles) {
 }
 
 library(xlsx)
-if(!file.exists("MMY3_motion_checks.xlsx")) { write.xlsx(x=df, file="MMY3_motion_checks.xlsx", sheetName="fdchecks", row.names=FALSE) }
+if(file.exists("MMY3_motion_checks.xlsx")) {
+    old <- read.xlsx(file="MMY3_motion_checks.xlsx", sheetName="fdchecks", stringsAsFactors=FALSE)
+    #only append unique luna ids (preserve notes for older runs)
+    newids <- setdiff(df$LunaID, old$LunaID)
+    if (length(newids) > 0L) {
+        df <- rbind(old, df[which(df$LunaID %in% newids),])
+        write.xlsx(x=df, file="MMY3_motion_checks.xlsx", sheetName="fdchecks", row.names=FALSE)
+    }
+} else {
+    write.xlsx(x=df, file="MMY3_motion_checks.xlsx", sheetName="fdchecks", row.names=FALSE)
+}
 

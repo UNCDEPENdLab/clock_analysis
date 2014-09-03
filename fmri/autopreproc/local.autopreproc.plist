@@ -6,10 +6,11 @@
 	<string>local.autopreproc</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/Users/michael/SpiderOak Hive/Data_Analysis/clock_analysis/fmri/autopreproc/autopreproc</string>
+		<string>/Users/michael/Box_Sync/Data_Analysis/clock_analysis/fmri/autopreproc/autopreproc</string>
 		<string>-njobs</string>
 		<string>8</string>
 		<string>specc.cfg</string>
+		<string>mmclock.cfg</string>
 	</array>
 	<key>RunAtLoad</key>
 	<false/>
@@ -22,9 +23,11 @@
 		<dict>
 			<key>Hour</key>
 			<integer>4</integer>
+			<key>Minute</key>
+			<integer>0</integer>
 		</dict>
 	</array>
 	<key>WorkingDirectory</key>
-	<string>/Users/michael/SpiderOak Hive/Data_Analysis/clock_analysis/fmri</string>
+	<string>/Users/michael/Box_Sync/Data_Analysis/clock_analysis/fmri</string>
 </dict>
 </plist>

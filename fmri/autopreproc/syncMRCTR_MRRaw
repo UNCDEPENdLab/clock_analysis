@@ -17,12 +17,29 @@ subid_regex="${3}"
 [ ! -f "${local_dir}/mrraw_dircache" ] && touch "${local_dir}/mrraw_dircache" #create empty directory cache if not in place
 
 #obtain list of subject directories on meson
-ssh meson "find ${meson_dir} -mindepth 2 -maxdepth 2 -type d" | grep -Ev "(multiband|shimtest)" | grep -E "${subid_regex}" | sort -rn > "${local_dir}/mrraw_dirlist"
+ssh meson "find ${meson_dir} -mindepth 2 -maxdepth 2 -type d" | grep -Ev "(multiband|shimtest)" | grep -E "${subid_regex}" | sort > "${local_dir}/mrraw_dirlist"
 
 #compare listing from ssh with cached list of directories already processed
-comm -23 "${local_dir}/mrraw_dirlist" "${local_dir}/mrraw_dircache" > "${local_dir}/newsubs"
+comm -23 <(sort "${local_dir}/mrraw_dirlist") <(sort "${local_dir}/mrraw_dircache") > "${local_dir}/newsubs"
 
-nnew=$( wc -l "${local_dir}/newsubs" | awk '{print $1}' )
+#process subjects to ignore
+if [[ -f "${local_dir}/.autopreproc_ignore" && $( awk 'END{print NR}' "${local_dir}/newsubs" ) -gt 0 ]]; then
+    #use sed to remove trailing white space or comments beginning with pound
+    grep -v -f <(sed -E -e 's/[[:space:]]*$|[[:space:]]*#.*$//' "${local_dir}/.autopreproc_ignore") "${local_dir}/newsubs" > "${local_dir}/newsubs_filt" || touch "${local_dir}/newsubs_filt" #grep returns exit 1 on no match, so create empty file
+    grep -f <(sed -E -e 's/[[:space:]]*$|[[:space:]]*#.*$//' "${local_dir}/.autopreproc_ignore") "${local_dir}/newsubs" > "${local_dir}/newsubs_match" || touch "${local_dir}/newsubs_match"
+
+    if [ $( awk 'END{print NR}' "${local_dir}/newsubs_match" ) -gt 0 ]; then
+	echo "The following subjects were filtered based on .autopreproc_ignore"
+	sed -e 's/^/   /' "${local_dir}/newsubs_match" #white space pad beginning of line
+	echo ""
+	mv -f "${local_dir}/newsubs_filt" "${local_dir}/newsubs"
+	rm -f "${local_dir}/newsubs_match"
+    else
+	rm -f "${local_dir}/newsubs_match" "${local_dir}/newsubs_filt"
+    fi
+fi
+
+nnew=$( awk 'END{print NR}' "${local_dir}/newsubs" )
 if [ $nnew -gt 0 ]; then
 
     #loop over any new subjects to process

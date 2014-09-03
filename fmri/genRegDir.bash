@@ -28,6 +28,11 @@ for dir in ${featDirs}; do
     #fslroi "${dir}/../nfswkmtd_functional.nii.gz" "${dir}/reg/example_func2standard" 0 1
 
     #directory structure on hammer includes example_func images in root of each Feat directory. Copy these to reg
+    if [ ! -f "${dir}/example_func.nii.gz" ]; then
+	echo "FEAT appears to have failed in ${dir}. Skipping to next subject"
+	continue
+    fi
+
     cp "${dir}/example_func.nii.gz" "${dir}/reg/example_func.nii.gz"
     cp "${dir}/example_func.nii.gz" "${dir}/reg/example_func2standard.nii.gz"
 
@@ -52,6 +57,6 @@ for dir in ${featDirs}; do
     pngappend example_func2standard1.png - example_func2standard2.png example_func2standard.png
 
     rm -f sl?.png example_func2standard2.png
-    cd -
+    #cd -
 
 done

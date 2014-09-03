@@ -28,6 +28,8 @@ if (length(args) > 2L) {
 }
 
 
+expectedFuncRuns <- 8
+
 ##handle all mprage directories
 ##overload built-in list.dirs function to support pattern match
 list.dirs <- function(...) {
@@ -118,11 +120,18 @@ for (d in subj_dirs) {
     ##create clock1-clock8 folder structure and copy raw data
     if (!file.exists("MBclock_recon")) { #create MBclock_recon folder if absent
         dir.create(file.path(d, "MBclock_recon"), showWarnings = FALSE)
+    } else {
+        ##MBclock_recon exists, check for .preprocessfunctional_complete files
+        extant_clockdirs <- list.dirs(path=file.path(d, "MBclock_recon"), pattern="clock[0-9]+", full.names=TRUE, recursive=FALSE)
+        if (length(extant_clockdirs) > 0L && length(extant_clockdirs) >= expectedFuncRuns && all(sapply(extant_clockdirs, function(x) { file.exists(file.path(x, ".preprocessfunctional_complete")) }))) {
+            cat("   preprocessing already complete for all clock directories\n\n")
+            next
+        }
     }
 
     #identify original reconstructed flies for this subject
     subid <- basename(d)
-    mbraw_dirs <- list.dirs(path=MB_src, recursive = FALSE, full.names=FALSE) #all original recon directories, leave off full names for agrep
+    mbraw_dirs <- list.dirs(path=MB_src, recursive = FALSE, full.names=FALSE) #all original recon directories, leave off full names for grep
 
     #approximate grep is leading to problems with near matches!!
     #example: 11263_20140307; WPC5640_11253_20140308
@@ -175,12 +184,9 @@ for (d in subj_dirs) {
     runnums <- as.numeric(runnums)
     if (any(is.na(runnums))) { stop ("Unable to determine run numbers:", runnums) }
 
-    cat("MB Files:\n")
-    print(mbfiles)
-    cat("Detected run numbers:\n")
-    print(runnums)
-
-    
+    cat("Detected run numbers, MB Files:\n")
+    print(cbind(runnum=runnums, mbfile=mbfiles))
+   
     #loop over files and setup run directories in MBclock_recon
     for (m in 1:length(mbfiles)) {
         #only copy data if folder does not exist
