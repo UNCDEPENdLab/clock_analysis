@@ -46,3 +46,22 @@ replay_fit_plot(fit_all$IEV.scram, fps=2.5, display="action") #replay action for
 replay_fit_plot(fit_all$IEV.scram, fps=2.5, display="uncertainty") #replay action for IEV scrambled fit at 3.5 frames per second
 
 
+
+
+
+### simulation
+
+rts <- runif(200, 150, 3950) #100 samples between 150 and 3950 ms
+rewards <- sapply(rts, getScore, scrfunc="IEV")
+rts <- round(rts/10) #need to round to 10ms bins for current td fit
+
+fitobj= td_fit(rewards, rts, cs_times=c(1, 100, 200, 300), ntimesteps=400) #add second CS at 1000ms
+replay_fit_plot(fitobj, fps=3.5, display="value") #replay value for IEV scrambled fit at 3.5 frames per second
+
+
+rts <- rep(3950, 200) #100 samples between 150 and 3950 ms
+rewards <- sapply(rts, getScore, scrfunc="IEV")
+rts <- round(rts/10) #need to round to 10ms bins for current td fit
+
+fitobj= td_fit(rewards, rts, cs_times=c(1, 100, 200, 300), ntimesteps=400) #add second CS at 1000ms
+replay_fit_plot(fitobj, fps=3.5, display="value") #replay value for IEV scrambled fit at 3.5 frames per second
