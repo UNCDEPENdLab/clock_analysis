@@ -56,7 +56,17 @@ rewards <- sapply(rts, getScore, scrfunc="IEV")
 rts <- round(rts/10) #need to round to 10ms bins for current td fit
 
 fitobj= td_fit(rewards, rts, cs_times=c(1, 100, 200, 300), ntimesteps=400) #add second CS at 1000ms
-replay_fit_plot(fitobj, fps=3.5, display="value") #replay value for IEV scrambled fit at 3.5 frames per second
+replay_fit_plot(fitobj, fps=5, display="action_value") #replay value for IEV scrambled fit at 3.5 frames per second
+replay_fit_plot(fitobj, fps=10, display="value") #replay value for IEV scrambled fit at 3.5 frames per second
+
+rts <- runif(300, 150, 3900) #100 samples between 150 and 3950 ms
+rewards <- sapply(rts, getScore, scrfunc="DEV")
+rts <- round(rts/10) #need to round to 10ms bins for current td fit
+
+fitobj= td_fit(rewards, rts, cs_times=c(1, 100, 200, 300), ntimesteps=400) #add second CS at 1000ms
+replay_fit_plot(fitobj, fps=5, display="action_value") #replay value for IEV scrambled fit at 3.5 frames per second
+replay_fit_plot(fitobj, fps=10, display="value") #replay value for IEV scrambled fit at 3.5 frames per second
+
 
 
 rts <- rep(3950, 200) #100 samples between 150 and 3950 ms
@@ -65,3 +75,4 @@ rts <- round(rts/10) #need to round to 10ms bins for current td fit
 
 fitobj= td_fit(rewards, rts, cs_times=c(1, 100, 200, 300), ntimesteps=400) #add second CS at 1000ms
 replay_fit_plot(fitobj, fps=3.5, display="value") #replay value for IEV scrambled fit at 3.5 frames per second
+replay_fit_plot(fitobj, fps=3.5, display="action_value") #replay value for IEV scrambled fit at 3.5 frames per second

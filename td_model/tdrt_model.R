@@ -11,7 +11,10 @@ replay_fit_plot <- function(outlist, fps=3, display="value") { #}, anim_loop=FAL
     ani.replay(outlist$dplot)
   } else if (display=="uncertainty") {
     ani.replay(outlist$uplot)
+  } else if (display=="action_value") {
+    ani.replay(outlist$avplot)
   }
+  
   
 }
 
@@ -99,6 +102,8 @@ td_fit <- function(
   wtrial = matrix(0, nrow=ntimesteps, ncol=nstimuli*nbasis)
   etrial = matrix(0, nrow=ntimesteps, ncol=nstimuli*nbasis)
   
+  x_w_perTrial <- array(0, dim=c(ntrials, ntimesteps, nstimuli))
+  
   #i trials
   #t timesteps
   #s stimuli
@@ -110,6 +115,8 @@ td_fit <- function(
     e = rep(0, nstimuli*nbasis) #reset eligibility trace
     rewardtime = rts[i] #time of reward (RT in clock)
     
+    msfigure <- list()
+    
     for (t in 1:ntimesteps) {
       if (t == rewardtime) {
         rewdeliv = rewdeliv + 1
@@ -120,6 +127,8 @@ td_fit <- function(
         reward = 0
         timesamp_reward = 0
       }
+      
+      #par(mfrow=c(5,1))
       
       #microstimulus representation of stimulus
       #x is updated for each stimulus at each timestep
@@ -135,10 +144,25 @@ td_fit <- function(
           #x [((s-1)*nbasis +1):((s-1)*nbasis +nbasis)] = 0;
           #x [nstimuli * nbasis + s] = 0; #this is updating the numms + 1 initial specification of x (19:21 in the 3 stim x 6 basis setup...). Don't get it. -- this is used by presence representation! 
         }
+        #plot(1:ncol(x), x[s,], xlab="basis function", ylab=colnames(stim_times)[s])
+        #text(x=ncol(x), y=max(x[s,]), paste0("t=", t)) #add trial number at
       }
       
       xvec = as.vector(x) #flatten x for computation of value, w, and e. (x as mat for ease of indexing/representation above)
+      
+      #if (i == 1 && t == 20) browser()
+      
       value[i, t] = crossprod(xvec,w) #inner product across all stimuli
+      
+      w_mat <- matrix(w, nrow=nstimuli)
+      x_w <- w_mat*x
+#      for (s in 1:nstimuli) {
+#        plot(1:ncol(x_w), x_w[s,], xlab="basis function", ylab=paste0("w*", colnames(stim_times)[s]))
+#        text(x=ncol(x_w), y=max(x_w[s,]), paste0("t=", t)) #add trial number at
+#      }
+      
+      x_w_perTrial[i,t,] <- rowSums(x_w)
+            
       uncertainty[i, t] = crossprod(xvec, w_uncertainty)
       
       #Action Selection:
@@ -146,8 +170,15 @@ td_fit <- function(
       oldaction=action[i, t]
       
       #Learning Algorithm:
-      delta[i, t] = reward + (gamma * value[i, t]) - oldvalue #TD Learning
-      delta_uncertainty = timesamp_reward + (gamma * uncertainty[i, t]) - oldvalue_uncertainty
+#      if (t > rewardtime) {
+#        t=ntimesteps + 1 #exit t
+#        next
+#        #delta[i, t] = 0
+#        #delta_uncertainty=0
+#      } else {
+        delta[i, t] = reward + (gamma * value[i, t]) - oldvalue #TD Learning
+        delta_uncertainty = timesamp_reward + (gamma * uncertainty[i, t]) - oldvalue_uncertainty
+#      }
       
       w = w + (alpha * delta[i, t] * e)       #weight update
       w_uncertainty = w_uncertainty + (alpha * delta_uncertainty * e)
@@ -160,10 +191,21 @@ td_fit <- function(
       
       #cat("range of value: ", range(value), "\n")
       #oldreward = reward
-      
+    
+      #msfigure[[t]] <- recordPlot()
     } #end timestep loop    
     
+#    for(s in 1:nstimuli) {
+#      plot(1:length(ntimesteps), sum(x_w[s,]))  
+#    }
+    
+    
+    #browser()
+    #rewardtime
+    #ani.replay(msfigure)
+    
   } #end trial loop
+  
   
   #generate animation of value function across trials
   vplot <- list()
@@ -184,6 +226,24 @@ td_fit <- function(
     abline(v=c(stim_times[1,-ncol(stim_times)])) #plot cs_times using first row of stim_times (minus us time, the last col)
     aplot[[a]] <- recordPlot()   #ani.record()
   }
+  
+  #action + value
+  both <- list()
+  par(mfrow=c(2,1))
+  for (a in 1:nrow(action)) {
+    plot(1:ntimesteps, action[a,], type="l", xlab="timestep", ylab="action", ylim=c(floor(min(action)), ceiling(max(action))))
+    text(x=ntimesteps, y=max(action), paste0("i=", a)) #add trial number at
+    text(x=us_times[a], y=(max(action) - min(action))*0.5, us_times[a])
+    abline(v=c(stim_times[1,-ncol(stim_times)])) #plot cs_times using first row of stim_times (minus us time, the last col)
+    
+    plot(1:ntimesteps, value[a,], type="l", xlab="timestep", ylab="expected value", ylim=c(floor(min(value)), ceiling(max(value))))
+    text(x=ntimesteps, y=max(value), paste0("i=", a)) #add trial number at
+    text(x=us_times[a], y=(max(value) - min(value))*0.5, us_times[a])
+    abline(v=c(stim_times[1,-ncol(stim_times)])) #plot cs_times using first row of stim_times (minus us time, the last col)
+    
+    both[[a]] <- recordPlot()   #ani.record()
+  }
+  par(mfrow=c(1,1))
   
   #td error function
   dplot <- list()
@@ -212,6 +272,7 @@ td_fit <- function(
   tracklist$aplot <- aplot
   tracklist$dplot <- dplot
   tracklist$uplot <- uplot
+  tracklist$avplot <- both 
   
   return(tracklist)  
 }
