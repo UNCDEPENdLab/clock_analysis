@@ -31,6 +31,7 @@ runFSLCommand <- function(args, fsldir=NULL, stdout=NULL, stderr=NULL) {
 
 setwd(file.path(getMainDir(), "clock_analysis", "fmri"))
 source("afniValueModel.R")
+source("afniTCModel.R")
 source("fslValueModel.R")
 if (!file.exists("fmri_fits")) { dir.create("fmri_fits") }
 setwd("fmri_fits")
@@ -157,7 +158,8 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr) {
         
         ##setup afni and FSL models
         afniValueModel(f_value, mrfiles, runlengths, mrrunnums, run=TRUE)
-        ##fslValueModel(f_value, mrfiles, runlengths, mrrunnums, run=TRUE, force=FALSE)
+        afniTCModel(f, mrfiles, runlengths, mrrunnums, run=TRUE)
+        fslValueModel(f_value, mrfiles, runlengths, mrrunnums, run=TRUE, force=FALSE)
     }
 
 }

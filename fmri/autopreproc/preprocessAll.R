@@ -27,8 +27,11 @@ if (length(args) > 2L) {
     MB_src <- normalizePath(Sys.glob("../WPC-*_MB")) #assume that MB data are up one directory in folder called WPC-XXXX_MB
 }
 
-
-expectedFuncRuns <- 8
+#pull in cfg environment variables from bash script
+mprage_dirpattern=Sys.getenv("mprage_dirpattern")
+preprocessed_dirname=Sys.getenv("preprocessed_dirname")
+paradigm_name=Sys.getenv("paradigm_name")
+n_expected_funcruns=Sys.getenv("n_expected_funcruns")
 
 ##handle all mprage directories
 ##overload built-in list.dirs function to support pattern match
@@ -56,7 +59,7 @@ list.dirs <- function(...) {
 }
 
 #find original mprage directories to rename
-mprage_dirs <- list.dirs(pattern="*MPRAGE_axial_32ch_good*")
+mprage_dirs <- list.dirs(pattern=mprage_dirpattern)
 
 if (!is.null(mprage_dirs)) {
     cat("Renaming original mprage directories to \"mprage\"\n")
@@ -112,19 +115,21 @@ subj_dirs <- list.dirs(path=basedir, recursive=FALSE)
 
 #make run processing parallel, not subject processing
 #f <- foreach(d=subj_dirs, .inorder = FALSE) %dopar% {
-all_clock_dirs <- list()
+all_funcrun_dirs <- list()
 for (d in subj_dirs) {
     cat("Processing subject: ", d, "\n")
     setwd(d)
 
-    ##create clock1-clock8 folder structure and copy raw data
-    if (!file.exists("MBclock_recon")) { #create MBclock_recon folder if absent
-        dir.create(file.path(d, "MBclock_recon"), showWarnings = FALSE)
+    ##create paradigm_run1-paradigm_run8 folder structure and copy raw data
+    if (!file.exists(preprocessed_dirname)) { #create preprocessed folder if absent
+        dir.create(file.path(d, preprocessed_dirname), showWarnings = FALSE)
     } else {
-        ##MBclock_recon exists, check for .preprocessfunctional_complete files
-        extant_clockdirs <- list.dirs(path=file.path(d, "MBclock_recon"), pattern="clock[0-9]+", full.names=TRUE, recursive=FALSE)
-        if (length(extant_clockdirs) > 0L && length(extant_clockdirs) >= expectedFuncRuns && all(sapply(extant_clockdirs, function(x) { file.exists(file.path(x, ".preprocessfunctional_complete")) }))) {
-            cat("   preprocessing already complete for all clock directories\n\n")
+        ##preprocessed folder exists, check for .preprocessfunctional_complete files
+        extant_funcrundirs <- list.dirs(path=file.path(d, preprocessed_dirname), pattern=paste0(paradigm_name,"[0-9]+"), full.names=TRUE, recursive=FALSE)
+        if (length(extant_funcrundirs) > 0L &&
+            length(extant_funcrundirs) >= n_expected_funcruns &&
+            all(sapply(extant_funcrundirs, function(x) { file.exists(file.path(x, ".preprocessfunctional_complete")) }))) {
+            cat("   preprocessing already complete for all functional run directories\n\n")
             next
         }
     }
@@ -187,28 +192,28 @@ for (d in subj_dirs) {
     cat("Detected run numbers, MB Files:\n")
     print(cbind(runnum=runnums, mbfile=mbfiles))
    
-    #loop over files and setup run directories in MBclock_recon
+    #loop over files and setup run directories in preprocessed_dirname
     for (m in 1:length(mbfiles)) {
         #only copy data if folder does not exist
-        if (!file.exists(file.path(d, "MBclock_recon", paste0("clock", runnums[m])))) {
-            dir.create(file.path(d, "MBclock_recon", paste0("clock", runnums[m])))
+        if (!file.exists(file.path(d, preprocessed_dirname, paste0(paradigm_name, runnums[m])))) {
+            dir.create(file.path(d, preprocessed_dirname, paste0(paradigm_name, runnums[m])))
             
             ##use 3dcopy to copy dataset as .nii.gz
-            system(paste0("3dcopy \"", mbfiles[m], "\" \"", file.path(d, "MBclock_recon", paste0("clock", runnums[m]), paste0("clock", runnums[m])), ".nii.gz\""))
+            system(paste0("3dcopy \"", mbfiles[m], "\" \"", file.path(d, preprocessed_dirname, paste0(paradigm_name, runnums[m]), paste0(paradigm_name, runnums[m])), ".nii.gz\""))
         }
     }
 
-    #now that MBrecon_clock files are copied, preprocess all
-    setwd("MBclock_recon")
+    #now that preprocessed_dirname files are copied, preprocess all
+    setwd(preprocessed_dirname)
 
-    all_clock_dirs[[d]] <- list.dirs(pattern="clock.*", path=getwd(), recursive = FALSE)
+    all_funcrun_dirs[[d]] <- list.dirs(pattern=paste0(paradigm_name, ".*"), path=getwd(), recursive = FALSE)
 }
 
-all_clock_dirs <- unname(unlist(all_clock_dirs)) #generate vector of all clock runs to process
+all_funcrun_dirs <- unname(unlist(all_funcrun_dirs)) #generate vector of all functional runs to process
 
 #loop over directories to process
 ##for (cd in clockdirs) {
-f <- foreach(cd=all_clock_dirs, .inorder=FALSE) %dopar% {
+f <- foreach(cd=all_funcrun_dirs, .inorder=FALSE) %dopar% {
     setwd(cd)
     
     ##determine phase versus magnitude directories for fieldmap
@@ -217,7 +222,7 @@ f <- foreach(cd=all_clock_dirs, .inorder=FALSE) %dopar% {
     magdir <- file.path(fmdirs[1], "MR*")
     phasedir <- file.path(fmdirs[2], "MR*")
 
-    cfile <- Sys.glob("clock*.nii.gz")
+    cfile <- Sys.glob(paste0(paradigm_name, "*.nii.gz"))
     ##run preprocessFunctional
     args <- paste0("-4d ", cfile, " -tr 1.0 -mprage_bet ../../mprage/mprage_bet.nii.gz -warpcoef ../../mprage/mprage_warpcoef.nii.gz -threshold 98_2 ",
                    "-hp_filter 100 -rescaling_method 10000_globalmedian -template_brain MNI_2.3mm -func_struc_dof bbr -warp_interpolation spline ",

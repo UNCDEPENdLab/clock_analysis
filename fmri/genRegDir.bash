@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e
 
 #this script is used to setup reg dirs for first-level analyses in Feat.
 #because we have preprocessed the data and warped into standard space, we do not need to
@@ -23,16 +23,18 @@ for dir in ${featDirs}; do
 	continue
     fi
 
-    mkdir "${dir}/reg"
-    #fslroi "${dir}/../nfswkmtd_functional.nii.gz" "${dir}/reg/example_func" 0 1
-    #fslroi "${dir}/../nfswkmtd_functional.nii.gz" "${dir}/reg/example_func2standard" 0 1
-
-    #directory structure on hammer includes example_func images in root of each Feat directory. Copy these to reg
     if [ ! -f "${dir}/example_func.nii.gz" ]; then
 	echo "FEAT appears to have failed in ${dir}. Skipping to next subject"
 	continue
     fi
 
+    echo "Generating reg directory: ${dir}/reg"
+    mkdir "${dir}/reg"
+
+    #fslroi "${dir}/../nfswkmtd_functional.nii.gz" "${dir}/reg/example_func" 0 1
+    #fslroi "${dir}/../nfswkmtd_functional.nii.gz" "${dir}/reg/example_func2standard" 0 1
+
+    #directory structure should include example_func images in root of each Feat directory. Copy these to reg
     cp "${dir}/example_func.nii.gz" "${dir}/reg/example_func.nii.gz"
     cp "${dir}/example_func.nii.gz" "${dir}/reg/example_func2standard.nii.gz"
 

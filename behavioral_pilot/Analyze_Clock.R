@@ -1,4 +1,4 @@
-setwd("/Users/michael/CogEmoFaceReward/analysis")
+setwd("/Users/michael/Box_Sync/Data_Analysis/clock_analysis/behavioral_pilot")
 library(plyr)
 library(ggplot2)
 library(reshape2)
@@ -143,9 +143,9 @@ plot(~ AICchange + epsChange, noemo)
 
 #learningParams <- read.table("../fit_behavior/SubjsSummary_emoexplore.txt", header=TRUE)
 
-learning_emoexplore <- read.table("../fit_behavior_matlab/SubjsSummary_emoexploresticky.txt", header=TRUE)
-learning_noemo <- read.table("../fit_behavior_matlab/SubjsSummary_noemosticky.txt", header=TRUE)
-#learning_noemo <- read.table("../fit_behavior_matlab/SubjsSummary_noemo.txt", header=TRUE)
+learning_emoexplore <- read.table("~/CogEmoFaceReward/fit_behavior_matlab/SubjsSummary_emoexploresticky.txt", header=TRUE)
+learning_noemo <- read.table("~/CogEmoFaceReward/fit_behavior_matlab/SubjsSummary_noemosticky.txt", header=TRUE)
+learning_noemo <- read.table("~/CogEmoFaceReward/fit_behavior_matlab/SubjsSummary_noemo.txt", header=TRUE)
 #learning_noemo <- read.table("../fit_behavior/SubjsSummary_noemo_scram.txt", header=TRUE)
 
 learning_emoexplore <- rename(learning_emoexplore, c(Subject="LunaID"))
@@ -166,8 +166,64 @@ learning_noemo <- merge(learning_noemo, behav[,c("LunaID", "AgeAtVisit",
 
 learning_noemo$explorePos <- sapply(learning_noemo$explore, function(x) { ifelse(x > 0, x, NA) })
 learning_noemo$exploreGt0 <- sapply(learning_noemo$explore, function(x) { ifelse(x > 0, 1, 0) })
+learning_noemo$adolescent <- as.integer(learning_noemo$AgeAtVisit < 18)
+
+
+learning_emoexplore$explore_scramGt0 <- sapply(learning_emoexplore$explore_scram, function(x) { ifelse(x > 0, 1, 0) })
+learning_emoexplore$explore_fearGt0 <- sapply(learning_emoexplore$explore_fear, function(x) { ifelse(x > 0, 1, 0) })
+learning_emoexplore$explore_happyGt0 <- sapply(learning_emoexplore$explore_happy, function(x) { ifelse(x > 0, 1, 0) })
+learning_emoexplore$adolescent <- as.integer(learning_noemo$AgeAtVisit < 18)
+
+learning_noemo$exploreGt0_nonull <- sapply(learning_noemo$explore, function(x) {
+    if (x == 0.0) {
+        NA
+    } else if (x > 0.0) {
+        1.0
+    } else if (x < 0.0) {
+        0.0
+    }
+})
+
+
+library(lattice)
+xyplot(exploreGt0 ~ AgeAtVisit, learning_noemo)
+xyplot(exploreGt0_nonull ~ AgeAtVisit, learning_noemo)
+chisq.test(learning_noemo$exploreGt0_nonull, learning_noemo$adolescent)
+
+chisq.test(learning_noemo$exploreGt0, learning_noemo$adolescent)
+table(learning_noemo$exploreGt0, learning_noemo$adolescent)
+exact2x2(learning_noemo$exploreGt0, learning_noemo$adolescent)
+
+exact2x2(learning_emoexplore$explore_scramGt0, learning_emoexplore$adolescent)
+exact2x2(learning_emoexplore$explore_fearGt0, learning_emoexplore$adolescent)
+exact2x2(learning_emoexplore$explore_happyGt0, learning_emoexplore$adolescent)
+
+explore.melt <- melt(learning_emoexplore[,c("LunaID", "adolescent", "explore_scram", "explore_fear", "explore_happy")], id.vars=c("LunaID", "AgeAtVisit", "UPPS_SS", "UPPS_Urg", "UPPS_PosUrg", "adolescent"))
+
+
+ct <- xtabs(Count ~ Allele + Habitat + Location, data=fish)
+
+
+
+table(learning_emoexplore$explore_scramGt0, learning_noemo$adolescent)
+table(learning_emoexplore$explore_fearGt0, learning_noemo$adolescent)
+table(learning_emoexplore$explore_happyGt0, learning_noemo$adolescent)
+
+
+cor.test(~ explore_scram + AgeAtVisit, learning_emoexplore)
+cor.test(~ explore_fear + AgeAtVisit, learning_emoexplore)
+cor.test(~ explore_happy + AgeAtVisit, learning_emoexplore)
+
+
+
+
+xyplot(exploreGt0_nonull ~ AgeAtVisit, learning_noemo)
+
+
+
 
 cor.test(~ exploreGt0 + AgeAtVisit, learning_noemo)
+cor.test(~ exploreGt0_nonull + AgeAtVisit, learning_noemo)
 cor.test(~ explore + AgeAtVisit, learning_noemo)
 cor.test(~ explorePos + AgeAtVisit, learning_noemo)
 cor.test(~ explore + DERS_Total, learning_noemo)
@@ -200,6 +256,7 @@ selfreports <- c("UPPS_Urg", "UPPS_PosUrg", "UPPS_SS", "UPPS_Prem", "UPPS_Pers",
 "STAI_Score", "RSE", "RSI")
 
 sigrs <- corwithtarget(learning_emoexplore, pmin=.05, omit=c("LunaID", "Session", "ignore", "explore_HappyMScramble", "explore_FearMScramble"), target=params)
+sigrs <- corwithtarget(learning_emoexplore, omit=c("LunaID", "Session", "ignore", "explore_HappyMScramble", "explore_FearMScramble"), target=params)
 #sigrs <- corwithtarget(learning_noemo, pmin=.05, omit=c("LunaID", "Session", "ignore", "explore_HappyMScramble", "explore_FearMScramble"), target=params)
 
 #sigrs <- corwithtarget(learning_noemo, pmin=.05, target="AgeAtVisit", with=c(params, selfreports))
@@ -385,12 +442,31 @@ dev.off()
 plot(effect(term="lambda:AgeAtVisit",mod=model,default.levels=10),multiline=TRUE)
 
 #explore by emotion
-explore.melt <- melt(learning_emoexplore[,c("LunaID", "AgeAtVisit", "UPPS_SS", "UPPS_Urg", "UPPS_PosUrg", 
-            "explore_scram", "explore_fear", "explore_happy")], id.vars=c("LunaID", "AgeAtVisit", "UPPS_SS", "UPPS_Urg", "UPPS_PosUrg"))
+explore.melt <- melt(learning_emoexplore[,c("LunaID", "AgeAtVisit", "UPPS_SS", "UPPS_Urg", "UPPS_PosUrg", "adolescent", 
+            "explore_scram", "explore_fear", "explore_happy")], id.vars=c("LunaID", "AgeAtVisit", "UPPS_SS", "UPPS_Urg", "UPPS_PosUrg", "adolescent"))
 
 learning_emoexplore$explore_HappyMScramble <- with(learning_emoexplore, explore_happy - explore_scram)
 learning_emoexplore$explore_FearMScramble <- with(learning_emoexplore, explore_fear - explore_scram)
 
+library(nlme)
+explore.melt$LunaID <- factor(explore.melt$LunaID)
+anova(summary(lme(value ~ variable, random=~1|LunaID, explore.melt)))
+
+anova(summary(lme(value ~ variable*AgeAtVisit , random=~1|LunaID, explore.melt)))
+anova(summary(lme(value ~ variable*adolescent , random=~1|LunaID, explore.melt)))
+
+friedman.test(value ~ variable | LunaID, data = explore.melt)
+explore.melt$value_nz <- sapply(explore.melt$value, function(x) { if (x == 0.0) { NA } else { x } })
+anova(summary(lme(value_nz ~ variable*AgeAtVisit, random=~1|LunaID, explore.melt, na.action=na.exclude)))
+friedman.test(value_nz ~ variable | LunaID, data = explore.melt)
+
+histogram(~value | variable, explore.melt)
+tapply(explore.melt$value, explore.melt$variable, mean)
+tapply(explore.melt$value, explore.melt$variable, sd)
+
+
+
+##ggplot(explore.melt, aes(x=
 
 hms <- ggplot(learning_emoexplore, aes(x=factor(1:36), y=sort(explore_HappyMScramble))) + geom_bar(stat="identity") +
         coord_flip() + theme_bw(base_size=16) + xlab("Subject") + ylab("Explore (Happy - Scrambled)") +
@@ -487,7 +563,7 @@ ggplot(behav, aes(x=AgeAtVisit, y=rho)) + geom_point() + stat_smooth(se=FALSE, m
 ##     browser()
 ## }
 
-tcFiles <- list.files(path="../subjects", pattern=".*_tc\\.txt", full.names=TRUE)
+tcFiles <- list.files(path="~/CogEmoFaceReward/subjects", pattern=".*_tc\\.txt", full.names=TRUE)
 
 allData <- list()
 for (f in tcFiles) {
@@ -588,11 +664,28 @@ dev.off()
 #This is pure expected value (i.e., for a given RT, just frequency * magnitude) and is not based on subjects' reward history.
 #Consequently, this is our best estimate of "good performance"
 evMixedAll <- lmer(EV ~ Func*Emotion + (1|LunaID), allData)
+
+library(lmerTest)
+evMixedAll <- lmer(EV ~ AgeAtVisit*Emotion + (1|LunaID), allData)
+
+evMixedAll <- nlme::lme(EV ~ AgeAtVisit*Emotion, random=~1|LunaID, allData)
+
 evMixedH1 <- lmer(EV ~ Func*Emotion + (1|LunaID), subset(allData, TrialRel <= 21))
 evMixedH2 <- lmer(EV ~ Func*Emotion + (1|LunaID), subset(allData, TrialRel > 21))
-cmAll <- lmerCellMeans(evMixedAll)
+cmAll <- lmerCellMeans(evMixedAll, n.cont=6)
 cmH1 <- lmerCellMeans(evMixedH1)
 cmH2 <- lmerCellMeans(evMixedH2)
+
+car::Anova(evMixedAll)
+anova(evMixedAll)
+
+pdf("Development of EV.pdf", width=6, height=6)
+ggplot(cmAll, aes(x=AgeAtVisit, y=EV, color=Emotion, group=Emotion, ymin=EV-se, ymax=EV+se)) +
+    geom_line(size=2) + geom_point(size=5) + geom_errorbar(width=0.5) + ylab("Expected value (points)") + xlab("Age (years)") +
+    theme_bw(base_size=21)
+dev.off()
+
+ggplot(cmAll, aes(x=AgeAtVisit, y=EV, color=Emotion, group=Emotion, ymin=plo, ymax=phi)) + geom_point(size=5) + geom_errorbar(width=0.5) + ggtitle("All Trials")
 
 pdf("Average EV.pdf", width=9, height=7)
 ggplot(cmAll, aes(x=Func, y=EV, color=Emotion, group=Emotion, ymin=plo, ymax=phi)) + geom_point(size=5) + geom_errorbar(width=0.5) + ggtitle("All Trials")
