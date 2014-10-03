@@ -32,8 +32,17 @@ function resetcfg {
     meson_mr_root=
     meson_mb_root=
     loc_root=
-    loc_mr_root=
+    loc_mrraw_root=
+    loc_mrproc_root=
     loc_mb_root=
+    meson_subid_regex=
+    mprage_dirpattern=
+    preprocessed_dirname=
+    paradigm_name=
+    n_expected_funcruns=
+    gre_fieldmap_dirpattern=
+    fieldmap_cfg=
+    preproc_call=
 }
 
 njobs=8 #default to 8 parallel jobs
@@ -71,12 +80,12 @@ while [ _$1 != _ ] ; do
 	fi
 	
 	#2) sync MR_Raw directory (Dicoms)
-	echo "./syncMRCTR_MRRAW \"${meson_mr_root}\" \"${loc_mr_root}\" \"${meson_subid_regex}\""
-	./syncMRCTR_MRRAW "${meson_mr_root}" "${loc_mr_root}" "${meson_subid_regex}"
+	echo "./syncMRCTR_MRRAW \"${meson_mr_root}\" \"${loc_mrraw_root}\" \"${meson_subid_regex}\""
+	./syncMRCTR_MRRAW "${meson_mr_root}" "${loc_mrraw_root}" "${meson_subid_regex}"
 
 	#3) preprocess all data in mr directory
-	echo "./preprocessAll.R \"${loc_mr_root}\" $njobs \"${loc_mb_root}\""
-	./preprocessAll.R "${loc_mr_root}" $njobs "${loc_mb_root}"
+	echo "./preprocessAll.R \"${loc_mrraw_root}\" $njobs \"${loc_mb_root}\""
+	./preprocessAll.R "${loc_mrraw_root}" $njobs "${loc_mb_root}"
 
 	echo "End config: $1"
 	echo "---"

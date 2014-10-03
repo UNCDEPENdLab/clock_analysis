@@ -2,36 +2,52 @@
 
 #read in command line arguments.
 #current format:
-#arg 1: directory to process (default current directory)
+#arg 1: config file to process (default current directory)
 #arg 2: number of parallel jobs (default 8)
 #arg 3: folder containing MRRC reconstructed MB data (rsync from meson)
 args <- commandArgs(trailingOnly = TRUE)
 
-if (length(args) > 0L) {
-    goto <- args[1L]
-    if (! file.exists(goto)) { stop("Cannot find directory: ", goto) }
-    setwd(goto)
-}
+#TODO: Accept config file as input, source (in empty env?) and then use Sys.setenv to get things running below.
 
+goto=Sys.getenv("loc_mrraw_root")
+if (! file.exists(goto)) { stop("Cannot find directory: ", goto) }
+setwd(goto)
 basedir <- getwd() #root directory for processing
 
-if (length(args) > 1L) {
-    njobs <- as.numeric(args[2L])
+if (length(args) > 0L) {
+    njobs <- as.numeric(args[1L])
 } else {
     njobs <- 8
 }
 
-if (length(args) > 2L) {
-    MB_src <- args[3L] #folder containing MRRC reconstructed data
-} else {
-    MB_src <- normalizePath(Sys.glob("../WPC-*_MB")) #assume that MB data are up one directory in folder called WPC-XXXX_MB
-}
+## if (length(args) > 2L) {
+##     MB_src <- args[3L] #folder containing MRRC reconstructed data
+## } else {
+##     MB_src <- normalizePath(Sys.glob("../WPC-*_MB")) #assume that MB data are up one directory in folder called WPC-XXXX_MB
+## }
+
+
+library(foreach)
+library(doMC)
+library(iterators)
 
 #pull in cfg environment variables from bash script
 mprage_dirpattern=Sys.getenv("mprage_dirpattern")
 preprocessed_dirname=Sys.getenv("preprocessed_dirname")
 paradigm_name=Sys.getenv("paradigm_name")
 n_expected_funcruns=Sys.getenv("n_expected_funcruns")
+preproc_call=Sys.getenv("preproc_call")
+MB_src=Sys.getenv("loc_mb_root")
+
+#optional config settings
+loc_mrproc_root=Sys.getenv("loc_mrproc_root")
+gre_fieldmap_dirpattern=Sys.getenv("gre_fieldmap_dirpattern")
+fieldmap_cfg=Sys.getenv("fieldmap_cfg")
+
+##All of the above environment variables must be in place for script to work properly.
+if (any(c(mprage_dirpattern, preprocessed_dirname, paradigm_name, n_expected_funcruns, preproc_call) == "")) {
+    stop("Script expects system environment to contain the following variables: mprage_dirpattern, preprocessed_dirname, paradigm_name, n_expected_funcruns, preproc_call")
+}
 
 ##handle all mprage directories
 ##overload built-in list.dirs function to support pattern match
@@ -59,9 +75,12 @@ list.dirs <- function(...) {
 }
 
 #find original mprage directories to rename
-mprage_dirs <- list.dirs(pattern=mprage_dirpattern)
+#mprage_dirs <- list.dirs(pattern=mprage_dirpattern)
 
-if (!is.null(mprage_dirs)) {
+#much faster than above because can control recursion depth
+mprage_dirs <- system(paste0("find $PWD -iname \"", mprage_dirpattern, "\" -type d -mindepth 2 -maxdepth 2"), intern=TRUE)
+
+if (length(mprage_dirs) > 0L) {
     cat("Renaming original mprage directories to \"mprage\"\n")
     for (d in mprage_dirs) {
         mdir <- file.path(dirname(d), "mprage")
@@ -72,10 +91,10 @@ if (!is.null(mprage_dirs)) {
 #find all renamed mprage directories for processing
 #use beginning and end of line markers to force exact match
 #use getwd to force absolute path since we setwd below
-mprage_dirs <- list.dirs(pattern="^mprage$", path=getwd()) 
+#mprage_dirs <- list.dirs(pattern="^mprage$", path=getwd())
 
-library(foreach)
-library(doMC)
+#faster than above
+mprage_dirs <- system("find $PWD -iname mprage -type d -mindepth 2 -maxdepth 2", intern=TRUE)
 
 registerDoMC(njobs) #setup number of jobs to fork
 
@@ -120,12 +139,45 @@ for (d in subj_dirs) {
     cat("Processing subject: ", d, "\n")
     setwd(d)
 
+    subid <- basename(d)
+
+    #define root directory for subject's processed data
+    if (loc_mrproc_root == "") {
+        outdir <- file.path(d, preprocessed_dirname) #e.g., /Volumes/Serena/MMClock/MR_Raw/10637/MBclock_recon
+    } else {
+        outdir <- file.path(loc_mrproc_root, subid, preprocessed_dirname) #e.g., /Volumes/Serena/MMClock/MR_Proc/10637/native_nosmooth
+    }
+
+    #determine directories for fieldmap if using
+    apply_fieldmap <- FALSE
+    fmdirs <- NULL
+    magdir <- phasedir <- NA_character_ #reduce risk of accidentally carrying over fieldmap from one subject to next in loop
+    if (gre_fieldmap_dirpattern != "" && fieldmap_cfg != "") {
+        ##determine phase versus magnitude directories for fieldmap
+        ##in runs so far, magnitude comes first. preprocessFunctional should handle properly if we screw this up...
+        fmdirs <- sort(normalizePath(Sys.glob(file.path(d, gre_fieldmap_dirpattern))))
+        if (length(fmdirs) == 2L) {
+            apply_fieldmap <- TRUE
+            magdir <- file.path(fmdirs[1], "MR*")
+            phasedir <- file.path(fmdirs[2], "MR*")
+        } else { stop("Number of fieldmap dirs is not 2: ", paste0(fmdirs, collapse=", ")) }
+    }
+
+    mpragedir <- file.path(d, "mprage")
+    if (file.exists(mpragedir)) {
+        if (! (file.exists(file.path(mpragedir, "mprage_warpcoef.nii.gz")) && file.exists(file.path(mpragedir, "mprage_bet.nii.gz")) ) ) {
+            stop("Unable to locate required mprage files in dir: ", mpragedir)
+        }
+    } else {
+        stop ("Unable to locate mprage directory: ", mpragedir)
+    }
+    
     ##create paradigm_run1-paradigm_run8 folder structure and copy raw data
-    if (!file.exists(preprocessed_dirname)) { #create preprocessed folder if absent
-        dir.create(file.path(d, preprocessed_dirname), showWarnings = FALSE)
+    if (!file.exists(outdir)) { #create preprocessed folder if absent
+        dir.create(outdir, showWarnings=FALSE, recursive=TRUE)
     } else {
         ##preprocessed folder exists, check for .preprocessfunctional_complete files
-        extant_funcrundirs <- list.dirs(path=file.path(d, preprocessed_dirname), pattern=paste0(paradigm_name,"[0-9]+"), full.names=TRUE, recursive=FALSE)
+        extant_funcrundirs <- list.dirs(path=outdir, pattern=paste0(paradigm_name,"[0-9]+"), full.names=TRUE, recursive=FALSE)
         if (length(extant_funcrundirs) > 0L &&
             length(extant_funcrundirs) >= n_expected_funcruns &&
             all(sapply(extant_funcrundirs, function(x) { file.exists(file.path(x, ".preprocessfunctional_complete")) }))) {
@@ -135,12 +187,12 @@ for (d in subj_dirs) {
     }
 
     #identify original reconstructed flies for this subject
-    subid <- basename(d)
     mbraw_dirs <- list.dirs(path=MB_src, recursive = FALSE, full.names=FALSE) #all original recon directories, leave off full names for grep
 
     #approximate grep is leading to problems with near matches!!
     #example: 11263_20140307; WPC5640_11253_20140308
     #srcmatch <- agrep(subid, mbraw_dirs, max.distance = 0.1, ignore.case = TRUE)[1L] #approximate id match in MRRC directory
+
     srcmatch <- grep(subid, mbraw_dirs, ignore.case = TRUE)[1L] #id match in MRRC directory
     
     if (is.na(srcmatch)) {
@@ -195,40 +247,37 @@ for (d in subj_dirs) {
     #loop over files and setup run directories in preprocessed_dirname
     for (m in 1:length(mbfiles)) {
         #only copy data if folder does not exist
-        if (!file.exists(file.path(d, preprocessed_dirname, paste0(paradigm_name, runnums[m])))) {
-            dir.create(file.path(d, preprocessed_dirname, paste0(paradigm_name, runnums[m])))
+        if (!file.exists(file.path(outdir, paste0(paradigm_name, runnums[m])))) {
+            dir.create(file.path(outdir, paste0(paradigm_name, runnums[m])))
             
             ##use 3dcopy to copy dataset as .nii.gz
-            system(paste0("3dcopy \"", mbfiles[m], "\" \"", file.path(d, preprocessed_dirname, paste0(paradigm_name, runnums[m]), paste0(paradigm_name, runnums[m])), ".nii.gz\""))
+            system(paste0("3dcopy \"", mbfiles[m], "\" \"", file.path(outdir, paste0(paradigm_name, runnums[m]), paste0(paradigm_name, runnums[m])), ".nii.gz\""))
         }
     }
 
-    #now that preprocessed_dirname files are copied, preprocess all
-    setwd(preprocessed_dirname)
+    #add all functional runs, along with mprage and fmap info, as a data.frame to the list
+    all_funcrun_dirs[[d]] <- data.frame(funcdir=list.dirs(pattern=paste0(paradigm_name, ".*"), path=outdir, recursive = FALSE),
+                                        magdir=magdir, phasedir=phasedir, mpragedir=mpragedir, stringsAsFactors=FALSE)
 
-    all_funcrun_dirs[[d]] <- list.dirs(pattern=paste0(paradigm_name, ".*"), path=getwd(), recursive = FALSE)
 }
 
-all_funcrun_dirs <- unname(unlist(all_funcrun_dirs)) #generate vector of all functional runs to process
+#rbind data frame together
+all_funcrun_dirs <- do.call(rbind, all_funcrun_dirs)
+row.names(all_funcrun_dirs) <- NULL
 
 #loop over directories to process
-##for (cd in clockdirs) {
-f <- foreach(cd=all_funcrun_dirs, .inorder=FALSE) %dopar% {
-    setwd(cd)
+##for (cd in all_funcrun_dirs) {
+f <- foreach(cd=iter(all_funcrun_dirs, by="row"), .inorder=FALSE) %dopar% {
+    setwd(cd$funcdir)
     
-    ##determine phase versus magnitude directories for fieldmap
-    ##in runs so far, magnitude comes first. preprocessFunctional should handle properly if we screw this up...
-    fmdirs <- sort(normalizePath(Sys.glob("../../gre_field_mapping*")))
-    magdir <- file.path(fmdirs[1], "MR*")
-    phasedir <- file.path(fmdirs[2], "MR*")
-
-    cfile <- Sys.glob(paste0(paradigm_name, "*.nii.gz"))
+    funcpart <- paste("-4d", Sys.glob(paste0(paradigm_name, "*.nii.gz")))
+    mpragepart <- paste("-mprage_bet", file.path(cd$mpragedir, "mprage_bet.nii.gz"), "-warpcoef", file.path(cd$mpragedir, "mprage_warpcoef.nii.gz"))
+    if (!is.na(cd$magdir)) {
+        fmpart <- paste0("-fm_phase \"", cd$phasedir, "\" -fm_magnitude \"", cd$magdir, "\" -fm_cfg ", fieldmap_cfg)
+    } else { fmpart <- "" }
+    
     ##run preprocessFunctional
-    args <- paste0("-4d ", cfile, " -tr 1.0 -mprage_bet ../../mprage/mprage_bet.nii.gz -warpcoef ../../mprage/mprage_warpcoef.nii.gz -threshold 98_2 ",
-                   "-hp_filter 100 -rescaling_method 10000_globalmedian -template_brain MNI_2.3mm -func_struc_dof bbr -warp_interpolation spline ",
-                   "-constrain_to_template y -wavelet_despike -4d_slice_motion -custom_slice_times /Volumes/Serena/SPECC/MR_Raw/speccMBTimings.1D ",
-                   "-fm_phase \"", phasedir, "\" -fm_magnitude \"", magdir, "\" -fm_cfg clock ", #quote phasedir and magdir to prevent wildcard expansion
-                   "-mc_movie -motion_censor fd=0.9,dvars=20")
+    args <- paste(funcpart, mpragepart, fmpart, preproc_call)
     
     ret_code <- system2("preprocessFunctional", args, stderr="preprocessFunctional_stderr", stdout="preprocessFunctional_stdout")
     if (ret_code != 0) { stop("preprocessFunctional failed.") }
