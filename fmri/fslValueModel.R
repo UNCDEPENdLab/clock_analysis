@@ -11,7 +11,7 @@ fslValueModel <- function(f_value, mrfiles, runlengths, mrrunnums, run=FALSE, fo
   dir.create(fsldir, showWarnings=FALSE) #one directory up from a given clock run
   timingdir <- file.path(fsldir, "run_timing_deltavalue")
   
-  d_value <- f_value$build_design_matrix(regressors=c("clock", "feedback", "ev", "rpe_neg", "rpe_pos"), 
+  d_value <- build_design_matrix(fitobj=f_value, regressors=c("clock", "feedback", "ev", "rpe_neg", "rpe_pos"), 
       event_onsets=c("clock_onset", "feedback_onset", "clock_onset", "feedback_onset", "feedback_onset"), 
       durations=c(0, 0, "clock_duration", "feedback_duration", "feedback_duration"), 
       baselineCoefOrder=2, writeTimingFiles=c("FSL"),

@@ -171,26 +171,26 @@ load(file="Feat_runinfo.RData")
 exampCope <- readNIfTI(file.path(featL1Df$featRun[1], "stats", "cope1.nii.gz"), reorient=FALSE)@.Data
 mask <- readNIfTI("/Users/michael/standard/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_mask_2.3mm.nii", reorient=FALSE)@.Data
 
-#copenum <- 1
-#for (copenum in 1:5) {
-#  cope_array <- array(NA_real_, c(dim(exampCope),nrow(featL1Df)))
-#  varcope_array <- array(NA_real_, c(dim(exampCope),nrow(featL1Df)))
-#  
-#  for (i in 1:nrow(featL1Df)) {
-#    cope <- readNIfTI(file.path(featL1Df$featRun[i], "stats", paste0("cope", copenum, ".nii.gz")), reorient=FALSE)@.Data
-#    varcope <- readNIfTI(file.path(featL1Df$featRun[i], "stats", paste0("varcope", copenum, ".nii.gz")), reorient=FALSE)@.Data
-#    
-#    #apply mask
-#    cope[which(mask==0)] <- NA_real_
-#    varcope[which(mask==0)] <- NA_real_
-#    
-#    cope_array[,,,i] <- cope
-#    varcope_array[,,,i] <- varcope
-#    
-#  }
-#  
-#  save(cope_array, varcope_array, file=paste0("allsubj_cope", copenum, ".RData"))
-#}
+#generate a group cope and varcope image for all subjects
+for (copenum in 1:5) {
+  cope_array <- array(NA_real_, c(dim(exampCope),nrow(featL1Df)))
+  varcope_array <- array(NA_real_, c(dim(exampCope),nrow(featL1Df)))
+  
+  for (i in 1:nrow(featL1Df)) {
+    cope <- readNIfTI(file.path(featL1Df$featRun[i], "stats", paste0("cope", copenum, ".nii.gz")), reorient=FALSE)@.Data
+    varcope <- readNIfTI(file.path(featL1Df$featRun[i], "stats", paste0("varcope", copenum, ".nii.gz")), reorient=FALSE)@.Data
+    
+    #apply mask
+    cope[which(mask==0)] <- NA_real_
+    varcope[which(mask==0)] <- NA_real_
+    
+    cope_array[,,,i] <- cope
+    varcope_array[,,,i] <- varcope
+    
+  }
+  
+  save(cope_array, varcope_array, file=paste0("allsubj_cope", copenum, ".RData"))
+}
 
 
 #now have 4d files for copes and varcopes in same order as featL1Df

@@ -10,7 +10,7 @@ afniTCModel <- function(f, mrfiles, runlengths, mrrunnums, run=FALSE, force=FALS
   dir.create(afnidir, showWarnings=FALSE) #one directory up from a given clock run
   timingdir <- file.path(afnidir, "run_timing_tc")
 
-  d <- f$build_design_matrix(regressors=c("clock", "mean_uncertainty", "rel_uncertainty", "rpe_pos", "rpe_neg"), 
+  d <- build_design_matrix(fitobj=f, regressors=c("clock", "mean_uncertainty", "rel_uncertainty", "rpe_pos", "rpe_neg"), 
                              event_onsets=c("clock_onset", "clock_onset", "clock_onset", "feedback_onset", "feedback_onset"), 
                              durations=c("rt", "rt", "rt", "feedback_duration", "feedback_duration"), 
                              baselineCoefOrder=2, writeTimingFiles="AFNI",

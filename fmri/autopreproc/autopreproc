@@ -83,9 +83,9 @@ while [ _$1 != _ ] ; do
 	echo "./syncMRCTR_MRRAW \"${meson_mr_root}\" \"${loc_mrraw_root}\" \"${meson_subid_regex}\""
 	./syncMRCTR_MRRAW "${meson_mr_root}" "${loc_mrraw_root}" "${meson_subid_regex}"
 
-	#3) preprocess all data in mr directory
+	#3) preprocess all data in mr directory: R script relies on environment variables sourced above for configuration
 	echo "./preprocessAll.R \"${loc_mrraw_root}\" $njobs \"${loc_mb_root}\""
-	./preprocessAll.R "${loc_mrraw_root}" $njobs "${loc_mb_root}"
+	./preprocessAll.R $njobs
 
 	echo "End config: $1"
 	echo "---"
