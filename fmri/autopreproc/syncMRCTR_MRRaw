@@ -1,5 +1,8 @@
 #!/bin/bash
-set -e
+
+source ~/.bashrc
+
+set -ex
 #setup master connection to meson
 ls $HOME/.ssh/controlmasters/*WPC-6290* 2>/dev/null 1>/dev/null || ./meson.expect
 

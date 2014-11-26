@@ -3,25 +3,40 @@
 #also drop runs where level of motion was unacceptable
 
 setwd(file.path(getMainDir(), "clock_analysis", "fmri"))
+source("glm_helper_functions.R")
 
-fmriDir <- "/Volumes/Serena/MMClock/MR_Raw"
+##fmriDir <- "/Volumes/Serena/MMClock/MR_Proc/10873_20140918/mni_5mm_wavelet"
+fmriDir <- "/Volumes/Serena/MMClock/MR_Proc"
 fitDir <- file.path(getMainDir(), "clock_analysis", "fmri", "fmri_fits")
 
 featRuns <- list.files(path=fmriDir, pattern="FEAT_LVL1_run[0-9].feat", include.dirs=TRUE, recursive=TRUE, full.names=TRUE)
 
 #flag runs with more than 10% volumes with FD 0.9mm or greater
 #find fd.txt files corresponding to each FEAT run
-fdFiles <- sub(paste0(fmriDir, "(.*)/fsl_value/FEAT_LVL1_run([0-9])\\.feat"), paste0(fmriDir, "\\1/clock\\2/motion_info/fd.txt"), featRuns, perl=TRUE)
+fdFiles <- sub(paste0(fmriDir, "(.*)/fsl_.*/FEAT_LVL1_run([0-9])\\.feat"), paste0(fmriDir, "\\1/clock\\2/motion_info/fd.txt"), featRuns, perl=TRUE)
 
 #identify matching truncated 4d files (created by model_clock_fmri.R) since we are only concerned about movement within the run proper (not dead volumes)  
-niTruncFiles <- Sys.glob(sub(paste0(fmriDir, "(.*)/fsl_value/FEAT_LVL1_run([0-9])\\.feat"), paste0(fmriDir, "\\1/clock\\2/nfsw*_trunc*.nii.gz"), featRuns, perl=TRUE))
+niTruncFiles <- Sys.glob(sub(paste0(fmriDir, "(.*)/fsl_.*/FEAT_LVL1_run([0-9])\\.feat"), paste0(fmriDir, "\\1/clock\\2/nfsw*drop*.nii.gz"), featRuns, perl=TRUE))
+
+#identify how many volumes were dropped at the beginning
+dropVolumes <- as.integer(sub("^.*_drop(\\d+).*.nii.gz$", "\\1", niTruncFiles, perl=TRUE))
+
+##some runs are not truncated (e.g., if they go all the way to 350 vols and the scanner stops)
+##this results in NAs here
 truncLengths <- as.integer(sub("^.*_trunc(\\d+).nii.gz$", "\\1", niTruncFiles, perl=TRUE))
+nafiles <- which(is.na(truncLengths))
+
+library(Rniftilib)
+#need to add back the dropped volumes since everything below assumes that the trunc length is the final volume in the original time series
+truncLengths[nafiles] <- unname(sapply(nafiles, function(x) { Rniftilib::nifti.image.read(niTruncFiles[x], read_data=0)$dim[4L] })) + dropVolumes[nafiles]
+detach("package:Rniftilib", unload=TRUE) #necessary to avoid dim() conflict with oro.nifti
 
 library(plyr)
 motexclude <- ldply(1:length(fdFiles), function(i) {
       fd <- read.table(fdFiles[i], header=FALSE)$V1
-      fd <- fd[1:truncLengths[i]] #only include volumes within run
+      fd <- fd[(dropVolumes[i]+1):truncLengths[i]] #only include volumes within run
       propSpikes_0p9 <- sum(as.integer(fd > 0.9))/length(fd)
+      ##if (is.na(propSpikes_0p9[1])) browser()
       spikeExclude <- if (propSpikes_0p9 > .15) 1 else 0
       maxFD <- max(fd)
       meanFD <- mean(fd)
@@ -29,7 +44,8 @@ motexclude <- ldply(1:length(fdFiles), function(i) {
       data.frame(f=fdFiles[i], propSpikes_0p9, spikeExclude, meanFD, maxFD, maxMotExclude)
     })
 
-motexclude$subid <- factor(sub(paste0(fmriDir, "/([0-9]{5})_\\d+/MBclock_recon/.*$"), "\\1", featRuns, perl=TRUE))
+motexclude$subid <- factor(sub(paste0(fmriDir, "/([0-9]{5})_\\d+/mni_5mm_wavelet/.*$"), "\\1", featRuns, perl=TRUE))
+##motexclude$subid <- factor(paste0("10873", sub(".*/mni_5mm_wavelet/(fsl_.*)/.*$", "\\1", featRuns)))
 motexclude <- ddply(motexclude, .(subid), function(subdf) {
       if (nrow(subset(subdf, maxMotExclude == 0 & spikeExclude == 0)) < 4) {
         subdf$lt4runs <- 1
@@ -46,17 +62,19 @@ motexclude[which(motexclude$anyExclude == 1),]
 
 #generate data frame of runs to analyze
 featL1Df <- motexclude[which(motexclude$anyExclude==0),] #only retain good runs
-featL1Df$runnums <- as.integer(sub("^.*/fsl_value/FEAT_LVL1_run([0-9])\\.feat", "\\1", featL1Df$featRun, perl=TRUE))
+featL1Df$runnums <- as.integer(sub("^.*/fsl_.*/FEAT_LVL1_run([0-9])\\.feat", "\\1", featL1Df$featRun, perl=TRUE))
 
 #figure out emotion and rew contingency for all runs
 run_conditions <- do.call(rbind, lapply(1:nrow(featL1Df), function(i) {
-          loc <- local({load(file.path(fitDir, paste0(as.character(featL1Df$subid[i]), "_fitinfo.RData"))); environment()})$f #time-clock fit object (load as local var)
-          data.frame(emotion=loc$run_condition[featL1Df$runnums[i]], contingency=loc$rew_function[featL1Df$runnums[i]]) #vector of emotion and contingency
-        }))
+    loc <- local({load(file.path(fitDir, paste0(as.character(featL1Df$subid[i]), "_fitinfo.RData"))); environment()})$f #time-clock fit object (load as local var)
+    ##loc <- local({load(file.path(fitDir, paste0(as.character("10873"), "_fitinfo.RData"))); environment()})$f #time-clock fit object (load as local var)
+    data.frame(emotion=loc$run_condition[featL1Df$runnums[i]], contingency=loc$rew_function[featL1Df$runnums[i]]) #vector of emotion and contingency
+}))
 
 #build design matrix
 featL1Df <- cbind(featL1Df, run_conditions)
 featL1Df$emotion <- relevel(featL1Df$emotion, ref="scram")
+featL1Df$model <- sub(paste0(fmriDir, "/.*/mni_5mm_wavelet/fsl_([^/]+)/FEAT.*$"), "\\1", featL1Df$featRun, perl=TRUE)
 
 save(featL1Df, file="Feat_runinfo.RData")
 
@@ -83,7 +101,7 @@ run_feat_lvl2 <- function(featL1Df, run=TRUE, force=FALSE) {
     allFeatRuns <- list()
     require(plyr)
     require(parallel)
-  d_ply(featL1Df, .(subid), function(subdf) {
+    d_ply(featL1Df, .(subid, model), function(subdf) {
         subdf <- subdf[order(subdf$runnums),] #verify that we have ascending runs
         dummy <- lm(runnums ~ emotion, subdf)
         mm <- model.matrix(dummy)
@@ -103,8 +121,56 @@ run_feat_lvl2 <- function(featL1Df, run=TRUE, force=FALSE) {
         
         #generate and run lvl2 for this subject
         fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl2_clock_template.fsf"))
+
+        #depending on lower-level model (e.g., TC versus value, will have different number of copes to compute
+
+                         
         
-        if (nrow(subdf) != 8) { stop("can't handle less than 8 runs at the moment!")}
+        if (subdf$model[1] == "value") {
+            ##value model has 5 copes: clock onset, feedback onset, ev, rpe+, rpe-
+            fsfTemplate <- c(fsfTemplate,
+                             "# Number of lower-level copes feeding into higher-level analysis",
+                             "set fmri(ncopeinputs) 5",
+                             "# Use lower-level cope 1 for higher-level analysis",
+                             "set fmri(copeinput.1) 1",
+                             "# Use lower-level cope 2 for higher-level analysis",
+                             "set fmri(copeinput.2) 1",
+                             "# Use lower-level cope 3 for higher-level analysis",
+                             "set fmri(copeinput.3) 1",
+                             "# Use lower-level cope 4 for higher-level analysis",
+                             "set fmri(copeinput.4) 1",
+                             "# Use lower-level cope 5 for higher-level analysis",
+                             "set fmri(copeinput.5) 1"
+                             )
+        } else if (subdf$model[1] =="tc_nocarry") {
+            ##TC model has 7 copes: clock onset, feedback onset, ev, rpe+, rpe-, mean_unc, rel_unc
+            fsfTemplate <- c(fsfTemplate,
+                             "# Number of lower-level copes feeding into higher-level analysis",
+                             "set fmri(ncopeinputs) 7",
+                             "",
+                             "# Use lower-level cope 1 for higher-level analysis",
+                             "set fmri(copeinput.1) 1",
+                             "",
+                             "# Use lower-level cope 2 for higher-level analysis",
+                             "set fmri(copeinput.2) 1",
+                             "",
+                             "# Use lower-level cope 3 for higher-level analysis",
+                             "set fmri(copeinput.3) 1",
+                             "",
+                             "# Use lower-level cope 4 for higher-level analysis",
+                             "set fmri(copeinput.4) 1",
+                             "",
+                             "# Use lower-level cope 5 for higher-level analysis",
+                             "set fmri(copeinput.5) 1",
+                             "# Use lower-level cope 6 for higher-level analysis",
+                             "set fmri(copeinput.6) 1",
+                             "",
+                             "# Use lower-level cope 7 for higher-level analysis",
+                             "set fmri(copeinput.7) 1"
+                             )
+        } else { warning("unable to match model: ", subdf$model[1]); return(NULL) }
+        
+        if (nrow(subdf) != 8) { warning("can't handle less than 8 runs at the moment! ", subdf$subid[1]); return(NULL) }
         #search and replace within fsf file for appropriate sections
         #.OUTPUTDIR. is the feat output location
         
@@ -147,7 +213,7 @@ run_feat_lvl2 <- function(featL1Df, run=TRUE, force=FALSE) {
   
 }
 
-run_feat_lvl2(featL1Df, run=TRUE, force=FALSE)
+run_feat_lvl2(featL1Df, run=TRUE, force=TRUE)
     
     
     

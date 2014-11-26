@@ -1,125 +1,45 @@
-library(fmri)
-library(fitclock)
+#library(fmri)
+#library(fitclock)
 #load a subject
-setwd(file.path(getMainDir(), "clock_analysis", "fmri", "fmri_fits"))
-load(file.path(getMainDir(), "clock_analysis", "fmri", "fmri_fits", "10811_fitinfo.RData"))
-
-# This is a demonstration of how mean centering a parametric regressor prior to convolution separates the neural activation into the eventness and
-# parametric pieces. Summed together, these recover the direct convolution of the parametric regressor with the HRF.
-onsets1 <- f_value$clock_onset[1,]
-durations1 <- f_value$RTraw[1,]
-evRun1 <- f_value$ev[1,]
-
-pdf("demonstration of mean-centered parametric before convolution.pdf", width=10, height=8)
-par(mfrow=c(4,1))
-evtOnly <- fmri.stimulus(scans=283, times=onsets1, durations=durations1/1000, values=1.0, mean=FALSE, rt=1.0)
-plot(1:length(evtOnly), evtOnly, type="l", main="event convolved", xlab="")
-
-meanPreConvolve <- fmri.stimulus(scans=283, times=onsets1, durations=durations1/1000, values=(evRun1-mean(evRun1)), mean=FALSE, rt=1.0)
-plot(1:length(noMean), meanPreConvolve, type="l", col="blue", main="mean-centered EV pre-convolution", xlab="")
-
-noMean <- fmri.stimulus(scans=283, times=onsets1, durations=durations1/1000, values=evRun1, mean=FALSE, rt=1.0)
-plot(1:length(noMean), noMean, type="l", main="ev convolved", col="red", xlab="")
-
-m <- lm(noMean ~ meanPreConvolve + evtOnly)
-summary(m)
-
-f <- fitted(m)
-
-plot(1:length(f), f, type="l", main="fitted values of event (1) + mean-cent EV (2) = EV convolved regressor (3)", col="orange", xlab="Time")
-dev.off()
-fmri.stimulus(scans=last_fmri_volume[i], values=reg[,"value"], times=reg[,"onset"], durations=reg[,"duration"], rt=1.0, mean=FALSE) #hard-coded 1.0s TR for now
-
-build_design_matrix(fitobj=f_value, regressors=c("clock", "feedback", "ev", "rpe_neg", "rpe_pos"), 
-    event_onsets=c("clock_onset", "feedback_onset", "clock_onset", "feedback_onset", "feedback_onset"), 
-    durations=c("clock_duration", "feedback_duration", "clock_duration", "feedback_duration", "feedback_duration"), 
-    normalizations=c("none", "none", "none", "none", "none"),
-    baselineCoefOrder=2, writeTimingFiles=c("AFNI"), output_directory="~/10811_timingtest_meanonly")
+#setwd(file.path(getMainDir(), "clock_analysis", "fmri", "fmri_fits"))
 
 
-build_design_matrix(fitobj=f_value, regressors=c("clock", "feedback", "ev", "rpe_neg", "rpe_pos"), 
-    event_onsets=c("clock_onset", "feedback_onset", "clock_onset", "feedback_onset", "feedback_onset"), 
-    durations=c("clock_duration", "feedback_duration", "clock_duration", "feedback_duration", "feedback_duration"), 
-    normalizations=c("durmax_1.0", "durmax_1.0", "evtmax_1.0", "evtmax_1.0", "evtmax_1.0"),
-    baselineCoefOrder=2, writeTimingFiles=c("AFNI"), output_directory="~/10811_timingtest")
-
-build_design_matrix(fitobj=f_value, regressors=c("clock", "feedback", "ev", "rpe_neg", "rpe_pos"), 
-    event_onsets=c("clock_onset", "feedback_onset", "clock_onset", "feedback_onset", "feedback_onset"), 
-    durations=c("clock_duration", "feedback_duration", "clock_duration", "feedback_duration", "feedback_duration"), 
-    baselineCoefOrder=2, writeTimingFiles=c("AFNI"), output_directory="~/10811_timingtest")
-
-#runVolumes=runlengths, runsToOutput=mrrunnums, output_directory=timingdir)
-
-
-#read in convolved regressors from above
-clock_onset <- read.table("/Volumes/Serena/MMClock/MR_Raw/11178_20140310/MBclock_recon//afni_tc/run_timing_tc/run8_clock.1D")$V1
-rel_uncertainty <- read.table("/Volumes/Serena/MMClock/MR_Raw/11178_20140310/MBclock_recon/clock8_nosmooth/afni_tc/run_timing_tc/run8_rel_uncertainty.1D")$V1
-mean_uncertainty <- read.table("/Volumes/Serena/MMClock/MR_Raw/11178_20140310/MBclock_recon/clock8_nosmooth/afni_tc/run_timing_tc/run8_mean_uncertainty.1D")$V1
-pos_rpe <- read.table("/Volumes/Serena/MMClock/MR_Raw/11178_20140310/MBclock_recon/clock8_nosmooth/afni_tc/run_timing_tc/run8_rpe_pos.1D")$V1
-neg_rpe <- read.table("/Volumes/Serena/MMClock/MR_Raw/11178_20140310/MBclock_recon/clock8_nosmooth/afni_tc/run_timing_tc/run8_rpe_neg.1D")$V1
-
-dmat <- cbind(clock_onset, rel_uncertainty, mean_uncertainty, pos_rpe, neg_rpe)
-dmat_fmri <- fmri.design(dmat, order=3)
-
-mrdat <- read.NIFTI("/Volumes/Serena/MMClock/MR_Raw/11178_20140310/MBclock_recon/clock8_nosmooth/nfwudktm_clock8_trunc303.nii", level = 0.75,setmask=TRUE)
-anat <- read.NIFTI("/Volumes/Serena/MMClock/MR_Raw/11178_20140310/MBclock_recon/clock8_nosmooth/template_brain.nii", level = 0.75,setmask=FALSE)
-#result <- fmri.lm(mrdat, dmat_fmri, actype="smooth", contrast=diag(9), vvector=rep(1,9))
-
-#just contrast for first beta
-result <- fmri.lm(mrdat, dmat_fmri, actype="smooth", contrast=1, vvector=1)
-
-sm <- fmri.smooth(result, adaptation="fullaws")
-summary.fmridata(sm)
-
-pv <- fmri.pvalue(sm, mode="local")
-
-plot(pv, anatomic=anat, maxpvalue=.05)
-
-#the $segm field has values 0 (null), 1 (positive activation), and -1 (negative activation) for each voxel basd on segmentation.
-sm_seg <- fmri.smooth(result, adaptation="segment", alpha=.05)
-
-save(result, sm, file="fmritest.RData")
-
-library(abind)
-b_se_t_p_seg <- abind(sm$cbeta, sm$var, sm$cbeta/sqrt(sm$var), 1 - pv$pvalue, sm_seg$segm, along=4)
-niftiHead <- sm$header
-niftiHead$dimension[5] <- 5 #b, se, t, p, seg
-write.NIFTI(b_se_t_p_seg, niftiHead, filename="beta_test")
-
-d_demean <- build_design_matrix(fitobj=f_value, regressors=c("clock", "feedback", "ev", "rpe_neg", "rpe_pos"), 
-    event_onsets=c("clock_onset", "feedback_onset", "clock_onset", "feedback_onset", "feedback_onset"), 
-    durations=c("clock_duration", "feedback_duration", "clock_duration", "feedback_duration", "feedback_duration"),
-    normalizations=c("durmax_1.0", "durmax_1.0", "evtmax_1.0", "evtmax_1.0", "evtmax_1.0"),
-    baselineCoefOrder=2)
-
-visualizeDesignMatrix <- function(df) {
-  require(ggplot2)
-  require(reshape2)
-  print(cor(df))
-  df$volume <- 1:nrow(df)
-  df.m <- melt(df, id.vars="volume")
-  ggplot(df.m, aes(x=volume, y=value)) + geom_line(size=1.5) + theme_bw(base_size=15) + facet_grid(variable ~ ., scales="free_y") 
-}
-
-#\
-r_valueModel <- function(f_value, mrfiles, runlengths, mrrunnums) {
-  library(orthopolynom)
-  unnormalized.p.list <- legendre.polynomials( 3, normalized=FALSE )
-  polynomial.values(polynomials=unnormalized.p.list, x=seq(-1,1, 0.1))
+r_valueModel <- function(f_value, mrfiles, runlengths, mrrunnums, force=FALSE, njobs=8) {
+  require(abind)
+  require(fmri)
+  require(oro.nifti)
+  require(pracma)
   
-  
-  d_value <- build_design_matrix(fitobj=f_value, regressors=c("clock", "ev", "feedback", "rpe_neg", "rpe_pos"), 
-      event_onsets=c("clock_onset", "clock_onset", "feedback_onset", "feedback_onset", "feedback_onset"), 
-      durations=c("clock_duration", "clock_duration", "feedback_duration", "feedback_duration", "feedback_duration"),
-      normalizations=c("durmax_1.0", "evtmax_1.0", "durmax_1.0", "evtmax_1.0", "evtmax_1.0"),
-      baselineCoefOrder=2, writeTimingFiles=c("AFNI"),
-      runVolumes=runlengths, runsToOutput=mrrunnums, output_directory=timingdir)
-  
-  for (f in mrfiles) {
-    
+  rglmdir <- file.path(normalizePath(file.path(dirname(mrfiles[1L]), "..")), "rglm_feedback_0dur") #note: normalizePath will fail to evaluate properly if directory does not exist (e.g., dir not created yet)
+  if (file.exists(rglmdir) && force==FALSE) {
+    message("rglm_feedback_0dur directory already exists. ", rglmdir, ". Skipping subject")
+    return(NULL)
   }
-  #basic main effect matrix
-  regressornames <- c("clock", "feedback", "ev", "rpe_pos", "rpe_neg")
+  
+  cat("rglmdir create: ", rglmdir, "\n")
+  dir.create(rglmdir, showWarnings=FALSE) #one directory up from a given clock run
+  ## regressornames <- c("clock", "ev", "feedback", "rpe_pos", "rpe_neg")
+  ## d_value <- build_design_matrix(fitobj=f_value, regressors=regressornames, 
+  ##     event_onsets=c("clock_onset", "clock_onset", "feedback_onset", "feedback_onset", "feedback_onset"), 
+  ##     durations=c("clock_duration", "clock_duration", 0, 0, 0),
+  ##     normalizations=c("durmax_1.0", "evtmax_1.0", "evtmax_1.0", "evtmax_1.0", "evtmax_1.0"), baselineCoefOrder=3,
+  ##     runVolumes=runlengths, runsToOutput=mrrunnums)
+  regressornames <- c("clock", "feedback", "rel_uncertainty", "mean_uncertainty", "ev", "rpe_pos", "rpe_neg")
+  
+  d_value <- build_design_matrix(fitobj=f_value, regressors=regressornames, 
+      event_onsets=c("clock_onset", "feedback_onset", "clock_onset", "clock_onset", "feedback_onset", "feedback_onset", "feedback_onset"), 
+      durations=c("clock_duration", "feedback_duration", "clock_duration", "clock_duration", "feedback_duration", 0, 0),
+      normalizations=c("durmax_1.0", "durmax_1.0", "evtmax_1.0", "evtmax_1.0", "evtmax_1.0", "evtmax_1.0", "evtmax_1.0"), baselineCoefOrder=3,
+      runVolumes=runlengths, runsToOutput=mrrunnums)
+  
+  ##read in run mask!
+  ##because glms are estimated on single runs, do not assume that a Tmin across runs makes any sense. Haven't coregistered runs to each other.
+  #generateRunMask(mrfiles, outdir=rglmdir, outfile="runmask")
+  #brainmask <- readNIfTI(file.path(rglmdir, "runmask.nii.gz"), reorient=FALSE)
+  #maskIndices <- which(brainmask == 0.0, arr.ind=TRUE)
+  
+  #motion parameters
+  motpcs <- pca_motion(mrfiles, runlengths, motion_parfile="motion.par", numpcs=3)
   
   contrastmat <- c()
   
@@ -130,22 +50,89 @@ r_valueModel <- function(f_value, mrfiles, runlengths, mrrunnums) {
     rownames(contrastmat)[r] <- paste("me", regressornames[r], sep=".") 
   }
   
+  require(foreach)
+  require(doSNOW)
+  
+  setDefaultClusterOptions(master="localhost", port=10290)
+  clusterobj <- makeSOCKcluster(njobs)
+  registerDoSNOW(clusterobj)
+  
+  on.exit(stopCluster(clusterobj))
+  
+  res <- foreach(f=1:length(mrfiles), .packages=c("oro.nifti", "fmri", "abind"), .export="runFSLCommand") %dopar% {
+    #for (f in 1:length(mrfiles)) {
+    
+    #mrdat <- read.NIFTI(mrfiles[f], setmask=FALSE)
+    mrdat <- readNIfTI(mrfiles[f], reorient=FALSE)
+    
+    #copy NIfTI header information for stats output (fmri write.NIFTI giving bad grid)
+    mrout <- mrdat
+    mrout@.Data <- array(0) #delete data and preserve header alone
+    mrout@dim_[5] <- 5 #stats output includes b, se, t, 1-p, seg
+    mrdat <- oro2fmri(mrdat, setmask=FALSE) #convert to fmri object for analysis
+    
+    ##use tmin=0 as mask
+    runFSLCommand(paste0("fslmaths ", mrfiles[f], " -Tmin -bin ", rglmdir, "/runmask", f))#, fsldir="/usr/local/ni_tools/fsl")
+    brainmask <- readNIfTI(file.path(rglmdir, paste0("runmask", f, ".nii.gz")), reorient=FALSE)    
+    mrdat$mask <- as.logical(brainmask@.Data) #set mask directly
+    
+    #apply run mask
+    #this generates a massive array (162994378 x 4)... probably more effective to loop and assign
+    #mask4d <- cbind(repmat(maskIndices, dim(mrdat)[4], 1), rep(1:dim(mrdat)[4], each=nrow(maskIndices))) 
+    #mrdat[mask4d] <- NA_real_
+    
+    #masking the functional image one volume at a time is very slow
+    #but using one big 4d array leads to a huge RAM overhead
+    #middle ground is to divide into blocks of 25 volumes to be masked
+#    blocksize <- 25
+#    nvols <- dim(mrdat)[4L]
+#    blocks <- split(1:nvols, ceiling((1:nvols)/blocksize))
+#    
+#    tim <- system.time(lapply(blocks, function(b) {
+#              mask4d <- cbind(repmat(maskIndices, length(b), 1), rep(b, each=nrow(maskIndices)))
+#              mrdat[mask4d] <- NA_real_
+#            }))
+    
+#    time <- system.time(for (vol in 1:dim(mrdat)[4L]) {
+#      mrdat[cbind(maskIndices, vol)] <- NA_real_
+#    })
+    
+    for (v in 1:nrow(contrastmat)) {
+      dmat <- as.matrix(cbind(d_value$design.convolve[[f]], motpcs$motion_pcs_runs[[f]]))
+      result <- fmri.lm(mrdat, dmat, actype="smooth", contrast=c(contrastmat[v,], rep(0, ncol(dmat) - length(contrastmat[v,]))), keep="all")
+      
+      #adaptive smoothing
+      sm <- fmri.smooth(result, adaptation="fullaws")
+      
+      #summary.fmridata(sm)
+      #local p-values based on adaptive smoothing
+      pv <- fmri.pvalue(sm, mode="local")
+      #plot(pv, anatomic=anat, maxpvalue=.05)
+      
+      #structural segmentation smoothing approach
+      #the $segm field has values 0 (null), 1 (positive activation), and -1 (negative activation) for each voxel basd on segmentation.
+      sm_seg <- tryCatch(fmri.smooth(result, adaptation="segment", alpha=.05), error=function(e) { warning("segmentation algorithm failed: ", mrfiles[f]); return(array(-5, dim=dim(sm$cbeta))) } )
+      
+      ##old fmri output code
+      #b_se_t_p_seg <- abind(sm$cbeta, sm$var, sm$cbeta/sqrt(sm$var), 1 - pv$pvalue, sm_seg$segm, along=4)
+      #niftiHead <- sm$header
+      #niftiHead$slicecode <- "" #slight mishap in converting oro2fmri
+      #niftiHead$xyztunits <- "\n"
+      #niftiHead$dimension[5] <- 5 #b, se, t, 1-p, seg
+      #write.NIFTI(b_se_t_p_seg, niftiHead, filename=file.path(rglmdir, paste0("run", mrrunnums[f], "_", rownames(contrastmat)[v])))
+      
+      ##new code based on oro.nifti
+      mrout@.Data <- abind(sm$cbeta, sm$var, sm$cbeta/sqrt(sm$var), 1 - pv$pvalue, sm_seg$segm, along=4)
+      mrout@cal_min <- min(mrout) #need to have min and max vals in header that match data for oro.nifti to succeed
+      mrout@cal_max <- max(mrout)
+      writeNIfTI(mrout, filename=file.path(rglmdir, paste0("run", mrrunnums[f], "_", rownames(contrastmat)[v])))
+    }
+    
+    rm(mrdat)
+    return("done")
+  }
+  
+  ##      stopCluster(clusterobj)
 #need to get an emotion-modulated matrix at some point, although this is between runs
   
 }
-
-r_glm <- 
-    
-    
-
-
-
-
-contrastMat <- cbind(
-    c()
-    )
-
-
-
-#library(oro.nifti)
-#o <- fmri2oro(mrdat)

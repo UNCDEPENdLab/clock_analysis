@@ -9,7 +9,7 @@ fi
 PATH=/Library/Frameworks/EPD64.framework/Versions/Current/bin:${PATH}
 
 #Explicit MATLAB location
-PATH=/Applications/MATLAB_R2013b.app/bin:${PATH}
+PATH=/Applications/MATLAB_R2014b.app/bin:${PATH}
 
 # FSL Configuration
 FSLDIR=/opt/ni_tools/fsl
