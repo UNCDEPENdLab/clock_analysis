@@ -22,39 +22,6 @@ concatDesign <- function(d, hpass=.01) {
 
 }
 
-visualizeDesignMatrix <- function(d, outfile=NULL, runboundaries=NULL, events=NULL, includeBaseline=TRUE) {
-  require(ggplot2)
-  require(reshape2)
-
-  if (!includeBaseline) {
-      d <- d[,!grepl("run[0-9]+base", colnames(d))]
-  }
-
-  print(round(cor(d), 3))
-  d <- as.data.frame(d)
-  d$volume <- 1:nrow(d)
-  d.m <- melt(d, id.vars="volume")
-  g <- ggplot(d.m, aes(x=volume, y=value)) + geom_line(size=1.2) + theme_bw(base_size=15) + facet_grid(variable ~ ., scales="free_y")
-  
-  colors <- c("black", "blue", "red", "orange") #just a hack for color scheme right now
-  
-  if (!is.null(runboundaries)) {
-    g <- g + geom_vline(xintercept=runboundaries, color=colors[1L])
-  }
-  
-  #browser()
-  
-  if (!is.null(events)) {
-    for (i in 1:length(events)) {
-      g <- g + geom_vline(xintercept=events[[i]], color=colors[i+1])
-    }
-  }
-  
-  if (!is.null(outfile)) {
-      ggsave(filename=outfile, plot=g, width=21, height=9)
-  }
-  return(invisible(g))
-}
 
 incr_fit <- function(designmat, sparsemat, mask3d, modelname=NULL, outputDf=FALSE, outputPvals=FALSE, outputBetas=TRUE, njobs=20, models="auto", add_derivs=FALSE) {
     require(oro.nifti)
@@ -66,7 +33,7 @@ incr_fit <- function(designmat, sparsemat, mask3d, modelname=NULL, outputDf=FALS
     
     on.exit(stopCluster(clusterobj))
     
-    setDefaultClusterOptions(master="localhost", port=10290) #move away from 10187 to avoid collisions
+    setDefaultClusterOptions(master="localhost")
     clusterobj <- makeSOCKcluster(njobs)
     registerDoSNOW(clusterobj)
     

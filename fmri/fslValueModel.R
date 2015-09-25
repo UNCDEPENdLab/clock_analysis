@@ -1,22 +1,23 @@
-fslValueModel <- function(f_value, mrfiles, runlengths, mrrunnums, run=FALSE, force=FALSE) {
+fslValueModel <- function(f_value, mrfiles, runlengths, mrrunnums, run=FALSE, force=FALSE, dropVolumes=0, outdir="fsl_value") {
   #sloppily using f_value, mrfiles, runlengths, etc. from parent env
   require(Rniftilib)
   require(parallel)
   fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl1_clock_template.fsf"))
   
-  fsldir <- file.path(normalizePath(file.path(dirname(mrfiles[1L]), "..")), "fsl_value") #note: normalizePath will fail to evaluate properly if directory does not exist
+  fsldir <- file.path(normalizePath(file.path(dirname(mrfiles[1L]), "..")), outdir) #note: normalizePath will fail to evaluate properly if directory does not exist
 
   if (file.exists(fsldir) && force==FALSE) { message(fsldir, " exists. Skipping."); return(0) }
   cat("fsldir create: ", fsldir, "\n")
   dir.create(fsldir, showWarnings=FALSE) #one directory up from a given clock run
   timingdir <- file.path(fsldir, "run_timing_deltavalue")
   
-  d_value <- build_design_matrix(fitobj=f_value, regressors=c("clock", "feedback", "ev", "rpe_neg", "rpe_pos"), 
-      event_onsets=c("clock_onset", "feedback_onset", "clock_onset", "feedback_onset", "feedback_onset"), 
-      durations=c(0, 0, "clock_duration", "feedback_duration", "feedback_duration"), 
-      baselineCoefOrder=2, writeTimingFiles=c("FSL"),
-      runVolumes=runlengths, runsToOutput=mrrunnums, output_directory=timingdir)
-  
+  d_value <- build_design_matrix(fitobj=f_value, regressors=c("clock", "ev", "feedback", "rpe_neg", "rpe_pos"), 
+      event_onsets=c("clock_onset", "clock_onset", "feedback_onset", "feedback_onset", "feedback_onset"), 
+      durations=c("clock_duration", "clock_duration", "feedback_duration", "feedback_duration", "feedback_duration"),
+      normalizations=c("durmax_1.0", "evtmax_1.0", "durmax_1.0", "evtmax_1.0", "evtmax_1.0"),
+      baselineCoefOrder=2, writeTimingFiles=c("FSL"), center_values=TRUE, convolve_wi_run = TRUE,
+      runVolumes=runlengths, runsToOutput=mrrunnums, output_directory=timingdir, dropVolumes=dropVolumes)
+    
   allFeatFiles <- list()
   
   #FSL computes first-level models on individual runs
@@ -25,30 +26,30 @@ fslValueModel <- function(f_value, mrfiles, runlengths, mrrunnums, run=FALSE, fo
     
     runnum <- sub("^.*/clock(\\d+)$", "\\1", dirname(mrfiles[r]), perl=TRUE)
     nvol <- nifti.image.read(mrfiles[r], read_data=0)$dim[4L]
-    
-    #for motion parameter regression, add temporal derivatives, then PCA and retain first 3 components (~95% of variance)
-    mot <- read.table(file.path(dirname(mrfiles[r]), "motion.par"), col.names=c("r.x", "r.y", "r.z", "t.x", "t.y", "t.z"))
-    motderiv <- as.data.frame(lapply(mot, function(col) { c(0, diff(col)) }))
-    names(motderiv) <- paste0("d.", names(motderiv)) #add delta to names
-    motall <- cbind(mot, motderiv)
-    pc <- princomp(motall, scores=TRUE)
-    cumvar <- cumsum(pc$sdev^2/sum(pc$sdev^2))
-    #cat("first three motion principal components account for: ", plyr::round_any(cumvar[3], .001), "\n")
-    cat("first two motion principal components account for: ", plyr::round_any(cumvar[2], .001), "\n")
-    mregressors <- pc$scores[,1:2] #first two components (cf Churchill et al. 2012 PLoS ONE)
-    
+
+    #just PCA motion on the current run
+    mregressors <- pca_motion(mrfiles[r], runlengths[r], motion_parfile="motion.par", numpcs=3, dropVolumes=dropVolumes)$motion_pcs_concat
+        
     #Add volumes to censor here. Use censor_intersection.mat, which flags fd > 0.9 and DVARS > 20
     censorfile <- file.path(dirname(mrfiles[r]), "motion_info", "censor_intersection.mat")
     if (file.exists(censorfile) && file.info(censorfile)$size > 0) {
-      censor <- read.table(censorfile, header=FALSE)
+      censor <- read.table(censorfile, header=FALSE)$V1
+      censor <- censor[(1+dropVolumes):runlengths[r]]
       mregressors <- cbind(mregressors, censor)
+    }
+       
+    #add CSF and WM regressors (with their derivatives)
+    nuisancefile <- file.path(dirname(mrfiles[r]), "nuisance_regressors.txt")
+    if (file.exists(nuisancefile)) {
+      nuisance <- read.table(nuisancefile, header=FALSE)
+      nuisance <- nuisance[(1+dropVolumes):runlengths[r],,drop=FALSE]
+      nuisance <- as.data.frame(lapply(nuisance, function(col) { col - mean(col) })) #demean
+      mregressors <- cbind(mregressors, nuisance)
     }
     
     motfile <- file.path(fsldir, paste0("run", runnum, "_confounds.txt"))
-    write.table(mregressors[1:runlengths[r], ], file=motfile, col.names=FALSE, row.names=FALSE) #make sure confound output matches fMRI file in length
-    
-    #add deep ventricle time series as confound regressor?
-    
+    write.table(mregressors, file=motfile, col.names=FALSE, row.names=FALSE)
+
     #search and replace within fsf file for appropriate sections
     #.OUTPUTDIR. is the feat output location
     #.NVOL. is the number of volumes in the run
@@ -78,18 +79,8 @@ fslValueModel <- function(f_value, mrfiles, runlengths, mrrunnums, run=FALSE, fo
     allFeatFiles[[r]] <- featFile
   }
   
-  if (run == TRUE) {
-    #N.B.: If FSLDIR is not setup properly, running feat using a system call hangs, whereas running it in bash -i is okay
-    #cat("#!/bin/bash",
-    #    paste0(file.path(Sys.getenv("FSLDIR"), "bin", "feat "), allFeatFiles, 
-    #        " > ", sapply(allFeatFiles, dirname), "/feat_stdout_", sapply(allFeatFiles, "basename"),
-    #        " 2> ", sapply(allFeatFiles, dirname), "/feat_stderr_", sapply(allFeatFiles, "basename"),
-    #        " &"),
-    #    "wait",
-    #    file="runfeat.bash", sep="\n")
-    #system("bash -i runfeat.bash")
-    
-    cl_fork <- makeForkCluster(nnodes=16)
+  if (run == TRUE) {    
+    cl_fork <- makeForkCluster(nnodes=8)
     runfeat <- function(fsf) {
       runname <- basename(fsf)
       runFSLCommand(paste("feat", fsf), stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)), stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)))

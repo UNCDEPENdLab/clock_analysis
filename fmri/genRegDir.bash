@@ -41,7 +41,9 @@ for dir in ${featDirs}; do
     cp "${FSLDIR}/etc/flirtsch/ident.mat" "${dir}/reg/example_func2standard.mat"
     cp "${FSLDIR}/etc/flirtsch/ident.mat" "${dir}/reg/example_standard2example_func.mat"
 
-    ln -sfn ~/standard/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_brain_2.3mm.nii "${dir}/reg/standard.nii"
+    #for some reason, FSL 5.0.8 is now giving errors following this symlink... switch to copy (at the expense of disk space)
+    #ln -sfn ~/standard/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_brain_2.3mm.nii "${dir}/reg/standard.nii"
+    cp ~/standard/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_brain_2.3mm.nii "${dir}/reg/standard.nii"
 
     cd "${dir}/reg"
     slicer example_func2standard standard -s 2 -x 0.35 sla.png -x 0.45 slb.png -x 0.55 slc.png -x 0.65 sld.png \

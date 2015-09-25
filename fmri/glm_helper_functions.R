@@ -1,5 +1,30 @@
 #cutting down on redundancy across glm setup scripts
 
+#wrapper for running an AFNI command safely within R
+#if AFNI does not have its environment setup properly, commands may not work
+runAFNICommand <- function(args, afnidir=NULL, stdout=NULL, stderr=NULL, ...) {
+  #look for AFNIDIR in system environment if not passed in
+  if (is.null(afnidir)) {
+    env <- system("env", intern=TRUE)
+    if (length(afnidir <- grep("^AFNIDIR=", env, value=TRUE)) > 0L) {
+      afnidir <- sub("^AFNIDIR=", "", afnidir)
+    } else {
+      warning("AFNIDIR not found in environment. Defaulting to ", paste0(normalizePath("~/"), "/afni"))
+      afnidir <- paste0(normalizePath("~/"), "/afni")
+    }
+  }
+  
+  Sys.setenv(AFNIDIR=afnidir) #export to R environment
+  afnisetup=paste0("AFNIDIR=", afnidir, "; PATH=${AFNIDIR}:${PATH}; DYLD_FALLBACK_LIBRARY_PATH=${AFNIDIR}; ${AFNIDIR}/")
+  afnicmd=paste0(afnisetup, args)
+  if (!is.null(stdout)) { afnicmd=paste(afnicmd, ">", stdout) }
+  if (!is.null(stderr)) { afnicmd=paste(afnicmd, "2>", stderr) }
+  cat("AFNI command: ", afnicmd, "\n")
+  retcode <- system(afnicmd, ...)
+  return(retcode)
+}
+
+
 #wrapper for running an fsl command safely within R
 #if FSL does not have its configuration setup properly, commands such as feat don't work, or hang strangely
 runFSLCommand <- function(args, fsldir=NULL, stdout=NULL, stderr=NULL) {
@@ -36,21 +61,19 @@ runFSLCommand <- function(args, fsldir=NULL, stdout=NULL, stderr=NULL) {
 gen_emo_interaction_regressors <- function(examplefile, regressors, emotions=c("fear","scram","happy"), timingdir, mrrunnums, runlengths, dropVolumes) {
     ##make between-session regressors based on emotion condition.
     ##fmriDir <- "/Volumes/Serena/MMClock/MR_Raw"
-    ##fmriDir <- "/Volumes/Serena/MMClock/MR_Proc"
-    fmriDir <- "/Volumes/Serena/SPECC/MR_Proc"
+    fmriDir <- "/Volumes/Serena/MMClock/MR_Proc"
+    ##fmriDir <- "/Volumes/Serena/SPECC/MR_Proc"
     fitDir <- file.path(getMainDir(), "clock_analysis", "fmri", "fmri_fits")
     ##/Volumes/Serena/MMClock/MR_Raw/10997_20140308/MBclock_recon/clock1/nfswudktm_clock1_5_trunc282.nii.gz
-    ##subid <- factor(sub(paste0(fmriDir, "/([0-9]{5})_\\d+/MBclock_recon/.*$"), "\\1", mrfiles[1L], perl=TRUE))
-    ##subid <- factor(sub(paste0(fmriDir, "/([0-9]{5})_\\d+/mni_5mm_wavelet/.*$"), "\\1", examplefile, perl=TRUE))
-    subid <- as.integer(sub(paste0(fmriDir, "/([0-9]{3})[A-z]{2}_.*/mni_5mm_wavelet/.*$"), "\\1", examplefile, perl=TRUE))
-    
+    subid <- factor(sub(paste0(fmriDir, "/([0-9]{5})_\\d+/(?:mni_5mm_wavelet|native_nosmooth)/.*$"), "\\1", examplefile, perl=TRUE))
+    ##subid <- as.integer(sub(paste0(fmriDir, "/([0-9]{3})[A-z]{2}_.*/mni_5mm_wavelet/.*$"), "\\1", examplefile, perl=TRUE)) #for SPECC
     
     loc <- local({load(file.path(fitDir, paste0(as.character(subid), "_fitinfo.RData"))); environment()})$f #time-clock fit object (load as local var)
     emocon <- data.frame(emotion=loc$run_condition[mrrunnums], contingency=loc$rew_function[mrrunnums]) #vector of emotion and contingency
 
     ##generate interactions for ev, rpe_neg, and rpe_pos with emotion
     csum <- cumsum(runlengths - dropVolumes)
-
+    
     for (reg in regressors) {
         for (emo in emotions) {
             vec <- rep(0, max(csum))
@@ -171,4 +194,38 @@ generateRunMask <- function(mrfiles, outdir=getwd(), outfile="runmask") {
   runFSLCommand(paste0("fslmaths ", outdir, "/tminsum -thr ", length(mrfiles), " -bin ", outdir, "/", outfile))#, fsldir="/usr/local/ni_tools/fsl")
   runFSLCommand(paste0("imrm ", outdir, "/tmin*"))#, fsldir="/usr/local/ni_tools/fsl") #cleanup 
   
+}
+
+visualizeDesignMatrix <- function(d, outfile=NULL, runboundaries=NULL, events=NULL, includeBaseline=TRUE) {
+  require(ggplot2)
+  require(reshape2)
+  
+  if (!includeBaseline) {
+    d <- d[,!grepl("run[0-9]+base", colnames(d))]
+  }
+  
+  print(round(cor(d), 3))
+  d <- as.data.frame(d)
+  d$volume <- 1:nrow(d)
+  d.m <- melt(d, id.vars="volume")
+  g <- ggplot(d.m, aes(x=volume, y=value)) + geom_line(size=1.2) + theme_bw(base_size=15) + facet_grid(variable ~ ., scales="free_y")
+  
+  colors <- c("black", "blue", "red", "orange") #just a hack for color scheme right now
+  
+  if (!is.null(runboundaries)) {
+    g <- g + geom_vline(xintercept=runboundaries, color=colors[1L])
+  }
+  
+  #browser()
+  
+  if (!is.null(events)) {
+    for (i in 1:length(events)) {
+      g <- g + geom_vline(xintercept=events[[i]], color=colors[i+1])
+    }
+  }
+  
+  if (!is.null(outfile)) {
+    ggsave(filename=outfile, plot=g, width=21, height=9)
+  }
+  return(invisible(g))
 }
