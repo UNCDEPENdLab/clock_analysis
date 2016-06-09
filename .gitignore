@@ -9,3 +9,8 @@
 
 #contains sensitive login info
 meson.expect
+
+fmri/fmri_fits
+
+#ludvig code from early testing
+td_model/

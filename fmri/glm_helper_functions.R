@@ -216,7 +216,6 @@ visualizeDesignMatrix <- function(d, outfile=NULL, runboundaries=NULL, events=NU
     g <- g + geom_vline(xintercept=runboundaries, color=colors[1L])
   }
   
-  #browser()
   
   if (!is.null(events)) {
     for (i in 1:length(events)) {

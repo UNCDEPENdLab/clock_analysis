@@ -243,3 +243,115 @@ cor(dmublock1[,3], normed_h2)
 # 1) model with whole-trial eventness regressor versus separate events
 # 2) model with eventness regressor where duration modulates height versus per stimulus normalization
 
+
+
+load(file.path(getMainDir(), "clock_analysis", "fmri", "fmri_fits", "10811_fitinfo.RData"))
+
+# This is a demonstration of how mean centering a parametric regressor prior to convolution separates the neural activation into the eventness and
+# parametric pieces. Summed together, these recover the direct convolution of the parametric regressor with the HRF.
+onsets1 <- f_value$clock_onset[1,]
+durations1 <- f_value$RTraw[1,]
+evRun1 <- f_value$ev[1,]
+rpes <- f_value$rpe[1,]
+par(mfrow=c(2,1))
+plot(1:length(rpes), rpes, type="l")
+
+plot(1:length(evRun1), evRun1, type="l")
+
+par(mfrow=c(3,1))
+evtOnly <- fmri.stimulus(scans=283, times=onsets1, durations=durations1/1000, values=1.0, mean=FALSE, rt=1.0)
+plot(1:length(evtOnly), evtOnly, type="l", main="event convolved", xlab="")
+
+rpeCent <- fmri.stimulus(scans=283, times=onsets1, durations=durations1/1000, values=(rpes-mean(rpes)), mean=FALSE, rt=1.0)
+plot(1:length(rpeCent), rpeCent, type="l", main="rpe centered convolved", xlab="")
+
+evCent <- fmri.stimulus(scans=283, times=onsets1, durations=durations1/1000, values=(evRun1-mean(evRun1)), mean=FALSE, rt=1.0)
+plot(1:length(evCent), evCent, type="l", main="ev centered convolved", xlab="")
+
+cor(cbind(evtOnly, rpeCent, evCent))
+
+
+pdf("demonstration of mean-centered parametric before convolution.pdf", width=10, height=8)
+par(mfrow=c(4,1))
+evtOnly <- fmri.stimulus(scans=283, times=onsets1, durations=durations1/1000, values=1.0, mean=FALSE, rt=1.0)
+plot(1:length(evtOnly), evtOnly, type="l", main="event convolved", xlab="")
+
+meanPreConvolve <- fmri.stimulus(scans=283, times=onsets1, durations=durations1/1000, values=(evRun1-mean(evRun1)), mean=FALSE, rt=1.0)
+plot(1:length(noMean), meanPreConvolve, type="l", col="blue", main="mean-centered EV pre-convolution", xlab="")
+
+noMean <- fmri.stimulus(scans=283, times=onsets1, durations=durations1/1000, values=evRun1, mean=FALSE, rt=1.0)
+plot(1:length(noMean), noMean, type="l", main="ev convolved", col="red", xlab="")
+
+m <- lm(noMean ~ meanPreConvolve + evtOnly)
+summary(m)
+
+f <- fitted(m)
+
+plot(1:length(f), f, type="l", main="fitted values of event (1) + mean-cent EV (2) = EV convolved regressor (3)", col="orange", xlab="Time")
+dev.off()
+fmri.stimulus(scans=last_fmri_volume[i], values=reg[,"value"], times=reg[,"onset"], durations=reg[,"duration"], rt=1.0, mean=FALSE) #hard-coded 1.0s TR for now
+
+d <- build_design_matrix(fitobj=f_value, regressors=c("clock", "feedback", "ev", "rpe_neg", "rpe_pos"), 
+    event_onsets=c("clock_onset", "feedback_onset", "clock_onset", "feedback_onset", "feedback_onset"), 
+    durations=c("clock_duration", "feedback_duration", "clock_duration", "feedback_duration", "feedback_duration"), 
+    normalizations=c("none", "none", "none", "none", "none"),
+    baselineCoefOrder=2, writeTimingFiles=c("AFNI"), output_directory="~/10811_timingtest_meanonly")
+
+
+build_design_matrix(fitobj=f_value, regressors=c("clock", "feedback", "ev", "rpe_neg", "rpe_pos"), 
+    event_onsets=c("clock_onset", "feedback_onset", "clock_onset", "feedback_onset", "feedback_onset"), 
+    durations=c("clock_duration", "feedback_duration", "clock_duration", "feedback_duration", "feedback_duration"), 
+    normalizations=c("durmax_1.0", "durmax_1.0", "evtmax_1.0", "evtmax_1.0", "evtmax_1.0"),
+    baselineCoefOrder=2, writeTimingFiles=c("AFNI"), output_directory="~/10811_timingtest")
+
+build_design_matrix(fitobj=f_value, regressors=c("clock", "feedback", "ev", "rpe_neg", "rpe_pos"), 
+    event_onsets=c("clock_onset", "feedback_onset", "clock_onset", "feedback_onset", "feedback_onset"), 
+    durations=c("clock_duration", "feedback_duration", "clock_duration", "feedback_duration", "feedback_duration"), 
+    baselineCoefOrder=2, writeTimingFiles=c("AFNI"), output_directory="~/10811_timingtest")
+
+#runVolumes=runlengths, runsToOutput=mrrunnums, output_directory=timingdir)
+
+
+#read in convolved regressors from above
+clock_onset <- read.table("/Volumes/Serena/MMClock/MR_Proc/11178_20140310/mni_5mm_wavelet/afni_value/run_timing_deltavalue/run8_clock.1D")$V1
+#rel_uncertainty <- read.table("/Volumes/Serena/MMClock/MR_Raw/11178_20140310/MBclock_recon/clock8_nosmooth/afni_tc/run_timing_tc/run8_rel_uncertainty.1D")$V1
+#mean_uncertainty <- read.table("/Volumes/Serena/MMClock/MR_Raw/11178_20140310/MBclock_recon/clock8_nosmooth/afni_tc/run_timing_tc/run8_mean_uncertainty.1D")$V1
+pos_rpe <- read.table("/Volumes/Serena/MMClock/MR_Proc/11178_20140310/mni_5mm_wavelet/afni_value/run_timing_deltavalue/run8_rpe_pos.1D")$V1
+neg_rpe <- read.table("/Volumes/Serena/MMClock/MR_Proc/11178_20140310/mni_5mm_wavelet/afni_value/run_timing_deltavalue/run8_rpe_neg.1D")$V1
+
+#dmat <- cbind(clock_onset, rel_uncertainty, mean_uncertainty, pos_rpe, neg_rpe)
+dmat <- cbind(clock_onset, pos_rpe, neg_rpe)
+dmat_fmri <- fmri.design(dmat, order=3)
+
+library(oro.nifti)
+library(fmri)
+mrdat <- oro2fmri(readNIfTI("/Volumes/Serena/MMClock/MR_Proc/11178_20140310/native_nosmooth/clock8/nfudktm_clock8_trunc303.nii.gz", reorient=FALSE), level = 0.75,setmask=TRUE)
+#anat <- read.NIFTI("/Volumes/Serena/MMClock/MR_Proc/11178_20140310/native_nosmooth/clock8/template_brain.nii", level = 0.75,setmask=FALSE)
+#result <- fmri.lm(mrdat, dmat_fmri, actype="smooth", contrast=diag(9), vvector=rep(1,9))
+
+#just contrast for first beta
+result <- fmri.lm(mrdat, dmat_fmri, actype="smooth", contrast=1, vvector=1)
+
+sm <- fmri.smooth(result, adaptation="fullaws")
+summary.fmridata(sm)
+
+pv <- fmri.pvalue(sm, mode="local")
+
+plot(pv, anatomic=anat, maxpvalue=.05)
+
+#the $segm field has values 0 (null), 1 (positive activation), and -1 (negative activation) for each voxel basd on segmentation.
+sm_seg <- fmri.smooth(result, adaptation="segment", alpha=.05)
+
+save(result, sm, file="fmritest.RData")
+
+library(abind)
+b_se_t_p_seg <- abind(sm$cbeta, sm$var, sm$cbeta/sqrt(sm$var), 1 - pv$pvalue, sm_seg$segm, along=4)
+niftiHead <- sm$header
+niftiHead$dimension[5] <- 5 #b, se, t, p, seg
+write.NIFTI(b_se_t_p_seg, niftiHead, filename="beta_test")
+
+d_demean <- build_design_matrix(fitobj=f_value, regressors=c("clock", "feedback", "ev", "rpe_neg", "rpe_pos"), 
+    event_onsets=c("clock_onset", "feedback_onset", "clock_onset", "feedback_onset", "feedback_onset"), 
+    durations=c("clock_duration", "feedback_duration", "clock_duration", "feedback_duration", "feedback_duration"),
+    normalizations=c("durmax_1.0", "durmax_1.0", "evtmax_1.0", "evtmax_1.0", "evtmax_1.0"),
+    baselineCoefOrder=2)

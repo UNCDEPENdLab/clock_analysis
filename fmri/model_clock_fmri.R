@@ -13,23 +13,13 @@ source("r_glm.R")
 if (!file.exists("fmri_fits")) { dir.create("fmri_fits") }
 setwd("fmri_fits")
 
+if (file.exists("fmri_sceptic_signals.RData")) { sceptic <- local({load("fmri_sceptic_signals.RData"); as.list(environment())}) }
+
 #N.B. in examining initial results from single subject analyses, it is clear that steady state magnetization is not achieved by the first volume acquired
 #ICA analysis suggests that it takes up to 6 volumes to reach steady state, and the rel and mean uncertainty maps are being adversely affected by this problem
 #because they also start high and decay... Mean uncertainty was consequently soaking up a huge amount of CSF in activation maps.
 #Because the first presentation occurs at 8 seconds, it seems fine to drop 6 volumes (6s) 
-fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FALSE) {
-  ##start with base Frank model
-  ##force non-negative epsilon (no sticky choice)
-  posEps <- clock_model()
-  posEps$add_params(
-      meanRT(max_value=4000),
-      autocorrPrevRT(),
-      goForGold(),
-      go(),
-      noGo(),
-      meanSlowFast(),
-      exploreBeta()
-  )
+fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FALSE, model="sceptic") {
   
   behavFiles <- list.files(path=behavDir, pattern=".*tcExport.csv", full.names=TRUE, recursive=TRUE)
  
@@ -86,59 +76,92 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
     mrfiles <- mrdf$mrfile_to_analyze
     runlengths <- mrdf$last_vol_analysis
     
-    if (file.exists(paste0(subid, "_fitinfo.RData"))) { 
-      cat("Fit data already present for: ", subid, "\n")
-      load(paste0(subid, "_fitinfo.RData"))
-    } else {           
-      cat("Fitting behavioral data for subject: ", subid, "\n")
-      
-      ##set data for model fit
-      posEps$set_data(s)
-      
-      incr_fit <- posEps$incremental_fit(njobs=7, plot=FALSE)
-      
-      png(file.path(paste0(subid, "_incrfit.png")), width=9, height=6, units="in", res=300)
-      print(incr_fit$AICplot)
-      dev.off()
-      
-      f <- posEps$fit(random_starts=5)
-      
-      #refit without value carryover
-      posEps$carryover_value <- FALSE
-      f_nocarryover <- posEps$fit(random_starts=5)
-      
+    if (model == "tc") {
+      ##start with base Frank model
+      ##force non-negative epsilon (no sticky choice)
+      posEps <- clock_model()
+      posEps$add_params(
+          meanRT(max_value=4000),
+          autocorrPrevRT(),
+          goForGold(),
+          go(),
+          noGo(),
+          meanSlowFast(),
+          exploreBeta()
+      )
+
+      if (file.exists(paste0(subid, "_fitinfo.RData"))) { 
+        cat("Fit data already present for: ", subid, "\n")
+        load(paste0(subid, "_fitinfo.RData"))
+      } else {
+        cat("Fitting behavioral data for subject: ", subid, "\n")
+        
+        ##set data for model fit
+        posEps$set_data(s)
+        
+        incr_fit <- posEps$incremental_fit(njobs=7, plot=FALSE)
+        
+        png(file.path(paste0(subid, "_incrfit.png")), width=9, height=6, units="in", res=300)
+        print(incr_fit$AICplot)
+        dev.off()
+        
+        f <- posEps$fit(random_starts=20)
+        
+        #refit without value carryover
+        posEps$carryover_value <- FALSE
+        f_nocarryover <- posEps$fit(random_starts=20)
+        
+      }
+    } else if (model == "value") {
       ##delta rule value model (simple)
       vm <- deltavalue_model(clock_data=s, alphaV=0.3, betaV=0.3) #N.B. This matches V matrix from full time-clock algorithm fit.
       f_value <- vm$fit() #estimate learning rate as a free parameter
       
       vm$carryover_value <- FALSE
       f_value_nocarryover <- vm$fit()
-      
-      save(f_value, f_value_nocarryover, f, f_nocarryover, s, incr_fit, file=paste0(subid, "_fitinfo.RData"))
+    } else if (model == "sceptic") {
+      #everything but the ID vector is a 3d matrix subjects x runs x trials
+      mats3d <- sort(grep("ids", names(sceptic), value=TRUE, invert=TRUE))
+      subj_sceptic <- lapply(sceptic[mats3d], function(mat) {
+            mat[subid,,]
+          })
+      #now have a list where each element is a runs x trials matrix and the elements are the various sceptic signals available
     }
     
-    ##setup afni and FSL models
+    ##setup afni and/or FSL models
     message("About to analyze the following files:")
     print(mrfiles)
     
-    if (usenative) {
-      r_valueModel(f, mrfiles, runlengths, mrrunnums, force=FALSE, dropVolumes=dropVolumes, outdir="rglm_tc_carry")      
-    } else {
-      #afniValueModel(f_value, mrfiles, runlengths, mrrunnums, run=TRUE, dropVolumes=dropVolumes)
-      afniTCModel(f, mrfiles, runlengths, mrrunnums, run=TRUE, dropVolumes=dropVolumes, outdir="afni_tc")
-      ##fslValueModel(f_value, mrfiles, runlengths, mrrunnums, run=TRUE, force=FALSE, dropVolumes=dropVolumes)
-      ##fslTCModel(f_nocarryover, mrfiles, runlengths, mrrunnums, run=TRUE, force=FALSE, dropVolumes=dropVolumes, outdir="fsl_tc_nocarry") #, f_value=f_value) #hybrid model with EV, RPE+, and RPE- from R-W (carryover value)
-      ##fslTCModel(f, mrfiles, runlengths, mrrunnums, run=TRUE, force=FALSE, dropVolumes=dropVolumes, outdir="fsl_tc_nomeanunc")
+    if (model=="tc") {
+      if (usenative) {
+        r_valueModel(f, mrfiles, runlengths, mrrunnums, force=FALSE, dropVolumes=dropVolumes, outdir="rglm_tc_carry")      
+      } else {
+        #afniValueModel(f_value, mrfiles, runlengths, mrrunnums, run=TRUE, dropVolumes=dropVolumes)
+        afniTCModel(f, mrfiles, runlengths, mrrunnums, run=TRUE, dropVolumes=dropVolumes, outdir="afni_tc")
+        ##fslValueModel(f_value, mrfiles, runlengths, mrrunnums, run=TRUE, force=FALSE, dropVolumes=dropVolumes)
+        ##fslTCModel(f_nocarryover, mrfiles, runlengths, mrrunnums, run=TRUE, force=FALSE, dropVolumes=dropVolumes, outdir="fsl_tc_nocarry") #, f_value=f_value) #hybrid model with EV, RPE+, and RPE- from R-W (carryover value)
+        ##fslTCModel(f, mrfiles, runlengths, mrrunnums, run=TRUE, force=FALSE, dropVolumes=dropVolumes, outdir="fsl_tc_nomeanunc")
+      }
+      
+    } else if (model=="sceptic") {
+      #for now, trying out a handful of univariate model-based regressors
+      fslSCEPTICModel(subj_sceptic["vmax"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes)
+      fslSCEPTICModel(subj_sceptic["pemax"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes)
     }
   }
   
 }
 
+#SCEPTIC MMClock Fit
+fit_all_fmri(behavDir="/storage/group/mnh5174_collab/temporal_instrumental_agent/clock_task/subjects",
+    fmriDir="/storage/group/mnh5174_collab/MMClock/MR_Proc",
+    idexpr=expression(paste0(subid, "_", scandate)), ##MMClock/LunaID format: 10637_20140302
+    model="sceptic")
 
 #MMClock fit
- fit_all_fmri(behavDir="/Volumes/bea_res/Data/Tasks/EmoClockfMRI/Basic",
-     fmriDir="/Volumes/Serena/MMClock/MR_Proc",
-     idexpr=expression(paste0(subid, "_", scandate))) ##MMClock/LunaID format: 10637_20140302
+# fit_all_fmri(behavDir="/Volumes/bea_res/Data/Tasks/EmoClockfMRI/Basic",
+#     fmriDir="/Volumes/Serena/MMClock/MR_Proc",
+#     idexpr=expression(paste0(subid, "_", scandate))) ##MMClock/LunaID format: 10637_20140302
 
 ## fit_all_fmri(behavDir="/Volumes/bea_res/Data/Tasks/EmoClockfMRI/Basic",
 ##    fmriDir="/Volumes/Serena/MMClock/MR_Proc",
