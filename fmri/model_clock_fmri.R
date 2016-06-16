@@ -8,6 +8,7 @@ source("afniValueModel.R")
 source("afniTCModel.R")
 source("fslValueModel.R")
 source("fslTCModel.R")
+source("fslSCEPTICModel.R")
 source("glm_helper_functions.R")
 source("r_glm.R")
 if (!file.exists("fmri_fits")) { dir.create("fmri_fits") }
@@ -19,7 +20,7 @@ if (file.exists("fmri_sceptic_signals.RData")) { sceptic <- local({load("fmri_sc
 #ICA analysis suggests that it takes up to 6 volumes to reach steady state, and the rel and mean uncertainty maps are being adversely affected by this problem
 #because they also start high and decay... Mean uncertainty was consequently soaking up a huge amount of CSF in activation maps.
 #Because the first presentation occurs at 8 seconds, it seems fine to drop 6 volumes (6s) 
-fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FALSE, model="sceptic") {
+fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FALSE, model="sceptic", ...) {
   
   behavFiles <- list.files(path=behavDir, pattern=".*tcExport.csv", full.names=TRUE, recursive=TRUE)
  
@@ -27,6 +28,7 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
     #example location of file on bea_res, which contains scan date
     #/Volumes/bea_res/Data/Tasks/EmoClockfMRI/Basic/11229/20140521/Raw/fMRIEmoClock_11229_tc_tcExport.csv
     subid <- sub("^.*fMRIEmoClock_(\\d+)_tc_tcExport.csv$", "\\1", b, perl=TRUE)
+    #scandate <- sub("^.*/Basic/\\w+/(\\d+)/.*$", "\\1", b, perl=TRUE)
     scandate <- sub("^.*/Basic/\\w+/(\\d+)/.*$", "\\1", b, perl=TRUE) 
     mrfiles <- c() #force clear of mr files over subjects to avoid potential persistence from one subject to the next
     
@@ -145,8 +147,13 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
       
     } else if (model=="sceptic") {
       #for now, trying out a handful of univariate model-based regressors
-      fslSCEPTICModel(subj_sceptic["vmax"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes)
-      fslSCEPTICModel(subj_sceptic["pemax"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes)
+      fslSCEPTICModel(subj_sceptic["vmax"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      fslSCEPTICModel(subj_sceptic["pemax"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      fslSCEPTICModel(subj_sceptic["vchosen"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      fslSCEPTICModel(subj_sceptic["ventropy"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      fslSCEPTICModel(subj_sceptic["vsd"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      fslSCEPTICModel(subj_sceptic["dauc"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      fslSCEPTICModel(subj_sceptic["dsd"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
     }
   }
   
@@ -155,8 +162,8 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
 #SCEPTIC MMClock Fit
 fit_all_fmri(behavDir="/storage/group/mnh5174_collab/temporal_instrumental_agent/clock_task/subjects",
     fmriDir="/storage/group/mnh5174_collab/MMClock/MR_Proc",
-    idexpr=expression(paste0(subid, "_", scandate)), ##MMClock/LunaID format: 10637_20140302
-    model="sceptic")
+    idexpr=expression(subid), ##MMClock/LunaID format: 10637_20140302
+    model="sceptic", usepreconvolve=TRUE)
 
 #MMClock fit
 # fit_all_fmri(behavDir="/Volumes/bea_res/Data/Tasks/EmoClockfMRI/Basic",

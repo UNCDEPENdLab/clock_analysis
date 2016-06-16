@@ -14,3 +14,5 @@ fmri/fmri_fits
 
 #ludvig code from early testing
 td_model/
+
+*.Rout

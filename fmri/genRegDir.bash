@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+if command -v module >/dev/null; then
+    module load fsl/5.0.8 >/dev/null 2>&1
+fi
+
 #this script is used to setup reg dirs for first-level analyses in Feat.
 #because we have preprocessed the data and warped into standard space, we do not need to
 #warp the copes into standard space, as is conventional in FSL.
