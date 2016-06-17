@@ -152,9 +152,10 @@ run_feat_lvl2 <- function(featL1Df, run=TRUE, force=FALSE, ncpus=8) {
         thisTemplate <- gsub(".GMCOL1.", gm_coef[1], thisTemplate, fixed=TRUE)
         thisTemplate <- gsub(".GMCOL2.", gm_coef[2], thisTemplate, fixed=TRUE)
         thisTemplate <- gsub(".GMCOL3.", gm_coef[3], thisTemplate, fixed=TRUE)
-        
-        featFile <- file.path(dirname(subdf$featRun[1L]), "FEAT_LVL2.gfeat")
-        if (file.exists(featFile) && force==FALSE) { return(NULL) } #skip re-creation of FSF and do not run below unless force==TRUE 
+
+        featOutDir <- file.path(dirname(subdf$featRun[1L]), "FEAT_LVL2.gfeat")
+        featFile <- file.path(dirname(subdf$featRun[1L]), "FEAT_LVL2.fsf")
+        if (file.exists(featOutDir) && force==FALSE) { return(NULL) } #skip re-creation of FSF and do not run below unless force==TRUE 
         cat(thisTemplate, file=featFile, sep="\n")      
         
         allFeatRuns[[featFile]] <<- featFile
