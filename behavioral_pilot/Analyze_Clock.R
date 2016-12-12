@@ -1,8 +1,9 @@
-setwd("/Users/michael/Box_Sync/Data_Analysis/clock_analysis/behavioral_pilot")
+setwd(file.path(getMainDir(), "clock_analysis/behavioral_pilot"))
 library(plyr)
 library(ggplot2)
 library(reshape2)
 library(gdata)
+library(dplyr)
 
 source(file.path(getMainDir(), "Miscellaneous", "Global_Functions.R"))
 

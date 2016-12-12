@@ -1,3 +1,34 @@
+####
+##SCEPTIC L3 ANALYSIS
+models <- c("sceptic_dauc_preconvolve", "sceptic_pemax_preconvolve", "sceptic_vmax_preconvolve", "sceptic_vchosen_preconvolve", "sceptic_ventropy_preconvolve")
+
+subinfo <- read.table("/Users/michael/Data_Analysis/clock_analysis/fmri/subinfo_db", header=TRUE)
+
+outdir <- "/storage/group/mnh5174_collab/MMClock/fsl_sceptic_group"
+procdir <- "/storage/group/mnh5174_collab/MMClock/MR_Proc"
+dir.create(outdir, showWarnings=FALSE)
+setwd(outdir)
+
+#cope structure for preconvolve models
+#1 = clock_onset
+#2 = feedback_onset
+#3 = regressor of interest
+
+for (m in models) {
+  for (cope in 1:3) {
+    outname <- paste0(m, "_cope", cope)
+    copedirs <- system(paste0("find ", procdir, " -iname 'cope", cope, ".feat' -ipath '*", m, "/FEAT_LVL2.gfeat*' -type d | sort -n"), intern=TRUE)
+    #copedirs <- read.table(outname)$V1
+    copedf <- data.frame(fsldir=copedirs, lunaid=as.numeric(sub("^.*/MR_Proc/(\\d{5})_\\d+/.*$", "\\1", copedirs, perl=TRUE)))
+    m <- merge(subinfo, copedf, by="lunaid", all.y=TRUE) #should probably do a setdiff to look for discrepancies
+    m$female.c <- m$female - mean(m$female)
+    m$age.c <- m$age - mean(m$age)
+    m$agefem <- m$age.c * m$female.c
+    cat(as.character(m$fsldir), quote="", sep="\n", file=file.path(outdir, paste0(outname, "_inputs")))
+    write.table(cbind(1, m[,c("female.c", "age.c", "agefem")]), file=file.path(outdir, paste0(outname, "_design")), sep="\t", col.names=FALSE, row.names=FALSE)
+    browser()
+  }
+}
 
 ####
 ##BEGIN L3

@@ -58,7 +58,7 @@ getMagFreq <- function(RT,scrfunc) {
 		Freq = Freq/200
 	} else { stop("unknown scrfunc: ", scrfunc) }
 	
-	return(c(Mag=Mag, Freq=Freq))
+	return(list(Mag=Mag, Freq=Freq))
 	
 }
 

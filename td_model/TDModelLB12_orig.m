@@ -48,8 +48,8 @@ ms = zeros (numtimesteps, numms);           %Microstimulus levels
 trace = 1;
 for timestep = 1:numtimesteps
     for micro = 1:numms
-        %ms (timestep, micro) = ((1/sqrt(2*pi))*exp(-((trace-(micro/numms))^2)/(2*(sigma^2))));
-        ms (timestep, micro) = trace * ((1/sqrt(2*pi))*exp(-((trace-(micro/numms))^2)/(2*(sigma^2))));
+        ms (timestep, micro) = ((1/sqrt(2*pi))*exp(-((trace-(micro/numms))^2)/(2*(sigma^2))));
+        %ms (timestep, micro) = trace * ((1/sqrt(2*pi))*exp(-((trace-(micro/numms))^2)/(2*(sigma^2))));
     end
     trace = trace * decay;
 end
