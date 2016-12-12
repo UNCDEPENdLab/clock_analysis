@@ -39,3 +39,5 @@ runfeat <- function(fsf) {
 
 clusterApply(cl_fork, torun, runfeat)
 stopCluster(cl_fork)
+
+system("bash /storage/home/mnh5174/mnh5174_collab/clock_analysis/fmri/genRegDir.bash /storage/group/mnh5174_collab/MMClock/MR_Proc")

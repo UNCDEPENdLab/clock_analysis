@@ -23,7 +23,8 @@ if (file.exists("fmri_sceptic_signals.RData")) { sceptic <- local({load("fmri_sc
 fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FALSE, model="sceptic", ...) {
   
   behavFiles <- list.files(path=behavDir, pattern=".*tcExport.csv", full.names=TRUE, recursive=TRUE)
- 
+  ##behavFiles <- grep("11317", behavFiles, value=TRUE) #temporarily here for running a single subject
+    
   for (b in behavFiles) {
     #example location of file on bea_res, which contains scan date
     #/Volumes/bea_res/Data/Tasks/EmoClockfMRI/Basic/11229/20140521/Raw/fMRIEmoClock_11229_tc_tcExport.csv
@@ -42,10 +43,12 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
     
     if (usenative==TRUE) {
       expectdir <- "native_nosmooth"
-      expectfile <- "nfudktm_clock(\\d+).nii.gz"
+      ##expectfile <- "nfudktm_clock(\\d+).nii.gz"
+      expectfile <- "nfudktm_clock[0-9].nii.gz"
     } else {
       expectdir <- "mni_5mm_wavelet"
-      expectfile <- "nfswudktm_clock(\\d+)_5.nii.gz"
+      ##expectfile <- "nfswudktm_clock(\\d+)_5.nii.gz"
+      expectfile <- "nfswudktm_clock[0-9]_5.nii.gz"
     }
     
     if (! file.exists(file.path(mrmatch, expectdir))) {
@@ -54,10 +57,15 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
     }
     
     ##identify fmri run lengths (4th dimension)
-    mrfiles <- list.files(mrmatch, pattern=expectfile, full.names=TRUE, recursive=TRUE)
+    ##mrfiles <- list.files(mrmatch, pattern=expectfile, full.names=TRUE, recursive=TRUE)
+    ##cat(paste0("command: find ", mrmatch, " -iname '", expectfile, "' -ipath '*", expectdir, "*' -type f\n"))
+    mrfiles <- system(paste0("find ", mrmatch, " -iname '", expectfile, "' -ipath '*", expectdir, "*' -type f | sort -n"), intern=TRUE)
     mrfiles <- mrfiles[!grepl("(exclude|bbr_noref)", mrfiles, ignore.case=TRUE)] #if exclude is in path/filename, then skip
-    mrrunnums <- as.integer(sub(paste0(".*", expectfile, "$"), "\\1", mrfiles, perl=TRUE))
-    mrfiles <- mrfiles[order(mrrunnums)] #make absolutely sure that runs are ordered ascending
+    ##mrrunnums <- as.integer(sub(paste0(".*", expectfile, "$"), "\\1", mrfiles, perl=TRUE))
+    mrrunnums <- as.integer(sub(paste0(".*clock(\\d+)_.*$"), "\\1", mrfiles, perl=TRUE))
+
+    ##NB. If we reorder the mrfiles, then the run numbers diverge unless we sort(mrrunnums). Remove for now for testing
+    ##mrfiles <- mrfiles[order(mrrunnums)] #make absolutely sure that runs are ordered ascending
 
     if (length(mrfiles) == 0L) {
       warning("Unable to find any preprocessed MB files in dir: ", mrmatch)
@@ -177,5 +185,3 @@ fit_all_fmri(behavDir="/storage/group/mnh5174_collab/temporal_instrumental_agent
 ## fit_all_fmri(behavDir="/Users/michael/Dropbox/Hallquist_K01/Data/fMRI",
 ##              fmriDir="/Volumes/Serena/SPECC/MR_Proc",
 ##              idexpr=expression(paste0(sprintf("%03s", subid), "[A-z]{2}_\\d+"))) #SPECC format: 003aa_15Jul2014
-
-

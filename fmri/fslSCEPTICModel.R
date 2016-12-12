@@ -99,7 +99,10 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
     censorfile <- file.path(dirname(mrfiles[r]), "motion_info", "fd_0.9.mat")
     if (file.exists(censorfile) && file.info(censorfile)$size > 0) {
       censor <- read.table(censorfile, header=FALSE)
-      censor <- censor[(1+dropVolumes):runlengths[r],]
+      censor <- censor[(1+dropVolumes):runlengths[r],,drop=FALSE] #need no drop here in case there is just a single volume to censor
+      #if the spikes fall outside of the rows selected above, we will obtain an all-zero column. remove these
+      censor <- censor[,sapply(censor, sum) > 0,drop=FALSE]
+      if (ncol(censor) == 0L) { censor <- NULL } #no volumes to censor within valid timepoints
       mregressors <- censor
     }
     
@@ -109,9 +112,9 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
       nuisance <- read.table(nuisancefile, header=FALSE)
       nuisance <- nuisance[(1+dropVolumes):runlengths[r],,drop=FALSE]
       nuisance <- as.data.frame(lapply(nuisance, function(col) { col - mean(col) })) #demean
-      cat("about to cbind with nuisance\n")
-      print(str(mregressors))
-      print(str(nuisance))
+      #cat("about to cbind with nuisance\n")
+      #print(str(mregressors))
+      #print(str(nuisance))
       if (!is.null(mregressors)) { mregressors <- cbind(mregressors, nuisance) #note that in R 3.3.0, cbind with NULL or c() is no problem...
       } else { mregressors <- nuisance }
     }
