@@ -15,7 +15,7 @@ h2.c <- height2 - mean(height2)
 #evt_boxcar <- fmri.stimulus(scans=300, values=1, times=10, durations=150, rt=1.0, a1=6, a2=16, b1=1, b2=1, c=1/6, mean=FALSE) #hard-coded 1.0s TR for now
 
 #glover 1999 double gamma
-evt_boxcar <- fmri.stimulus(scans=300, values=1, times=10, durations=150, rt=1.0, a1=6, a2=12, b1=0.9, b2=0.9, c=0.35, mean=FALSE) #hard-coded 1.0s TR for now
+evt_boxcar <- fmri.stimulus(scans=300, values=1, times=10, durations=150, rt=1.0, a1=6, a2=12, b1=0.9, b2=0.9, cc=0.35, demean=TRUE) #hard-coded 1.0s TR for now
 
 evt_scaleup <- fmri.stimulus(scans=300, values=1, times=onsets, durations=durations, rt=1.0, a1=6, a2=12, b1=0.9, b2=0.9, c=0.0, mean=FALSE) #hard-coded 1.0s TR for now
 

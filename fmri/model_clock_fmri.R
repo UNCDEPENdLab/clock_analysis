@@ -155,13 +155,18 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
       
     } else if (model=="sceptic") {
       #for now, trying out a handful of univariate model-based regressors
-      fslSCEPTICModel(subj_sceptic["vmax"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
-      fslSCEPTICModel(subj_sceptic["pemax"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
-      fslSCEPTICModel(subj_sceptic["vchosen"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
-      fslSCEPTICModel(subj_sceptic["ventropy"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
-      fslSCEPTICModel(subj_sceptic["vsd"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
-      fslSCEPTICModel(subj_sceptic["dauc"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
-      fslSCEPTICModel(subj_sceptic["dsd"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      #fslSCEPTICModel(subj_sceptic["vmax"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      #fslSCEPTICModel(subj_sceptic["pemax"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      #fslSCEPTICModel(subj_sceptic["vchosen"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      #fslSCEPTICModel(subj_sceptic["ventropy"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      #fslSCEPTICModel(subj_sceptic["vsd"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      #fslSCEPTICModel(subj_sceptic["dauc"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      #fslSCEPTICModel(subj_sceptic["dsd"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+  
+      #results from Mean SCEPTIC regressor correlation.pdf indicate that regressors for vchosen, ventropy_decay_matlab, dauc, and pemax are
+      #reasonably uncorrelated. The worst is dauc with vchosen (mean r = -0.31), which makes sense that as learning progresses, chosen values
+      #are higher and there is less residue to decay. These 4 regressors are also of greatest theoretical interest
+      fslSCEPTICModel(subj_sceptic[c("sceptic_vchosen", "sceptic_ventropy_decay_matlab", "sceptic_dauc", "sceptic_pemax")], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
     }
   }
   

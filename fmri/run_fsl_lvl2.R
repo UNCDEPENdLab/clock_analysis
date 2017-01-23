@@ -4,7 +4,7 @@ load("Feat_runinfo_sceptic.RData")
 
 #generate dummy DV to get model.matrix from lm
 featL1Df$dummy <- rnorm(nrow(featL1Df), 0, 1)
-## designmat <- lm(dummy ~ emotion + subid, data=featL1Df)
+#designmat <- lm(dummy ~ emotion + subid, data=featL1Df)
 
 ## mm <- model.matrix(designmat)
 ## write.table(mm, file="fsl_LVL3_emo_design.txt", row.names=FALSE, col.names=FALSE, quote=FALSE)

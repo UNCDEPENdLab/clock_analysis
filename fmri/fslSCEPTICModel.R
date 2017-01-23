@@ -57,7 +57,7 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
                                    event_onsets=c("clock_onset", "feedback_onset", onsets),
                                    durations=c("clock_duration", "feedback_duration", durations), 
                                    normalizations=c("durmax_1.0", "durmax_1.0", normalizations),
-                                   baselineCoefOrder=2, writeTimingFiles=c("AFNI"), center_values=TRUE, convolve_wi_run=TRUE,
+                                   baselineCoefOrder=2, writeTimingFiles=c("convolved", "FSL"), center_values=TRUE, convolve_wi_run=TRUE,
                                    runVolumes=runlengths, runsToOutput=mrrunnums, output_directory=timingdir, dropVolumes=dropVolumes)
       } else {
           d <- build_design_matrix(fitobj=f, regressors=c("clock", "feedback", signals_to_model), 
