@@ -14,7 +14,8 @@ source("r_glm.R")
 if (!file.exists("fmri_fits")) { dir.create("fmri_fits") }
 setwd("fmri_fits")
 
-if (file.exists("fmri_sceptic_signals.RData")) { sceptic <- local({load("fmri_sceptic_signals.RData"); as.list(environment())}) }
+#this version has rtvmax etc., as well as specific variants of entropy
+if (file.exists("fmri_sceptic_signals_24basis.RData")) { sceptic <- local({load("fmri_sceptic_signals_24basis.RData"); as.list(environment())}) }
 
 #N.B. in examining initial results from single subject analyses, it is clear that steady state magnetization is not achieved by the first volume acquired
 #ICA analysis suggests that it takes up to 6 volumes to reach steady state, and the rel and mean uncertainty maps are being adversely affected by this problem
@@ -166,7 +167,8 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
       #results from Mean SCEPTIC regressor correlation.pdf indicate that regressors for vchosen, ventropy_decay_matlab, dauc, and pemax are
       #reasonably uncorrelated. The worst is dauc with vchosen (mean r = -0.31), which makes sense that as learning progresses, chosen values
       #are higher and there is less residue to decay. These 4 regressors are also of greatest theoretical interest
-      fslSCEPTICModel(subj_sceptic[c("sceptic_vchosen", "sceptic_ventropy_decay_matlab", "sceptic_dauc", "sceptic_pemax")], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      fslSCEPTICModel(subj_sceptic[c("sceptic_vchosen", "sceptic_ventropy_decay_matlab", "sceptic_dauc", "sceptic_pemax")], s, 
+          mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
     }
   }
   
@@ -176,7 +178,7 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
 fit_all_fmri(behavDir="/storage/group/mnh5174_collab/temporal_instrumental_agent/clock_task/subjects",
     fmriDir="/storage/group/mnh5174_collab/MMClock/MR_Proc",
     idexpr=expression(subid), ##MMClock/LunaID format: 10637_20140302
-    model="sceptic", usepreconvolve=TRUE)
+    model="sceptic", usepreconvolve=TRUE, parmax1=TRUE) #rescale to 1.0 max
 
 #MMClock fit
 # fit_all_fmri(behavDir="/Volumes/bea_res/Data/Tasks/EmoClockfMRI/Basic",

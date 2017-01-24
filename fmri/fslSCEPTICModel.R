@@ -1,4 +1,4 @@
-fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths, mrrunnums, run=FALSE, force=FALSE, dropVolumes=0, outdir=NULL, usepreconvolve=FALSE) {
+fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths, mrrunnums, run=FALSE, force=FALSE, dropVolumes=0, outdir=NULL, usepreconvolve=FALSE, ...) {
   require(Rniftilib)
   require(parallel)
 
@@ -16,9 +16,14 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
         fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl1_clock_sceptic_univariate_template.fsf"))
     }
     univariate <- TRUE
+  } else if (length(sceptic_signals) == 4L) {
+    if (usepreconvolve) {
+      fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl1_clock_sceptic_4param_preconvolve_template.fsf"))
+    } else {
+      stop("not implemented yet")
+    }
   } else {
-    #not implemented yet
-    #fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl1_clock_sceptic_template.fsf"))
+    stop("not implemented yet")
   }
   
   fsldir <- file.path(normalizePath(file.path(dirname(mrfiles[1L]), "..")), outdir) #note: normalizePath will fail to evaluate properly if directory does not exist
@@ -42,32 +47,20 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
     signals_to_model[v] <- paste0("sceptic_", thisName) #name of regressor in build_design_matrix
     #clock_fit objects assume that each signal is a list of vectors where each element is a run (permits uneven runlengths)
     f$sceptic[[thisName]] <- split(sceptic_signals[[v]], row(sceptic_signals[[v]]))
-    if (thisName %in% c("vauc", "vchosen", "ventropy", "vmax", "vsd")) {
+    if (thisName %in% c("vauc", "vchosen", "ventropy", "vmax", "vsd", "ventropy_decay_matlab", "ventropy_fixed_matlab")) {
       onsets[v] <- "clock_onset"; durations[v] <- "clock_duration"; normalizations[v] <- "evtmax_1.0"
     } else if (thisName %in% c("pemax", "peauc", "dauc", "dsd")) {
       onsets[v] <- "feedback_onset"; durations[v] <- "feedback_duration"; normalizations[v] <- "evtmax_1.0"
     }
   }
 
-  if (univariate) {
-      if (usepreconvolve) {
-          ##For now, use writeTimingFiles="AFNI" to output preconvolved run-wise regressors
-          ##Should probably amend the function to support something like "run_convolved"
-          d <- build_design_matrix(fitobj=f, regressors=c("clock", "feedback", signals_to_model), 
-                                   event_onsets=c("clock_onset", "feedback_onset", onsets),
-                                   durations=c("clock_duration", "feedback_duration", durations), 
-                                   normalizations=c("durmax_1.0", "durmax_1.0", normalizations),
-                                   baselineCoefOrder=2, writeTimingFiles=c("convolved", "FSL"), center_values=TRUE, convolve_wi_run=TRUE,
-                                   runVolumes=runlengths, runsToOutput=mrrunnums, output_directory=timingdir, dropVolumes=dropVolumes)
-      } else {
-          d <- build_design_matrix(fitobj=f, regressors=c("clock", "feedback", signals_to_model), 
-                                   event_onsets=c("clock_onset", "feedback_onset", onsets),
-                                   durations=c("clock_duration", "feedback_duration", durations), 
-                                   normalizations=c("durmax_1.0", "durmax_1.0", normalizations),
-                                   baselineCoefOrder=2, writeTimingFiles=c("FSL"), center_values=TRUE, convolve_wi_run=TRUE,
-                                   runVolumes=runlengths, runsToOutput=mrrunnums, output_directory=timingdir, dropVolumes=dropVolumes)
-      }
-  }
+  ##Use writingTimingFiles = "convolved" to receive HRF convolved parametric regressors
+  d <- build_design_matrix(fitobj=f, regressors=c("clock", "feedback", signals_to_model), 
+      event_onsets=c("clock_onset", "feedback_onset", onsets),
+      durations=c("clock_duration", "feedback_duration", durations), 
+      normalizations=c("durmax_1.0", "durmax_1.0", normalizations),
+      baselineCoefOrder=2, writeTimingFiles=c("convolved", "FSL"), center_values=TRUE, convolve_wi_run=TRUE,
+      runVolumes=runlengths, runsToOutput=mrrunnums, output_directory=timingdir, dropVolumes=dropVolumes, ...)
 
   save(d, f, file=file.path(fsldir, "designmatrix.RData"))
   
@@ -139,16 +132,22 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
     thisTemplate <- gsub(".FUNCTIONAL.", gsub(".nii(.gz)*$", "", mrfiles[r]), thisTemplate, fixed=TRUE)
     thisTemplate <- gsub(".CONFOUNDS.", motfile, thisTemplate, fixed=TRUE)
     if (usepreconvolve) {
-        thisTemplate <- gsub(".CLOCK_TIMES.", file.path(timingdir, paste0("run", runnum, "_clock.1D")), thisTemplate, fixed=TRUE)
-        thisTemplate <- gsub(".FEEDBACK_TIMES.", file.path(timingdir, paste0("run", runnum, "_feedback.1D")), thisTemplate, fixed=TRUE)
-        thisTemplate <- gsub(".V_TIMES.", file.path(timingdir, paste0("run", runnum, "_", signals_to_model[1], ".1D")), thisTemplate, fixed=TRUE)
+      thisTemplate <- gsub(".CLOCK_TIMES.", file.path(timingdir, paste0("run", runnum, "_clock.1D")), thisTemplate, fixed=TRUE)
+      thisTemplate <- gsub(".FEEDBACK_TIMES.", file.path(timingdir, paste0("run", runnum, "_feedback.1D")), thisTemplate, fixed=TRUE)
     } else {
-        thisTemplate <- gsub(".CLOCK_TIMES.", file.path(timingdir, paste0("run", runnum, "_clock_FSL3col.txt")), thisTemplate, fixed=TRUE)
-        thisTemplate <- gsub(".FEEDBACK_TIMES.", file.path(timingdir, paste0("run", runnum, "_feedback_FSL3col.txt")), thisTemplate, fixed=TRUE)
-        thisTemplate <- gsub(".V_TIMES.", file.path(timingdir, paste0("run", runnum, "_", signals_to_model[1], "_FSL3col.txt")), thisTemplate, fixed=TRUE)
+      thisTemplate <- gsub(".CLOCK_TIMES.", file.path(timingdir, paste0("run", runnum, "_clock_FSL3col.txt")), thisTemplate, fixed=TRUE)
+      thisTemplate <- gsub(".FEEDBACK_TIMES.", file.path(timingdir, paste0("run", runnum, "_feedback_FSL3col.txt")), thisTemplate, fixed=TRUE)
     }
-    thisTemplate <- gsub(".VNAME.", sub("sceptic_", "", signals_to_model[1]), thisTemplate, fixed=TRUE) #remove sceptic_ prefix for brevity
-    thisTemplate <- gsub(".V_CON.", sub("sceptic_", "", signals_to_model[1]), thisTemplate, fixed=TRUE)
+    
+    for (s in 1:length(signals_to_model)) {
+      if (usepreconvolve) {
+        thisTemplate <- gsub(".V_TIMES.", file.path(timingdir, paste0("run", runnum, "_", signals_to_model[s], ".1D")), thisTemplate, fixed=TRUE)
+      } else {
+        thisTemplate <- gsub(".V_TIMES.", file.path(timingdir, paste0("run", runnum, "_", signals_to_model[s], "_FSL3col.txt")), thisTemplate, fixed=TRUE)
+      }
+      thisTemplate <- gsub(".VNAME.", sub("sceptic_", "", signals_to_model[s]), thisTemplate, fixed=TRUE) #remove sceptic_ prefix for brevity
+      thisTemplate <- gsub(".V_CON.", sub("sceptic_", "", signals_to_model[s]), thisTemplate, fixed=TRUE)      
+    }
     
     featFile <- file.path(fsldir, paste0("FEAT_LVL1_run", runnum, ".fsf"))
     if (file.exists(featFile) && force==FALSE) { next } #skip re-creation of FSF and do not run below unless force==TRUE 

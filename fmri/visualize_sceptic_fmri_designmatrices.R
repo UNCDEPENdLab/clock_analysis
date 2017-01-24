@@ -10,7 +10,7 @@ setwd("fmri_fits")
 
 source(file.path(getMainDir(), "Miscellaneous", "Global_Functions.R"))
 
-#updated version that used 24 basis functions and also 
+#updated version that used 24 basis functions and also has additional signals (rtvmax etc.)
 if (file.exists("fmri_sceptic_signals_24basis.RData")) { sceptic <- local({load("fmri_sceptic_signals_24basis.RData"); as.list(environment())}) }
 
 behavDir=file.path(getMainDir(), "temporal_instrumental_agent/clock_task/subjects")
