@@ -3,7 +3,7 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
   require(parallel)
 
   if (is.null(outdir)) {
-      outdir=paste0("sceptic_", paste(names(sceptic_signals)), collapse="_")
+      outdir=paste0("sceptic_", paste(names(sceptic_signals), collapse="_"))
       if (usepreconvolve) { outdir=paste(outdir, "preconvolve", sep="_") }
   }
   
@@ -25,7 +25,7 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
   } else {
     stop("not implemented yet")
   }
-  
+
   fsldir <- file.path(normalizePath(file.path(dirname(mrfiles[1L]), "..")), outdir) #note: normalizePath will fail to evaluate properly if directory does not exist
 
   if (file.exists(fsldir) && force==FALSE) { message(fsldir, " exists. Skipping."); return(0) }
@@ -138,15 +138,15 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
       thisTemplate <- gsub(".CLOCK_TIMES.", file.path(timingdir, paste0("run", runnum, "_clock_FSL3col.txt")), thisTemplate, fixed=TRUE)
       thisTemplate <- gsub(".FEEDBACK_TIMES.", file.path(timingdir, paste0("run", runnum, "_feedback_FSL3col.txt")), thisTemplate, fixed=TRUE)
     }
-    
+
     for (s in 1:length(signals_to_model)) {
       if (usepreconvolve) {
-        thisTemplate <- gsub(".V_TIMES.", file.path(timingdir, paste0("run", runnum, "_", signals_to_model[s], ".1D")), thisTemplate, fixed=TRUE)
+        thisTemplate <- gsub(paste0(".V", s, "_TIMES."), file.path(timingdir, paste0("run", runnum, "_", signals_to_model[s], ".1D")), thisTemplate, fixed=TRUE)
       } else {
-        thisTemplate <- gsub(".V_TIMES.", file.path(timingdir, paste0("run", runnum, "_", signals_to_model[s], "_FSL3col.txt")), thisTemplate, fixed=TRUE)
+        thisTemplate <- gsub(paste0(".V", s, "_TIMES."), file.path(timingdir, paste0("run", runnum, "_", signals_to_model[s], "_FSL3col.txt")), thisTemplate, fixed=TRUE)
       }
-      thisTemplate <- gsub(".VNAME.", sub("sceptic_", "", signals_to_model[s]), thisTemplate, fixed=TRUE) #remove sceptic_ prefix for brevity
-      thisTemplate <- gsub(".V_CON.", sub("sceptic_", "", signals_to_model[s]), thisTemplate, fixed=TRUE)      
+      thisTemplate <- gsub(paste0(".V", s, "NAME."), sub("sceptic_", "", signals_to_model[s]), thisTemplate, fixed=TRUE) #remove sceptic_ prefix for brevity
+      thisTemplate <- gsub(paste0(".V", s, "_CON."), sub("sceptic_", "", signals_to_model[s]), thisTemplate, fixed=TRUE)      
     }
     
     featFile <- file.path(fsldir, paste0("FEAT_LVL1_run", runnum, ".fsf"))

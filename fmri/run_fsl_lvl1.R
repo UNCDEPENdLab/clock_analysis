@@ -1,10 +1,11 @@
+
 library(parallel)
 source("glm_helper_functions.R")
 
 rerun <- FALSE
 ncpus <- 40
 setwd("/storage/group/mnh5174_collab/MMClock/MR_Proc")
-fsfFiles <- system(paste("find", getwd(), "-mindepth 3 -iname \"FEAT_LVL1_*.fsf\" -ipath \"*sceptic*\" -type f"), intern=TRUE)
+fsfFiles <- system(paste("find", getwd(), "-mindepth 3 -iname \"FEAT_LVL1_*.fsf\" -ipath \"*sceptic_vchosen*\" -type f"), intern=TRUE)
 #    list.files(path=getwd(), pattern="FEAT_LVL1_.*\\.fsf", recursive=TRUE, full.names=TRUE)
 
 #figure out which fsf files have already been run
@@ -40,4 +41,4 @@ runfeat <- function(fsf) {
 clusterApply(cl_fork, torun, runfeat)
 stopCluster(cl_fork)
 
-system("bash /storage/home/mnh5174/mnh5174_collab/clock_analysis/fmri/genRegDir.bash /storage/group/mnh5174_collab/MMClock/MR_Proc")
+system("bash /storage/group/mnh5174_collab/clock_analysis/fmri/genRegDir.bash /storage/group/mnh5174_collab/MMClock/MR_Proc")

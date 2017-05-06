@@ -9,14 +9,19 @@ source("glm_helper_functions.R")
 ##fmriDir <- "/Volumes/Serena/MMClock/MR_Proc"
 fmriDir <- "/storage/group/mnh5174_collab/MMClock/MR_Proc"
 
+##subjbasedir <- "mni_5mm_wavelet"
+subjbasedir <- "mni_5mm_3ddespike"
+
+
 ##not used: just look for designmatrix.RData in timing directory
 ##fitDir <- file.path(getMainDir(), "clock_analysis", "fmri", "fmri_fits")
 
 featRuns_all <- list.files(path=fmriDir, pattern="FEAT_LVL1_run[0-9].feat", include.dirs=TRUE, recursive=TRUE, full.names=TRUE)
 #featRuns <- featRuns_all[grepl("/fsl_tc_nomeanunc/", featRuns_all, fixed=TRUE)] #filter to only nomeanunc folders
 #featRuns <- featRuns_all[grepl("/sceptic_vchosen/", featRuns_all, fixed=TRUE)]
-featRuns <- featRuns_all[grepl("/sceptic_.*/", featRuns_all)]
+#featRuns <- featRuns_all[grepl("/sceptic_.*/", featRuns_all)]
 
+featRuns <- featRuns_all[grepl(paste0(subjbasedir, "/sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve/"), featRuns_all)]
 cat("All runs identified:\n")
 print(featRuns)
 
@@ -55,8 +60,8 @@ motexclude <- ldply(1:length(fdFiles), function(i) {
       data.frame(f=fdFiles[i], propSpikes_0p9, spikeExclude, meanFD, maxFD, maxMotExclude)
     })
 
-motexclude$subid <- factor(sub(paste0(fmriDir, "/([0-9]{5})_\\d+/mni_5mm_wavelet/.*$"), "\\1", featRuns, perl=TRUE))
-##motexclude$subid <- factor(paste0("10873", sub(".*/mni_5mm_wavelet/(fsl_.*)/.*$", "\\1", featRuns)))
+motexclude$subid <- factor(sub(paste0(fmriDir, "/([0-9]{5})_\\d+/", subjbasedir, "/.*$"), "\\1", featRuns, perl=TRUE))
+##motexclude$subid <- factor(paste0("10873", sub(paste0(".*/", subjbasedir, "/(fsl_.*)/.*$"), "\\1", featRuns)))
 motexclude <- ddply(motexclude, .(subid), function(subdf) {
       if (nrow(subset(subdf, maxMotExclude == 0 & spikeExclude == 0)) < 4) {
         subdf$lt4runs <- 1
@@ -95,8 +100,7 @@ run_conditions <- do.call(rbind, lapply(1:nrow(featL1Df), function(i) {
 #build design matrix
 featL1Df <- cbind(featL1Df, run_conditions)
 featL1Df$emotion <- relevel(featL1Df$emotion, ref="scram")
-##featL1Df$model <- sub(paste0(fmriDir, "/.*/mni_5mm_wavelet/fsl_([^/]+)/FEAT.*$"), "\\1", featL1Df$featRun, perl=TRUE)
-featL1Df$model <- sub(paste0(fmriDir, "/.*/mni_5mm_wavelet/([^/]+)/FEAT.*$"), "\\1", featL1Df$featRun, perl=TRUE)
+##featL1Df$model <- sub(paste0(fmriDir, "/.*/", subjbasedir, "/fsl_([^/]+)/FEAT.*$"), "\\1", featL1Df$featRun, perl=TRUE)
+featL1Df$model <- sub(paste0(fmriDir, "/.*/", subjbasedir, "/([^/]+)/FEAT.*$"), "\\1", featL1Df$featRun, perl=TRUE)
 
 save(featL1Df, file="Feat_runinfo_sceptic.RData")
-

@@ -2,6 +2,8 @@
 # setup model-based fMRI GLM analysis for based on fitted data
 
 library(fitclock)
+library(foreach)
+library(doSNOW)
 
 setwd(file.path(getMainDir(), "clock_analysis", "fmri"))
 source("afniValueModel.R")
@@ -21,12 +23,22 @@ if (file.exists("fmri_sceptic_signals_24basis.RData")) { sceptic <- local({load(
 #ICA analysis suggests that it takes up to 6 volumes to reach steady state, and the rel and mean uncertainty maps are being adversely affected by this problem
 #because they also start high and decay... Mean uncertainty was consequently soaking up a huge amount of CSF in activation maps.
 #Because the first presentation occurs at 8 seconds, it seems fine to drop 6 volumes (6s) 
-fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FALSE, model="sceptic", ...) {
+fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FALSE, model="sceptic", runpar=FALSE, ...) {
   
-  behavFiles <- list.files(path=behavDir, pattern=".*tcExport.csv", full.names=TRUE, recursive=TRUE)
-  ##behavFiles <- grep("11317", behavFiles, value=TRUE) #temporarily here for running a single subject
+  behavFiles <- list.files(path=behavDir, pattern=".*tcExport.csv", full.names=TRUE, recursive=FALSE)
+  #behavFiles <- grep("11317", behavFiles, value=TRUE) #temporarily here for running a single subject
+
+  if (runpar) {
+    require(doSNOW)
+    setDefaultClusterOptions(master="localhost") #move away from 10187 to avoid collisions
+    clusterobj <- makeSOCKcluster(10)
+    registerDoSNOW(clusterobj)
     
-  for (b in behavFiles) {
+    on.exit(try(stopCluster(clusterobj)))
+  }
+
+  ll <- foreach(b = iter(behavFiles), .inorder=FALSE, .packages=c("fitclock"), .export=c("truncateRuns", "r_valueModel", "afniTCModel", "fslSCEPTICModel", "runFSLCommand", "sceptic") ) %dopar% {
+  #for (b in behavFiles) {
     #example location of file on bea_res, which contains scan date
     #/Volumes/bea_res/Data/Tasks/EmoClockfMRI/Basic/11229/20140521/Raw/fMRIEmoClock_11229_tc_tcExport.csv
     subid <- sub("^.*fMRIEmoClock_(\\d+)_tc_tcExport.csv$", "\\1", b, perl=TRUE)
@@ -39,7 +51,8 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
 
     if(length(mrmatch) != 1L) {
       warning("Unable to find fMRI directory for subid: ", subid)
-      next
+      ##next
+      return(NULL)
     }
     
     if (usenative==TRUE) {
@@ -47,21 +60,23 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
       ##expectfile <- "nfudktm_clock(\\d+).nii.gz"
       expectfile <- "nfudktm_clock[0-9].nii.gz"
     } else {
-      expectdir <- "mni_5mm_wavelet"
+        ##expectdir <- "mni_5mm_wavelet"
+        expectdir <- "mni_5mm_3ddespike"
       ##expectfile <- "nfswudktm_clock(\\d+)_5.nii.gz"
       expectfile <- "nfswudktm_clock[0-9]_5.nii.gz"
     }
     
     if (! file.exists(file.path(mrmatch, expectdir))) {
       warning("Unable to find preprocessed data ", expectdir, " for subid: ", subid)
-      next
+      ##next
+      return(NULL)
     }
     
     ##identify fmri run lengths (4th dimension)
     ##mrfiles <- list.files(mrmatch, pattern=expectfile, full.names=TRUE, recursive=TRUE)
     ##cat(paste0("command: find ", mrmatch, " -iname '", expectfile, "' -ipath '*", expectdir, "*' -type f\n"))
     mrfiles <- system(paste0("find ", mrmatch, " -iname '", expectfile, "' -ipath '*", expectdir, "*' -type f | sort -n"), intern=TRUE)
-    mrfiles <- mrfiles[!grepl("(exclude|bbr_noref)", mrfiles, ignore.case=TRUE)] #if exclude is in path/filename, then skip
+    mrfiles <- mrfiles[!grepl("(exclude|bbr_noref|old)", mrfiles, ignore.case=TRUE)] #if exclude is in path/filename, then skip
     ##mrrunnums <- as.integer(sub(paste0(".*", expectfile, "$"), "\\1", mrfiles, perl=TRUE))
     mrrunnums <- as.integer(sub(paste0(".*clock(\\d+)_.*$"), "\\1", mrfiles, perl=TRUE))
 
@@ -70,7 +85,8 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
 
     if (length(mrfiles) == 0L) {
       warning("Unable to find any preprocessed MB files in dir: ", mrmatch)
-      next
+      ##next
+      return(NULL)
     }
 
     ##read number of volumes from NIfTI header
@@ -164,21 +180,21 @@ fit_all_fmri <- function(behavDir, fmriDir, idexpr, dropVolumes=6, usenative=FAL
       #fslSCEPTICModel(subj_sceptic["dauc"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
       #fslSCEPTICModel(subj_sceptic["dsd"], s, mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
   
-      #results from Mean SCEPTIC regressor correlation.pdf indicate that regressors for vchosen, ventropy_decay_matlab, dauc, and pemax are
-      #reasonably uncorrelated. The worst is dauc with vchosen (mean r = -0.31), which makes sense that as learning progresses, chosen values
-      #are higher and there is less residue to decay. These 4 regressors are also of greatest theoretical interest
-      fslSCEPTICModel(subj_sceptic[c("sceptic_vchosen", "sceptic_ventropy_decay_matlab", "sceptic_dauc", "sceptic_pemax")], s, 
-          mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+      ##results from Mean SCEPTIC regressor correlation.pdf indicate that regressors for vchosen, ventropy_decay_matlab, dauc, and pemax are
+      ##reasonably uncorrelated. The worst is dauc with vchosen (mean r = -0.31), which makes sense that as learning progresses, chosen values
+      ##are higher and there is less residue to decay. These 4 regressors are also of greatest theoretical interest
+      subj_sceptic[["dauc"]] <- -1*subj_sceptic[["dauc"]] #invert decay such that higher values indicate greater decay
+      fslSCEPTICModel(subj_sceptic[c("vchosen", "ventropy_decay_matlab", "dauc", "pemax")], s, 
+                      mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
     }
-  }
-  
+  }  
 }
 
 #SCEPTIC MMClock Fit
 fit_all_fmri(behavDir="/storage/group/mnh5174_collab/temporal_instrumental_agent/clock_task/subjects",
     fmriDir="/storage/group/mnh5174_collab/MMClock/MR_Proc",
     idexpr=expression(subid), ##MMClock/LunaID format: 10637_20140302
-    model="sceptic", usepreconvolve=TRUE, parmax1=TRUE) #rescale to 1.0 max
+    model="sceptic", usepreconvolve=TRUE, parmax1=TRUE, runpar=TRUE) #rescale to 1.0 max
 
 #MMClock fit
 # fit_all_fmri(behavDir="/Volumes/bea_res/Data/Tasks/EmoClockfMRI/Basic",

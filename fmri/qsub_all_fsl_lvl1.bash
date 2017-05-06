@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 #PBS -l nodes=1:ppn=40
-#PBS -l walltime=30:00:00
+#PBS -l walltime=60:00:00
 #PBS -A mnh5174_collab
 #PBS -j oe
 #PBS -M michael.hallquist@psu.edu

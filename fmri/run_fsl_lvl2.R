@@ -39,8 +39,8 @@ run_feat_lvl2 <- function(featL1Df, run=TRUE, force=FALSE, ncpus=8) {
 #      summary(glht(dummy, linfct=matrix(gm_coef, 1)))
         
         #generate and run lvl2 for this subject
-        fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl2_clock_template.fsf"))
-        
+        #fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl2_clock_template.fsf"))
+        fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl2_clock_template_runtrend.fsf"))
         #depending on lower-level model (e.g., TC versus value, will have different number of copes to compute
         
         if (subdf$model[1] == "value") {
@@ -109,6 +109,30 @@ run_feat_lvl2 <- function(featL1Df, run=TRUE, force=FALSE, ncpus=8) {
               "# Use lower-level cope 6 for higher-level analysis",
               "set fmri(copeinput.6) 1"
           )
+        } else if (subdf$model[1] =="sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve") {
+          ##TC no mean unc model has 6 copes: clock onset, feedback onset, vchosen, ventropy, dauc, pemax
+          fsfTemplate <- c(fsfTemplate,
+              "# Number of lower-level copes feeding into higher-level analysis",
+              "set fmri(ncopeinputs) 6",
+              "",
+              "# Use lower-level cope 1 for higher-level analysis",
+              "set fmri(copeinput.1) 1",
+              "",
+              "# Use lower-level cope 2 for higher-level analysis",
+              "set fmri(copeinput.2) 1",
+              "",
+              "# Use lower-level cope 3 for higher-level analysis",
+              "set fmri(copeinput.3) 1",
+              "",
+              "# Use lower-level cope 4 for higher-level analysis",
+              "set fmri(copeinput.4) 1",
+              "",
+              "# Use lower-level cope 5 for higher-level analysis",
+              "set fmri(copeinput.5) 1",
+              "",
+              "# Use lower-level cope 6 for higher-level analysis",
+              "set fmri(copeinput.6) 1"
+          )
         } else {
             ##assuming single single parametric regressor model (clock onset, feedback onset, parameter)
             ##warning("unable to match model: ", subdf$model[1]); return(NULL)
@@ -134,7 +158,8 @@ run_feat_lvl2 <- function(featL1Df, run=TRUE, force=FALSE, ncpus=8) {
         #.OUTPUTDIR. is the feat output location
         
         thisTemplate <- fsfTemplate
-        thisTemplate <- gsub(".OUTPUTDIR.", file.path(dirname(subdf$featRun[1L]), "FEAT_LVL2"), thisTemplate, fixed=TRUE)
+        ##thisTemplate <- gsub(".OUTPUTDIR.", file.path(dirname(subdf$featRun[1L]), "FEAT_LVL2"), thisTemplate, fixed=TRUE)
+        thisTemplate <- gsub(".OUTPUTDIR.", file.path(dirname(subdf$featRun[1L]), "FEAT_LVL2_runtrend"), thisTemplate, fixed=TRUE)
         for (i in 1:nrow(subdf)) {
           thisTemplate <- gsub(paste0(".INPUT", i, "."), subdf$featRun[i], thisTemplate, fixed=TRUE)
         }
@@ -153,8 +178,8 @@ run_feat_lvl2 <- function(featL1Df, run=TRUE, force=FALSE, ncpus=8) {
         thisTemplate <- gsub(".GMCOL2.", gm_coef[2], thisTemplate, fixed=TRUE)
         thisTemplate <- gsub(".GMCOL3.", gm_coef[3], thisTemplate, fixed=TRUE)
 
-        featOutDir <- file.path(dirname(subdf$featRun[1L]), "FEAT_LVL2.gfeat")
-        featFile <- file.path(dirname(subdf$featRun[1L]), "FEAT_LVL2.fsf")
+        featOutDir <- file.path(dirname(subdf$featRun[1L]), "FEAT_LVL2_runtrend.gfeat")
+        featFile <- file.path(dirname(subdf$featRun[1L]), "FEAT_LVL2_runtrend.fsf")
         if (file.exists(featOutDir) && force==FALSE) { return(NULL) } #skip re-creation of FSF and do not run below unless force==TRUE 
         cat(thisTemplate, file=featFile, sep="\n")      
         
