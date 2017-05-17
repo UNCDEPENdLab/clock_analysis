@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
-featl1dirs=$( find /storage/group/mnh5174_collab/MMClock/MR_Proc -iname "*.feat" -type d -ipath "*sceptic*" )
-afniout=/storage/group/mnh5174_collab/MMClock/featl1_afnicombined
+featl1dirs=$( find /gpfs/group/mnh5174/default/MMClock/MR_Proc -iname "*.feat" -type d -ipath "*sceptic*" )
+afniout=/gpfs/group/mnh5174/default/MMClock/featl1_afnicombined
 
 [ ! -d $afniout ] && mkdir $afniout
 
