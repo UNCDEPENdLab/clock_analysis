@@ -11,7 +11,8 @@ setwd("fmri_fits")
 source(file.path(getMainDir(), "Miscellaneous", "Global_Functions.R"))
 
 #updated version that used 24 basis functions and also has additional signals (rtvmax etc.)
-if (file.exists("fmri_sceptic_signals_24basis.RData")) { sceptic <- local({load("fmri_sceptic_signals_24basis.RData"); as.list(environment())}) }
+#if (file.exists("fmri_sceptic_signals_24basis.RData")) { sceptic <- local({load("fmri_sceptic_signals_24basis.RData"); as.list(environment())}) }
+if (file.exists("fmri_sceptic_signals_24basis_mmclock_Jun2017.RData")) { sceptic <- local({load("fmri_sceptic_signals_24basis_mmclock_Jun2017.RData"); as.list(environment())}) }
 
 behavDir=file.path(getMainDir(), "temporal_instrumental_agent/clock_task/subjects")
 behavFiles <- list.files(path=behavDir, pattern=".*tcExport.csv", full.names=TRUE, recursive=FALSE)
@@ -19,18 +20,19 @@ behavFiles <- list.files(path=behavDir, pattern=".*tcExport.csv", full.names=TRU
 #11282 was on floor of RTs for all runs (also leads to low magnitude of clock regressor)
 #11246 had huge and unforgivable head movements (centimeters). RTs were also on the floor and had poor variability.
 behavFiles <- grep("11282|11246", behavFiles, value=TRUE, invert=TRUE)
+ids <- grep("11282|11246", sceptic$ids, value=TRUE, invert=TRUE)
 
 #for a moment...
 #sceptic[["ventropy_decay_matlab"]] <- NULL
 #sceptic[["ventropy_fixedlrv_matlab"]] <- NULL
 #sceptic[["rtumax"]] <- NULL
-#pdf("run_designs_Dec2016.pdf", width=15, height=14)
+#pdf("run_designs_Jun2017.pdf", width=15, height=14)
 
 require(doSNOW)
 setDefaultClusterOptions(master="localhost") #move away from 10187 to avoid collisions
 clusterobj <- makeSOCKcluster(8)
 registerDoSNOW(clusterobj)
-
+#registerDoSEQ()
 #for (b in behavFiles[1:2]) {
 dmats <- foreach(b=iter(behavFiles), .packages=c("fitclock", "ggplot2"), .export=c("corHeatmap")) %dopar% {
   
@@ -48,7 +50,8 @@ dmats <- foreach(b=iter(behavFiles), .packages=c("fitclock", "ggplot2"), .export
   #also, for collinearity diagnostics, stick with the ventropy_decay_matlab used in the behavioral paper
   #"ventropy", "ventropy_fixedlrv_matlab",
   
-  mats3d <- sort(c("pemax", "vchosen", "vmax", "rtvmax", "ventropy_decay_matlab", "dauc")) #manual specification
+  #mats3d <- sort(c("pemax", "vchosen", "vmax", "rtvmax", "ventropy_decay_matlab", "dauc")) #manual specification
+  mats3d <- sort(c("pemax", "vchosen", "ventropy", "dauc")) #manual specification "vmax", "rtvmax", 
   
   subj_sceptic <- lapply(sceptic[mats3d], function(mat) {
         mat[subid,,]
@@ -83,15 +86,21 @@ dmats <- foreach(b=iter(behavFiles), .packages=c("fitclock", "ggplot2"), .export
     }
   }
   
+  f$sceptic[["vtime"]] <- sceptic[["vtime_list"]][subid,,]
+  signals_to_model[v+1] <- "custom_vtime"
+  onsets[v+1] <- NA #not used for custom (but expects same lengths)
+  durations[v+1] <- NA #not used for custom
+  normalizations[v+1] <- "none"
+  
   #visualize the design matrix as a series of boxcars  
   dnocon <- build_design_matrix(fitobj=f, regressors=c("clock", "feedback", signals_to_model), 
       event_onsets=c("clock_onset", "feedback_onset", onsets),
       durations=c("clock_duration", "feedback_duration", durations), 
-      normalizations=rep("none", length(signals_to_model) + 2), #no re-normalization in case of no convolution
+      normalizations=rep("none", length(signals_to_model) + 3), #no re-normalization in case of no convolution
       baselineCoefOrder=-1, center_values=TRUE, convolve=FALSE,
       dropVolumes=0)
   
-  #pdf("run_designs_noconvolve_Dec2016.pdf", width=15, height=14)
+#  pdf("run_designs_noconvolve_Dec2016.pdf", width=15, height=14)
 #  for (r in 1:length(dnocon$design.convolve)) {
 #    g <- visualizeDesignMatrix(dnocon$design.convolve[[r]], outfile=NULL, includeBaseline=FALSE)
 #    plot(g+ggtitle(paste("Subj", subid, "Run", r))+theme_bw(base_size=12))
@@ -106,14 +115,13 @@ dmats <- foreach(b=iter(behavFiles), .packages=c("fitclock", "ggplot2"), .export
   dcon <- build_design_matrix(fitobj=f, regressors=c("clock", "feedback", signals_to_model), 
       event_onsets=c("clock_onset", "feedback_onset", onsets),
       durations=c("clock_duration", "feedback_duration", durations), 
-      normalizations=c("durmax_1.0", "durmax_1.0", normalizations), #no re-normalization in case of no convolution
+      normalizations=c("durmax_1.0", "durmax_1.0", normalizations),
       baselineCoefOrder=-1, center_values=TRUE, convolve=TRUE, convolve_wi_run=TRUE, dropVolumes=0)
   
 #  for (r in 1:length(dcon$design.convolve)) {
 #    g <- visualizeDesignMatrix(dcon$design.convolve[[r]], outfile=NULL, includeBaseline=FALSE)
 #    plot(g+ggtitle(paste("Subj", subid, "Run", r))+theme_bw(base_size=12))
 #    plot(corHeatmap(dcon$design.convolve[[r]], alphaSort=TRUE, tileTextSize=6))
-#    
 #  }
   
 #  dcon <- build_design_matrix(fitobj=f, regressors=c("clock", "feedback", signals_to_model), 
@@ -129,12 +137,23 @@ dmats <- foreach(b=iter(behavFiles), .packages=c("fitclock", "ggplot2"), .export
 
 try(stopCluster(clusterobj))
 
-save(file="n76_sceptic_design_matrices_Jan2017.RData", dmats)
+#save(file="n76_sceptic_design_matrices_Jan2017.RData", dmats)
+#save(file="n76_sceptic_design_matrices_vtime_Jun2017.RData", dmats)
+#save(file="n76_sceptic_design_matrices_vtime_novmax_Jun2017.RData", dmats)
+save(file="n76_sceptic_design_matrices_novtime_novmax_Jun2017.RData", dmats)
 
 #aggregate unconvolved and convolved design matrices by: 1) runs within subject, 2) across subjects
 rawcollin <- lapply(dmats, function(d) { lapply(d$dcon$collin.raw, "[[", "r") })
 rawcollin <- lapply(dmats, function(d) { lapply(d$dcon$collin.raw, "[[", "vif") })
 
+sink("convolved vif sceptic.txt")
+convcollin <- lapply(dmats, function(d) { lapply(d$dcon$collin.convolve, "[[", "vif") })
+convcollin <- do.call(rbind, lapply(convcollin, function(subj) {
+      colMeans(do.call(rbind, subj), na.rm=TRUE)
+    }))
+rownames(convcollin) <- ids
+print(convcollin)
+sink()
 
 dmats[[1]]$dnocon$collin.raw$run1 #this is the correlations among decision signals independent of event timing (on trial grid, not on MRI time grid)
 dmats[[1]]$dcon$collin.raw$run1 #identical to above
@@ -172,7 +191,7 @@ alldcon_groupmean <- do.call(abind, list(lapply(alldcon_agg, function(d) {
     }), along=0))
 
 #melt for display
-pdf("Mean SCEPTIC regressor correlation.pdf", width=17, height=13)
+pdf("Mean SCEPTIC regressor correlation vtime.pdf", width=17, height=13)
 gmelt <- reshape2::melt(alldcon_groupmean, varnames=c("ID", "V1", "V2"))
 gmeans <- gmelt %>% filter(V1 != V2) %>% group_by(V1, V2) %>% summarize(value=mean(value))
 ggplot(filter(gmelt, V1 != V2), aes(x=value)) + geom_density() + facet_grid(V1 ~ V2) + theme_bw(base_size=16) +
