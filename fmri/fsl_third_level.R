@@ -3,27 +3,33 @@
 ##models <- c("sceptic_dauc_preconvolve", "sceptic_pemax_preconvolve", "sceptic_vmax_preconvolve", "sceptic_vchosen_preconvolve", "sceptic_ventropy_preconvolve")
 library(dplyr)
 options(dplyr.width=200)
-preproc_dirname <- "mni_5mm_3ddespike"
+preproc_dirname <- "mni_5mm_aroma"
 fsl_dirname <- "FEAT_LVL2_runtrend.gfeat"
 ##models <- c("sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve")
 models <- c("sceptic_vchosen_ventropy_dauc_pemax_preconvolve")
 
-##subinfo <- read.table("subinfo_db", header=TRUE)
+dataset <- "MMY3"
+#dataset <- "SPECC"
 
-idfile <- "/gpfs/group/mnh5174/default/SPECC/SPECC_Participant_Info.csv"
-subinfo <- read.csv(idfile)
+if (dataset=="MMY3") {
+  subinfo <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/subinfo_db", header=TRUE)
+  subinfo <- subinfo %>% rename(ID=lunaid, Age=age, Female=female, ScanDate=scandate)
+  subinfo$mr_dir <- with(subinfo, paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d"))) #convert to Date, then reformat YYYYMMDD
+  outdir <- "/gpfs/group/mnh5174/default/MMClock/fsl_sceptic_group_jun2017"
+} else if (dataset=="SPECC") {
+  subinfo <- read.csv("/gpfs/group/mnh5174/default/SPECC/SPECC_Participant_Info.csv", header=TRUE)
+  subinfo <- subinfo %>% rowwise() %>% mutate(mr_dir=ifelse(LunaMRI==1,
+    paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", Luna_ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
+    paste0("/gpfs/group/mnh5174/default/SPECC/MR_Proc/", tolower(SPECC_ID), "_", tolower(format((as.Date(ScanDate, format="%Y-%m-%d")), "%d%b%Y")))))
+  subinfo <- subinfo %>% rename(ID=SPECC_ID, Age=AgeAtScan)
+  outdir <- "/gpfs/group/mnh5174/default/SPECC/fsl_sceptic_group"  
+}
 
-subinfo <- subinfo %>% rowwise() %>% mutate(mr_dir=ifelse(LunaMRI==1,
-  paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", Luna_ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
-  paste0("/gpfs/group/mnh5174/default/SPECC/MR_Proc/", tolower(SPECC_ID), "_", tolower(format((as.Date(ScanDate, format="%Y-%m-%d")), "%d%b%Y")))))
 
 #verify that mr_dir is present as expected
 subinfo$dirfound <- file.exists(subinfo$mr_dir)
 subset(subinfo, dirfound==FALSE)
 
-##outdir <- "/gpfs/group/mnh5174/default/MMClock/fsl_sceptic_group"
-outdir <- "/gpfs/group/mnh5174/default/SPECC/fsl_sceptic_group"
-procdir <- "/gpfs/group/mnh5174/default/MMClock/MR_Proc"
 dir.create(outdir, showWarnings=FALSE)
 setwd(outdir)
 
@@ -31,22 +37,13 @@ setwd(outdir)
 #1 = clock_onset
 #2 = feedback_onset
 #3 = regressor of interest
-
-badids <- c(11335, #low IQ, ADHD Hx, loss of consciousness
-            11332, #should be excluded, but scan was terminated early due to repeated movement
-            11282, #RTs at the floor for essentially all runs. Not appropriate
-            11246, #huge movement and RTs at floor
-            10637, #large and many movements in later runs (need to revisit to confirm)
-            10662  #I think there are reconstruction problems here -- need to revisit
-            ) 
             
 ncopes <- 6 #clock, feedback, sceptic vchosen, ventropy, dauc, pemax
 
-preproc_dirname <- "mni_5mm_3ddespike"
+preproc_dirname <- "mni_5mm_aroma"
 fsl_dirname <- "FEAT_LVL2_runtrend.gfeat"
 ##models <- c("sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve")
 models <- c("sceptic_vchosen_ventropy_dauc_pemax_preconvolve")
-
 
 ##rework using subinfo structure as the authoritative guide (rather than repeated searches)
 copedf <- c()
@@ -55,7 +52,7 @@ for (m in models) {
     for (cope in 1:ncopes) {
       expectdir <- file.path(subinfo[s,"mr_dir"], preproc_dirname, m, fsl_dirname, paste0("cope", cope, ".feat"))
       if (dir.exists(expectdir)) {
-        copedf <- rbind(copedf, data.frame(SPECC_ID=subinfo[s,"SPECC_ID"], model=m, cope=cope, fsldir=expectdir))
+        copedf <- rbind(copedf, data.frame(ID=subinfo[s,"ID"], model=m, cope=cope, fsldir=expectdir))
       } else {
         message("could not find expected directory: ", expectdir)
       }
@@ -64,31 +61,60 @@ for (m in models) {
 }
 
 
-mdf <- merge(subinfo, copedf, by="SPECC_ID", all.y=TRUE)
-mdf <- arrange(mdf, SPECC_ID, model, cope)
+mdf <- merge(subinfo, copedf, by="ID", all.y=TRUE)
+badids <- c(11335, #low IQ, ADHD Hx, loss of consciousness
+            11332, #should be excluded, but scan was terminated early due to repeated movement
+            11282, #RTs at the floor for essentially all runs. Not appropriate
+            11246, #huge movement and RTs at floor
+            10637, #large and many movements in later runs (need to revisit to confirm)
+            10662  #I think there are reconstruction problems here -- need to revisit
+            ) 
+
+mdf <- mdf %>% filter(!ID %in% badids)
+mdf <- arrange(mdf, ID, model, cope)
 
 ##fsl constructs models by cope
 bycope <- split(mdf, mdf$cope)
 
 ##create input files and design matrices for L3 models by cope
 ##separate models for inverse age from age
-lapply(bycope, function(cdf) {
-  outname <- paste0(cdf$model[1], "_cope", cdf$cope[1])
-  cdf$female.c <- cdf$Female - mean(cdf$Female)
-  cdf$bpd.c <- cdf$BPD - mean(cdf$BPD)
-  cdf$age.c <- cdf$AgeAtScan - mean(cdf$AgeAtScan)
-  cdf$iage <- 1/cdf$AgeAtScan * 100 #scale up age to make regressors not tiny
-  cdf$iage.c <- cdf$iage - mean(cdf$iage)
-  cdf$bpdage <- cdf$age.c * cdf$bpd.c
-  cdf$bpdiage <- cdf$age.c * cdf$bpd.c
-  cdf$femage <- cdf$age.c * cdf$female.c
-  cdf$ifemage <- cdf$iage.c * cdf$female.c
-  cat(as.character(cdf$fsldir), quote="", sep="\n", file=file.path(outdir, paste0(outname, "_inputs")))
-  write.table(cbind(1, cdf[,c("bpd.c", "female.c", "age.c", "bpdage", "femage")]), file=file.path(outdir, paste0(outname, "_design")), sep="\t", col.names=FALSE, row.names=FALSE)
-  write.table(cbind(1, cdf[,c("bpd.c", "female.c", "iage.c", "bpdiage", "ifemage")]), file=file.path(outdir, paste0(outname, "_design_iage")), sep="\t", col.names=FALSE, row.names=FALSE)
-})
+if (dataset=="MMY3") {
+  lapply(bycope, function(cdf) {
+    outname <- paste0(cdf$model[1], "_cope", cdf$cope[1])
+    cdf$female.c <- cdf$Female - mean(cdf$Female)
+    cdf$age.c <- cdf$Age - mean(cdf$Age)
+    cdf$iage <- 1/cdf$Age * -100 #scale up age to make regressors not tiny and multiply by -1 so that larger values indicate developmental increase
+    cdf$iage.c <- cdf$iage - mean(cdf$iage)
+    cdf$femage <- cdf$age.c * cdf$female.c
+    cdf$ifemage <- cdf$iage.c * cdf$female.c
+    cat(as.character(cdf$fsldir), quote="", sep="\n", file=file.path(outdir, paste0(outname, "_inputs")))
+    write.table(cbind(1, cdf[,c("female.c", "age.c", "femage")]), file=file.path(outdir, paste0(outname, "_design")), sep="\t", col.names=FALSE, row.names=FALSE)
+    write.table(cbind(1, cdf[,c("female.c", "iage.c", "ifemage")]), file=file.path(outdir, paste0(outname, "_design_iage")), sep="\t", col.names=FALSE, row.names=FALSE)
+  })
+ 
+} else if (dataset=="SPECC") {
+
+  lapply(bycope, function(cdf) {
+    outname <- paste0(cdf$model[1], "_cope", cdf$cope[1])
+    cdf$female.c <- cdf$Female - mean(cdf$Female)
+    cdf$bpd.c <- cdf$BPD - mean(cdf$BPD)
+    cdf$age.c <- cdf$Age - mean(cdf$Age)
+    cdf$iage <- 1/cdf$Age * 100 #scale up age to make regressors not tiny
+    cdf$iage.c <- cdf$iage - mean(cdf$iage)
+    cdf$bpdage <- cdf$age.c * cdf$bpd.c
+    cdf$bpdiage <- cdf$age.c * cdf$bpd.c
+    cdf$femage <- cdf$age.c * cdf$female.c
+    cdf$ifemage <- cdf$iage.c * cdf$female.c
+    cat(as.character(cdf$fsldir), quote="", sep="\n", file=file.path(outdir, paste0(outname, "_inputs")))
+    write.table(cbind(1, cdf[,c("bpd.c", "female.c", "age.c", "bpdage", "femage")]), file=file.path(outdir, paste0(outname, "_design")), sep="\t", col.names=FALSE, row.names=FALSE)
+    write.table(cbind(1, cdf[,c("bpd.c", "female.c", "iage.c", "bpdiage", "ifemage")]), file=file.path(outdir, paste0(outname, "_design_iage")), sep="\t", col.names=FALSE, row.names=FALSE)
+  })
+
+}
+####
 
 #Older Approach that searches file system and aligns with subject info
+procdir <- "/gpfs/group/mnh5174/default/MMClock/MR_Proc"
 for (m in models) {
   for (cope in 1:ncopes) {
     outname <- paste0(m, "_cope", cope)

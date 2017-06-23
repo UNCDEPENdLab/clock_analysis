@@ -11,7 +11,8 @@ fmriDir <- "/gpfs/group/mnh5174/default/MMClock/MR_Proc"
 ##fmriDir <- "/gpfs/group/mnh5174/default/SPECC/MR_Proc"
 
 ##subjbasedir <- "mni_5mm_wavelet"
-subjbasedir <- "mni_5mm_3ddespike"
+##subjbasedir <- "mni_5mm_3ddespike"
+subjbasedir <- "mni_5mm_aroma"
 
 ##not used: just look for designmatrix.RData in timing directory
 ##fitDir <- file.path(getMainDir(), "clock_analysis", "fmri", "fmri_fits")
@@ -25,7 +26,7 @@ featRuns_all <- system(paste0("find ", fmriDir, " -mindepth 3 -iname \"FEAT_LVL1
 ##featRuns <- featRuns_all[grepl(paste0(subjbasedir, "/sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve/"), featRuns_all)]
 
 #entropy from R
-featRuns <- featRuns_all[grepl(paste0(subjbasedir, "/sceptic_vchosen_ventropy_dauc_pemax_preconvolve/"), featRuns_all)]
+featRuns <- featRuns_all[grepl(paste0(subjbasedir, "/sceptic_vchosen_ventropy_dauc_pemax_vtime_preconvolve/"), featRuns_all)]
 cat("All runs identified:\n")
 print(featRuns)
 
@@ -34,7 +35,7 @@ print(featRuns)
 fdFiles <- sub(paste0(fmriDir, "(.*)/[^/]+/FEAT_LVL1_run([0-9])\\.feat"), paste0(fmriDir, "\\1/clock\\2/motion_info/fd.txt"), featRuns, perl=TRUE)
 
 #identify matching truncated 4d files (created by model_clock_fmri.R) since we are only concerned about movement within the run proper (not dead volumes)  
-niTruncFiles <- Sys.glob(sub(paste0(fmriDir, "(.*)/[^/]+/FEAT_LVL1_run([0-9])\\.feat"), paste0(fmriDir, "\\1/clock\\2/nfsw*drop*.nii.gz"), featRuns, perl=TRUE))
+niTruncFiles <- Sys.glob(sub(paste0(fmriDir, "(.*)/[^/]+/FEAT_LVL1_run([0-9])\\.feat"), paste0(fmriDir, "\\1/clock\\2/nfasw*drop*.nii.gz"), featRuns, perl=TRUE))
 
 #identify how many volumes were dropped at the beginning
 dropVolumes <- as.integer(sub("^.*_drop(\\d+).*.nii.gz$", "\\1", niTruncFiles, perl=TRUE))
@@ -57,7 +58,7 @@ motexclude <- ldply(1:length(fdFiles), function(i) {
       fd <- fd[(dropVolumes[i]+1):truncLengths[i]] #only include volumes within run
       propSpikes_0p9 <- sum(as.integer(fd > 0.9))/length(fd)
       ##if (is.na(propSpikes_0p9[1])) browser()
-      spikeExclude <- if (propSpikes_0p9 > .10) 1 else 0
+      spikeExclude <- if (propSpikes_0p9 > .15) 1 else 0
       maxFD <- max(fd)
       meanFD <- mean(fd)
       maxMotExclude <- if (maxFD > 10) 1 else 0
@@ -91,7 +92,6 @@ table(badruns$subid)
 motexclude[which(motexclude$subid == "10711"),] #runs 6, 7, 8 are bad
 motexclude[which(motexclude$subid == "11324"),] #a lot of movement in runs 3 and 4, but otherwise very still...
 motexclude[which(motexclude$subid == "11336"),] #run 1 has a 14.5 mm FD, run 4 has an 8.5mm movement, but otherwise still
-
 
 #generate data frame of runs to analyze
 featL1Df <- motexclude[which(motexclude$anyExclude==0),] #only retain good runs

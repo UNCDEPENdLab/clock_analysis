@@ -2,7 +2,7 @@
 set -e
 
 if command -v module >/dev/null; then
-    module load "fsl/fsl(5.0.9)" >/dev/null 2>&1
+    module load "fsl/5.0.10" >/dev/null 2>&1
 fi
 
 #this script is used to setup reg dirs for first-level analyses in Feat.

@@ -1,27 +1,34 @@
-fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths, mrrunnums, run=FALSE, force=FALSE, dropVolumes=0, outdir=NULL, usepreconvolve=FALSE, ...) {
+fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths, mrrunnums, run=FALSE,
+                            force=FALSE, dropVolumes=0, outdir=NULL, usepreconvolve=FALSE, spikeregressors=TRUE, ...) {
   require(Rniftilib)
   require(parallel)
 
   if (is.null(outdir)) {
-      outdir=paste0("sceptic_", paste(names(sceptic_signals), collapse="_"))
-      if (usepreconvolve) { outdir=paste(outdir, "preconvolve", sep="_") }
+    outdir=paste0("sceptic_", paste(names(sceptic_signals), collapse="_"))
+    if (usepreconvolve) { outdir=paste(outdir, "preconvolve", sep="_") }
   }
   
   univariate <- FALSE
   if (length(sceptic_signals) == 1L) {
     ##single model-based regressor
     if (usepreconvolve) {
-        fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl1_clock_sceptic_univariate_preconvolve_template.fsf"))
+      fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_univariate_preconvolve_template.fsf"))
     } else {
-        fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl1_clock_sceptic_univariate_template.fsf"))
+      fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_univariate_template.fsf"))
     }
     univariate <- TRUE
   } else if (length(sceptic_signals) == 4L) {
     if (usepreconvolve) {
-      fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl1_clock_sceptic_4param_preconvolve_template.fsf"))
+      fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_4param_preconvolve_template.fsf"))
     } else {
       stop("not implemented yet")
     }
+  } else if (length(sceptic_signals) == 5L) { #pemax, dauc, vchosen, ventropy, vtime
+    if (usepreconvolve) {
+      fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_5param_preconvolve_template.fsf"))
+    } else {
+      stop("not implemented yet")
+    }      
   } else {
     stop("not implemented yet")
   }
@@ -44,23 +51,35 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
   normalizations <- rep(NA_character_, length(sceptic_signals))
   for (v in 1:length(sceptic_signals)) {
     thisName <- names(sceptic_signals)[v]
-    signals_to_model[v] <- paste0("sceptic_", thisName) #name of regressor in build_design_matrix
-    #clock_fit objects assume that each signal is a list of vectors where each element is a run (permits uneven runlengths)
-    f$sceptic[[thisName]] <- split(sceptic_signals[[v]], row(sceptic_signals[[v]]))
+    if (thisName == "vtime") {
+      signals_to_model[v] <- paste0("custom_", thisName) #need custom prefix to indicate within-trial event structure
+      #do not split on runs (as below) since custom is already a list
+      f$sceptic[[thisName]] <- sceptic_signals[[v]]
+    } else {
+      signals_to_model[v] <- paste0("sceptic_", thisName) #name of regressor in build_design_matrix
+      #clock_fit objects assume that each signal is a list of vectors where each element is a run (permits uneven runlengths)
+      f$sceptic[[thisName]] <- split(sceptic_signals[[v]], row(sceptic_signals[[v]]))
+    }
+
     if (thisName %in% c("vauc", "vchosen", "ventropy", "vmax", "vsd", "ventropy_decay_matlab", "ventropy_fixed_matlab")) {
       onsets[v] <- "clock_onset"; durations[v] <- "clock_duration"; normalizations[v] <- "evtmax_1.0"
     } else if (thisName %in% c("pemax", "peauc", "dauc", "dsd")) {
       onsets[v] <- "feedback_onset"; durations[v] <- "feedback_duration"; normalizations[v] <- "evtmax_1.0"
+    } else if (thisName == "vtime") {
+      #vtime is a runs x trials list with a data.frame per trial containing onsets, durations, and values within trial
+      onsets[v] <- NA #not relevant
+      durations[v] <- NA #not relevant
+      normalizations[v] <- "none" #should not try to normalize the within-trial regressor since this starts to confused within/between trial variation      
     }
   }
 
   ##Use writingTimingFiles = "convolved" to receive HRF convolved parametric regressors
   d <- build_design_matrix(fitobj=f, regressors=c("clock", "feedback", signals_to_model), 
-      event_onsets=c("clock_onset", "feedback_onset", onsets),
-      durations=c("clock_duration", "feedback_duration", durations), 
-      normalizations=c("durmax_1.0", "durmax_1.0", normalizations),
-      baselineCoefOrder=2, writeTimingFiles=c("convolved", "FSL"), center_values=TRUE, convolve_wi_run=TRUE,
-      runVolumes=runlengths, runsToOutput=mrrunnums, output_directory=timingdir, dropVolumes=dropVolumes, ...)
+                           event_onsets=c("clock_onset", "feedback_onset", onsets),
+                           durations=c("clock_duration", "feedback_duration", durations), 
+                           normalizations=c("durmax_1.0", "durmax_1.0", normalizations),
+                           baselineCoefOrder=2, writeTimingFiles=c("convolved", "FSL"), center_values=TRUE, convolve_wi_run=TRUE,
+                           runVolumes=runlengths, runsToOutput=mrrunnums, output_directory=timingdir, dropVolumes=dropVolumes, ...)
 
   save(d, f, file=file.path(fsldir, "designmatrix.RData"))
   
@@ -88,15 +107,17 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
     ##}
 
     mregressors <- NULL #start with NULL
-    
-    censorfile <- file.path(dirname(mrfiles[r]), "motion_info", "fd_0.9.mat")
-    if (file.exists(censorfile) && file.info(censorfile)$size > 0) {
-      censor <- read.table(censorfile, header=FALSE)
-      censor <- censor[(1+dropVolumes):runlengths[r],,drop=FALSE] #need no drop here in case there is just a single volume to censor
-      #if the spikes fall outside of the rows selected above, we will obtain an all-zero column. remove these
-      censor <- censor[,sapply(censor, sum) > 0,drop=FALSE]
-      if (ncol(censor) == 0L) { censor <- NULL } #no volumes to censor within valid timepoints
-      mregressors <- censor
+
+    if (spikeregressors) { #incorporate spike regressors if requested (not used in conventional AROMA)
+      censorfile <- file.path(dirname(mrfiles[r]), "motion_info", "fd_0.9.mat")
+      if (file.exists(censorfile) && file.info(censorfile)$size > 0) {
+        censor <- read.table(censorfile, header=FALSE)
+        censor <- censor[(1+dropVolumes):runlengths[r],,drop=FALSE] #need no drop here in case there is just a single volume to censor
+        #if the spikes fall outside of the rows selected above, we will obtain an all-zero column. remove these
+        censor <- censor[,sapply(censor, sum) > 0,drop=FALSE]
+        if (ncol(censor) == 0L) { censor <- NULL } #no volumes to censor within valid timepoints
+        mregressors <- censor
+      }
     }
     
     ##add CSF and WM regressors (with their derivatives)
@@ -145,8 +166,8 @@ fslSCEPTICModel <- function(sceptic_signals, clockdata_subj, mrfiles, runlengths
       } else {
         thisTemplate <- gsub(paste0(".V", s, "_TIMES."), file.path(timingdir, paste0("run", runnum, "_", signals_to_model[s], "_FSL3col.txt")), thisTemplate, fixed=TRUE)
       }
-      thisTemplate <- gsub(paste0(".V", s, "NAME."), sub("sceptic_", "", signals_to_model[s]), thisTemplate, fixed=TRUE) #remove sceptic_ prefix for brevity
-      thisTemplate <- gsub(paste0(".V", s, "_CON."), sub("sceptic_", "", signals_to_model[s]), thisTemplate, fixed=TRUE)      
+      thisTemplate <- gsub(paste0(".V", s, "NAME."), sub("(custom|sceptic)_", "", signals_to_model[s]), thisTemplate) #remove sceptic_ or custom_ prefix for brevity
+      thisTemplate <- gsub(paste0(".V", s, "_CON."), sub("(custom|sceptic)_", "", signals_to_model[s]), thisTemplate)      
     }
     
     featFile <- file.path(fsldir, paste0("FEAT_LVL1_run", runnum, ".fsf"))

@@ -41,19 +41,18 @@ cat("About to run the following fsf files in parallel:\n\n")
 cat(unlist(torun), sep="\n")
 
 preamble <- c(
-    "#PBS -A mnh5174_a_g_sc_default",
-    paste0("#PBS -l nodes=1:ppn=", cpusperjob, ":stmem"),
+    "#PBS -A mnh5174_a_g_hc_default",
+    paste0("#PBS -l nodes=1:ppn=", cpusperjob, ":himem"),
     "#PBS -l walltime=6:00:00",
     "#PBS -j oe",
     "#PBS -M michael.hallquist@psu.edu",
     "#PBS -m abe",
+    "#PBS -W group_list=mnh5174_collab",
     "",
     "",
-    "export DEPEND_GROUP=/gpfs/group/mnh5174/default",
-    "module use $DEPEND_GROUP/sw/modules",
-    "module load \"fsl/fsl(5.0.9)\" >/dev/null 2>&1",
+    "source /gpfs/group/mnh5174/default/lab_resources/ni_path.bash",
+    "module load \"fsl/5.0.10\" >/dev/null 2>&1",
     "",
-    "env",
     "cd $PBS_O_WORKDIR"
 )
 

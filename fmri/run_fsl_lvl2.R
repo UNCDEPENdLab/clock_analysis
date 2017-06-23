@@ -41,117 +41,39 @@ run_feat_lvl2 <- function(featL1Df, run=TRUE, force=FALSE, ncpus=8) {
     #      summary(glht(dummy, linfct=matrix(gm_coef, 1)))
     
     #generate and run lvl2 for this subject
-    #fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl2_clock_template.fsf"))
-    fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "feat_lvl2_clock_template_runtrend.fsf"))
+    #fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl2_clock_template.fsf"))
+    fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl2_clock_template_runtrend.fsf"))
     #depending on lower-level model (e.g., TC versus value, will have different number of copes to compute
+
     
     if (subdf$model[1] == "value") {
       ##value model has 5 copes: clock onset, feedback onset, ev, rpe+, rpe-
-      fsfTemplate <- c(fsfTemplate,
-        "# Number of lower-level copes feeding into higher-level analysis",
-      "set fmri(ncopeinputs) 5",
-      "# Use lower-level cope 1 for higher-level analysis",
-      "set fmri(copeinput.1) 1",
-      "# Use lower-level cope 2 for higher-level analysis",
-      "set fmri(copeinput.2) 1",
-      "# Use lower-level cope 3 for higher-level analysis",
-      "set fmri(copeinput.3) 1",
-      "# Use lower-level cope 4 for higher-level analysis",
-      "set fmri(copeinput.4) 1",
-      "# Use lower-level cope 5 for higher-level analysis",
-      "set fmri(copeinput.5) 1"
-      )
-    } else if (subdf$model[1] =="tc_nocarry") {
+      ncopes <- 5      
+    } else if (subdf$model[1] == "tc_nocarry") {
       ##TC model has 7 copes: clock onset, feedback onset, ev, rpe+, rpe-, mean_unc, rel_unc
-      fsfTemplate <- c(fsfTemplate,
-        "# Number of lower-level copes feeding into higher-level analysis",
-      "set fmri(ncopeinputs) 7",
-      "",
-      "# Use lower-level cope 1 for higher-level analysis",
-      "set fmri(copeinput.1) 1",
-      "",
-      "# Use lower-level cope 2 for higher-level analysis",
-      "set fmri(copeinput.2) 1",
-      "",
-      "# Use lower-level cope 3 for higher-level analysis",
-      "set fmri(copeinput.3) 1",
-      "",
-      "# Use lower-level cope 4 for higher-level analysis",
-      "set fmri(copeinput.4) 1",
-      "",
-      "# Use lower-level cope 5 for higher-level analysis",
-      "set fmri(copeinput.5) 1",
-      "# Use lower-level cope 6 for higher-level analysis",
-      "set fmri(copeinput.6) 1",
-      "",
-      "# Use lower-level cope 7 for higher-level analysis",
-      "set fmri(copeinput.7) 1"
-      )
+      ncopes <- 7
     } else if (subdf$model[1] =="tc_nomeanunc") {
       ##TC no mean unc model has 6 copes: clock onset, feedback onset, ev, rpe+, rpe-, rel_unc
-      fsfTemplate <- c(fsfTemplate,
-        "# Number of lower-level copes feeding into higher-level analysis",
-      "set fmri(ncopeinputs) 6",
-      "",
-      "# Use lower-level cope 1 for higher-level analysis",
-      "set fmri(copeinput.1) 1",
-      "",
-      "# Use lower-level cope 2 for higher-level analysis",
-      "set fmri(copeinput.2) 1",
-      "",
-      "# Use lower-level cope 3 for higher-level analysis",
-      "set fmri(copeinput.3) 1",
-      "",
-      "# Use lower-level cope 4 for higher-level analysis",
-      "set fmri(copeinput.4) 1",
-      "",
-      "# Use lower-level cope 5 for higher-level analysis",
-      "set fmri(copeinput.5) 1",
-      "",
-      "# Use lower-level cope 6 for higher-level analysis",
-      "set fmri(copeinput.6) 1"
-      )
+      ncopes <- 6
     } else if (subdf$model[1] %in% c("sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve", "sceptic_vchosen_ventropy_dauc_pemax_preconvolve")) {
-      fsfTemplate <- c(fsfTemplate,
-        "# Number of lower-level copes feeding into higher-level analysis",
-      "set fmri(ncopeinputs) 6",
-      "",
-      "# Use lower-level cope 1 for higher-level analysis",
-      "set fmri(copeinput.1) 1",
-      "",
-      "# Use lower-level cope 2 for higher-level analysis",
-      "set fmri(copeinput.2) 1",
-      "",
-      "# Use lower-level cope 3 for higher-level analysis",
-      "set fmri(copeinput.3) 1",
-      "",
-      "# Use lower-level cope 4 for higher-level analysis",
-      "set fmri(copeinput.4) 1",
-      "",
-      "# Use lower-level cope 5 for higher-level analysis",
-      "set fmri(copeinput.5) 1",
-      "",
-      "# Use lower-level cope 6 for higher-level analysis",
-      "set fmri(copeinput.6) 1"
-      )
+      ncopes <- 6
+    } else if (subdf$model[1] == "sceptic_vchosen_ventropy_dauc_pemax_vtime_preconvolve") {
+      ncopes <- 7
     } else {
       ##assuming single single parametric regressor model (clock onset, feedback onset, parameter)
       ##warning("unable to match model: ", subdf$model[1]); return(NULL)
       ##message("Assuming single parametric modulator")
+      ncopes <- 3
+    }
 
+    fsfTemplate <- c(fsfTemplate,
+      "# Number of lower-level copes feeding into higher-level analysis",
+      paste0("set fmri(ncopeinputs) ", ncopes))
+    
+    for (n in 1:ncopes) {
       fsfTemplate <- c(fsfTemplate,
-        "# Number of lower-level copes feeding into higher-level analysis",
-        "set fmri(ncopeinputs) 3",
-        "",
-        "# Use lower-level cope 1 for higher-level analysis",
-        "set fmri(copeinput.1) 1",
-        "",
-        "# Use lower-level cope 2 for higher-level analysis",
-        "set fmri(copeinput.2) 1",
-        "",
-        "# Use lower-level cope 3 for higher-level analysis",
-        "set fmri(copeinput.3) 1"
-      )
+      paste0("# Use lower-level cope ", n, " for higher-level analysis"),
+      paste0("set fmri(copeinput.", n, ") 1"))      
     }
     
     if (nrow(subdf) != 8) { warning("can't handle less than 8 runs at the moment! ", subdf$subid[1]); return(NULL) }
