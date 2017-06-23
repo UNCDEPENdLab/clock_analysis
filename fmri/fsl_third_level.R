@@ -2,14 +2,28 @@
 ##SCEPTIC L3 ANALYSIS
 ##models <- c("sceptic_dauc_preconvolve", "sceptic_pemax_preconvolve", "sceptic_vmax_preconvolve", "sceptic_vchosen_preconvolve", "sceptic_ventropy_preconvolve")
 library(dplyr)
+options(dplyr.width=200)
 preproc_dirname <- "mni_5mm_3ddespike"
 fsl_dirname <- "FEAT_LVL2_runtrend.gfeat"
-models <- c("sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve")
+##models <- c("sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve")
+models <- c("sceptic_vchosen_ventropy_dauc_pemax_preconvolve")
 
-subinfo <- read.table("subinfo_db", header=TRUE)
+##subinfo <- read.table("subinfo_db", header=TRUE)
 
-outdir <- "/storage/group/mnh5174_collab/MMClock/fsl_sceptic_group"
-procdir <- "/storage/group/mnh5174_collab/MMClock/MR_Proc"
+idfile <- "/gpfs/group/mnh5174/default/SPECC/SPECC_Participant_Info.csv"
+subinfo <- read.csv(idfile)
+
+subinfo <- subinfo %>% rowwise() %>% mutate(mr_dir=ifelse(LunaMRI==1,
+  paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", Luna_ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
+  paste0("/gpfs/group/mnh5174/default/SPECC/MR_Proc/", tolower(SPECC_ID), "_", tolower(format((as.Date(ScanDate, format="%Y-%m-%d")), "%d%b%Y")))))
+
+#verify that mr_dir is present as expected
+subinfo$dirfound <- file.exists(subinfo$mr_dir)
+subset(subinfo, dirfound==FALSE)
+
+##outdir <- "/gpfs/group/mnh5174/default/MMClock/fsl_sceptic_group"
+outdir <- "/gpfs/group/mnh5174/default/SPECC/fsl_sceptic_group"
+procdir <- "/gpfs/group/mnh5174/default/MMClock/MR_Proc"
 dir.create(outdir, showWarnings=FALSE)
 setwd(outdir)
 
@@ -26,31 +40,78 @@ badids <- c(11335, #low IQ, ADHD Hx, loss of consciousness
             10662  #I think there are reconstruction problems here -- need to revisit
             ) 
             
-
 ncopes <- 6 #clock, feedback, sceptic vchosen, ventropy, dauc, pemax
+
+preproc_dirname <- "mni_5mm_3ddespike"
+fsl_dirname <- "FEAT_LVL2_runtrend.gfeat"
+##models <- c("sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve")
+models <- c("sceptic_vchosen_ventropy_dauc_pemax_preconvolve")
+
+
+##rework using subinfo structure as the authoritative guide (rather than repeated searches)
+copedf <- c()
 for (m in models) {
+  for (s in 1:nrow(subinfo)) {
     for (cope in 1:ncopes) {
-        outname <- paste0(m, "_cope", cope)
-        subjdirs <- system(paste0("find ", procdir, " -mindepth 1 -maxdepth 1 -type d | sort -n"), intern=TRUE)
-        copedirs <- c()
-        for (s in subjdirs) {
-            if (file.exists(checkpath <- file.path(s, preproc_dirname, m, fsl_dirname, paste0("cope", cope, ".feat")))) {
-                copedirs <- c(copedirs, checkpath)
-            }
-        }
-        
-        ##copedirs <- system(paste0("find ", procdir, " -iname 'cope", cope, ".feat' -ipath '*", m, "/FEAT_LVL2.gfeat*' -type d | sort -n"), intern=TRUE)
-        ##copedirs <- read.table(outname)$V1
-        copedf <- data.frame(fsldir=copedirs, lunaid=as.numeric(sub("^.*/MR_Proc/(\\d{5})_\\d+/.*$", "\\1", copedirs, perl=TRUE)))
-        mdf <- merge(subinfo, copedf, by="lunaid", all.y=TRUE) #should probably do a setdiff to look for discrepancies
-        mdf <- filter(mdf, !lunaid %in% badids) %>% arrange(lunaid)
-        ##dplyr::anti_join(subinfo, copedf, by="lunaid")
-        ##dplyr::anti_join(copedf, subinfo, by="lunaid")
-        mdf$female.c <- mdf$female - mean(mdf$female)
-        mdf$age.c <- mdf$age - mean(mdf$age)
-        mdf$agefem <- mdf$age.c * mdf$female.c
-        cat(as.character(mdf$fsldir), quote="", sep="\n", file=file.path(outdir, paste0(outname, "_inputs")))
-        write.table(cbind(1, mdf[,c("female.c", "age.c", "agefem")]), file=file.path(outdir, paste0(outname, "_design")), sep="\t", col.names=FALSE, row.names=FALSE)
+      expectdir <- file.path(subinfo[s,"mr_dir"], preproc_dirname, m, fsl_dirname, paste0("cope", cope, ".feat"))
+      if (dir.exists(expectdir)) {
+        copedf <- rbind(copedf, data.frame(SPECC_ID=subinfo[s,"SPECC_ID"], model=m, cope=cope, fsldir=expectdir))
+      } else {
+        message("could not find expected directory: ", expectdir)
+      }
+    }
+  }
+}
+
+
+mdf <- merge(subinfo, copedf, by="SPECC_ID", all.y=TRUE)
+mdf <- arrange(mdf, SPECC_ID, model, cope)
+
+##fsl constructs models by cope
+bycope <- split(mdf, mdf$cope)
+
+##create input files and design matrices for L3 models by cope
+##separate models for inverse age from age
+lapply(bycope, function(cdf) {
+  outname <- paste0(cdf$model[1], "_cope", cdf$cope[1])
+  cdf$female.c <- cdf$Female - mean(cdf$Female)
+  cdf$bpd.c <- cdf$BPD - mean(cdf$BPD)
+  cdf$age.c <- cdf$AgeAtScan - mean(cdf$AgeAtScan)
+  cdf$iage <- 1/cdf$AgeAtScan * 100 #scale up age to make regressors not tiny
+  cdf$iage.c <- cdf$iage - mean(cdf$iage)
+  cdf$bpdage <- cdf$age.c * cdf$bpd.c
+  cdf$bpdiage <- cdf$age.c * cdf$bpd.c
+  cdf$femage <- cdf$age.c * cdf$female.c
+  cdf$ifemage <- cdf$iage.c * cdf$female.c
+  cat(as.character(cdf$fsldir), quote="", sep="\n", file=file.path(outdir, paste0(outname, "_inputs")))
+  write.table(cbind(1, cdf[,c("bpd.c", "female.c", "age.c", "bpdage", "femage")]), file=file.path(outdir, paste0(outname, "_design")), sep="\t", col.names=FALSE, row.names=FALSE)
+  write.table(cbind(1, cdf[,c("bpd.c", "female.c", "iage.c", "bpdiage", "ifemage")]), file=file.path(outdir, paste0(outname, "_design_iage")), sep="\t", col.names=FALSE, row.names=FALSE)
+})
+
+#Older Approach that searches file system and aligns with subject info
+for (m in models) {
+  for (cope in 1:ncopes) {
+    outname <- paste0(m, "_cope", cope)
+    subjdirs <- system(paste0("find ", procdir, " -mindepth 1 -maxdepth 1 -type d | sort -n"), intern=TRUE)
+    copedirs <- c()
+    for (s in subjdirs) {
+      if (file.exists(checkpath <- file.path(s, preproc_dirname, m, fsl_dirname, paste0("cope", cope, ".feat")))) {
+        copedirs <- c(copedirs, checkpath)
+      }
+    }
+    
+    ##copedirs <- system(paste0("find ", procdir, " -iname 'cope", cope, ".feat' -ipath '*", m, "/FEAT_LVL2.gfeat*' -type d | sort -n"), intern=TRUE)
+    ##copedirs <- read.table(outname)$V1
+    copedf <- data.frame(fsldir=copedirs, lunaid=as.numeric(sub("^.*/MR_Proc/(\\d{5})_\\d+/.*$", "\\1", copedirs, perl=TRUE)))
+    mdf <- merge(subinfo, copedf, by="lunaid", all.y=TRUE) #should probably do a setdiff to look for discrepancies
+    mdf <- filter(mdf, !lunaid %in% badids) %>% arrange(lunaid)
+    ##dplyr::anti_join(subinfo, copedf, by="lunaid")
+    ##dplyr::anti_join(copedf, subinfo, by="lunaid")
+    mdf$female.c <- mdf$female - mean(mdf$female)
+    mdf$age.c <- mdf$age - mean(mdf$age)
+    mdf$agefem <- mdf$age.c * mdf$female.c
+    cat(as.character(mdf$fsldir), quote="", sep="\n", file=file.path(outdir, paste0(outname, "_inputs")))
+    write.table(cbind(1, mdf[,c("female.c", "age.c", "agefem")]), file=file.path(outdir, paste0(outname, "_design")), sep="\t", col.names=FALSE, row.names=FALSE)
   }
 }
 

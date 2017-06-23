@@ -1,10 +1,14 @@
-
 library(parallel)
 source("glm_helper_functions.R")
 
+target=Sys.getenv("TARGET")
+if (target=="") { stop("Must pass in TARGET as environment variable") }
+stopifnot(file.exists(target))
+
 rerun <- FALSE
 ncpus <- 40
-setwd("/storage/group/mnh5174_collab/MMClock/MR_Proc")
+setwd(target)
+##stop("exiting in dir: ", target) #leftover for testing
 fsfFiles <- system(paste("find", getwd(), "-mindepth 3 -iname \"FEAT_LVL1_*.fsf\" -ipath \"*sceptic_vchosen*\" -type f"), intern=TRUE)
 #    list.files(path=getwd(), pattern="FEAT_LVL1_.*\\.fsf", recursive=TRUE, full.names=TRUE)
 
@@ -35,10 +39,10 @@ cl_fork <- makeForkCluster(nnodes=ncpus)
 runfeat <- function(fsf) {
     runname <- basename(fsf)
     runFSLCommand(paste("feat", fsf), stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)),
-                  stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)), fsldir="/opt/aci/sw/fsl/5.0.8/fsl")
+                  stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)), fsldir="/gpfs/group/mnh5174/default/sw/fsl")
 }
 
 clusterApply(cl_fork, torun, runfeat)
 stopCluster(cl_fork)
 
-system("bash /storage/group/mnh5174_collab/clock_analysis/fmri/genRegDir.bash /storage/group/mnh5174_collab/MMClock/MR_Proc")
+system(paste0("bash /gpfs/group/mnh5174/default/clock_analysis/fmri/genRegDir.bash ", target))

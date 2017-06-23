@@ -7,21 +7,25 @@ source("glm_helper_functions.R")
 
 ##fmriDir <- "/Volumes/Serena/MMClock/MR_Proc/10873_20140918/mni_5mm_wavelet"
 ##fmriDir <- "/Volumes/Serena/MMClock/MR_Proc"
-fmriDir <- "/storage/group/mnh5174_collab/MMClock/MR_Proc"
+fmriDir <- "/gpfs/group/mnh5174/default/MMClock/MR_Proc"
+##fmriDir <- "/gpfs/group/mnh5174/default/SPECC/MR_Proc"
 
 ##subjbasedir <- "mni_5mm_wavelet"
 subjbasedir <- "mni_5mm_3ddespike"
 
-
 ##not used: just look for designmatrix.RData in timing directory
 ##fitDir <- file.path(getMainDir(), "clock_analysis", "fmri", "fmri_fits")
 
-featRuns_all <- list.files(path=fmriDir, pattern="FEAT_LVL1_run[0-9].feat", include.dirs=TRUE, recursive=TRUE, full.names=TRUE)
+featRuns_all <- system(paste0("find ", fmriDir, " -mindepth 3 -iname \"FEAT_LVL1_run*.feat\" -ipath \"*", subjbasedir, "/sceptic_vchosen_ventropy_dauc_*\" -type d"), intern=TRUE)
+#featRuns_all <- list.files(path=fmriDir, pattern="FEAT_LVL1_run[0-9].feat", include.dirs=TRUE, recursive=TRUE, full.names=TRUE)
 #featRuns <- featRuns_all[grepl("/fsl_tc_nomeanunc/", featRuns_all, fixed=TRUE)] #filter to only nomeanunc folders
 #featRuns <- featRuns_all[grepl("/sceptic_vchosen/", featRuns_all, fixed=TRUE)]
 #featRuns <- featRuns_all[grepl("/sceptic_.*/", featRuns_all)]
 
-featRuns <- featRuns_all[grepl(paste0(subjbasedir, "/sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve/"), featRuns_all)]
+##featRuns <- featRuns_all[grepl(paste0(subjbasedir, "/sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve/"), featRuns_all)]
+
+#entropy from R
+featRuns <- featRuns_all[grepl(paste0(subjbasedir, "/sceptic_vchosen_ventropy_dauc_pemax_preconvolve/"), featRuns_all)]
 cat("All runs identified:\n")
 print(featRuns)
 
@@ -60,7 +64,11 @@ motexclude <- ldply(1:length(fdFiles), function(i) {
       data.frame(f=fdFiles[i], propSpikes_0p9, spikeExclude, meanFD, maxFD, maxMotExclude)
     })
 
-motexclude$subid <- factor(sub(paste0(fmriDir, "/([0-9]{5})_\\d+/", subjbasedir, "/.*$"), "\\1", featRuns, perl=TRUE))
+
+motexclude$featRun <- featRuns
+##motexclude$subid <- factor(sub(paste0(fmriDir, "/([0-9]{3}[A-z]{2})_.*/", subjbasedir, "/.*$"), "\\1", motexclude$featRun, perl=TRUE))
+motexclude$subid <- factor(sub(paste0(fmriDir, "/([0-9]{5})_\\d+/", subjbasedir, "/.*$"), "\\1", motexclude$featRun, perl=TRUE))##MMClock LunaID
+
 ##motexclude$subid <- factor(paste0("10873", sub(paste0(".*/", subjbasedir, "/(fsl_.*)/.*$"), "\\1", featRuns)))
 motexclude <- ddply(motexclude, .(subid), function(subdf) {
       if (nrow(subset(subdf, maxMotExclude == 0 & spikeExclude == 0)) < 4) {
@@ -72,13 +80,14 @@ motexclude <- ddply(motexclude, .(subid), function(subdf) {
     })
 
 motexclude$anyExclude <- with(motexclude, as.integer(spikeExclude | maxMotExclude | lt4runs))
-motexclude$featRun <- featRuns
+
 
 #10637 has pretty bad head movement in runs 5-8... in runs 7 and 8, it falls just below 10% FD > 0.9mm, so exclude subject altogether
 motexclude[which(motexclude$subid == "10637"),"anyExclude"] <- 1
 
 nrow(motexclude[which(motexclude$anyExclude == 1),])
-
+badruns <- droplevels(subset(motexclude, anyExclude==1))
+table(badruns$subid)
 motexclude[which(motexclude$subid == "10711"),] #runs 6, 7, 8 are bad
 motexclude[which(motexclude$subid == "11324"),] #a lot of movement in runs 3 and 4, but otherwise very still...
 motexclude[which(motexclude$subid == "11336"),] #run 1 has a 14.5 mm FD, run 4 has an 8.5mm movement, but otherwise still
@@ -102,5 +111,7 @@ featL1Df <- cbind(featL1Df, run_conditions)
 featL1Df$emotion <- relevel(featL1Df$emotion, ref="scram")
 ##featL1Df$model <- sub(paste0(fmriDir, "/.*/", subjbasedir, "/fsl_([^/]+)/FEAT.*$"), "\\1", featL1Df$featRun, perl=TRUE)
 featL1Df$model <- sub(paste0(fmriDir, "/.*/", subjbasedir, "/([^/]+)/FEAT.*$"), "\\1", featL1Df$featRun, perl=TRUE)
+featL1Df <- arrange(featL1Df, subid, runnums) #arrange by subid, run
+featL1Df[sample(1:nrow(featL1Df), 30), ] #verify match across columns
 
-save(featL1Df, file="Feat_runinfo_sceptic.RData")
+save(featL1Df, motexclude, file="Feat_runinfo_sceptic_mmclock.RData")
