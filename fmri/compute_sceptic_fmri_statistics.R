@@ -5,15 +5,17 @@ library(plyr)
 library(dplyr)
 library(reshape2)
 library(entropy)
-setwd("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri")
+options(dplyr.print_max = 1000)
+options(max.print = 1000)
+setwd("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri")
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession.mat")
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_constrain0p025.mat")
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_constrain0p0125_niv.mat")
-fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
-#fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_specc_decay_psfixed0p0125_k24.mat") #specc n=94 dataset
+fit <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
+#fit <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_specc_decay_psfixed0p0125_k24.mat") #specc n=94 dataset
 
 #basis <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/sceptic_fmri_basis_setup.mat")
-basis <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
+basis <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
 source("clock_functions.R")
 
 #pull the uncertainties from kalman_uv_sum. Make sure this is not predictive of RT swings
@@ -21,19 +23,19 @@ source("clock_functions.R")
 #udata <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/uncertainty_results/multisession_uncertainty_fixed_uv_kalman_uv_sum.mat"))
 
 #this one should be correct for resetting U at run boundaries
-udata <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/uncertainty_results/updated_multisession_u_matrix.mat"))
+#udata <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/uncertainty_results/updated_multisession_u_matrix.mat"))
 
 #sigtrials <- udata[[1]]["kalman.uv.sum",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
-sigtrials <- udata[[1]]["fixed.uv",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
+#sigtrials <- udata[[1]]["fixed.uv",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
 #the other data in the fit objects tend to be subjects x runs x basis functions x trials
 #sigtrials <- aperm(sigtrials, c(3,2,1))
 #sigrestruct <- array(aperm(sigtrials, c(3,2,1)), dim=c(76, 8, 24, 50)) #this doesn't get the ordering quite right...
 
-m <- melt(sigtrials, varnames=c("basis", "trial", "rowID")) %>% arrange(rowID, trial, basis) %>% select(-trial)#rename(trial_abs=trial)
-m$run <- rep(1:8, each=50*24) #1:8 numbering
-m$trial <- rep(1:50, each=24) #1:50 numbering as elsewhere
+#m <- melt(sigtrials, varnames=c("basis", "trial", "rowID")) %>% arrange(rowID, trial, basis) %>% select(-trial)#rename(trial_abs=trial)
+#m$run <- rep(1:8, each=50*24) #1:8 numbering
+#m$trial <- rep(1:50, each=24) #1:50 numbering as elsewhere
 
-sigrestruct <- acast(m, rowID ~ run ~ basis ~ trial, value.var="value") #tada! 
+#sigrestruct <- acast(m, rowID ~ run ~ basis ~ trial, value.var="value") #tada! 
 
 #sigrestruct[1,1,1:24, 1:10] #all basis functions for 10 trials
 #sigtrials[1:24,1:10, 1]
@@ -41,24 +43,28 @@ sigrestruct <- acast(m, rowID ~ run ~ basis ~ trial, value.var="value") #tada!
 ids <- gsub(".*CORRECT_(\\d+)_fixed_decay.*", "\\1", unlist(fit$fitfiles), perl=TRUE)
 
 #plot RTs for clock data
-#allData <- getClockGroupData(path="/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/subjects/SPECC") #for SPECC
-allData <- getClockGroupData(path="/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/subjects") #for MMY3
+#allData <- getClockGroupData(path="~/Data_Analysis/temporal_instrumental_agent/clock_task/subjects/SPECC") #for SPECC
+allData <- getClockGroupData(path="~/Data_Analysis/temporal_instrumental_agent/clock_task/subjects") #for MMY3
+allData$timestep <- plyr::round_any(allData$rt, 100)/100 #1:40 coding
+
 
 #these .mat structures are all MMClock Y3, no equivalent for SPECC at the moment.
-newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/val_based_shannon_H.mat"))
-
+#newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/val_based_shannon_H.mat"))
+#newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/H_values_decay_and_fixed_multisession.mat"))
+#newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/unisession_decay_and_fixed_rand_priors.mat"))
+#newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/unisession_decay_and_fixed_rand_priors_full.mat"))
 
 #value distribution entropy under decay and fixed LR V 
-ventropy_decay_matlab <- melt(newEntropy$decay.H, varnames=c("rowID", "trial"), value.name="entropyH")
-ventropy_fixedlrv_matlab <- melt(newEntropy$fixed.H, varnames=c("rowID", "trial"), value.name="entropyFixed")
+#ventropy_decay_matlab <- melt(newEntropy$decay.H, varnames=c("rowID", "trial"), value.name="entropyH")
+#ventropy_fixedlrv_matlab <- melt(newEntropy$fixed.H, varnames=c("rowID", "trial"), value.name="entropyFixed")
 
-ventropy_decay_matlab <- ventropy_decay_matlab %>% arrange(rowID, trial)
-ventropy_decay_matlab$run <- rep(1:8, each=50)
-ventropy_decay_matlab$trial <- 1:50
+#ventropy_decay_matlab <- ventropy_decay_matlab %>% arrange(rowID, trial)
+#ventropy_decay_matlab$run <- rep(1:8, each=50)
+#ventropy_decay_matlab$trial <- 1:50
 
-ventropy_fixedlrv_matlab <- ventropy_fixedlrv_matlab %>% arrange(rowID, trial)
-ventropy_fixedlrv_matlab$run <- rep(1:8, each=50)
-ventropy_fixedlrv_matlab$trial <- 1:50
+#ventropy_fixedlrv_matlab <- ventropy_fixedlrv_matlab %>% arrange(rowID, trial)
+#ventropy_fixedlrv_matlab$run <- rep(1:8, each=50)
+#ventropy_fixedlrv_matlab$trial <- 1:50
 
 #with(allData, table(ID, rewFunc, emotion))
 #allData$rewarded <- factor(allData$score > 0, levels=c(TRUE, FALSE), labels=c("Reward", "Omission"))
@@ -147,8 +153,8 @@ ventropy_fixedlrv_matlab$trial <- 1:50
 
 
 #generate regressors for PE, value, and decay at each trial
-#tofmri <- list(V=fit$V, PE=fit$PE, D=fit$D)#, U=sigrestruct) #dropping U for SPECC
-tofmri <- list(V=fit$V, PE=fit$PE, D=fit$D, U=sigrestruct) #MMY3
+tofmri <- list(V=fit$V, PE=fit$PE, D=fit$D)#, U=sigrestruct) #dropping U for SPECC
+#tofmri <- list(V=fit$V, PE=fit$PE, D=fit$D, U=sigrestruct) #MMY3
 fmriexpanded <- list()
 for (v in 1:length(tofmri)) {  
   #multiply against basis to get distribution/representation
@@ -233,9 +239,11 @@ vsd <- apply(fmriexpanded[["V"]], c(1,2,3), function(trial) {
     })
 
 #5) value of chosen option
-mv <- melt(fmriexpanded[["V"]], varnames=c("subj", "run", "trial", "timestep"))
-mv$ID <- factor(mv$subj, levels=sort(unique(mv$subj)), labels=ids)
-allData$timestep <- plyr::round_any(allData$rt, 100)/100
+mv <- melt(fmriexpanded[["V"]], varnames=c("ID", "run", "trial", "timestep"))
+
+##NB. this line was implemented before ID was added directly (and in the correct order) to fmriexpanded elements
+##also, it causes serious problems (terrible idea) when ids are out of order, as in SPECC data (MMY3 appears okay)
+##mv$ID <- factor(mv$subj, levels=sort(unique(mv$subj)), labels=ids)
 
 #um <- melt(fmriexpanded[["U"]], value.name="U")
 #um$subject <- factor(um$ID, levels=sort(unique(um$ID)), labels=1:76)
@@ -244,28 +252,28 @@ allData$timestep <- plyr::round_any(allData$rt, 100)/100
 #6) max uncertainty
 #problem is that subjects can't really respond fast enough to choose very early, so U will always go there.
 #pull back to say min of 10?.. this gets pretty hacky, but going with 6 and 6 for now
-rtumax <- apply(fmriexpanded[["U"]], c(1,2,3), function(trial) {
-      if (all(is.na(trial)) || sd(trial) < 1) { #essentially no variability, so hard to say there's a max 
-        return(NA) 
-      } else {
-        minoffset <- 6 #first five time steps (of 40) deemed ineligible
-        maxoffset <- 6 #last three time steps also ineligible
-        #browser()
-        trial <- trial[minoffset:(length(trial)-maxoffset)]
-        return(which.max(trial) + minoffset - 1)
-      } 
-    })
-
-umax <- apply(fmriexpanded[["U"]], c(1,2,3), function(trial) {
-      if (all(is.na(trial)) || sd(trial) < 1) { #essentially no variability, so hard to say there's a max 
-        return(NA) 
-      } else {
-        minoffset <- 4 #first three time steps (of 40) deemed ineligible
-        maxoffset <- 4 #last three time steps also ineligible
-        trial <- trial[minoffset:(length(trial)-maxoffset)]
-        return(max(trial))
-      } 
-    })
+# rtumax <- apply(fmriexpanded[["U"]], c(1,2,3), function(trial) {
+#       if (all(is.na(trial)) || sd(trial) < 1) { #essentially no variability, so hard to say there's a max 
+#         return(NA) 
+#       } else {
+#         minoffset <- 6 #first five time steps (of 40) deemed ineligible
+#         maxoffset <- 6 #last three time steps also ineligible
+#         #browser()
+#         trial <- trial[minoffset:(length(trial)-maxoffset)]
+#         return(which.max(trial) + minoffset - 1)
+#       } 
+#     })
+# 
+# umax <- apply(fmriexpanded[["U"]], c(1,2,3), function(trial) {
+#       if (all(is.na(trial)) || sd(trial) < 1) { #essentially no variability, so hard to say there's a max 
+#         return(NA) 
+#       } else {
+#         minoffset <- 4 #first three time steps (of 40) deemed ineligible
+#         maxoffset <- 4 #last three time steps also ineligible
+#         trial <- trial[minoffset:(length(trial)-maxoffset)]
+#         return(max(trial))
+#       } 
+#     })
 
 
 #there are two RTs less than 50ms that round down to zero, leading to their being missing in the merge
@@ -273,19 +281,126 @@ umax <- apply(fmriexpanded[["U"]], c(1,2,3), function(trial) {
 #there are also 119 RTs above 4s, representing non-response. Again, subjects get feedback (always zero) but is a bit different
 #for now:
 allData$timestep[which(allData$timestep==0)] <- 1
+allData$timestep[which(allData$timestep==41)] <- 40 #overflow on RT
 
 #30400 rows = 76 subjects x 8 runs x 50 trials
 #mv now has one row per subject and trial representing the value at the chosen option.
-mv <- merge(mv, allData, by=c("ID", "run", "trial", "timestep"))
-with(mv, table(ID, run))
 
+#problem with a handful of subjects. Look at subject 18, run 8
+#dplyr::anti_join(mv, allData, by=c("ID", "run", "trial", "timestep"))
+
+#from SPECC
+#tt1 <- filter(mv, ID=="18")
+#tt2 <- filter(allData, ID=="18") %>% arrange(run, trial)
+#mtt <- merge(tt1, tt2, by=c("run", "trial", "timestep"), all.y=TRUE) %>% arrange(run, trial)
+
+#this check out... no concerns here
+# > with(tt1, value[run==1 & trial==1 & timestep==8])
+# [1] 0
+# > with(tt1, value[run==1 & trial==2 & timestep==5])
+# [1] 7.680692
+# > with(tt1, value[run==1 & trial==3 & timestep==14])
+# [1] 0.4172741
+# > with(tt1, value[run==1 & trial==4 & timestep==9])
+# [1] 16.08931
+# with(tt1, value[run==1 & trial==5 & timestep==20])
+# [1] 5.716574e-07
+# 
+# > head(mtt, n=5)[,c("run", "trial", "timestep", "value")]
+# run trial timestep        value
+# 1   1     1        8 0.000000e+00
+# 2   1     2        5 7.680692e+00
+# 3   1     3       14 4.172741e-01
+# 4   1     4        9 1.608931e+01
+# 5   1     5       20 5.716574e-07
+
+
+mv_chosen <- merge(mv, allData, by=c("ID", "run", "trial", "timestep"))
+with(mv_chosen, table(ID, run))
+
+#mv_chosen <- subset(mv_chosen, !ID==74)
 #recast into 3d array to match other regressors.
-vchosen <- acast(mv, ID ~ run ~ trial, value.var="value")
+vchosen_suspicious <- acast(mv_chosen, ID ~ run ~ trial, value.var="value")
+
+#I have no idea what's happening in the recast... let's just try a brute force rearrangement
+#but it is generating very weird missingness (264 missing values interspersed in strange places)
+#in addition, when I look at the value estimates themselves, they seem out of order in vchosen, but good in the brute force setup
+
+#on further analysis, it appears that there are 264 missing values (legitimately)
+#but in the original there were 465 missing values. As best I can tell, this links back to the bad mv$ID line above (that inadvertently messed up IDs)
+ids_arranged <- as.character(sort(as.numeric(ids)))
+vchosen <- array(NA, dim=c(length(ids), 8, 50), dimnames=list(ID=ids_arranged, run=1:8, trial=1:50))
+for (s in 1:length(ids)) {
+  for (r in 1:8) {
+    df <- subset(mv_chosen, ID==ids_arranged[s] & run==r)
+    df <- df %>% arrange(trial) #ensure that the data are ordered by trial
+    if (nrow(df) > 0) { vchosen[s,r,1:nrow(df)] <- df$value
+    } else { message("no data for id:", ids_arranged[s], ", run: ", r) }
+  }
+}
+
+#further checks reveal no substantial problems in the acast version
+all.equal(vchosen, vchosen_suspicious)
+#[1] "Attributes: < Component “dimnames”: names for target but not for current >"
+sum(vchosen-vchosen_suspicious, na.rm=T)
+#[1] 0
+
 
 #compute an evolving value signal
-#mmdf <- melt(fmriexpanded[["V"]])
-#mmdf <- merge(mmdf, allData %>% rename(timestep_chosen=timestep), by=c("ID", "run", "trial"))
+mmdf <- melt(fmriexpanded[["V"]])
+mmdf <- merge(mmdf, allData %>% dplyr::rename(timestep_chosen=timestep), by=c("ID", "run", "trial")) %>% arrange(ID, run, trial, timestep)
+
+#so now we have the timestep chosen merged in. Seems we would just need to filter to observations before chosen value
+mmdf <- mmdf %>% filter(timestep <= timestep_chosen)
+
+#if the EV is held for 100ms, then we add timestep - 1 to the trial onset
+mmdf$onset <- mmdf$clock_onset + (mmdf$timestep-1)/10
+mmdf$duration = 0.1
+
+mmdf <- select(mmdf, ID, run, trial, onset, value, duration) #timestep, timestep_chosen,
+
+#prototype: checks out
+
+#vtime <- split(mmdf, list(mmdf$ID, mmdf$run))
+#xx <- vtime[[1]]
+#xr1 <- filter(xx, run==1)
 #
+#ev_convolve <- fmri.stimulus(scans=3000, values=xr1$value, times=xr1$onset, durations=xr1$duration, rt=0.1)
+#ev_noconvolve <- fmri.stimulus(scans=3000, values=xr1$value, times=xr1$onset, durations=xr1$duration, rt=0.1, convolve=FALSE)
+#par(mfrow=c(2,1))
+#plot(ev_convolve, type="l")
+#plot(ev_noconvolve, type="l")
+
+
+#creates a nested list structure... but not multidimensional
+#mylist <- dlply(mmdf, .(ID), dlply, .(run), dlply, .(trial), identity)
+subjs <- sort(unique(mmdf$ID))
+runs <- sort(unique(mmdf$run))
+trials <- sort(unique(mmdf$trial))
+vtime_list <- array(list(), dim=c(length(nsubjs), length(runs), length(trials)), dimnames=list(ID=subjs, run=runs, trial=trials))
+
+#brute force
+for (s in as.character(subjs)) {
+  for (r in as.character(runs)) {
+    for (t in as.character(trials)) {
+      vtime_list[[s,r,t]] <- filter(mmdf, ID==s & run==r & trial==t)
+    }
+  }
+}
+
+
+
+
+
+#this should give us what we need for convolution
+#just need to reshape to subjects x runs x trials array (and to have a 4th dimension of timestep)
+#or maybe just break with this convention and allow a custom pass through for full manual specification
+
+
+#now we need to lay these down onto the MRI time grid...
+#it seems like essentially we just need to support passing in a parametric regressor that can have many values per trial
+#and have the convolution lay down all of those timesteps wrt trial onset
+
 #vdf <- dcast(mmdf, ID + run + trial ~ timestep)
 
 
@@ -349,13 +464,15 @@ dsd <- apply(fmriexpanded[["D"]], c(1,2,3), sd)
 dsd <- rightshift1(dsd)
 
 #copy across luna ids
-ventropy_decay_matlab_3d <- acast(ventropy_decay_matlab, rowID ~ run ~ trial, value.var="entropyH")
-ventropy_fixedlrv_matlab_3d <- acast(ventropy_fixedlrv_matlab, rowID ~ run ~ trial, value.var="entropyFixed")
+#ventropy_decay_matlab_3d <- acast(ventropy_decay_matlab, rowID ~ run ~ trial, value.var="entropyH")
+#ventropy_fixedlrv_matlab_3d <- acast(ventropy_fixedlrv_matlab, rowID ~ run ~ trial, value.var="entropyFixed")
 
-dimnames(ventropy_decay_matlab_3d) <- dimnames(ventropy_fixedlrv_matlab_3d) <- dimnames(rtvmax)
+#dimnames(ventropy_decay_matlab_3d) <- dimnames(ventropy_fixedlrv_matlab_3d) <- dimnames(rtvmax)
 
+save(vmax, rtvmax, vauc, vsd, ventropy, vchosen, vtime_list, pemax, peauc, dauc, dsd, ids, file="fmri_sceptic_signals_24basis_mmclock_Jun2017.RData")
 #save(vmax, rtvmax, vauc, vsd, ventropy, vchosen, pemax, peauc, dauc, dsd, umax, rtumax, ventropy_decay_matlab, ventropy_fixedlrv_matlab, ids, file="fmri_sceptic_signals_24basis_specc.RData")
-#save(vmax, rtvmax, vauc, vsd, ventropy, vchosen, pemax, peauc, dauc, dsd, ids, file="fmri_sceptic_signals_24basis_specc.RData")
+#save(vmax, rtvmax, vauc, vsd, ventropy, vchosen, vchosen_suspicious, pemax, peauc, dauc, dsd, ids, file="fmri_sceptic_signals_24basis_specc_correctedvchosen.RData")
+
 #detach("package:plyr", unload=TRUE)
 library(dplyr)
 
@@ -365,15 +482,15 @@ edf <- melt(ventropy, varnames=c("ID", "run", "trial"), value.name="entropy")
 rtvmaxdf <- melt(rtvmax, varnames=c("ID", "run", "trial"), value.name="rtvmax")
 vchosendf <- melt(vchosen, varnames=c("ID", "run", "trial"), value.name="vchosen")
 vmaxdf <- melt(vmax, varnames=c("ID", "run", "trial"), value.name="vmax")
-rtumaxdf <- melt(rtumax, varnames=c("ID", "run", "trial"), value.name="rtumax")
-umaxdf <- melt(umax, varnames=c("ID", "run", "trial"), value.name="umax")
+#rtumaxdf <- melt(rtumax, varnames=c("ID", "run", "trial"), value.name="rtumax")
+#umaxdf <- melt(umax, varnames=c("ID", "run", "trial"), value.name="umax")
 pemaxdf <- melt(pemax, varnames=c("ID", "run", "trial"), value.name="pemax")
 
 bdf <- merge(edf, rtvmaxdf, by=c("ID", "run", "trial"))
 bdf <- merge(bdf, vchosendf, by=c("ID", "run", "trial"))
 bdf <- merge(bdf, vmaxdf, by=c("ID", "run", "trial"))
-bdf <- merge(bdf, rtumaxdf, by=c("ID", "run", "trial"))
-bdf <- merge(bdf, umaxdf, by=c("ID", "run", "trial"))
+#bdf <- merge(bdf, rtumaxdf, by=c("ID", "run", "trial"))
+#bdf <- merge(bdf, umaxdf, by=c("ID", "run", "trial"))
 bdf <- merge(bdf, pemaxdf, by=c("ID", "run", "trial"))
 bdf <- merge(bdf, allData, by=c("ID", "run", "trial"))
 
@@ -414,17 +531,17 @@ bdf <- bdf %>% group_by(ID, run) %>%
         vdev = timestep - rtvmax,
         vdevlag = lag(vdev, order_by=trial),
         rtvmaxlag = lag(rtvmax, order_by=trial),
-        udev = timestep - rtumax,
-        udevlag = lag(udev, order_by=trial),
-        rtumaxlag = lag(rtumax, order_by=trial),
+        #udev = timestep - rtumax,
+        #udevlag = lag(udev, order_by=trial),
+        #rtumaxlag = lag(rtumax, order_by=trial),
         absvdevlag = abs(vdevlag), #just absolute distance from max value (unsigned)
         evdev = vmax - vchosen,
         evdevlag = lag(evdev, order_by=trial),
         omission = factor(as.numeric(score > 0), levels=c(0,1), labels=c("Omission", "Reward")),
         omissionlag = lag(omission, order_by=trial),
         entropylag = lag(entropy, order_by=trial),
-        entropyHlag = lag(entropyH, order_by=trial),
-        entropyFlag = lag(entropyFixed, order_by=trial),
+        #entropyHlag = lag(entropyH, order_by=trial),
+        #entropyFlag = lag(entropyFixed, order_by=trial),
         wizentropy = as.vector(scale(entropy)),
         wizabstschange = as.vector(scale(abstschange)),
         distfromedge = sapply(timestep, function(x) { min(40-x,x) }),
@@ -480,7 +597,9 @@ bdf %>% select(ID, run, trial, rt, timestep, timesteplag, timestepchange, rtvmax
 bdf %>% select(ID, run, trial, rt, timestep, score, omission, entropy, wizentropy) %>% arrange(ID, run, trial) %>% print(n=101)
 
 
-save(file="dataframe_for_entropy_analysis_Nov2016.RData", bdf)
+#save(file="dataframe_for_entropy_analysis_Mar2017.RData", bdf)
+save(file="dataframe_for_entropy_analysis_specc_Mar2017.RData", bdf)
+
 #save(file="dataframe_for_entropy_analysis_SPECC_Dec2016.RData", bdf)
 #write.csv(file="sceptic_fmri_behavior_Nov2016.csv", bdf, row.names=FALSE)
 
