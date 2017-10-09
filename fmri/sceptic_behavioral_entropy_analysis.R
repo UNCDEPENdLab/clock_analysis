@@ -526,6 +526,28 @@ mean(bdfcent$entropyHlag_wicent, na.rm=TRUE)
 mean(bdfcent$trial_c, na.rm=TRUE)
 mean(bdfcent$distfromedgelag_c, na.rm=TRUE)
 
+library(ggplot2)
+bdf <- bdf %>% filter(trial_abs > 1) %>% group_by(subject, run) %>% #do({browser()})
+    #mutate(entropyH_runnorm = entropyH/max(entropyH), entropyFixed_runnorm=entropyFixed/max(entropyFixed)) %>% ungroup()
+    mutate(entropyH_runnorm = scale(entropyH), entropyFixed_runnorm=scale(entropyFixed)) %>% ungroup()
+pdf("wild1.pdf", width=24, height=24)
+#ggplot(filter(bdf, subject < 15), aes(x=trial, y=abstschange, color=entropyH_runnorm)) + facet_grid(subject ~ run) + stat_smooth() + geom_point() +
+#    theme_bw() + scale_color_viridis()
+
+
+ggplot(filter(bdf, subject < 15), aes(x=trial, color=entropyH_runnorm)) + facet_grid(subject ~ run) + 
+    #stat_smooth(aes(y=abstschange), color="blue") + 
+    #geom_point() +
+    #geom_line(aes(y=abstschange), color="blue") +
+    geom_line(aes(y=timestep), color="blue") +
+    geom_line(aes(y=entropyFixed_runnorm*5), color="black") +
+    geom_line(aes(y=entropyH_runnorm*5), color="red") +
+    geom_point(aes(y=timestep, shape=omission, color=vchosen)) +
+    scale_y_continuous(sec.axis = sec_axis(~./5, name = "Sel entropy")) +
+    theme_bw() + scale_color_viridis()
+
+
+dev.off()
 
 #effect of multiple lags for RT swings
 m1 <- lmer(abstschange ~ distfromedgelag_c*omissionlag*vdevlag_c + trial_c + (1 | LunaID) + (1 | run), bdfcent)
@@ -1120,318 +1142,6 @@ car::Anova(memo)
 summary(memo <- lmer(abstschange ~ abstschangelag + abstschangelag2 + abstschangelag3 + rtvmaxlag + abspelag*emotion*rewFunc*entropyHlag + (1 | ID) + (1 | run), filter(bdf, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
 car::Anova(memo)
 
-#try bringing in age for a second
-subinfo <- read.table("/Users/michael/Data_Analysis/clock_analysis/fmri/subinfo_db", header=TRUE) %>% rename(ID=lunaid)
-
-bdf2 <- merge(bdf, subinfo, by="ID")
-bdf2$iage <- 1/bdf2$age * 1000
-bdf2$itrial <- 1/bdf2$trial * 100
-bdf2 <- bdf2 %>% mutate(rtlag=rtlag/100, rtlag2=rtlag2/100, rtlag3=rtlag3/100) #normalize variances
-
-summary(memo <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rtvmaxlag + abspelag*emotion*rewFunc*entropyHlag + (1 | ID) + (1 | run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo)
-
-summary(memo <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rtvmaxlag + age*emotion*rewFunc*abspelag + (1 | ID) + (1 | run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo)
-
-#simple model: learning contingencies
-summary(memo <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rtvmaxlag + age*rewFunc + (1 | ID) + (1 | run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo)
-
-#test of simple slopes
-library(lsmeans)
-lsmeans(memo, ~ age | rewFunc)
-
-#so, as people get older, they're more willing to wait on IEV
-summary(lstrends(memo, "rewFunc", var="age"), adjust="tukey")
-
-#inverese does not improve things in any meaningful way -- stick with linear
-
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rtvmaxlag + iage*rewFunc + (1 | ID) + (1 | run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-anova(memo, memo2)
-
-cm <- lmerCellMeans(memo, fixat0=c("rtlag", "rtlag2", "rtlag3", "rtvmaxlag"), n.cont=10)
-ggplot(cm, aes(x=age, y=rt, color=rewFunc, ymin=rt-se, ymax=rt+se)) + geom_line() + geom_pointrange() 
-
-#now look at emo (not really sure why we're seeing some confounding of emo and rewardfunc -- do we need the counterbalance order in there?)
-summary(memo <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rtvmaxlag + age*emotion + (1 | ID) + (1 | run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo)
-
-summary(memo <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rtvmaxlag + trial*emotion*rewFunc + 
-            age*rewFunc + age*emotion + (1 + rewFunc | ID) + (1 | run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo) #removed higher-order interactions with age that were n.s. 
-
-cm <- lmerCellMeans(memo, fixat0=c("rtlag", "rtlag2", "rtlag3", "rtvmaxlag"), n.cont=10, cont.pts=list(trial=c(1, 10, 20, 40, 50), age=c(10, 15, 20, 25)))
-pdf("tmp emo rewfunc developmental.pdf", width=10, height=8)
-ggplot(cm, aes(x=age, y=rt, color=rewFunc, ymin=rt-se, ymax=rt+se)) + geom_line() + geom_pointrange() + facet_grid(trial~emotion) 
-dev.off()
-
-#summary(lsmeans(memo, ~ age | rewFunc*emotion, at=list(age=c(10, 15, 20, 25))))
-summary(cm1 <- lstrends(memo, ~ emotion, var="age"))
-pairs(cm1) #simple slope differences for age x emotion
-summary(cm2 <- lstrends(memo, ~ rewFunc, var="age"))
-pairs(lstrends(memo, ~ rewFunc, var="age")) #simple slope differences for age x rewFunc
-
-#emotion x rewFunc interaction
-pairs(lsmeans(memo, ~ rewFunc*emotion))
-
-#this is the main rewFunc x emo interaction
-#emotion of either type interferes with learning IEV
-#IEV,scram - IEV,happy   93.508894 21.98762   6.14   4.253  0.0362
-#IEV,scram - IEV,fear    88.692109 21.96689   6.12   4.038  0.0457
-
-#age model incorporating PEs, omissions
-#hold on, it's the interaction of omissionlag with abspe that gives a signed PE effect, right?
-#including signed pe and omission in the model is pretty collinear
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + emotion*age*rewFunc*pemaxlag + omissionlag*pemaxlag + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-summary(memo3 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + emotion*age*rewFunc*pemaxlag + omissionlag*pemaxlag + rtvmaxlag + (1 | ID) + (1 | run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo3)
-
-#conclusion: treating run as nested within subject is far better than a model that treats them as crossed random effects
-anova(memo2, memo3)
-
-car::Anova(memo2)
-#effects to interrogate: age x rewFunc x pemaxlag, age x rewFunc
-
-#age x rewFunc x pemaxlag
-lstrends(memo2, ~ pemaxlag*rewFunc, var="age", at=list(pemaxlag=c(-30, 0, 30, 60))) #simple slopes of age at different levels of PE and by contingency
-lstrends(memo2, ~ age*rewFunc, var="pemaxlag", at=list(age=c(14, 20, 26))) #simple slopes of age at different levels of PE and by contingency
-
-#what about just slow down/speed up for pe
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc + omissionlag*pemaxlag + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc*pemaxlag + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-#so, for larger positive PEs in DEV, bigger speed up. For larger positive PEs in IEV, bigger slow down
-lstrends(memo2, ~ rewFunc, var="pemaxlag")
-
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc*pemaxlag*omissionlag + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-pairs(lstrends(memo2, ~ rewFunc*omissionlag, var="pemaxlag"))
-lstrends(memo2, ~ rewFunc*omissionlag, var="pemaxlag")
-pairs(lsmeans(memo2, ~ rewFunc*omissionlag)) #omissions/rewards after marginalizing over parametric pe effect. Basically same as below, just marginal for DEV
-
-#simpler model with reward/omission
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc*omissionlag + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-pairs(lsmeans(memo2, ~ rewFunc*omissionlag))
-lsmeans(memo2, ~ rewFunc*omissionlag) #so speed up to omissions in IEV (opportunity cost), and similar effect, but weaker in DEV
-
-#unpack age-related effects
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc*pemaxlag*omissionlag*age*emotion + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-#compute age effect at low, medium, and high PEs as a function of contingency
-lstrends(memo2, ~ pemaxlag*rewFunc, var="age", at=list(pemaxlag=c(-30, 0, 30, 60)))
-
-xx <- summary(lsmeans(memo2, ~ pemaxlag*rewFunc*age, at=list(pemaxlag=c(-30, 0, 30, 60), age=c(14, 20, 26))))
-
-ggplot(xx, aes(x=age, y=lsmean, ymin=lsmean-SE, ymax=lsmean+SE, color=factor(pemaxlag))) + geom_line() + geom_pointrange() + theme_bw(base_size=15) +
-    facet_wrap(~rewFunc)
-
-#try a model with just omissions (not parametric pe) for a moment
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc*omissionlag*age*emotion + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-xx <- summary(lsmeans(memo2, ~ omissionlag*rewFunc*age*emotion, at=list(age=c(14, 20, 26))))
-
-ggplot(xx, aes(x=age, y=lsmean, ymin=lsmean-SE, ymax=lsmean+SE, color=omissionlag)) + geom_line() + geom_pointrange() + theme_bw(base_size=20) +
-    facet_grid(emotion~rewFunc)
-
-
-pairs(lsmeans(memo2, ~ omissionlag*rewFunc*age*emotion, at=list(age=c(14, 20, 26))))
-
-pairs(lsmeans(memo2, ~ omissionlag*rewFunc*emotion))
-pairs(lsmeans(memo2, ~ omissionlag*rewFunc*emotion), by=c("emotion", "rewFunc")) #simple effect tests: omission - reward for each emo x rew. corroborates happy DEV effect
-
-#if that's true, what about age slopes for each rewFunc x emo?
-#this is the omission - reward simple slope test for each combo
-pairs(lstrends(memo2, ~ omissionlag*rewFunc*emotion, var="age"), by=c("emotion", "rewFunc")) #simple effect tests: omission - reward for each emo x rew. corroborates happy DEV effect
-
-#or just the estimates themselves (averaging over omissions/rewards since that wasn't sig)
-summary(lstrends(memo2, ~ rewFunc*emotion, var="age"), infer=c(TRUE, TRUE), by=c("emotion", "rewFunc")) #simple effect tests: omission - reward for each emo x rew. corroborates happy DEV effect
-summary(lstrends(memo2, ~ rewFunc*emotion, var="age"), infer=c(TRUE, TRUE)) #slight positive age effect for happy + IEV
-
-plot(lsmeans(memo2, ~ omissionlag*rewFunc*emotion), comparisons=TRUE)
-
-
-##wouldn't this be more a matter of directional RT change? PEs predict speed up or slow down
-summary(memo2 <- lmer(timestepchange ~ timestepchangelag + rewFunc*pemaxlag*omissionlag*age*emotion + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=TRUE))
-car::Anova(memo2)
-
-xx <- summary(lsmeans(memo2, ~ omissionlag*rewFunc*age*emotion, at=list(age=c(14, 20, 26))))
-
-ggplot(xx, aes(x=age, y=lsmean, ymin=lsmean-SE, ymax=lsmean+SE, color=omissionlag)) + geom_line() + geom_pointrange() + theme_bw(base_size=20) +
-    facet_grid(emotion~rewFunc)
-
-#test omission - reward slope differences for each emo x rew combo
-pairs(lstrends(memo2, ~ omissionlag*rewFunc*emotion, var="age"), by=c("emotion", "rewFunc")) #simple effect tests: omission - reward for each emo x rew. corroborates happy DEV effect
-
-#fancy: by wrapping in R bind, we can get the comparisons adjusted for multiple comparisons
-rbind(pairs(lstrends(memo2, ~ omissionlag*rewFunc*emotion, var="age"), by=c("emotion", "rewFunc"))) #simple effect tests: omission - reward for each emo x rew. corroborates happy DEV effect
-
-xx <- summary(lsmeans(memo2, ~ omissionlag*rewFunc*age*emotion*pemaxlag, at=list(age=c(14, 20, 26), pemaxlag=c(-30, 0, 30, 60))))
-
-ggplot(xx, aes(x=age, y=lsmean, ymin=lsmean-SE, ymax=lsmean+SE, color=omissionlag, shape=factor(pemaxlag))) + geom_line() + geom_pointrange() + theme_bw(base_size=20) +
-    facet_grid(emotion~rewFunc)
-
-# I have concerns about keeping omissionlag and pemaxlag in the same model. It implies that there can be instances where there is a big negative PE from a reward
-# or a big positive PE from an omission. These really don't occur on the clock under the current contingencies
-
-#model omitting omission/reward
-summary(memo2 <- lmer(timestepchange ~ timestepchangelag + rewFunc*pemaxlag*age*emotion + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=TRUE))
-car::Anova(memo2)
-
-xx <- summary(lsmeans(memo2, ~ rewFunc*age*emotion*pemaxlag, at=list(age=c(14, 20, 26), pemaxlag=c(-30, 0, 30, 60))))
-
-ggplot(xx, aes(x=age, y=lsmean, ymin=lsmean-SE, ymax=lsmean+SE, color=factor(pemaxlag))) + geom_line() + geom_pointrange() + theme_bw(base_size=20) +
-    facet_grid(emotion~rewFunc)
-
-#looks a bit like RT changes are broader under happy than other conditions.
-pairs(lstrends(memo2, ~ pemaxlag*rewFunc*emotion, var="age", at=list(pemaxlag=c(-30, 0, 30, 60))), by=c("pemaxlag", "rewFunc"))
-
-#difference in magnitude of PE effect on RT change by emotion (irrespective of age)
-pairs(lstrends(memo2, ~ rewFunc*emotion, var="pemaxlag"), by=c("rewFunc"))
-
-####age hypotheses 
-# 1) participants will get better at waiting in IEV with age
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc*omissionlag*age*emotion*itrial + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-#no meaningful age x emo x rewFunc interaction
-pairs(lstrends(memo2, ~ rewFunc*emotion, var="age"), by=c("rewFunc"))
-
-#yes, there is a slope difference between IEV and DEV
-cld(lstrends(memo2, ~ rewFunc, var="age"))
-#significant positive IEV slope: people slow down with age in IEV
-summary(lstrends(memo2, ~rewFunc, var="age"), infer=c(TRUE, TRUE), adjust="none")
-
-#this is especially true for rewards
-summary(lstrends(memo2, ~rewFunc*omissionlag, var="age"), infer=c(TRUE, TRUE), adjust="tukey")
-
-pairs(lstrends(memo2, ~rewFunc*omissionlag, var="age"), infer=c(TRUE, TRUE), by=c("rewFunc"))
-
-#any evidence of inverse age effect? (no, 0.1 difference... so stay with linear)
-summary(memo3 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc*omissionlag*iage*emotion*itrial + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-anova(memo2, memo3)
-
-#attempt to replicate Alex's model (not seeing the same effects -- largely concentrated in emo term. others are close. Also only close if I don't use lagged abspe, which seems wrong)
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc + 
-            abspelag*emotion + omissionlag*abspelag + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-xx <- summary(lsmeans(memo2, ~abspelag*emotion, at=list(abspelag=c(0,30, 60, 90))))
-
-pairs(lstrends(memo2, ~emotion, var="abspelag")) #yes, shows happy > scram & fear for PE-related slow down
-
-ggplot(xx, aes(x=abspelag, y=lsmean, ymin=lsmean-SE, ymax=lsmean+SE, color=emotion)) + geom_line() + geom_pointrange()
-
-#what about signed pe?
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc + 
-            pemaxlag*emotion + omissionlag*pemaxlag + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-#or just add in age to see if the abspelag x emotion effect depends on age
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc + 
-            abspelag*emotion*age + omissionlag*abspelag*age + rtvmaxlag*age + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-#several effects hiding in there...
-#as above
-summary(lsmeans(memo2, ~abspelag*emotion, at=list(abspelag=c(0,30, 60, 90))))
-
-#age x abspelag: fanning in of PE-related modulation with age.
-xx <- summary(lsmeans(memo2, ~abspelag*age, at=list(age=c(14, 20, 26), abspelag=c(0,30, 60, 90))))
-ggplot(xx, aes(x=age, y=lsmean, ymin=lsmean-SE, ymax=lsmean+SE, color=factor(abspelag))) + geom_pointrange() + geom_line()
-
-#age x omissionlag
-summary(lstrends(memo2, ~omissionlag, var="age"), infer=c(TRUE, TRUE)) #positive age effect for rewards. So, individuals slow down to reward to a greater extent with age
-pairs(lstrends(memo2, ~omissionlag, var="age")) #age slope is bigger for rewards than omissions
-
-
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc + 
-            abspelag*emotion*age*omissionlag + rtvmaxlag*age + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-
-car::Anova(memo2)
-
-pairs(lstrends(memo2, ~omissionlag*emotion, var="age"), by="emotion") #this is where the money is -- age effect: rewards > omissions for happy and scram, but not fear
-pairs(lstrends(memo2, ~omissionlag*emotion, var="age"), by="omissionlag")
-
-afex::mixed(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc + 
-            abspelag*emotion*age*omissionlag + rtvmaxlag*age + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE)
-
-
-    
-###
-#hyp 2) PEs will differentially modulate RTs with development
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc*pemaxlag*age*emotion*itrial + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-#not much slicing by emo
-pairs(lstrends(memo2, ~ rewFunc*emotion, var="age", at=list(pemaxlag=c(-30, 0, 30, 60))), by=c("rewFunc"))
-
-#right, this is where the money is... pe effects, but these seem to interact with emo
-pairs(lstrends(memo2, ~ rewFunc*emotion*age, var="pemaxlag", at=list(age=c(14, 20, 26))), by=c("rewFunc"))
-
-lstrends(memo2, ~ rewFunc*emotion*age, var="pemaxlag", at=list(age=c(14, 20, 26)))
-
-#look at overall effects of PE for IEV versus DEV 
-xx <- summary(lsmeans(memo2, ~ pemaxlag*rewFunc*age*emotion, at=list(age=c(14, 20, 26), pemaxlag=c(-30, 0, 30, 60))))
-
-ggplot(xx, aes(x=age, y=lsmean, ymin=lsmean-SE, ymax=lsmean+SE, color=factor(pemaxlag))) + geom_line() + geom_pointrange() + theme_bw(base_size=20) +
-    facet_grid(rewFunc~emotion, scales="free_y")
-
-#can we basically do a kind a regions of significance test for age 14 versus 26?
-lstrends(memo2, ~ rewFunc*emotion*age, var="pemaxlag", at=list(age=c(14, 20, 26)))
-
-#pairs(lstrends(memo2, ~ rewFunc*emotion*age, var="pemaxlag", at=list(age=c(14, 20, 26))), by=c("rewFunc", "emotion"))
-
-pairs(lsmeans(memo2, ~ rewFunc*emotion*age*pemaxlag, at=list(pemaxlag=c(-30, 0, 30, 60), age=c(14, 20, 26))), by=c("rewFunc", "emotion"))
-
-
-pairs(lsmeans(memo2, ~ rewFunc*emotion*age*pemaxlag, at=list(pemaxlag=c(-30, 60), age=c(14, 26))), by=c("rewFunc", "emotion"))
-
-
-#
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + abspelag*omissionlag + rtvmaxlag + (1 | ID) + (1 | run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-lstrends(memo2, ~ omissionlag, var="abspelag")
-
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + abspelag*omissionlag + rtvmaxlag + (1 | ID) + (1 | run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + abspelag*omissionlag + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-
-###
-#entropy effects?
-  
-summary(memo2 <- lmer(rt ~ rtlag + rtlag2 + rtlag3 + rewFunc*pemaxlag*age*emotion*itrial*entropyHlag + rtvmaxlag + (1 | ID/run), filter(bdf2, rewFunc %in% c("IEV", "DEV") & !ID==11282), REML=FALSE))
-car::Anova(memo2)
-
-#substantial effect
-#rewFunc:pemaxlag:age:entropyHlag                  10.0672  1  0.0015093 **
-
-lstrends(memo2, ~ entropyHlag*age*rewFunc, var="pemaxlag", at=list(age=c(14, 20, 26), entropyHlag=c(2, 3, 4)))
-
-xx <- summary(lsmeans(memo2, ~ pemaxlag*entropyHlag*age*rewFunc, at=list(age=c(14, 20, 26), entropyHlag=c(2, 3, 4), pemaxlag=c(-30, 0, 30, 60))))
-
-pdf("crazy entropy plot.pdf", width=16, height=10)
-ggplot(xx, aes(x=age, y=lsmean, color=factor(pemaxlag), shape=factor(entropyHlag), ymax=lsmean+SE, ymin=lsmean-SE)) + 
-    geom_pointrange(size=1.4) + geom_line(size=1.5) + facet_wrap(~rewFunc, scales="free_y") + theme_bw(base_size=20)
-dev.off()
-#conclusion: age effects are strongest for negative PEs in IEV. So... big negative PEs in 
-
-#age:rewFunc:pemaxlag           11.3547  1  0.0007526 ***
-    
 
 #######
 #w/i versus b/w run effects

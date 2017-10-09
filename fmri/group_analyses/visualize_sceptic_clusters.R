@@ -7,23 +7,27 @@ library(oro.nifti)
 library(reshape2)
 library(robust)
 library(car)
+library(dplyr)
 
 fslgroupdir <- "/gpfs/group/mnh5174/default/MMClock/fsl_sceptic_group_jun2017"
 
 #cope 6 is relative uncertainty in LVL1 runs
-l2dirs <- data.frame(dir=dirname(readLines(file.path(fslgroupdir, "sceptic_vchosen_ventropy_dauc_pemax_preconvolve_cope1_inputs")))) #use dirname to pull off cope6
-
-l2dirs$lunaid <- as.numeric(sub(".*/MR_Proc/(\\d{5})_.*", "\\1", l2dirs$dir, perl=TRUE))
+l2dirs <- data.frame(dir=dirname(readLines(file.path(fslgroupdir, "sceptic_vchosen_ventropy_dauc_pemax_preconvolve_cope1_inputs")))) #use dirname to pull off cope
+if (as.character(l2dirs[nrow(l2dirs), "dir"]) == "") { l2dirs <- l2dirs[-nrow(l2dirs),,drop=FALSE] } #there is an empty trailing row sometimes
+l2dirs$ID <- as.numeric(sub(".*/MR_Proc/(\\d{5})_.*", "\\1", l2dirs$dir, perl=TRUE))
 
 #master cov list
 #n73_covs <- read.table("/Volumes/Serena/MMClock/fsl_group/groupcov_ageexplore_n73.txt", header=TRUE)
-n73_covs <- read.table("/Users/michael/TresorSync/fmri/fsl_group/groupcov_ageexplore_n73.txt", header=TRUE)
+##n73_covs <- read.table("/Users/michael/TresorSync/fmri/fsl_group/groupcov_ageexplore_n73.txt", header=TRUE)
 
-l2dirs <- merge(l2dirs, n73_covs, by="lunaid", all.x=TRUE)
+subinfo <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/subinfo_db", header=TRUE)
+subinfo <- subinfo %>% rename(ID=lunaid)
+
+l2dirs <- merge(l2dirs, subinfo, by="ID", all.x=TRUE)
 l2dirs$age.c <- l2dirs$age - mean(l2dirs$age, na.rm=TRUE)
 l2dirs$female.c <- l2dirs$female - mean(l2dirs$female, na.rm=TRUE)
+l2dirs$age_female <- l2dirs$age.c * l2dirs$female.c #numerical interaction
 l2dirs$female_fac <- factor(l2dirs$female, levels=c(0,1), labels=c("Male", "Female"))
-l2dirs$explorer <- factor(l2dirs$explorer, levels=c(0,1), labels=c("Non-explorer", "Explorer"))
 
 #list of LVL2 copes
 #cope1: m_scram
@@ -36,8 +40,7 @@ l2dirs$explorer <- factor(l2dirs$explorer, levels=c(0,1), labels=c("Non-explorer
 #cope8: m_run (linear run effect)
 
 source(file.path(getMainDir(), "clock_analysis", "fmri", "glm_helper_functions.R"))
-source(file.path(getMainDir(), "bars_ica", "shared_functions.R"))
-afnidir <- "/usr/local/ni_tools/afni"
+afnidir <- "/opt/aci/sw/afni/17.0.02/bin"
 setwd(file.path(getMainDir(), "clock_analysis/fmri/group_analyses/sceptic_cluster_plots_fsl_Jun2017"))
 
 #for explorer x age interaction group map, generate clusters using 3dclust, then extract average betas within clusters to generate plots
@@ -69,7 +72,7 @@ dim(graphlist) <- c(length(l1copes), length(l2copes), length(l3copes))
 dimnames(graphlist) <- list(l1cope=l1copes, l2cope=l2copes, l3cope=l3copes)
 
 zthresh <- 2.807 #2-tailed p=.005 for z stat
-clustsize <- 30 #a bit arbitrary at the moment
+clustsize <- 34 #based on 3dClustSim using ACFs for first-level FEAT runs
 
 for (l1 in 1:length(l1copes)) {
   for (l2 in 1:length(l2copes)) {
@@ -77,9 +80,9 @@ for (l1 in 1:length(l1copes)) {
     #note that these do not vary by level 3 covariate (because each represents the activation for a given event (e.g., clock_onset) and multi-run contrast (e.g., fear > scram)
     copefiles <- file.path(l2dirs$dir, paste0("cope", l1, ".feat"), "stats", paste0("cope", l2, ".nii.gz"))
     
-    #library(Rniftilib)
+    suppressMessages(library(Rniftilib))
     imgdims <- Rniftilib::nifti.image.read(copefiles[1], read_data=0)$dim
-    #detach("package:Rniftilib", unload=TRUE) #necessary to avoid dim() conflict with oro.nifti
+    detach("package:Rniftilib", unload=TRUE) #necessary to avoid dim() conflict with oro.nifti
     
     #generate concatenated cope file image
     copeconcat <- array(0, dim=c(imgdims, length(copefiles)))
@@ -88,7 +91,9 @@ for (l1 in 1:length(l1copes)) {
     }
     
     for (l3 in 1:length(l3copes)) {
-      groupmap <- file.path(fslgroupdir, paste0(l1copes[l1], ".gfeat"), paste0("cope", l2, ".feat"), "stats", paste0("zstat", l3, ".nii.gz"))
+      #groupmap <- file.path(fslgroupdir, paste0(l1copes[l1], ".gfeat"), paste0("cope", l2, ".feat"), "stats", paste0("zstat", l3, ".nii.gz")) #this line works if .gfeat directories are named by the contrast
+      groupmap <- file.path(fslgroupdir, paste0("cope", l1, ".gfeat"), paste0("cope", l2, ".feat"), "stats", paste0("zstat", l3, ".nii.gz")) #this is for numeric naming of .gfeat dirs
+      
       #gdat <- readNIfTI(groupmap, reorient=FALSE)
       #generate cluster mask
       runAFNICommand(paste0("3dclust -overwrite -1Dformat -nosum -1dindex 0 -1tindex 0",
@@ -138,7 +143,9 @@ for (l1 in 1:length(l1copes)) {
             clusavg <- apply(mat, 2, mean)
           })      
 
-      pdf(paste0(l1copes[l1], "_", l2copes[l2], "_", l3copes[l3], ".pdf"), width=11, height=8)
+      curoutdir <- file.path(getwd(), l1copes[l1], l2copes[l2])
+      dir.create(curoutdir, showWarnings=FALSE, recursive=TRUE)
+      pdf(file.path(curoutdir, paste0(l1copes[l1], "_", l2copes[l2], "_", l3copes[l3], ".pdf")), width=11, height=8)
       clustgraphs <- vector("list", length(bestguess))
       for (k in 1:length(bestguess)) {
         df <- data.frame(l2dirs, vox=roimats[[k]])
@@ -149,23 +156,38 @@ for (l1 in 1:length(l1copes)) {
           plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p = ", round(corr$p.value, 3), ", rob r = ", round(robcorr, 2))
 
           g <- ggplot(df, aes(x=age, y=vox)) + geom_point() + stat_smooth(method="loess", color="red", size=2, se=FALSE) + stat_smooth(method="lm") +
-              ggtitle(plottitles[k]) + annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0)
-          plot(g)          
+              ggtitle(plottitles[k]) + annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0) + theme_bw(base_size=18) +
+              ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Age (years)")
+          plot(g)
         } else if (l3copes[l3] == "female") {
           m <- t.test(vox ~ female_fac, df)
           plotnote <- paste0("t(", round(m$parameter, 2), ") = ", round(m$statistic, 2), ", p = ", round(m$p.value, 4))
           g <- ggplot(df, aes(x=female_fac, y=vox)) + geom_boxplot() + 
-              ggtitle(plottitles[k]) + annotate("text", x = 1, y = max(df$vox)+0.1*max(df$vox), label = plotnote, hjust=0)
+              ggtitle(plottitles[k]) + annotate("text", x = 1, y = max(df$vox)+0.1*max(df$vox), label = plotnote, hjust=0) + theme_bw(base_size=18) +
+              ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Sex")
           plot(g)
         } else if (l3copes[l3] == "intercept") {
           m <- t.test(df$vox, mu=0) #test against 0
           plotnote <- paste0("t(", round(m$parameter, 2), ") = ", round(m$statistic, 2), ", p = ", round(m$p.value, 4))
           g <- ggplot(df, aes(x=factor(0), y=vox)) + geom_boxplot() + 
               ggtitle(plottitles[k]) + annotate("text", x = 0.5, y = max(df$vox)+0.1*max(df$vox), label = plotnote, hjust=0) +
+              theme_bw(base_size=18) + ylab(paste(l1copes[l1], l2copes[l2])) +
               theme(axis.title.x=element_blank(),
                   axis.text.x=element_blank(),
                   axis.ticks.x=element_blank())
           plot(g)          
+        } else if (l3copes[l3] == "female_x_age") {
+          m <- summary(lm(vox ~ age*female, df))
+          eff_b <- m$coefficients["age:female","Estimate"]
+          eff_t <- m$coefficients["age:female","t value"]
+          eff_p <- m$coefficients["age:female","Pr(>|t|)"]
+          plotnote <- paste0("b = ", round(eff_b, 3), ", t = ", round(eff_t, 3), ", p = ", round(eff_p, 4))
+
+          g <- ggplot(df, aes(x=age, y=vox, color=female_fac)) + geom_point() + stat_smooth(method="lm") +
+              ggtitle(plottitles[k]) + annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0) +
+              theme_bw(base_size=18) +
+              ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Age (years)")
+          plot(g)
         }
         
         clustgraphs[[k]] <- g
@@ -181,22 +203,50 @@ for (l1 in 1:length(l1copes)) {
 save(graphlist, file="cluster_ggplot_objs_Jun2017.RData")
 
 
-#load(file="cluster_ggplot_objs_Jun2017.RData")
-#dimnames(graphlist)
-#
-##age-related increase for RPE+ in cognitive network. Here L IPL
-#df <- graphlist[["rpe_pos", "m_overall", "age"]][[1]]$data
-#
-#corr <- cor.test(df$age, df$vox)
-#plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p = ", round(corr$p.value, 3))
-#
-#pdf("rpe_pos_age_increases_lipl.pdf", width=8, height=6)
-#g <- ggplot(df, aes(x=age, y=vox)) + geom_point() + stat_smooth(method="lm", se=FALSE, size=3) +
-#    annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
-#    theme_bw(base_size=24) + ylab("Activation to pos. RPEs in L IPL (AU)\n") + xlab("Age (years)")
-#plot(g)          
-#dev.off()
-#
+load(file="cluster_ggplot_objs_Jun2017.RData")
+dimnames(graphlist)
+
+#L and R IFG fear > scram age effect. L IFG is cluster 3
+df <- graphlist[["ventropy", "fear_gt_scram", "age"]][[3]]$data
+
+corr <- cor.test(df$age, df$vox)
+plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p = ", format(corr$p.value, digits=3))
+
+pdf("ventropy_fear_gt_scram_age_increases_lifg.pdf", width=8, height=6)
+g <- ggplot(df, aes(x=age, y=vox)) + geom_point(size=3) + stat_smooth(method="lm", se=FALSE, size=3, color="darkblue") +
+    annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
+    theme_bw(base_size=24) + ylab("Value entropy activity in L IFG (AU)\n") + xlab("Age (years)")
+plot(g)          
+dev.off()
+
+
+#MPFC age increase for happy > scram. Cluster 1 is mPFC/ACC
+df <- graphlist[["ventropy", "happy_gt_scram", "age"]][[1]]$data
+
+corr <- cor.test(df$age, df$vox)
+plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p = ", format(corr$p.value, digits=3))
+
+pdf("ventropy_happy_gt_scram_age_increases_mpfc.pdf", width=8, height=6)
+g <- ggplot(df, aes(x=age, y=vox)) + geom_point(size=3) + stat_smooth(method="lm", se=FALSE, size=3, color="darkblue") +
+    annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
+    theme_bw(base_size=24) + ylab("Value entropy activity in mPFC (AU)\n") + xlab("Age (years)")
+plot(g)          
+dev.off()
+
+
+#age-related increases in SMA for PEs
+df <- graphlist[["pemax", "m_overall", "age"]][[3]]$data
+
+corr <- cor.test(df$age, df$vox)
+plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p = ", round(corr$p.value, digits=3))
+
+pdf("rpe_pos_age_increases_sma.pdf", width=8, height=6)
+g <- ggplot(df, aes(x=age, y=vox)) + geom_point(size=3) + stat_smooth(method="lm", se=FALSE, size=3, color="darkblue") +
+    annotate("text", x = min(df$age), y = max(df$vox) - .01, label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
+    theme_bw(base_size=24) + ylab("RPE activity in SMA (AU)\n") + xlab("Age (years)")
+plot(g)          
+dev.off()
+
 #
 ##age-related increase for clock onset in L IFG
 #df <- graphlist[["clock_onset", "happy_gt_scram", "age"]][[6]]$data
