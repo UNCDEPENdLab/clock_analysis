@@ -1,5 +1,4 @@
-# setwd(file.path(getMainDir(), "temporal_instrumental_agent/clock_task/vba_fmri"))
-
+# in this script, value entropy is replaced with softmax entropy
 # for Alex:
 setwd("~/code/temporal_instrumental_agent/clock_task/vba_fmri/")
 
@@ -13,7 +12,9 @@ library(dplyr)
 library(tidyr)
 library(psych)
 library(gdata)
-source(file.path(getMainDir(), "Miscellaneous", "Global_Functions.R"))
+# for Alex:
+sapply(list.files(path="~/code/R", full.names=TRUE), source);
+# source(file.path(getMainDir(), "Miscellaneous", "Global_Functions.R"))
 library(R.matlab)
 library(reshape2)
 #bring in Luna IDs
@@ -35,8 +36,11 @@ fullSoftH <- aperm(softmax_entropies$fixed.H, c(2,1))
 selSoftH <- aperm(softmax_entropies$decay.H, c(2,1))
 softmax_H_full <- melt(fullSoftH)
 softmax_H_sel <- melt(selSoftH)
-bdf$softmax_H_full <- softmax_H_full$value
-bdf$softmax_H_sel <- softmax_H_sel$value
+
+# AD: careful here, I am replacing value with softmax entropy
+
+bdf$entropyFixed <- softmax_H_full$value
+bdf$entropyH <- softmax_H_sel$value
 # AD: I checked that we merged correctly
 #bdf$subject_check <- softmax_H_full$Var2
 
@@ -59,23 +63,6 @@ ggplot(edesc_aggruns, aes(x=trial, y=entropy, color=Model)) +
 summary((mdiff = lmer(entropy ~ Model + trial + (1|LunaID) + (1|run), edescriptives)))
 car::Anova(mdiff)
 
-# same for softmax entropy
-
-edescriptives_softmax <- bdf %>% 
-  dplyr::select(LunaID, run, trial, softmax_H_full, softmax_H_sel) %>% 
-  gather(key=Model, value=entropy, softmax_H_full, softmax_H_sel) %>% 
-  mutate(Model=recode(Model, softmax_H_full="Full maintenance", softmax_H_sel="Selective maint."))
-
-edesc_aggruns_softmax <- edescriptives_softmax %>% filter(run > 1) %>%
-  group_by(LunaID, Model, trial) %>% dplyr::summarize(entropy=mean(entropy))
-
-ggplot(edesc_aggruns_softmax, aes(x=trial, y=entropy, color=Model)) + 
-  stat_smooth(size=2) + theme_bw(base_size=25)
-
-summary((mdiff_soft = lmer(entropy ~ Model + trial + (1|LunaID) + (1|run), edescriptives_softmax)))
-car::Anova(mdiff_soft)
-
-
 #just for merging
 mdf <- bdf %>% group_by(LunaID) %>% summarize(msplit=dplyr::first(msplit))
 
@@ -90,7 +77,7 @@ edesc_aggtrialsruns_msplit <- edescriptives %>% filter(run > 1) %>% left_join(md
     group_by(Model, msplit, trial) %>% do({data.frame(rbind(Hmisc::smean.cl.boot(.$entropy))) } )  %>% 
     ungroup() %>% mutate(msplit=recode(msplit, "< Median" = "Total~earnings<median", ">= Median"="Total~earnings>=median"))
 
-pdf("entropy curves raw means.pdf", width=5, height=3.5)
+pdf("softmax entropy curves raw means.pdf", width=5, height=3.5)
 #ggplot(filter(edesc_aggtrialsruns), aes(x=trial, y=m, ymin=m-se, ymax=m+se, color=Model)) +
 ggplot(edesc_aggtrialsruns, aes(x=trial, y=Mean, ymin=Lower, ymax=Upper, color=Model)) +
     theme_bw(base_size=16) + xlab("Trial") + ylab("Entropy") +
@@ -102,7 +89,7 @@ ggplot(edesc_aggtrialsruns, aes(x=trial, y=Mean, ymin=Lower, ymax=Upper, color=M
     theme(axis.title.y=element_text(margin=margin(r=15)), axis.title.x=element_text(margin=margin(t=10)))
 dev.off()
 
-pdf("entropy curves raw means inset.pdf", width=3.5, height=2.5)
+pdf("softmax entropy curves raw means inset.pdf", width=3.5, height=2.5)
 #ggplot(filter(edesc_aggtrialsruns), aes(x=trial, y=m, ymin=m-se, ymax=m+se, color=Model)) +
 ggplot(edesc_aggtrialsruns, aes(x=trial, y=Mean, ymin=Lower, ymax=Upper, color=Model)) +
     theme_bw(base_size=13) + xlab("Trial") + ylab("Entropy") +
@@ -114,7 +101,7 @@ ggplot(edesc_aggtrialsruns, aes(x=trial, y=Mean, ymin=Lower, ymax=Upper, color=M
     ggtitle("Averaged over runs (2-8)")
 dev.off()
 
-pdf("entropy curves raw means inset msplit.pdf", width=7.9, height=2.5)
+pdf("softmax entropy curves raw means inset msplit.pdf", width=7.9, height=2.5)
 #ggplot(filter(edesc_aggtrialsruns), aes(x=trial, y=m, ymin=m-se, ymax=m+se, color=Model)) +
 ggplot(edesc_aggtrialsruns_msplit, aes(x=trial, y=Mean, ymin=Lower, ymax=Upper, color=Model)) +
     theme_bw(base_size=16) + xlab("Trial within run") + ylab("Entropy") +
@@ -131,112 +118,16 @@ ggplot(edesc_aggtrialsruns_msplit, aes(x=trial, y=Mean, ymin=Lower, ymax=Upper, 
 #strip.placement = "outside", 
 dev.off()
 
+#  add lagged softmax entropies
+# first remove the old value entropy variables
+bdf <- bdf[,-(55:57)]
 
-## plots for softmax entropy
-
-#This just gets the 95% bootstrapped CIs. Can't put a multi-return call in summarize
-edesc_aggtrialsruns_soft <- edescriptives_softmax %>% filter(run > 1) %>% 
-  group_by(Model, trial) %>% do({data.frame(rbind(Hmisc::smean.cl.boot(.$entropy))) } )  %>% 
-  ungroup() #%>% left_join(mdf, by="LunaID")
-#summarize(m=mean(value), se=plotrix::std.error(value))
-#, b=list(Hmisc::smean.cl.boot(value))) %>% unnest()
-
-edesc_aggtrialsruns_msplit_soft <- edescriptives_softmax %>% filter(run > 1) %>% left_join(mdf, by="LunaID") %>% 
-  group_by(Model, msplit, trial) %>% do({data.frame(rbind(Hmisc::smean.cl.boot(.$entropy))) } )  %>% 
-  ungroup() %>% mutate(msplit=recode(msplit, "< Median" = "Total~earnings<median", ">= Median"="Total~earnings>=median"))
-
-pdf("Softmax entropy curves raw means.pdf", width=5, height=3.5)
-#ggplot(filter(edesc_aggtrialsruns), aes(x=trial, y=m, ymin=m-se, ymax=m+se, color=Model)) +
-ggplot(edesc_aggtrialsruns_soft, aes(x=trial, y=Mean, ymin=Lower, ymax=Upper, color=Model)) +
-  theme_bw(base_size=16) + xlab("Trial") + ylab("Softmax entropy") +
-  geom_line(size=1.5) + geom_ribbon(aes(fill=Model, color=NULL), alpha=0.3) +
-  #geom_ribbon(aes(color=NULL, fill=Model), alpha=0.3)
-  scale_color_brewer("Model", palette="Dark2") + scale_fill_brewer("Model", palette="Dark2") +
-  theme(legend.position = c(0.75, 0.8), legend.background = element_rect(color = "grey40", 
-                                                                         fill = "grey98", size = 0.5, linetype = "solid")) +
-  theme(axis.title.y=element_text(margin=margin(r=15)), axis.title.x=element_text(margin=margin(t=10)))
-dev.off()
-
-pdf("Softmax entropy curves raw means inset.pdf", width=3.5, height=2.5)
-#ggplot(filter(edesc_aggtrialsruns), aes(x=trial, y=m, ymin=m-se, ymax=m+se, color=Model)) +
-ggplot(edesc_aggtrialsruns_soft, aes(x=trial, y=Mean, ymin=Lower, ymax=Upper, color=Model)) +
-  theme_bw(base_size=13) + xlab("Trial") + ylab("Softmax entropy") +
-  geom_line(size=1.5, show.legend=FALSE) + geom_ribbon(aes(color=NULL, fill=Model), alpha=0.3, show.legend=FALSE) +
-  scale_color_brewer("Model", palette="Dark2") + scale_fill_brewer("Model", palette="Dark2") +
-  theme(legend.position = c(0.75, 0.5), legend.background = element_rect(color = "grey40", 
-                                                                         fill = "grey98", size = 0.5, linetype = "solid")) +
-  theme(axis.title.y=element_text(margin=margin(r=15)), axis.title.x=element_text(margin=margin(t=10))) +
-  ggtitle("Averaged over runs (2-8)")
-dev.off()
-
-pdf("softmax entropy curves raw means inset msplit.pdf", width=7.9, height=2.5)
-#ggplot(filter(edesc_aggtrialsruns), aes(x=trial, y=m, ymin=m-se, ymax=m+se, color=Model)) +
-ggplot(edesc_aggtrialsruns_msplit_soft, aes(x=trial, y=Mean, ymin=Lower, ymax=Upper, color=Model)) +
-  theme_bw(base_size=16) + xlab("Trial within run") + ylab("Entropy") +
-  geom_line(size=1.5, show.legend=FALSE) + geom_ribbon(aes(color=NULL, fill=Model), alpha=0.3, show.legend=FALSE) +
-  scale_color_brewer("Model", palette="Dark2") + scale_fill_brewer("Model", palette="Dark2") +
-  theme(legend.position = c(0.75, 0.5), legend.background = element_rect(color = "grey40", 
-                                                                         fill = "grey98", size = 0.5, linetype = "solid")) +
-  theme(axis.title.y=element_text(margin=margin(r=15)), axis.title.x=element_text(margin=margin(t=10))) +
-  facet_wrap(~msplit, labeller=label_parsed) +
-  #ggtitle("Averaged over runs (2-8)") 
-  theme(strip.background = element_blank(), 
-        strip.text = element_text(face = "bold", size=12, margin=margin(t=0, b=0)),
-        plot.margin = margin(l=7, r=7, t=0, b=6))
-#strip.placement = "outside", 
-dev.off()
+bdf <- bdf %>% group_by(LunaID, run) %>% mutate (entropyHlag = lag(entropyH, n=1, order_by=trial),
+                                                        entropyFlag= lag(entropyFixed, n=1, order_by=trial)
+)
 
 
-
-#what about plotting all trials? (No run aggregation and keep run 1)
-#we should probably drop true zeros... doesn't seem to have much effect: filter(entropy > 0) %>%
-edesc_aggtrials_soft <- edescriptives_softmax %>% group_by(Model, run, trial) %>% do({data.frame(rbind(Hmisc::smean.cl.boot(.$entropy))) } )  %>% ungroup() %>%
-    arrange(Model, run, trial) %>% mutate(trialabs=rep(1:400,2))
-
-pdf("softmax entropy curves raw means alltrials.pdf", width=10.25, height=5)
-ggplot(filter(edesc_aggtrials_soft, trialabs > 1), aes(x=trialabs, y=Mean, ymin=Lower, ymax=Upper, color=Model)) +
-#ggplot(edesc_aggtrials, aes(x=trialabs, y=Mean, ymin=Lower, ymax=Upper, color=Model)) +
-    theme_bw(base_size=16) + xlab("Trial") + ylab("Entropy") +
-    geom_line(size=1.5) + geom_ribbon(aes(color=NULL, fill=Model), alpha=0.3) +
-    scale_color_brewer("Model", palette="Dark2") + scale_fill_brewer("Model", palette="Dark2") +
-    #theme(legend.position = c(0.75, 0.3), legend.background = element_rect(color = "grey40", 
-    #        fill = "grey98", size = 0.5, linetype = "solid")) +
-    theme(axis.title.y=element_text(margin=margin(r=15)), axis.title.x=element_text(margin=margin(t=10))) +
-    geom_vline(xintercept=seq(50, 350, 50), color="gray60")
-dev.off()
-
-subset(edesc_aggtrials, trialabs < 10)
-
-
-
-pdf("softmax entropy curves with spaghetti.pdf", width=8, height=6)
-ggplot(filter(edescriptives_softmax, run > 1), aes(x=trial, y=entropy, color=Model)) + stat_smooth(size=2, alpha=0.2, method="gam", formula = y ~ s(x), size = 1) + theme_bw(base_size=20) + xlab("Trial") + ylab("Entropy") + 
-    #geom_line(data=subset(edesc_aggruns), aes(x=trial, y=entropy, color=Model, group=interaction(LunaID, Model)), size=0.4, alpha=0.3)
-    stat_smooth(data=edesc_aggruns_softmax, aes(x=trial, y=entropy, color=Model, group=interaction(LunaID, Model)), size=0.4, alpha=0.1, se=FALSE, method="loess")
-    #geom_jitter(data=edesc_aggruns, size=0.4, alpha=0.2, width=0.5) + 
-#    layer(mapping=NULL,
-#        data=edesc_aggruns,
-#        geom=geom_point(alpha=0.1),
-#        stat="identity", position="identity")
-dev.off()
-
-pdf("softmax entropy curves gam.pdf", width=8, height=6)
-ggplot(filter(edescriptives_softmax, run > 1), aes(x=trial, y=entropy, color=Model)) + theme_bw(base_size=20) + xlab("Trial") + ylab("Entropy") +
-    stat_smooth(size=2, alpha=0.2, method="gam", formula = y ~ s(x), method.args=list(method="REML"), size = 1)
-    #stat_smooth(size=2, alpha=0.2, method="loess")
-    #geom_line(data=subset(edesc_aggruns), aes(x=trial, y=entropy, color=Model, group=interaction(LunaID, Model)), size=0.4, alpha=0.3)
-#    stat_smooth(data=edesc_aggruns, aes(x=trial, y=entropy, color=Model, group=interaction(LunaID, Model)), size=0.4, alpha=0.1, se=FALSE, method="loess")
-#geom_jitter(data=edesc_aggruns, size=0.4, alpha=0.2, width=0.5) + 
-#    layer(mapping=NULL,
-#        data=edesc_aggruns,
-#        geom=geom_point(alpha=0.1),
-#        stat="identity", position="identity")
-dev.off()
-
-
-ggplot(subset(edesc_aggruns_softmax, LunaID == 10637), aes(x=trial, y=entropy, color=Model, group=Model)) + geom_line() + geom_point()
-
-wicenter <- c("entropyHlag", "distfromedgelag", "evdevlag", "vdevlag", "abstschangelag", "ev", "rtumax", "rtumaxlag", "rtvmaxlag") #predictors to center within subject and run
+wicenter <- c("entropyHlag", "entropyFlag", "distfromedgelag", "evdevlag", "vdevlag", "abstschangelag", "ev", "rtumax", "rtumaxlag", "rtvmaxlag") #predictors to center within subject and run
 predictors <- c(wicenter, "trial", "omissionlag", "ev") #full set of predictors (GM center)
 
 #compute entropy of trials 2-10 and 41-50 versus the run-average mean (normalize to remove between run and between subjects effects)
@@ -256,8 +147,7 @@ df1 <- bdfruns %>% dplyr::select(subject, run, elratio) %>%
     mutate(run=paste0("r", run)) %>%
     spread(key=run, value=elratio, convert=TRUE) %>%
     left_join(dplyr::select(bdfruns, subject, run, runreward) %>% group_by(subject) %>% dplyr::summarize(totreward=sum(runreward)), by=c("subject"))  
-
-corstarsl(df1)
+# corstarsl(df1)
 summary(lm(totreward ~ r1, df1))
 summary(lm(totreward ~ r2, df1))
 summary(lm(totreward ~ r3, df1))
@@ -295,27 +185,28 @@ bdfagg$elratio_wins <- winsor(bdfagg$elratio, trim=0.02) #trim a few outliers
 bdfagg$elratioF_wins <- winsor(bdfagg$elratioF, trim=0.02) #trim a few outliers
 bdfagg$runreward_wins <- winsor(bdfagg$runreward, trim=0.02) #trim a few outliers
 
-ggplot(bdfagg, aes(x=runreward, y=elratio)) + geom_point()
+ggplot(bdfagg, aes(x=runreward_wins, y=elratio_wins)) + geom_point()
 ggplot(bdfagg, aes(x=runreward_wins, y=runreward_wins)) + geom_point()
-ggplot(bdfagg, aes(x=runreward_wins, y=elratioF)) + geom_point()
+ggplot(bdfagg, aes(x=runreward_wins, y=elratioF_wins)) + geom_point()
 
-bothmodels <- bdfagg %>% dplyr::select(runreward_wins, runreward_wins, elratio_wins, elratioF_wins) %>% 
-    gather(key="model", value="elratio", elratioF_wins, elratio_wins) %>% mutate(model=recode(model, elratioF_wins="Fixed LR V", elratio_wins="Fixed LR V Sel. Maint."))
+bothmodels <- bdfagg %>% dplyr::select(runreward_wins, runreward_wins,  elratioF_wins, elratio_wins) %>% 
+    gather(key="model", value="elratio", elratioF_wins, elratio_wins) %>% mutate(model=recode(model, elratioF_wins="Full maintenance", elratio_wins="Selective maint."))
 
-pdf("Beauty.pdf", width=10, height=5)
+# NB: this is no longer different between models, but they don't predict anyway
+pdf("softmax beauty.pdf", width=10, height=5)
 ggplot(bothmodels, aes(x=runreward_wins, y=elratio)) + geom_point() + facet_wrap(~model) + stat_smooth(se=FALSE, method="lm") +
     geom_hline(yintercept=1, color="gray50") +
     theme_bw(base_size=20) +
     ylab("Early:Late Entropy Ratio") + xlab("Total points earned in task") +
     theme(axis.title.y=element_text(margin=margin(r=15)), axis.title.x=element_text(margin=margin(t=15))) +
-    geom_text(data=data.frame(runreward_wins=13800, elratio=1.38, model=c("Fixed LR V", "Fixed LR V Sel. Maint."), text=c("italic(r) == -.16", "italic(r) == .56")), 
+    geom_text(data=data.frame(runreward_wins=13800, elratio=1.38, model=c("Full maintenance", "Selective maint."), text=c("italic(r) == .18", "italic(r) == .16")), 
         aes(label=text), parse=TRUE, size=7)
 dev.off()
 
 
-library(robust)
-covRob(dplyr::select(bdfagg, runreward, elratio), corr=TRUE)
-covRob(dplyr::select(bdfagg, runreward, elratioF), corr=TRUE)
+# library(robust)
+# covRob(dplyr::select(bdfagg, runreward, elratio), corr=TRUE)
+# covRob(dplyr::select(bdfagg, runreward, elratioF), corr=TRUE)
 
 cor.test(~ runreward + elratio, bdfagg) 
 cor.test(~ runreward_wins + elratio_wins, bdfagg)
@@ -323,6 +214,7 @@ cor.test(~ runreward + elratioF, bdfagg)
 cor.test(~ runreward_wins + elratioF_wins, bdfagg)
 
 
+# AD -- reduction in softmax entropy under FULL is slightly more predictive of performance
 cor.test(~ runreward + earlyentropy, bdfagg)
 cor.test(~ runreward + lateentropy, bdfagg)
 cor.test(~ runreward + earlyentropyF, bdfagg)
@@ -330,129 +222,130 @@ cor.test(~ runreward + lateentropyF, bdfagg)
 
 #pull in age for a brief jaunt
 #ran the top chunk of sceptic_external_correlates.R (should really just cache, but being lazy)
-bdfagg <- left_join(bdfagg, df, by=c(LunaID="lunaid"))
-
-cor.test(~runreward_wins + age, bdfagg)
-plot(~runreward_wins + age, bdfagg)
-ggplot(bdfagg, aes(x=age, y=runreward_wins)) + geom_point()
-
-cor.test(~runreward_wins + fmri_gamma_t, bdfagg) #uhh, why didn't we see this before?!
-cor.test(~runreward_wins + fmri_beta_t, bdfagg)
-cor.test(~runreward_wins + fmri_alpha_t, bdfagg)
-cor.test(~fmri_gamma_t + fmri_beta_t, bdfagg) #higher decay, lower beta
-
-plot(~runreward_wins + PerformanceTScore, bdfagg)
-cor.test(~fmri_gamma_t + PerformanceTScore, bdfagg)
-
-#correlation of entropy and IQ
-cor.test(~ PerformanceTScore + elratio, bdfagg)
-cor.test(~ PerformanceTScore + elratio_wins, bdfagg)
-cor.test(~ PerformanceTScore + elratioF, bdfagg)
-cor.test(~ PerformanceTScore + elratioF_wins, bdfagg)
-
-cor.test(~ PerformanceTScore + elratio, bdfagg)
-cor.test(~ PerformanceTScore + elratio_wins, bdfagg)
-cor.test(~ PerformanceTScore + elratioF, bdfagg)
-cor.test(~ PerformanceTScore + elratioF_wins, bdfagg)
-
-bdfagg$PerformanceTScore_wins <- winsor(bdfagg$PerformanceTScore, trim=0.02) #trim a few outliers
-
-cor.test(~ PerformanceTScore_wins + elratio_wins, bdfagg)
-
-ggplot(bdfagg, aes(x=PerformanceTScore_wins, y=elratio_wins)) + geom_point() + stat_smooth()
+# bdfagg <- left_join(bdfagg, df, by=c(LunaID="lunaid"))
+# 
+# cor.test(~runreward_wins + age, bdfagg)
+# plot(~runreward_wins + age, bdfagg)
+# ggplot(bdfagg, aes(x=age, y=runreward_wins)) + geom_point()
+# 
+# cor.test(~runreward_wins + fmri_gamma_t, bdfagg) #uhh, why didn't we see this before?!
+# cor.test(~runreward_wins + fmri_beta_t, bdfagg)
+# cor.test(~runreward_wins + fmri_alpha_t, bdfagg)
+# cor.test(~fmri_gamma_t + fmri_beta_t, bdfagg) #higher decay, lower beta
+# 
+# plot(~runreward_wins + PerformanceTScore, bdfagg)
+# cor.test(~fmri_gamma_t + PerformanceTScore, bdfagg)
+# 
+# #correlation of entropy and IQ
+# cor.test(~ PerformanceTScore + elratio, bdfagg)
+# cor.test(~ PerformanceTScore + elratio_wins, bdfagg)
+# cor.test(~ PerformanceTScore + elratioF, bdfagg)
+# cor.test(~ PerformanceTScore + elratioF_wins, bdfagg)
+# 
+# cor.test(~ PerformanceTScore + elratio, bdfagg)
+# cor.test(~ PerformanceTScore + elratio_wins, bdfagg)
+# cor.test(~ PerformanceTScore + elratioF, bdfagg)
+# cor.test(~ PerformanceTScore + elratioF_wins, bdfagg)
+# 
+# bdfagg$PerformanceTScore_wins <- winsor(bdfagg$PerformanceTScore, trim=0.02) #trim a few outliers
+# 
+# cor.test(~ PerformanceTScore_wins + elratio_wins, bdfagg)
+# 
+# ggplot(bdfagg, aes(x=PerformanceTScore_wins, y=elratio_wins)) + geom_point() + stat_smooth()
 
 #conclusion: no relationship between IQ and EL ratio
 
 #but what about mediation?
 # elratio -> total rewards is mediated by gamma?  elratio -> gamma -> reward
 
-cor.test(~runreward_wins + elratio_wins, bdfagg) #X -> Y: .55
+# cor.test(~runreward_wins + elratio_wins, bdfagg) #X -> Y: .55
+# 
+# cor.test(~runreward_wins + fmri_gamma_t, bdfagg) #M -> Y: .37
+# 
+# cor.test(~elratio_wins + fmri_gamma_t, bdfagg) #X -> M: .52
+# 
+# #what about relationships under fixed only?
+# cor.test(~fixed_alpha + runreward_wins, bdfagg)
+# cor.test(~fixed_beta + runreward_wins, bdfagg)
+# 
+# cor.test(~fixed_decay_alpha + runreward_wins, bdfagg)
+# cor.test(~fixed_decay_gamma + runreward_wins, bdfagg)
+# cor.test(~fixed_decay_beta + runreward_wins, bdfagg)
+# 
+# corstarsl(dplyr::select(bdfagg, runreward_wins, fixed_decay_alpha, fixed_decay_gamma, fixed_decay_beta, fixed_alpha, fixed_beta))
+# corstarsl(dplyr::select(bdfagg, runreward_wins, elratio_wins, fixed_decay_alpha, fixed_decay_gamma, fixed_decay_beta))
+# corstarsl(dplyr::select(bdfagg, runreward_wins, elratio_wins, fixed_decay_alpha, fixed_decay_gamma, fixed_decay_beta, fixed_alpha, fixed_beta))
+# 
+# model_withm <- lm(runreward_wins ~ elratio_wins + fmri_gamma_t, data=bdfagg) # + fmri_beta_t
+# model_withoutm_elratio <- lm(runreward_wins ~ elratio_wins, data=bdfagg) # + fmri_beta_t
+# model_withoutm_gamma <- lm(runreward_wins ~ fmri_gamma_t, data=bdfagg) # + fmri_beta_t
+# 
+# # ad -- not including these for softmax since there was no effect anyway
+# library(mediation)
+# 
+# #technically, I'm supposed to specify means for control and treatment on elratio_wins -- haven't done this ... not sure how to since it seems arbitrary
+# med <- mediate(model_withoutm_elratio, model_withm, sims=1000, treat="elratio_wins", mediator="fmri_gamma_t", control.value=.95, treat.value=1.2)
+# summary(med)
+# 
+# med <- mediate(model_withoutm_gamma, model_withm, sims=1000, mediator="elratio_wins", treat="fmri_gamma_t", treat.value=0.5, control.value=.05)
+# summary(med)
+# 
+# 
+# library(MBESS)
+# round(with(bdfagg, mediation(x=elratio_wins, mediator=fmri_gamma_t, dv=runreward_wins, bootstrap=TRUE, B=1000)), 3)
+# round(with(bdfagg, mediation(x=elratio_wins, mediator=fmri_gamma_t, dv=runreward_wins)), 3)
+# 
+# cor.test(~runreward_wins + age, bdfagg)
+# cor.test(~fmri_gamma_t + age, bdfagg)
+# cor.test(~fmri_alpha_t + age, bdfagg)
+# cor.test(~fmri_beta_t + age, bdfagg)
+# cor.test(~elratio_wins + age, bdfagg)
+# cor.test(~elratio_wins + age, bdfagg)
+# 
+# corwithtarget(as.data.frame(bdfagg), target="age", omit=c("CompletionDate", "Notes", "lunaid", "scandate"))
+# 
+# round(medmodel <- with(bdfagg, mediation(mediator=elratio_wins, x=fmri_gamma_t, dv=runreward_wins)), 3) #isn't gamma really X since it controls things?
+# m2 <- with(bdfagg, mediation(mediator=elratio_wins, x=fmri_gamma_t, dv=runreward_wins, bootstrap=TRUE, B=1000, complete.set=TRUE)) #isn't gamma really X since it controls things?
+# upsilon(bdfsem, x="fmri_gamma_t", m="elratio_wins", y="runreward_wins")
+# upsilon(bdfsem, m="fmri_gamma_t", x="elratio_wins", y="runreward_wins")
+# 
+# mediation.effect.bar.plot(x=bdfagg$elratio_wins, mediator=bdfagg$fmri_gamma_t, dv=bdfagg$runreward_wins)
+# mediation.effect.plot(x=bdfagg$elratio_wins, mediator=bdfagg$fmri_gamma_t, dv=bdfagg$runreward_wins)
+# 
+# 
+# 
 
-cor.test(~runreward_wins + fmri_gamma_t, bdfagg) #M -> Y: .37
-
-cor.test(~elratio_wins + fmri_gamma_t, bdfagg) #X -> M: .52
-
-#what about relationships under fixed only?
-cor.test(~fixed_alpha + runreward_wins, bdfagg)
-cor.test(~fixed_beta + runreward_wins, bdfagg)
-
-cor.test(~fixed_decay_alpha + runreward_wins, bdfagg)
-cor.test(~fixed_decay_gamma + runreward_wins, bdfagg)
-cor.test(~fixed_decay_beta + runreward_wins, bdfagg)
-
-corstarsl(dplyr::select(bdfagg, runreward_wins, fixed_decay_alpha, fixed_decay_gamma, fixed_decay_beta, fixed_alpha, fixed_beta))
-corstarsl(dplyr::select(bdfagg, runreward_wins, elratio_wins, fixed_decay_alpha, fixed_decay_gamma, fixed_decay_beta))
-corstarsl(dplyr::select(bdfagg, runreward_wins, elratio_wins, fixed_decay_alpha, fixed_decay_gamma, fixed_decay_beta, fixed_alpha, fixed_beta))
-
-model_withm <- lm(runreward_wins ~ elratio_wins + fmri_gamma_t, data=bdfagg) # + fmri_beta_t
-model_withoutm_elratio <- lm(runreward_wins ~ elratio_wins, data=bdfagg) # + fmri_beta_t
-model_withoutm_gamma <- lm(runreward_wins ~ fmri_gamma_t, data=bdfagg) # + fmri_beta_t
-
-library(mediation)
-
-#technically, I'm supposed to specify means for control and treatment on elratio_wins -- haven't done this ... not sure how to since it seems arbitrary
-med <- mediate(model_withoutm_elratio, model_withm, sims=1000, treat="elratio_wins", mediator="fmri_gamma_t", control.value=.95, treat.value=1.2)
-summary(med)
-
-med <- mediate(model_withoutm_gamma, model_withm, sims=1000, mediator="elratio_wins", treat="fmri_gamma_t", treat.value=0.5, control.value=.05)
-summary(med)
-
-
-library(MBESS)
-round(with(bdfagg, mediation(x=elratio_wins, mediator=fmri_gamma_t, dv=runreward_wins, bootstrap=TRUE, B=1000)), 3)
-round(with(bdfagg, mediation(x=elratio_wins, mediator=fmri_gamma_t, dv=runreward_wins)), 3)
-
-cor.test(~runreward_wins + age, bdfagg)
-cor.test(~fmri_gamma_t + age, bdfagg)
-cor.test(~fmri_alpha_t + age, bdfagg)
-cor.test(~fmri_beta_t + age, bdfagg)
-cor.test(~elratio_wins + age, bdfagg)
-cor.test(~elratio_wins + age, bdfagg)
-
-corwithtarget(as.data.frame(bdfagg), target="age", omit=c("CompletionDate", "Notes", "lunaid", "scandate"))
-
-round(medmodel <- with(bdfagg, mediation(mediator=elratio_wins, x=fmri_gamma_t, dv=runreward_wins)), 3) #isn't gamma really X since it controls things?
-m2 <- with(bdfagg, mediation(mediator=elratio_wins, x=fmri_gamma_t, dv=runreward_wins, bootstrap=TRUE, B=1000, complete.set=TRUE)) #isn't gamma really X since it controls things?
-upsilon(bdfsem, x="fmri_gamma_t", m="elratio_wins", y="runreward_wins")
-upsilon(bdfsem, m="fmri_gamma_t", x="elratio_wins", y="runreward_wins")
-
-mediation.effect.bar.plot(x=bdfagg$elratio_wins, mediator=bdfagg$fmri_gamma_t, dv=bdfagg$runreward_wins)
-mediation.effect.plot(x=bdfagg$elratio_wins, mediator=bdfagg$fmri_gamma_t, dv=bdfagg$runreward_wins)
-
-
-
-
-bdfsem <- bdfagg
-bdfsem$runreward_wins <- bdfsem$runreward_wins/1000 #normalize variances 
-
-#lavaan (of course!)
-library(lavaan)
-m1 <- '
-runreward_wins ~ c*elratio_wins + b*fmri_gamma_t
-fmri_gamma_t ~ a*elratio_wins
-
-ide := a*b
-total := c + a*b
-'
-
-fsem <- sem(m1, data=bdfsem, bootstrap=1000, se="bootstrap")
-summary(fsem, fit.measures=TRUE, standardize=TRUE, rsquare=TRUE)
-
-#elratio is mediator
-m2 <- '
-    runreward_wins ~ c*fmri_gamma_t + b*elratio_wins 
-    elratio_wins ~ a*fmri_gamma_t
-    
-    ide := a*b
-    total := c + a*b
-		propmed := ide/total
-    '
-
-#yes, we see that the gamma -> performance relationship is mediated by elratio
-fsem2 <- sem(m2, data=bdfsem, bootstrap=1000, se="bootstrap")
-summary(fsem2, fit.measures=TRUE, standardize=TRUE, rsquare=TRUE)
-
-
+# bdfsem <- bdfagg
+# bdfsem$runreward_wins <- bdfsem$runreward_wins/1000 #normalize variances 
+# 
+# #lavaan (of course!)
+# library(lavaan)
+# m1 <- '
+# runreward_wins ~ c*elratio_wins + b*fmri_gamma_t
+# fmri_gamma_t ~ a*elratio_wins
+# 
+# ide := a*b
+# total := c + a*b
+# '
+# 
+# fsem <- sem(m1, data=bdfsem, bootstrap=1000, se="bootstrap")
+# summary(fsem, fit.measures=TRUE, standardize=TRUE, rsquare=TRUE)
+# 
+# #elratio is mediator
+# m2 <- '
+#     runreward_wins ~ c*fmri_gamma_t + b*elratio_wins 
+#     elratio_wins ~ a*fmri_gamma_t
+#     
+#     ide := a*b
+#     total := c + a*b
+# 		propmed := ide/total
+#     '
+# 
+# #yes, we see that the gamma -> performance relationship is mediated by elratio
+# fsem2 <- sem(m2, data=bdfsem, bootstrap=1000, se="bootstrap")
+# summary(fsem2, fit.measures=TRUE, standardize=TRUE, rsquare=TRUE)
+# 
+# 
 
 
 #what about the relationship between trial entropy and overall performance?
@@ -493,7 +386,7 @@ cmat$trial <- 1:50
 cmat$run <- rep(1:8, each=50)
 
 library(viridis)
-pdf("relationship between decay entropy and run rewards by trial.pdf", width=15, height=8)
+pdf("relationship between selective maintenance softmax entropy and run rewards by trial.pdf", width=15, height=8)
 ggplot(cmat, aes(x=trial, y=b, ymin=b-se, ymax = b+se, color=factor(run))) + geom_pointrange(position=position_dodge(width=1)) + 
     geom_line(position=position_dodge(width=1)) + geom_hline(yintercept=0) + stat_smooth(color="black") +
     scale_color_viridis("Run", discrete=TRUE) + theme_bw(base_size=20)
@@ -516,7 +409,7 @@ bdfruns$subject <- factor(bdfruns$subject)
 summary(mval <- lmer(runreward ~ elratio + lateentropy + run + (1|subject), filter(bdfruns, run > 1))) # + (1|run)
 car::Anova(mval)
 
-
+# AD not sure what "within" does
 library(ez)
 ezANOVA(bdfruns, dv=runreward, wid=subject, within)
 bdfruns$runreward <- as.numeric(bdfruns$runreward)
@@ -535,8 +428,12 @@ summary(lmer(runreward ~ earlyentropy + (1|subject), filter(bdfruns, run>1)))
 summary(lmer(runreward ~ 1 + (1|subject), bdfruns))
 
 
-summary(mval <- lmer(runreward ~ elratio + (1|subject) + (1|run), filter(bdfruns, run > 1)))
+summary(mval <- lmer(runreward ~ log(elratio) + (1|subject) + (1|run), filter(bdfruns, run > 1)))
 car::Anova(mval)
+summary(mvalF <- lmer(runreward ~ log(elratioF) + (1|subject) + (1|run), filter(bdfruns, run > 1)))
+car::Anova(mvalF)
+
+anova(mval,mvalF)
 
 summary(mval <- lmer(runreward ~ elratio + elratioLag + (1|subject) + (1|run), filter(bdfruns, run > 1)))
 car::Anova(mval)
@@ -616,11 +513,12 @@ mean(bdfcent$trial_c, na.rm=TRUE)
 mean(bdfcent$distfromedgelag_c, na.rm=TRUE)
 
 
-library(ggplot2)
+# post- SNE plots
+
 bdf <- bdf %>% filter(trial_abs > 1) %>% group_by(subject, run) %>% #do({browser()})
     #mutate(entropyH_runnorm = entropyH/max(entropyH), entropyFixed_runnorm=entropyFixed/max(entropyFixed)) %>% ungroup()
     mutate(entropyH_runnorm = scale(entropyH), entropyFixed_runnorm=scale(entropyFixed)) %>% ungroup()
-pdf("wild1.pdf", width=24, height=24)
+pdf("softmax_H_RTswing.pdf", width=24, height=24)
 #ggplot(filter(bdf, subject < 15), aes(x=trial, y=abstschange, color=entropyH_runnorm)) + facet_grid(subject ~ run) + stat_smooth() + geom_point() +
 #    theme_bw() + scale_color_viridis()
 
@@ -628,8 +526,8 @@ pdf("wild1.pdf", width=24, height=24)
 ggplot(filter(bdf, subject < 15), aes(x=trial, color=entropyH_runnorm)) + facet_grid(subject ~ run) + 
     #stat_smooth(aes(y=abstschange), color="blue") + 
     #geom_point() +
-    #geom_line(aes(y=abstschange), color="blue") +
-    geom_line(aes(y=timestep), color="blue") +
+    geom_line(aes(y=abstschange), color="blue") +
+    # geom_line(aes(y=timestep), color="blue") +
     geom_line(aes(y=entropyFixed_runnorm*5), color="black") +
     geom_line(aes(y=entropyH_runnorm*5), color="red") +
     geom_point(aes(y=timestep, shape=omission, color=vchosen)) +
@@ -638,6 +536,17 @@ ggplot(filter(bdf, subject < 15), aes(x=trial, color=entropyH_runnorm)) + facet_
 
 
 dev.off()
+
+#  look by contingency
+pdf("softmax_H_RTswing_by_contingency_and_performance.pdf", width=8, height=8)
+ggplot(bdf,aes(x=trial)) + facet_grid(msplit ~ rewFunc) + 
+      geom_smooth(aes(y=abstschange),method = 'loess',  colour="black") +
+    geom_smooth(aes(y=entropyFixed_runnorm*10), method = 'loess', colour="cyan4", show.legend = TRUE) +
+  geom_smooth(aes(y=entropyH_runnorm*10), method = 'loess', colour="orange") +
+    scale_y_continuous(sec.axis = sec_axis(~./10, name = "Softmax entropy")) +
+    theme_bw() 
+dev.off()
+
 
 #effect of multiple lags for RT swings
 m1 <- lmer(abstschange ~ distfromedgelag_c*omissionlag*vdevlag_c + trial_c + (1 | LunaID) + (1 | run), bdfcent)
@@ -699,6 +608,7 @@ ggplot(subset(bdf,run>1), aes(x=trial, y=abstschange)) + stat_smooth(method="loe
 
 
 
+
 toresid <- lmer(abstschange ~ distfromedgelag_c*omissionlag*vdevlag_c + trial_c + (1 | LunaID) + (1 | run), bdfcent, na.action=na.exclude)
 bdf$leftovers <- resid(toresid)
 
@@ -727,12 +637,13 @@ m6 <- lmer(abstschange_sec ~ entropyHlag_pmean_c*distfromedgelag_c*omissionlag*v
 summary(m6)
 car::Anova(m6)
 
-#
-bdfcent$abstschange_sec <- bdfcent$abstschange*100 
-m6 <- lmer(abstschange_sec ~ entropyHlag_pmean_c*distfromedgelag_c*omissionlag*vdevlag_c + entropyHlag_wicent*distfromedgelag_c*omissionlag*vdevlag_c + trial_c*entropyHlag_wicent + entropyHlag_wicent*entropyHlag_pmean_c + abstschangelag_c + (1 | LunaID) + (1 | run), bdfcent)
-summary(m6)
-car::Anova(m6)
+# AD: same for FULL 
+m6f <- lmer(abstschange_sec ~ entropyFlag_pmean_c*distfromedgelag_c*omissionlag*vdevlag_c + entropyFlag_wicent*distfromedgelag_c*omissionlag*vdevlag_c + trial_c*entropyFlag_wicent + entropyFlag_wicent*entropyFlag_pmean_c + abstschangelag_c + (1 | LunaID) + (1 | run), bdfcent)
+summary(m6f)
+car::Anova(m6f)
 
+# selective beats full, but within-run entropy does not predict except as an interaction with value and ommission
+anova(m6f,m6)
 
 msimple <- lmer(abstschange_sec ~ entropyHlag_pmean_c*entropyHlag_wicent + trial_c*entropyHlag_wicent + abstschangelag_c + (1 | LunaID) + (1 | run), bdfcent)
 summary(msimple)
@@ -754,6 +665,11 @@ msimple <- lmer(abstschange_sec ~ entropyHlag_c*trial_c + abstschangelag_c + (1 
 summary(msimple)
 car::Anova(msimple)
 
+msimpleF <- lmer(abstschange_sec ~ entropyFlag_c*trial_c + abstschangelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
+summary(msimpleF)
+car::Anova(msimpleF)
+anova(msimple,msimpleF)
+
 
 pdf("simple entropy for plos.pdf", width=12, height=7)
 cm <- lmerCellMeans(msimple, n.cont=10, fixat0=c("trial_c", "abstschangelag_c"))
@@ -762,26 +678,41 @@ ggplot(cm, aes(x=entropyHlag_c, y=abstschange_sec, ymin=abstschange_sec-se, ymax
     geom_line(size=2.5) + theme_bw(base_size=24) + geom_pointrange()
 dev.off()
 
+
 msimple2 <- lmer(abstschange_sec ~ entropyHlag_c*trial_c*omissionlag + abstschangelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
 summary(msimple2)
 car::Anova(msimple2)
 
+msimple2F <- lmer(abstschange_sec ~ entropyFlag_c*trial_c*omissionlag + abstschangelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
+summary(msimple2F)
+car::Anova(msimple2F)
+anova(msimple2F,msimple2)
 
-pdf("simple entropy for plos with omission.pdf", width=12, height=7)
+pdf("Paradoxical full vs. selective softmax entropy with omission.pdf", width=12, height=7)
 cm <- lmerCellMeans(msimple2, n.cont=10, fixat0=c("trial_c", "abstschangelag_c"))
 cm$entropyHlag_c <- cm$entropyHlag_c + mean(bdfcent$entropyHlag, na.rm=TRUE) #uncenter for plotting
-ggplot(cm, aes(x=entropyHlag_c, y=abstschange_sec, ymin=abstschange_sec-se, ymax=abstschange_sec+se, color=omissionlag)) + 
+p1 <- ggplot(cm, aes(x=entropyHlag_c, y=abstschange_sec, ymin=abstschange_sec-se, ymax=abstschange_sec+se, color=omissionlag)) + 
     geom_line(size=2.5) + theme_bw(base_size=24) + geom_pointrange()
+cm <- lmerCellMeans(msimple2F, n.cont=10, fixat0=c("trial_c", "abstschangelag_c"))
+cm$entropyFlag_c <- cm$entropyFlag_c + mean(bdfcent$entropyFlag, na.rm=TRUE) #uncenter for plotting
+p2 <- ggplot(cm, aes(x=entropyFlag_c, y=abstschange_sec, ymin=abstschange_sec-se, ymax=abstschange_sec+se, color=omissionlag)) + 
+  geom_line(size=2.5) + theme_bw(base_size=24) + geom_pointrange()
+multiplot(p1,p2, cols = 2)
 dev.off()
 
 
 #controlling for various effects and confounders
 mcontrol <- lmer(abstschange_sec ~ entropyHlag_c*trial_c + abstschangelag_c +
         evdevlag_c*omissionlag*vdevlag_c*distfromedgelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
-
-
 summary(mcontrol)
 car::Anova(mcontrol)
+
+mcontrolF <- lmer(abstschange_sec ~ entropyFlag_c*trial_c + abstschangelag_c +
+                   evdevlag_c*omissionlag*vdevlag_c*distfromedgelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
+summary(mcontrolF)
+car::Anova(mcontrolF)
+
+anova(mcontrolF,mcontrol)
 
 
 pdf("wi entropy for plos.pdf", width=5, height=4)
@@ -791,12 +722,12 @@ cm$predpoint <- 1:10 #rep 2x
 cm <- cm %>% group_by(predpoint) %>% summarize_if(is.numeric, mean)
 cm$entropyHlag_c <- cm$entropyHlag_c + mean(bdfcent$entropyHlag, na.rm=TRUE) #uncenter for plotting
 ggplot(cm, aes(x=entropyHlag_c, y=abstschange_sec, ymin=abstschange_sec-se, ymax=abstschange_sec+se)) + 
-     geom_line(size=1.5) + theme_bw(base_size=20) + geom_pointrange(size=0.8) + ylab("RT swing (ms)") + xlab("Entropy of value distribution") +
+     geom_line(size=1.5) + theme_bw(base_size=20) + geom_pointrange(size=0.8) + ylab("RT swing (ms)") + xlab("Softmax entropy, selective maintenance") +
      theme(axis.title.y=element_text(margin=margin(r=15)), axis.title.x=element_text(margin=margin(t=10)))
 dev.off()
 
 #divide into between and within
-mdivide <- lmer(abstschange_sec ~ entropyHlag_pmean_c*trial_c + entropyHlag_wicent*trial_c + abstschangelag_c +
+mdivide <- lmer(abstschange_sec ~ entropyHlag_pmean_c*trial_c*entropyHlag_wicent + abstschangelag_c +
         evdevlag_c*omissionlag*vdevlag_c*distfromedgelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
 
 summary(mdivide)
