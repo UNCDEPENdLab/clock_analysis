@@ -192,6 +192,10 @@ dev.off()
 
 #what about plotting all trials? (No run aggregation and keep run 1)
 #we should probably drop true zeros... doesn't seem to have much effect: filter(entropy > 0) %>%
+edesc_aggtrials <- edescriptives %>% group_by(Model, run, trial) %>% do({data.frame(rbind(Hmisc::smean.cl.boot(.$entropy))) } )  %>% ungroup() %>%
+  arrange(Model, run, trial) %>% mutate(trialabs=rep(1:400,2))
+
+
 edesc_aggtrials_soft <- edescriptives_softmax %>% group_by(Model, run, trial) %>% do({data.frame(rbind(Hmisc::smean.cl.boot(.$entropy))) } )  %>% ungroup() %>%
     arrange(Model, run, trial) %>% mutate(trialabs=rep(1:400,2))
 
@@ -727,13 +731,13 @@ car::Anova(m5)
 bdfcent$abstschange_sec <- bdfcent$abstschange*100 
 m6 <- lmer(abstschange_sec ~ entropyHlag_pmean_c*distfromedgelag_c*omissionlag*vdevlag_c + entropyHlag_wicent*distfromedgelag_c*omissionlag*vdevlag_c + trial_c*entropyHlag_wicent + entropyHlag_wicent*entropyHlag_pmean_c + abstschangelag_c + (1 | LunaID) + (1 | run), bdfcent)
 summary(m6)
-car::Anova(m6)
-
-#
-bdfcent$abstschange_sec <- bdfcent$abstschange*100 
-m6 <- lmer(abstschange_sec ~ entropyHlag_pmean_c*distfromedgelag_c*omissionlag*vdevlag_c + entropyHlag_wicent*distfromedgelag_c*omissionlag*vdevlag_c + trial_c*entropyHlag_wicent + entropyHlag_wicent*entropyHlag_pmean_c + abstschangelag_c + (1 | LunaID) + (1 | run), bdfcent)
-summary(m6)
 car::Anova(m6, type = "III")
+
+#  but is this just an artifact of previous swinging?  Add more lags.
+m6strong <- lmer(abstschange_sec ~ abstschangelag2 + abstschangelag3 + abstschangelag4 + abstschangelag5 + entropyHlag_pmean_c*distfromedgelag_c*omissionlag*vdevlag_c + entropyHlag_wicent*distfromedgelag_c*omissionlag*vdevlag_c + trial_c*entropyHlag_wicent + entropyHlag_wicent*entropyHlag_pmean_c + abstschangelag_c + (1 | LunaID) + (1 | run), bdfcent)
+summary(m6strong)
+car::Anova(m6strong, type = "III")
+#  No, entropy still stands!
 
 
 msimple <- lmer(abstschange_sec ~ entropyHlag_pmean_c*entropyHlag_wicent + trial_c*entropyHlag_wicent + abstschangelag_c + (1 | LunaID) + (1 | run), bdfcent)
