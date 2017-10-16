@@ -13,8 +13,12 @@ library(tidyr)
 library(psych)
 library(gdata)
 # for Alex:
-sapply(list.files(path="~/code/R", full.names=TRUE), source);
+source("~/code/R/lmerCellMeans.R")
+source("~/code/R/multiplot.R")
+
+# source("~/code/R/corstarsl.R")
 # source(file.path(getMainDir(), "Miscellaneous", "Global_Functions.R"))
+
 library(R.matlab)
 library(reshape2)
 #bring in Luna IDs
@@ -29,6 +33,8 @@ bdf = bdf %>% group_by(subject) %>% arrange(subject, run, trial) %>% mutate(totr
 		mutate(medreward=median(totreward), #between subjects
 				msplit=factor(as.numeric(totreward > medreward), levels=c(0,1), labels=c("< Median", ">= Median")))
 
+bdf$LunaID <- as.factor(bdf$LunaID)
+bdf$ID <- as.factor(bdf$ID)
 
 # read in softmax entropies
 softmax_entropies <- readMat("multisession_random_priors_selective_and_full_maintenance.mat")
@@ -52,7 +58,7 @@ bdf <- filter(bdf, LunaID != 11282)
 edescriptives <- bdf %>% 
   dplyr::select(LunaID, run, trial, entropyH, entropyFixed) %>% 
   gather(key=Model, value=entropy, entropyFixed, entropyH) %>% 
-  mutate(Model=recode(Model, entropyFixed="Fixed LR V", entropyH="Fixed LR V Sel. Maint."))
+  mutate(Model=recode(Model, entropyFixed="Full maint.", entropyH="Selective maint."))
 
 edesc_aggruns <- edescriptives %>% filter(run > 1) %>%
   group_by(LunaID, Model, trial) %>% dplyr::summarize(entropy=mean(entropy))
@@ -409,12 +415,12 @@ bdfruns$subject <- factor(bdfruns$subject)
 summary(mval <- lmer(runreward ~ elratio + lateentropy + run + (1|subject), filter(bdfruns, run > 1))) # + (1|run)
 car::Anova(mval)
 
-# AD not sure what "within" does
-library(ez)
-ezANOVA(bdfruns, dv=runreward, wid=subject, within)
-bdfruns$runreward <- as.numeric(bdfruns$runreward)
-xx <- ezMixed(as.data.frame(bdfruns), dv=.(runreward), random=.(subject), fixed=.(earlyentropy))
-print(xx$summary)
+# # AD not sure what "within" does
+# library(ez)
+# ezANOVA(bdfruns, dv=runreward, wid=subject, within)
+# bdfruns$runreward <- as.numeric(bdfruns$runreward)
+# xx <- ezMixed(as.data.frame(bdfruns), dv=.(runreward), random=.(subject), fixed=.(earlyentropy))
+# print(xx$summary)
 
 
 
@@ -635,7 +641,7 @@ car::Anova(m5)
 bdfcent$abstschange_sec <- bdfcent$abstschange*100 
 m6 <- lmer(abstschange_sec ~ entropyHlag_pmean_c*distfromedgelag_c*omissionlag*vdevlag_c + entropyHlag_wicent*distfromedgelag_c*omissionlag*vdevlag_c + trial_c*entropyHlag_wicent + entropyHlag_wicent*entropyHlag_pmean_c + abstschangelag_c + (1 | LunaID) + (1 | run), bdfcent)
 summary(m6)
-car::Anova(m6)
+car::Anova(m6, type = "III")
 
 # AD: same for FULL 
 m6f <- lmer(abstschange_sec ~ entropyFlag_pmean_c*distfromedgelag_c*omissionlag*vdevlag_c + entropyFlag_wicent*distfromedgelag_c*omissionlag*vdevlag_c + trial_c*entropyFlag_wicent + entropyFlag_wicent*entropyFlag_pmean_c + abstschangelag_c + (1 | LunaID) + (1 | run), bdfcent)
@@ -651,6 +657,20 @@ car::Anova(msimple)
 
 #spot check
 bdfcent %>% group_by(LunaID, run) %>% summarize(mean(entropyHlag_wicent, na.rm=TRUE)) %>% print(n=100)
+
+
+# what about the opposite -- how do previous RT swings predict FULL vs. SELECTIVE softmax entropy?
+# FULL is predicted by SMALLER RT swings
+mh <- lmer(entropyH ~ abstschangelag + abstschangelag2 + abstschangelag3 + abstschangelag4 +
+                  (1 | LunaID) + (1 | run), subset(bdf, run>1))
+summary(mh)
+car::Anova(mh)
+
+mhF <- lmer(entropyFixed ~ abstschangelag + abstschangelag2 + abstschangelag3 + abstschangelag4 +
+             (1 | LunaID) + (1 | run), subset(bdf, run>1))
+summary(mhF)
+car::Anova(mhF)
+
 
 #Here's my current thinking for PLoS paper
 #1) Report simple abstschange ~ entropy + trial
@@ -729,9 +749,14 @@ dev.off()
 #divide into between and within
 mdivide <- lmer(abstschange_sec ~ entropyHlag_pmean_c*trial_c*entropyHlag_wicent + abstschangelag_c +
         evdevlag_c*omissionlag*vdevlag_c*distfromedgelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
-
 summary(mdivide)
-car::Anova(mdivide)
+car::Anova(mdivide, type = "III")
+
+mdivideF <- lmer(abstschange_sec ~ entropyFlag_pmean_c*trial_c*entropyFlag_wicent + abstschangelag_c +
+                  evdevlag_c*omissionlag*vdevlag_c*distfromedgelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
+summary(mdivideF)
+car::Anova(mdivideF, type = "III")
+anova(mdivideF,mdivide)
 
 pdf("wi entropy as a function of person avg entropy.pdf", width=12, height=7)
 cm <- lmerCellMeans(m6, n.cont=10, divide="entropyHlag_pmean_c", fixat0=c("trial_c", "distfromedgelag_c", "vdevlag_c", "abstschangelag_c"))

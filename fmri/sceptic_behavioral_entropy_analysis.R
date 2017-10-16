@@ -13,7 +13,9 @@ library(dplyr)
 library(tidyr)
 library(psych)
 library(gdata)
-source(file.path(getMainDir(), "Miscellaneous", "Global_Functions.R"))
+# source(file.path(getMainDir(), "Miscellaneous", "Global_Functions.R"))
+# for Alex:
+source("~/code/R")
 library(R.matlab)
 library(reshape2)
 #bring in Luna IDs
@@ -731,7 +733,7 @@ car::Anova(m6)
 bdfcent$abstschange_sec <- bdfcent$abstschange*100 
 m6 <- lmer(abstschange_sec ~ entropyHlag_pmean_c*distfromedgelag_c*omissionlag*vdevlag_c + entropyHlag_wicent*distfromedgelag_c*omissionlag*vdevlag_c + trial_c*entropyHlag_wicent + entropyHlag_wicent*entropyHlag_pmean_c + abstschangelag_c + (1 | LunaID) + (1 | run), bdfcent)
 summary(m6)
-car::Anova(m6)
+car::Anova(m6, type = "III")
 
 
 msimple <- lmer(abstschange_sec ~ entropyHlag_pmean_c*entropyHlag_wicent + trial_c*entropyHlag_wicent + abstschangelag_c + (1 | LunaID) + (1 | run), bdfcent)
@@ -800,7 +802,7 @@ mdivide <- lmer(abstschange_sec ~ entropyHlag_pmean_c*trial_c + entropyHlag_wice
         evdevlag_c*omissionlag*vdevlag_c*distfromedgelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
 
 summary(mdivide)
-car::Anova(mdivide)
+car::Anova(mdivide, type = "III")
 
 pdf("wi entropy as a function of person avg entropy.pdf", width=12, height=7)
 cm <- lmerCellMeans(m6, n.cont=10, divide="entropyHlag_pmean_c", fixat0=c("trial_c", "distfromedgelag_c", "vdevlag_c", "abstschangelag_c"))
