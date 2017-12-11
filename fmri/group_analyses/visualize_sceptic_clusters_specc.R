@@ -9,25 +9,37 @@ library(robust)
 library(car)
 library(dplyr)
 
-fslgroupdir <- "/gpfs/group/mnh5174/default/MMClock/fsl_sceptic_group_jun2017"
+fslgroupdir <- "/gpfs/group/mnh5174/default/SPECC/fsl_sceptic_group"
 
 #cope 6 is relative uncertainty in LVL1 runs
 l2dirs <- data.frame(dir=dirname(readLines(file.path(fslgroupdir, "sceptic_vchosen_ventropy_dauc_pemax_preconvolve_cope1_inputs")))) #use dirname to pull off cope
 if (as.character(l2dirs[nrow(l2dirs), "dir"]) == "") { l2dirs <- l2dirs[-nrow(l2dirs),,drop=FALSE] } #there is an empty trailing row sometimes
-l2dirs$ID <- as.numeric(sub(".*/MR_Proc/(\\d{5})_.*", "\\1", l2dirs$dir, perl=TRUE))
+l2dirs$ID <- sub(".*/MR_Proc/([^_]+)_.*", "\\1", l2dirs$dir, perl=TRUE)
 
-#master cov list
-#n73_covs <- read.table("/Volumes/Serena/MMClock/fsl_group/groupcov_ageexplore_n73.txt", header=TRUE)
-##n73_covs <- read.table("/Users/michael/TresorSync/fmri/fsl_group/groupcov_ageexplore_n73.txt", header=TRUE)
+## I have now converted all SPECC MR directory names to all lower case to allow for match on case-sensitive filesystem
+## and to make the naming consistent
+idfile <- "/gpfs/group/mnh5174/default/SPECC/SPECC_Participant_Info.csv"
+idinfo <- read.csv(idfile)
 
-subinfo <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/subinfo_db", header=TRUE)
-subinfo <- subinfo %>% rename(ID=lunaid)
+options(dplyr.width=200)
+idinfo <- idinfo %>% rowwise() %>% mutate(mr_dir=ifelse(LunaMRI==1,
+  paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", Luna_ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
+  paste0("/gpfs/group/mnh5174/default/SPECC/MR_Proc/", tolower(SPECC_ID), "_", tolower(format((as.Date(ScanDate, format="%Y-%m-%d")), "%d%b%Y"))))) %>%
+  mutate(Luna_ID=as.character(Luna_ID), SPECC_ID=as.character(SPECC_ID), ID=tolower(ifelse(LunaMRI==1, Luna_ID, SPECC_ID))) %>%
+  rename(age=AgeAtScan, female=Female, bpd=BPD)
 
-l2dirs <- merge(l2dirs, subinfo, by="ID", all.x=TRUE)
+##verify that mr_dir is present as expected
+idinfo$dirfound <- file.exists(idinfo$mr_dir)
+subset(idinfo, dirfound==FALSE)
+
+l2dirs <- merge(l2dirs, select(idinfo, ID, age, female, bpd), by="ID", all.x=TRUE)
 l2dirs$age.c <- l2dirs$age - mean(l2dirs$age, na.rm=TRUE)
 l2dirs$female.c <- l2dirs$female - mean(l2dirs$female, na.rm=TRUE)
+l2dirs$bpd.c <- l2dirs$bpd - mean(l2dirs$bpd, na.rm=TRUE)
 l2dirs$age_female <- l2dirs$age.c * l2dirs$female.c #numerical interaction
+l2dirs$age_bpd <- l2dirs$age.c * l2dirs$bpd.c #numerical interaction
 l2dirs$female_fac <- factor(l2dirs$female, levels=c(0,1), labels=c("Male", "Female"))
+l2dirs$bpd_fac <- factor(l2dirs$bpd, levels=c(0,1), labels=c("Control", "BPD"))
 
 #list of LVL2 copes
 #cope1: m_scram
@@ -41,7 +53,7 @@ l2dirs$female_fac <- factor(l2dirs$female, levels=c(0,1), labels=c("Male", "Fema
 
 source(file.path(getMainDir(), "clock_analysis", "fmri", "glm_helper_functions.R"))
 afnidir <- "/opt/aci/sw/afni/17.0.02/bin"
-setwd(file.path(getMainDir(), "clock_analysis/fmri/group_analyses/sceptic_cluster_plots_fsl_Jun2017"))
+setwd(file.path(getMainDir(), "clock_analysis/fmri/group_analyses/specc_sceptic_cluster_plots_fsl_Oct2017"))
 
 #for explorer x age interaction group map, generate clusters using 3dclust, then extract average betas within clusters to generate plots
 #use 3dclustsim 2-sided threshold with voxelwise p = .005 and NN=1
@@ -62,7 +74,7 @@ setwd(file.path(getMainDir(), "clock_analysis/fmri/group_analyses/sceptic_cluste
 
 l1copes <- c("clock_onset", "feedback_onset", "vchosen", "ventropy", "dauc", "pemax")
 l2copes <- c("m_scram", "m_fear", "m_happy", "m_overall", "fear_gt_scram", "happy_gt_scram", "fear_gt_happy", "m_run")
-l3copes <- c("intercept", "female", "age", "female_x_age")
+l3copes <- c("intercept", "bpd", "female", "age", "bpd_x_age", "female_x_age")
 
 #create a multi-dimensional list to store all graphs
 #then we can extract specific graphs of interest
@@ -92,7 +104,7 @@ for (l1 in 1:length(l1copes)) {
     
     for (l3 in 1:length(l3copes)) {
       #groupmap <- file.path(fslgroupdir, paste0(l1copes[l1], ".gfeat"), paste0("cope", l2, ".feat"), "stats", paste0("zstat", l3, ".nii.gz")) #this line works if .gfeat directories are named by the contrast
-      groupmap <- file.path(fslgroupdir, paste0("cope", l1, ".gfeat"), paste0("cope", l2, ".feat"), "stats", paste0("zstat", l3, ".nii.gz")) #this is for numeric naming of .gfeat dirs
+      groupmap <- file.path(fslgroupdir, paste0("sceptic_cope", l1, ".gfeat"), paste0("cope", l2, ".feat"), "stats", paste0("zstat", l3, ".nii.gz")) #this is for numeric naming of .gfeat dirs
       
       #gdat <- readNIfTI(groupmap, reorient=FALSE)
       #generate cluster mask
@@ -166,6 +178,13 @@ for (l1 in 1:length(l1copes)) {
               ggtitle(plottitles[k]) + annotate("text", x = 1, y = max(df$vox)+0.1*max(df$vox), label = plotnote, hjust=0) + theme_bw(base_size=18) +
               ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Sex")
           plot(g)
+        } else if (l3copes[l3] == "bpd") {
+          m <- t.test(vox ~ bpd_fac, df)
+          plotnote <- paste0("t(", round(m$parameter, 2), ") = ", round(m$statistic, 2), ", p = ", round(m$p.value, 4))
+          g <- ggplot(df, aes(x=bpd_fac, y=vox)) + geom_boxplot() + 
+              ggtitle(plottitles[k]) + annotate("text", x = 1, y = max(df$vox)+0.1*max(df$vox), label = plotnote, hjust=0) + theme_bw(base_size=18) +
+              ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Group")
+          plot(g)
         } else if (l3copes[l3] == "intercept") {
           m <- t.test(df$vox, mu=0) #test against 0
           plotnote <- paste0("t(", round(m$parameter, 2), ") = ", round(m$statistic, 2), ", p = ", round(m$p.value, 4))
@@ -184,6 +203,18 @@ for (l1 in 1:length(l1copes)) {
           plotnote <- paste0("b = ", round(eff_b, 3), ", t = ", round(eff_t, 3), ", p = ", round(eff_p, 4))
 
           g <- ggplot(df, aes(x=age, y=vox, color=female_fac)) + geom_point() + stat_smooth(method="lm") +
+              ggtitle(plottitles[k]) + annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0) +
+              theme_bw(base_size=18) +
+              ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Age (years)")
+          plot(g)
+        } else if (l3copes[l3] == "bpd_x_age") {
+          m <- summary(lm(vox ~ age*bpd, df))
+          eff_b <- m$coefficients["age:bpd","Estimate"]
+          eff_t <- m$coefficients["age:bpd","t value"]
+          eff_p <- m$coefficients["age:bpd","Pr(>|t|)"]
+          plotnote <- paste0("b = ", round(eff_b, 3), ", t = ", round(eff_t, 3), ", p = ", round(eff_p, 4))
+
+          g <- ggplot(df, aes(x=age, y=vox, color=bpd_fac)) + geom_point() + stat_smooth(method="lm") +
               ggtitle(plottitles[k]) + annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0) +
               theme_bw(base_size=18) +
               ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Age (years)")

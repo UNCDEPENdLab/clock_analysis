@@ -22,17 +22,16 @@ setwd("fmri_fits")
 ##if (file.exists("fmri_sceptic_signals_24basis_specc.RData")) { sceptic <- local({load("fmri_sceptic_signals_24basis_specc.RData"); as.list(environment())}) }
 
 #this is SPECC with correct vchosen
-#if (file.exists("fmri_sceptic_signals_24basis_specc_correctedvchosen.RData")) { sceptic <- local({load("fmri_sceptic_signals_24basis_specc_correctedvchosen.RData"); as.list(environment())}) }
+if (file.exists("fmri_sceptic_signals_24basis_specc_correctedvchosen.RData")) { sceptic <- local({load("fmri_sceptic_signals_24basis_specc_correctedvchosen.RData"); as.list(environment())}) }
 
 #this contains MMClock data with vtime
-if (file.exists("fmri_sceptic_signals_24basis_mmclock_Jun2017.RData")) {
-  sceptic <- local({load("fmri_sceptic_signals_24basis_mmclock_Jun2017.RData"); as.list(environment())})
-
-  #rename vtime_list -> vtime for clarity
-  sceptic$vtime <- sceptic$vtime_list
-  sceptic$vtime_list <- NULL
-}
-
+## if (file.exists("fmri_sceptic_signals_24basis_mmclock_Jun2017.RData")) {
+##   sceptic <- local({load("fmri_sceptic_signals_24basis_mmclock_Jun2017.RData"); as.list(environment())})
+##
+##   #rename vtime_list -> vtime for clarity
+##   sceptic$vtime <- sceptic$vtime_list
+##   sceptic$vtime_list <- NULL
+## }
 
 #N.B. in examining initial results from single subject analyses, it is clear that steady state magnetization is not achieved by the first volume acquired
 #ICA analysis suggests that it takes up to 6 volumes to reach steady state, and the rel and mean uncertainty maps are being adversely affected by this problem
@@ -209,8 +208,8 @@ fit_all_fmri <- function(behavDir, fmriDir=NULL, idexpr=NULL, iddf=NULL, dropVol
         ##are higher and there is less residue to decay. These 4 regressors are also of greatest theoretical interest
         subj_sceptic[["dauc"]] <- -1*subj_sceptic[["dauc"]] #invert decay such that higher values indicate greater decay
         #fslSCEPTICModel(subj_sceptic[c("vchosen", "ventropy_decay_matlab", "dauc", "pemax")], s_clock,
-        fslSCEPTICModel(subj_sceptic[c("vchosen", "ventropy", "dauc", "pemax", "vtime")], s_clock, 
-                        mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
+        #fslSCEPTICModel(subj_sceptic[c("vchosen", "ventropy", "dauc", "pemax", "vtime")], s_clock, 
+        #                mrfiles, runlengths, mrrunnums, run=FALSE, dropVolumes=dropVolumes, ...)
 
         #model without time-varying value signal
         fslSCEPTICModel(subj_sceptic[c("vchosen", "ventropy", "dauc", "pemax")], s_clock, 
@@ -223,33 +222,33 @@ fit_all_fmri <- function(behavDir, fmriDir=NULL, idexpr=NULL, iddf=NULL, dropVol
 }
 
 #SCEPTIC MMClock Fit
-fit_all_fmri(behavDir="/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/subjects",
-    fmriDir="/gpfs/group/mnh5174/default/MMClock/MR_Proc",
-    idexpr=expression(subid), ##MMClock/LunaID format: 10637_20140302
-    model="sceptic", usepreconvolve=TRUE, parmax1=TRUE, runpar=FALSE, ncpus=1, spikeregressors=FALSE, dropVolumes=2) #parmax1 rescales to 1.0 max
+#fit_all_fmri(behavDir="/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/subjects",
+#    fmriDir="/gpfs/group/mnh5174/default/MMClock/MR_Proc",
+#    idexpr=expression(subid), ##MMClock/LunaID format: 10637_20140302
+#    model="sceptic", usepreconvolve=TRUE, parmax1=TRUE, runpar=FALSE, ncpus=1, spikeregressors=FALSE, dropVolumes=2) #parmax1 rescales to 1.0 max
 #    model="sceptic", usepreconvolve=TRUE, parmax1=TRUE, runpar=TRUE, ncpus=20, spikeregressors=FALSE, dropVolumes=2) #parmax1 rescales to 1.0 max
 
 #Jun2017: further ICAs on these data do not suggest a long steady-state. Drop 2 volumes for good measure
 
 ## I have now converted all SPECC MR directory names to all lower case to allow for match on case-sensitive filesystem
 ## and to make the naming consistent
-##idfile <- "/gpfs/group/mnh5174/default/SPECC/SPECC_Participant_Info.csv"
-##idinfo <- gdata::read.xls(idfile)
-##idinfo <- read.csv(idfile)
-##library(dplyr)
-##options(dplyr.width=200)
-##idinfo <- idinfo %>% rowwise() %>% mutate(mr_dir=ifelse(LunaMRI==1,
-##  paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", Luna_ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
-##  paste0("/gpfs/group/mnh5174/default/SPECC/MR_Proc/", tolower(SPECC_ID), "_", tolower(format((as.Date(ScanDate, format="%Y-%m-%d")), "%d%b%Y")))))
+idfile <- "/gpfs/group/mnh5174/default/SPECC/SPECC_Participant_Info.csv"
+#idinfo <- gdata::read.xls(idfile)
+idinfo <- read.csv(idfile)
+library(dplyr)
+options(dplyr.width=200)
+idinfo <- idinfo %>% rowwise() %>% mutate(mr_dir=ifelse(LunaMRI==1,
+  paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", Luna_ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
+  paste0("/gpfs/group/mnh5174/default/SPECC/MR_Proc/", tolower(SPECC_ID), "_", tolower(format((as.Date(ScanDate, format="%Y-%m-%d")), "%d%b%Y")))))
 
-#verify that mr_dir is present as expected
-##idinfo$dirfound <- file.exists(idinfo$mr_dir)
-##subset(idinfo, dirfound==FALSE)
+##verify that mr_dir is present as expected
+idinfo$dirfound <- file.exists(idinfo$mr_dir)
+subset(idinfo, dirfound==FALSE)
 
 ##subject CSVs in subjects/SPECC are names according to numeric SPECC_ID
 ##need to use idinfo data.frame to line up with MMClock, look in Luna dir as needed, etc.
-##fit_all_fmri(behavDir="/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/subjects/SPECC",
-##  iddf = idinfo, model="sceptic", usepreconvolve=TRUE, parmax1=TRUE, runpar=FALSE, ncpus=1) #rescale to 1.0 max
+fit_all_fmri(behavDir="/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/subjects/SPECC",
+  iddf = idinfo, model="sceptic", usepreconvolve=TRUE, parmax1=TRUE, runpar=FALSE, ncpus=1) #rescale to 1.0 max
 
 ## fit_all_fmri(behavDir="/Volumes/bea_res/Data/Tasks/EmoClockfMRI/Basic",
 ##    fmriDir="/Volumes/Serena/MMClock/MR_Proc",
