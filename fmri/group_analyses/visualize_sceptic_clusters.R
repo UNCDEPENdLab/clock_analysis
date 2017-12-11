@@ -203,22 +203,50 @@ for (l1 in 1:length(l1copes)) {
 save(graphlist, file="cluster_ggplot_objs_Jun2017.RData")
 
 
-#load(file="cluster_ggplot_objs_Jun2017.RData")
-#dimnames(graphlist)
-#
-##age-related increase for RPE+ in cognitive network. Here L IPL
-#df <- graphlist[["rpe_pos", "m_overall", "age"]][[1]]$data
-#
-#corr <- cor.test(df$age, df$vox)
-#plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p = ", round(corr$p.value, 3))
-#
-#pdf("rpe_pos_age_increases_lipl.pdf", width=8, height=6)
-#g <- ggplot(df, aes(x=age, y=vox)) + geom_point() + stat_smooth(method="lm", se=FALSE, size=3) +
-#    annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
-#    theme_bw(base_size=24) + ylab("Activation to pos. RPEs in L IPL (AU)\n") + xlab("Age (years)")
-#plot(g)          
-#dev.off()
-#
+load(file="cluster_ggplot_objs_Jun2017.RData")
+dimnames(graphlist)
+
+#L and R IFG fear > scram age effect. L IFG is cluster 3
+df <- graphlist[["ventropy", "fear_gt_scram", "age"]][[3]]$data
+
+corr <- cor.test(df$age, df$vox)
+plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p = ", format(corr$p.value, digits=3))
+
+pdf("ventropy_fear_gt_scram_age_increases_lifg.pdf", width=8, height=6)
+g <- ggplot(df, aes(x=age, y=vox)) + geom_point(size=3) + stat_smooth(method="lm", se=FALSE, size=3, color="darkblue") +
+    annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
+    theme_bw(base_size=24) + ylab("Value entropy activity in L IFG (AU)\n") + xlab("Age (years)")
+plot(g)          
+dev.off()
+
+
+#MPFC age increase for happy > scram. Cluster 1 is mPFC/ACC
+df <- graphlist[["ventropy", "happy_gt_scram", "age"]][[1]]$data
+
+corr <- cor.test(df$age, df$vox)
+plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p = ", format(corr$p.value, digits=3))
+
+pdf("ventropy_happy_gt_scram_age_increases_mpfc.pdf", width=8, height=6)
+g <- ggplot(df, aes(x=age, y=vox)) + geom_point(size=3) + stat_smooth(method="lm", se=FALSE, size=3, color="darkblue") +
+    annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
+    theme_bw(base_size=24) + ylab("Value entropy activity in mPFC (AU)\n") + xlab("Age (years)")
+plot(g)          
+dev.off()
+
+
+#age-related increases in SMA for PEs
+df <- graphlist[["pemax", "m_overall", "age"]][[3]]$data
+
+corr <- cor.test(df$age, df$vox)
+plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p = ", round(corr$p.value, digits=3))
+
+pdf("rpe_pos_age_increases_sma.pdf", width=8, height=6)
+g <- ggplot(df, aes(x=age, y=vox)) + geom_point(size=3) + stat_smooth(method="lm", se=FALSE, size=3, color="darkblue") +
+    annotate("text", x = min(df$age), y = max(df$vox) - .01, label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
+    theme_bw(base_size=24) + ylab("RPE activity in SMA (AU)\n") + xlab("Age (years)")
+plot(g)          
+dev.off()
+
 #
 ##age-related increase for clock onset in L IFG
 #df <- graphlist[["clock_onset", "happy_gt_scram", "age"]][[6]]$data

@@ -614,24 +614,48 @@ library(lme4)
 
 #example of entropy
 mixing = seq(0, 1, .01)
-u = runif(3000, min=-3, max=3)
-y = rnorm(3000)
+mixing <- seq(1, 10)
+u = runif(3000, min=3, max=6)
+y = rnorm(3000, mean=4)
 #y = c(rep(100, 1000), rep(0,2000))
 m = rep(NA, length(mixing))
 s = rep(NA, length(mixing))
 e = rep(NA, length(mixing))
 library(entropy)
 library(np)
+dd <- matrix(NA_real_, nrow=length(mixing), ncol=length(u))
 
+
+enorm = rep(NA, length(mixing))
+esoft = rep(NA, length(mixing))
+options(error=recover, warn=0)
 for (i in 1:length(mixing)) {
-  d = mixing[i]*u + (1-mixing[i])*y
+  #d = mixing[i]*u + (1-mixing[i])*y
+  d <- y/mixing[i] 
+  dd[i,] <- d
   #hist(d)
-  dd = discretize(d, numBins=100)
+  #dd = discretize(d, numBins=100)
   #maximum entropy for a 100-bit vector is log(100) = 4.605
-  m[i] = entropy(dd)
-  s[i] = sd(d)
+  #m[i] = entropy(dd)
+  #s[i] = sd(d)
   #e[i] = npsymtest(d,boot.num=200)
+  dnorm <- d/sum(d)
+  dsoft <- exp(d)/sum(exp(d))
+  enorm[i] <- -sum(dnorm*log(dnorm))
+  esoft[i] <- -sum(dsoft*log(dsoft))
 }
+
+matplot(dd)
+dm <- melt(dd)
+ggplot(dm, aes(x=value)) + geom_histogram() + facet_wrap(~Var1)
+
+cor(enorm, esoft)
+
+scatter3d(1:10, enorm, esoft, point.col = "blue", surface=FALSE)
+library(plotly)
+
+plot(1:101, enorm, main="normalize")
+plot(1:101, esoft, main="softmax")
 
 par(mfrow=c(3,1))
 plot(mixing, m/log(100), type="l")

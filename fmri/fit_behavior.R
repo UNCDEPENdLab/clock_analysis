@@ -142,6 +142,22 @@ for (b in behavFiles) {
           poseps$fit(toFit=r, random_starts=5)
         })
     
+    runfits <- list()
+    for (r in 1:length(s$runs)) {
+      if (r > 1) {
+       s$runs[[r]]$w$V[1] <- lastv 
+      }
+      poseps$set_data(s$runs[[r]])
+      runfits[[r]] <- poseps$fit(random_starts=1)
+      vfit <- s$runs[[r]]$w$V
+      lastv <- vfit[length(vfit)]
+    }
+    
+    f_runs <- lapply(s$runs, function(r) {
+          poseps$fit(toFit=r, random_starts=5)
+        })
+    
+    
     #refit without value carryover
     poseps$carryover_value <- FALSE
     negeps$carryover_value <- FALSE
