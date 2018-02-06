@@ -193,8 +193,32 @@ car::Anova(mmtrial2)
 summary(mmtrial2 <- lmer(ev ~ emotion*group + rewFunc*group + AgeAtScan.c + run + ppelag*group*emotion + (1 | SPECC_ID/run), bdf))
 car::Anova(mmtrial2)
 
+summary(mtest <- lmer(rt ~ rewFunc*group*emotion*omissionlag + (1 | SPECC_ID/run), filter(bdf, rewFunc != "CEVR")))
+car::Anova(mtest)
+
+plot(lsmeans(mtest, ~ emotion*rewFunc))
+plot(lsmeans(mtest, ~ emotion*rewFunc))
+
+summary(mtest <- lmer(ev ~ rewFunc*emotion*omissionlag + (1 | SPECC_ID/run), filter(bdf, rewFunc != "CEVR")))
+car::Anova(mtest)
+
+
+summary(mtest <- lmer(ev ~ rewFunc*emotion*trial + (1 | SPECC_ID/run), filter(bdf, rewFunc != "CEVR")))
+car::Anova(mtest)
+
+summary(mtest <- lmer(ev ~ rewFunc*emotion + (1 | SPECC_ID/run), filter(bdf, rewFunc %in% c("DEV", "IEV"))))
+car::Anova(mtest)
+
+summary(mtest <- lmer(ev ~ rewFunc*emotion*trial + (1 | SPECC_ID/run), filter(bdf, rewFunc != "CEVR")))
+car::Anova(mtest)
+
+
+pairs(lsmeans(mtest, ~ emotion | rewFunc))
+
 summary(mmtrial2 <- lmer(ev ~ emotion*group + rewFunc*group*ppelag + rewFunc*group*npelag + AgeAtScan.c*group*emotion + run + ppelag*group*emotion + npelag*group*emotion + (1 | SPECC_ID/run), bdf))
 car::Anova(mmtrial2)
+
+summary(mmtrial2 <- lmer(ev ~ emotion + rewFunc*ppelag + rewFunc*npelag + run + ppelag*emotion + npelag*emotion + (1 | SPECC_ID/run), bdf))
 
 ggplot(bdfruns, aes(x=AgeAtScan.c, y=elratio, color=group)) + geom_point() + stat_smooth(method="lm") +
   facet_wrap(~rewFunc)
@@ -206,7 +230,6 @@ pairs(lstrends(mmtrial2, ~ group | emotion, var="npelag"))
 #looks like there are also emotion condition differences within group
 pairs(lstrends(mmtrial2, ~ emotion | group, var="ppelag"))
 pairs(lstrends(mmtrial2, ~ emotion | group, var="npelag"))
-
 
 
 plot(lstrends(mmtrial2, ~ group | emotion, var="ppelag", infer=c(TRUE, TRUE)))
