@@ -3,13 +3,14 @@
 ##models <- c("sceptic_dauc_preconvolve", "sceptic_pemax_preconvolve", "sceptic_vmax_preconvolve", "sceptic_vchosen_preconvolve", "sceptic_ventropy_preconvolve")
 library(dplyr)
 options(dplyr.width=200)
-preproc_dirname <- "mni_5mm_aroma"
+#preproc_dirname <- "mni_5mm_aroma"
+preproc_dirname <- "mni_5mm_3ddespike"
 fsl_dirname <- "FEAT_LVL2_runtrend.gfeat"
 ##models <- c("sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve")
 models <- c("sceptic_vchosen_ventropy_dauc_pemax_preconvolve")
 
-dataset <- "MMY3"
-#dataset <- "SPECC"
+#dataset <- "MMY3"
+dataset <- "SPECC"
 
 if (dataset=="MMY3") {
   subinfo <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/subinfo_db", header=TRUE)
@@ -40,7 +41,6 @@ setwd(outdir)
             
 ncopes <- 6 #clock, feedback, sceptic vchosen, ventropy, dauc, pemax
 
-preproc_dirname <- "mni_5mm_aroma"
 fsl_dirname <- "FEAT_LVL2_runtrend.gfeat"
 ##models <- c("sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve")
 models <- c("sceptic_vchosen_ventropy_dauc_pemax_preconvolve")
