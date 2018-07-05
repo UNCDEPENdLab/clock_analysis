@@ -7,15 +7,21 @@ library(reshape2)
 library(entropy)
 options(dplyr.print_max = 1000)
 options(max.print = 1000)
-setwd("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri")
+# setwd("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri")
+setwd("~/code/temporal_instrumental_agent/clock_task/vba_fmri")
+
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession.mat")
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_constrain0p025.mat")
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_constrain0p0125_niv.mat")
-fit <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
+# fit <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
+fit <- readMat("~/code/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
+
 #fit <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_specc_decay_psfixed0p0125_k24.mat") #specc n=94 dataset
 
 #basis <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/sceptic_fmri_basis_setup.mat")
-basis <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
+# basis <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
+basis <- readMat("~/code/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
+
 source("clock_functions.R")
 
 #pull the uncertainties from kalman_uv_sum. Make sure this is not predictive of RT swings
@@ -24,6 +30,8 @@ source("clock_functions.R")
 
 #this one should be correct for resetting U at run boundaries
 #udata <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/uncertainty_results/updated_multisession_u_matrix.mat"))
+
+udata <- readMat("~/Box Sync/skinner/projects_analyses/SCEPTIC/subject_fitting/uncertainty_results/multisession_uncertainty_fixed_uv_kalman_uv_sum.mat")
 
 #sigtrials <- udata[[1]]["kalman.uv.sum",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
 #sigtrials <- udata[[1]]["fixed.uv",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
@@ -44,7 +52,9 @@ ids <- gsub(".*CORRECT_(\\d+)_fixed_decay.*", "\\1", unlist(fit$fitfiles), perl=
 
 #plot RTs for clock data
 #allData <- getClockGroupData(path="~/Data_Analysis/temporal_instrumental_agent/clock_task/subjects/SPECC") #for SPECC
-allData <- getClockGroupData(path="~/Data_Analysis/temporal_instrumental_agent/clock_task/subjects") #for MMY3
+# allData <- getClockGroupData(path="~/Data_Analysis/temporal_instrumental_agent/clock_task/subjects") #for MMY3
+allData <- getClockGroupData(path="~/code/temporal_instrumental_agent/clock_task/subjects") #for MMY3
+
 allData$timestep <- plyr::round_any(allData$rt, 100)/100 #1:40 coding
 
 
@@ -359,6 +369,7 @@ mmdf$duration = 0.1
 
 mmdf <- select(mmdf, ID, run, trial, onset, value, duration) #timestep, timestep_chosen,
 
+
 #prototype: checks out
 
 #vtime <- split(mmdf, list(mmdf$ID, mmdf$run))
@@ -377,7 +388,7 @@ mmdf <- select(mmdf, ID, run, trial, onset, value, duration) #timestep, timestep
 subjs <- sort(unique(mmdf$ID))
 runs <- sort(unique(mmdf$run))
 trials <- sort(unique(mmdf$trial))
-vtime_list <- array(list(), dim=c(length(nsubjs), length(runs), length(trials)), dimnames=list(ID=subjs, run=runs, trial=trials))
+vtime_list <- array(list(), dim=c(length(subjs), length(runs), length(trials)), dimnames=list(ID=subjs, run=runs, trial=trials))
 
 #brute force
 for (s in as.character(subjs)) {
@@ -548,8 +559,30 @@ bdf <- bdf %>% group_by(ID, run) %>%
         distfromedgelag = lag(distfromedge, order_by=trial)
     ) %>% ungroup() %>% arrange(ID, run, trial)
 
-
+# counting process dataframe for survival analysis
 library(tidyr)
+library(tibble)
+mmdf <- as.tibble(mmdf)
+bdf$trial <- as.numeric(bdf$trial)
+sdf <- as.tibble(merge(mmdf,bdf, by = c("ID", "run", "trial")))
+sdf <- sdf %>% arrange(ID, run, trial)
+sdf <- sdf %>% group_by(ID,run,trial) %>% 
+  dplyr::mutate(
+  t2 = seq(n())/10,
+  t1 = t2-.1
+  ) %>% ungroup() %>% arrange(ID, run, trial)
+
+# sanity check: plot value by condition.  Checks out.
+p <- ggplot(sdf,aes(t2,value, color = rewFunc)) + geom_jitter() + facet_wrap(~ID)
+ggsave("binned_value_for_coxme_by_subject.pdf", p, width = 20, height = 20)
+p <- ggplot(sdf,aes(t2,value, color = rewFunc)) + geom_jitter(size = 0.25) + facet_wrap(rewFunc~trial>10)
+ggsave("binned_value_for_coxme_early_late.pdf", p, width = 10, height = 10)
+
+# save data for coxme analyses
+setwd("~/code/clock_analysis/coxme")
+save(file="clock_for_coxme_value_only_070518.RData", list = c('sdf', 'bdf'))
+
+
 bdf_toplot <- bdf %>% select(ID, run, trial, rtvmax, rtumax, timestep) %>% gather(key=signal, value=value, rtvmax, rtumax, timestep)
 
 subids <- 1:length(unique(bdf_toplot$ID))
