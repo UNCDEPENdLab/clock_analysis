@@ -33,17 +33,21 @@ source("clock_functions.R")
 
 udata <- readMat("~/Box Sync/skinner/projects_analyses/SCEPTIC/subject_fitting/uncertainty_results/multisession_uncertainty_fixed_uv_kalman_uv_sum.mat")
 
-#sigtrials <- udata[[1]]["kalman.uv.sum",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
+# read in U
+
+udata <- readMat("~/code/temporal_instrumental_agent/clock_task/updated_multisession_u_matrix.mat")
+
+sigtrials <- udata[[1]]["kalman.uv.sum",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
 #sigtrials <- udata[[1]]["fixed.uv",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
 #the other data in the fit objects tend to be subjects x runs x basis functions x trials
-#sigtrials <- aperm(sigtrials, c(3,2,1))
+# sigtrials <- aperm(sigtrials, c(3,2,1))
 #sigrestruct <- array(aperm(sigtrials, c(3,2,1)), dim=c(76, 8, 24, 50)) #this doesn't get the ordering quite right...
 
-#m <- melt(sigtrials, varnames=c("basis", "trial", "rowID")) %>% arrange(rowID, trial, basis) %>% select(-trial)#rename(trial_abs=trial)
-#m$run <- rep(1:8, each=50*24) #1:8 numbering
-#m$trial <- rep(1:50, each=24) #1:50 numbering as elsewhere
+m <- melt(sigtrials, varnames=c("basis", "trial", "rowID")) %>% arrange(rowID, trial, basis) %>% select(-trial)#rename(trial_abs=trial)
+m$run <- rep(1:8, each=50*24) #1:8 numbering
+m$trial <- rep(1:50, each=24) #1:50 numbering as elsewhere
 
-#sigrestruct <- acast(m, rowID ~ run ~ basis ~ trial, value.var="value") #tada! 
+sigrestruct <- acast(m, rowID ~ run ~ basis ~ trial, value.var="value") #tada!
 
 #sigrestruct[1,1,1:24, 1:10] #all basis functions for 10 trials
 #sigtrials[1:24,1:10, 1]
@@ -163,7 +167,7 @@ allData$timestep <- plyr::round_any(allData$rt, 100)/100 #1:40 coding
 
 
 #generate regressors for PE, value, and decay at each trial
-tofmri <- list(V=fit$V, PE=fit$PE, D=fit$D)#, U=sigrestruct) #dropping U for SPECC
+tofmri <- list(V=fit$V, PE=fit$PE, D=fit$D, U=sigrestruct) #dropping U for SPECC
 #tofmri <- list(V=fit$V, PE=fit$PE, D=fit$D, U=sigrestruct) #MMY3
 fmriexpanded <- list()
 for (v in 1:length(tofmri)) {  
@@ -176,6 +180,19 @@ for (v in 1:length(tofmri)) {
   
   dimnames(fmriexpanded[[ names(tofmri)[v] ]]) <- list(ID=ids, run=1:8, trial=1:50, timestep=1:40) #list(ID=ids, run=1:8, trial=1:50, timestep=1:40)
 }
+
+# Alex's mirror version for U
+for (U in 1:length(tofmri)) {  
+  #multiply against basis to get distribution/representation
+  fmriexpanded[[ names(tofmri)[U] ]] <- aaply(tofmri[[U]], c(1,2,4), function(b) {
+    U = outer(b, rep(1, dim(basis$tvec)[2])) * basis$gaussmat #use vector outer product to replicate weight vector
+    ufunc <- colSums(U)
+    return(ufunc)
+  })
+  
+  dimnames(fmriexpanded[[ names(tofmri)[U] ]]) <- list(ID=ids, run=1:8, trial=1:50, timestep=1:40) #list(ID=ids, run=1:8, trial=1:50, timestep=1:40)
+}
+
 
 #fmriexpanded now has arrays that are subjects x runs x trials x timesteps
 #make regressors of these
@@ -358,6 +375,9 @@ sum(vchosen-vchosen_suspicious, na.rm=T)
 
 #compute an evolving value signal
 mmdf <- melt(fmriexpanded[["V"]])
+udf <- melt(fmriexpanded[["U"]], value.name = "uncertainty")
+mmdf <- merge(mmdf,udf, by = c("ID", "run", "trial", "timestep"))
+
 mmdf <- merge(mmdf, allData %>% dplyr::rename(timestep_chosen=timestep), by=c("ID", "run", "trial")) %>% arrange(ID, run, trial, timestep)
 
 #so now we have the timestep chosen merged in. Seems we would just need to filter to observations before chosen value
@@ -367,7 +387,7 @@ mmdf <- mmdf %>% filter(timestep <= timestep_chosen)
 mmdf$onset <- mmdf$clock_onset + (mmdf$timestep-1)/10
 mmdf$duration = 0.1
 
-mmdf <- select(mmdf, ID, run, trial, onset, value, duration) #timestep, timestep_chosen,
+mmdf <- select(mmdf, ID, run, trial, onset, value, uncertainty, duration) #timestep, timestep_chosen,
 
 
 #prototype: checks out
@@ -577,6 +597,13 @@ p <- ggplot(sdf,aes(t2,value, color = rewFunc)) + geom_jitter() + facet_wrap(~ID
 ggsave("binned_value_for_coxme_by_subject.pdf", p, width = 20, height = 20)
 p <- ggplot(sdf,aes(t2,value, color = rewFunc)) + geom_jitter(size = 0.25) + facet_wrap(rewFunc~trial>10)
 ggsave("binned_value_for_coxme_early_late.pdf", p, width = 10, height = 10)
+
+# it seems to check out!
+p <- ggplot(sdf,aes(t2,uncertainty, color = rewFunc)) + geom_jitter() + facet_wrap(~ID)
+ggsave("binned_uncertainty_for_coxme_by_subject.pdf", p, width = 20, height = 20)
+p <- ggplot(sdf,aes(t2,uncertainty, color = rewFunc)) + geom_jitter(size = 0.25) + facet_wrap(rewFunc~trial>10, nrow = 4)
+ggsave("binned_uncertainty_for_coxme_early_late.pdf", p, width = 10, height = 10)
+
 
 # save data for coxme analyses
 setwd("~/code/clock_analysis/coxme")
