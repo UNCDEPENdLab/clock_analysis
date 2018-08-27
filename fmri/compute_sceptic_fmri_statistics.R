@@ -7,15 +7,21 @@ library(reshape2)
 library(entropy)
 options(dplyr.print_max = 1000)
 options(max.print = 1000)
-setwd("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri")
+# setwd("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri")
+setwd("~/code/temporal_instrumental_agent/clock_task/vba_fmri")
+
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession.mat")
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_constrain0p025.mat")
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_constrain0p0125_niv.mat")
-fit <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
+# fit <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
+fit <- readMat("~/code/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
+
 #fit <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_specc_decay_psfixed0p0125_k24.mat") #specc n=94 dataset
 
 #basis <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/sceptic_fmri_basis_setup.mat")
-basis <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
+# basis <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
+basis <- readMat("~/code/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
+
 source("clock_functions.R")
 
 #pull the uncertainties from kalman_uv_sum. Make sure this is not predictive of RT swings
@@ -25,17 +31,23 @@ source("clock_functions.R")
 #this one should be correct for resetting U at run boundaries
 #udata <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/uncertainty_results/updated_multisession_u_matrix.mat"))
 
-#sigtrials <- udata[[1]]["kalman.uv.sum",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
+udata <- readMat("~/Box Sync/skinner/projects_analyses/SCEPTIC/subject_fitting/uncertainty_results/multisession_uncertainty_fixed_uv_kalman_uv_sum.mat")
+
+# read in U
+
+udata <- readMat("~/code/temporal_instrumental_agent/clock_task/updated_multisession_u_matrix.mat")
+
+sigtrials <- udata[[1]]["kalman.uv.sum",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
 #sigtrials <- udata[[1]]["fixed.uv",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
 #the other data in the fit objects tend to be subjects x runs x basis functions x trials
-#sigtrials <- aperm(sigtrials, c(3,2,1))
+# sigtrials <- aperm(sigtrials, c(3,2,1))
 #sigrestruct <- array(aperm(sigtrials, c(3,2,1)), dim=c(76, 8, 24, 50)) #this doesn't get the ordering quite right...
 
-#m <- melt(sigtrials, varnames=c("basis", "trial", "rowID")) %>% arrange(rowID, trial, basis) %>% select(-trial)#rename(trial_abs=trial)
-#m$run <- rep(1:8, each=50*24) #1:8 numbering
-#m$trial <- rep(1:50, each=24) #1:50 numbering as elsewhere
+m <- melt(sigtrials, varnames=c("basis", "trial", "rowID")) %>% arrange(rowID, trial, basis) %>% select(-trial)#rename(trial_abs=trial)
+m$run <- rep(1:8, each=50*24) #1:8 numbering
+m$trial <- rep(1:50, each=24) #1:50 numbering as elsewhere
 
-#sigrestruct <- acast(m, rowID ~ run ~ basis ~ trial, value.var="value") #tada! 
+sigrestruct <- acast(m, rowID ~ run ~ basis ~ trial, value.var="value") #tada!
 
 #sigrestruct[1,1,1:24, 1:10] #all basis functions for 10 trials
 #sigtrials[1:24,1:10, 1]
@@ -44,7 +56,9 @@ ids <- gsub(".*CORRECT_(\\d+)_fixed_decay.*", "\\1", unlist(fit$fitfiles), perl=
 
 #plot RTs for clock data
 #allData <- getClockGroupData(path="~/Data_Analysis/temporal_instrumental_agent/clock_task/subjects/SPECC") #for SPECC
-allData <- getClockGroupData(path="~/Data_Analysis/temporal_instrumental_agent/clock_task/subjects") #for MMY3
+# allData <- getClockGroupData(path="~/Data_Analysis/temporal_instrumental_agent/clock_task/subjects") #for MMY3
+allData <- getClockGroupData(path="~/code/temporal_instrumental_agent/clock_task/subjects") #for MMY3
+
 allData$timestep <- plyr::round_any(allData$rt, 100)/100 #1:40 coding
 
 
@@ -153,7 +167,7 @@ allData$timestep <- plyr::round_any(allData$rt, 100)/100 #1:40 coding
 
 
 #generate regressors for PE, value, and decay at each trial
-tofmri <- list(V=fit$V, PE=fit$PE, D=fit$D)#, U=sigrestruct) #dropping U for SPECC
+tofmri <- list(V=fit$V, PE=fit$PE, D=fit$D, U=sigrestruct) #dropping U for SPECC
 #tofmri <- list(V=fit$V, PE=fit$PE, D=fit$D, U=sigrestruct) #MMY3
 fmriexpanded <- list()
 for (v in 1:length(tofmri)) {  
@@ -166,6 +180,19 @@ for (v in 1:length(tofmri)) {
   
   dimnames(fmriexpanded[[ names(tofmri)[v] ]]) <- list(ID=ids, run=1:8, trial=1:50, timestep=1:40) #list(ID=ids, run=1:8, trial=1:50, timestep=1:40)
 }
+
+# Alex's mirror version for U
+for (U in 1:length(tofmri)) {  
+  #multiply against basis to get distribution/representation
+  fmriexpanded[[ names(tofmri)[U] ]] <- aaply(tofmri[[U]], c(1,2,4), function(b) {
+    U = outer(b, rep(1, dim(basis$tvec)[2])) * basis$gaussmat #use vector outer product to replicate weight vector
+    ufunc <- colSums(U)
+    return(ufunc)
+  })
+  
+  dimnames(fmriexpanded[[ names(tofmri)[U] ]]) <- list(ID=ids, run=1:8, trial=1:50, timestep=1:40) #list(ID=ids, run=1:8, trial=1:50, timestep=1:40)
+}
+
 
 #fmriexpanded now has arrays that are subjects x runs x trials x timesteps
 #make regressors of these
@@ -348,6 +375,9 @@ sum(vchosen-vchosen_suspicious, na.rm=T)
 
 #compute an evolving value signal
 mmdf <- melt(fmriexpanded[["V"]])
+udf <- melt(fmriexpanded[["U"]], value.name = "uncertainty")
+mmdf <- merge(mmdf,udf, by = c("ID", "run", "trial", "timestep"))
+
 mmdf <- merge(mmdf, allData %>% dplyr::rename(timestep_chosen=timestep), by=c("ID", "run", "trial")) %>% arrange(ID, run, trial, timestep)
 
 #so now we have the timestep chosen merged in. Seems we would just need to filter to observations before chosen value
@@ -357,7 +387,8 @@ mmdf <- mmdf %>% filter(timestep <= timestep_chosen)
 mmdf$onset <- mmdf$clock_onset + (mmdf$timestep-1)/10
 mmdf$duration = 0.1
 
-mmdf <- select(mmdf, ID, run, trial, onset, value, duration) #timestep, timestep_chosen,
+mmdf <- select(mmdf, ID, run, trial, onset, value, uncertainty, duration) #timestep, timestep_chosen,
+
 
 #prototype: checks out
 
@@ -377,7 +408,7 @@ mmdf <- select(mmdf, ID, run, trial, onset, value, duration) #timestep, timestep
 subjs <- sort(unique(mmdf$ID))
 runs <- sort(unique(mmdf$run))
 trials <- sort(unique(mmdf$trial))
-vtime_list <- array(list(), dim=c(length(nsubjs), length(runs), length(trials)), dimnames=list(ID=subjs, run=runs, trial=trials))
+vtime_list <- array(list(), dim=c(length(subjs), length(runs), length(trials)), dimnames=list(ID=subjs, run=runs, trial=trials))
 
 #brute force
 for (s in as.character(subjs)) {
@@ -550,8 +581,37 @@ bdf <- bdf %>% group_by(ID, run) %>%
         scorelag = lag(score, order_by=trial)
     ) %>% ungroup() %>% arrange(ID, run, trial)
 
-
+# counting process dataframe for survival analysis
 library(tidyr)
+library(tibble)
+mmdf <- as.tibble(mmdf)
+bdf$trial <- as.numeric(bdf$trial)
+sdf <- as.tibble(merge(mmdf,bdf, by = c("ID", "run", "trial")))
+sdf <- sdf %>% arrange(ID, run, trial)
+sdf <- sdf %>% group_by(ID,run,trial) %>% 
+  dplyr::mutate(
+  t2 = seq(n())/10,
+  t1 = t2-.1
+  ) %>% ungroup() %>% arrange(ID, run, trial)
+
+# sanity check: plot value by condition.  Checks out.
+p <- ggplot(sdf,aes(t2,value, color = rewFunc)) + geom_jitter() + facet_wrap(~ID)
+ggsave("binned_value_for_coxme_by_subject.pdf", p, width = 20, height = 20)
+p <- ggplot(sdf,aes(t2,value, color = rewFunc)) + geom_jitter(size = 0.25) + facet_wrap(rewFunc~trial>10)
+ggsave("binned_value_for_coxme_early_late.pdf", p, width = 10, height = 10)
+
+# it seems to check out!
+p <- ggplot(sdf,aes(t2,uncertainty, color = rewFunc)) + geom_jitter() + facet_wrap(~ID)
+ggsave("binned_uncertainty_for_coxme_by_subject.pdf", p, width = 20, height = 20)
+p <- ggplot(sdf,aes(t2,uncertainty, color = rewFunc)) + geom_jitter(size = 0.25) + facet_wrap(rewFunc~trial>10, nrow = 4)
+ggsave("binned_uncertainty_for_coxme_early_late.pdf", p, width = 10, height = 10)
+
+
+# save data for coxme analyses
+setwd("~/code/clock_analysis/coxme")
+save(file="clock_for_coxme_value_only_070518.RData", list = c('sdf', 'bdf'))
+
+
 bdf_toplot <- bdf %>% select(ID, run, trial, rtvmax, rtumax, timestep) %>% gather(key=signal, value=value, rtvmax, rtumax, timestep)
 
 subids <- 1:length(unique(bdf_toplot$ID))
