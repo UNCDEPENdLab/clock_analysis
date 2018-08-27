@@ -97,18 +97,18 @@ for (l1 in 1:length(l1copes)) {
       #gdat <- readNIfTI(groupmap, reorient=FALSE)
       #generate cluster mask
       runAFNICommand(paste0("3dclust -overwrite -1Dformat -nosum -1dindex 0 -1tindex 0",
-              " -1thresh ", zthresh, " -dxyz=1 -savemask tmpclust 1.01 ", clustsize, " ", groupmap), 
-          afnidir=afnidir, stdout="tmpclust.1D")
+                            " -1thresh ", zthresh, " -dxyz=1 -savemask tmpclust 1.01 ", clustsize, " ", groupmap), 
+                     afnidir=afnidir, stdout="tmpclust.1D")
       
       #get coordinates and names of regions
       lookup <- runAFNICommand(paste0("whereami -coord_file tmpclust.1D'[1,2,3]' -space MNI -lpi -atlas CA_ML_18_MNIA"),
-          afnidir=afnidir, stderr="/dev/null", intern=TRUE) #/Volumes/Serena/bars_ica/output/einfomax_60_30_prenorm_28Jan2014/ic11behavLMER+tlrc.HEAD
+                               afnidir=afnidir, stderr="/dev/null", intern=TRUE) #/Volumes/Serena/bars_ica/output/einfomax_60_30_prenorm_28Jan2014/ic11behavLMER+tlrc.HEAD
       exitstatus <- attr(lookup, "status")  
       if (!is.null(exitstatus) && exitstatus != 0) next #whereami failed, which occurs when there are no clusters. Skip to next tbrik
       
       #get voxel sizes of clusters
       vsizes <- read.table("tmpclust.1D")$V1
-            
+      
       atlaslines <- grep("Atlas CA_ML_18_MNIA: Macro Labels (N27)", lookup, fixed=TRUE)
       bestguess <- sub("(^\\s*|\\s*$)", "", lookup[atlaslines+1], perl=TRUE) #first match after atlas for each cluster
       
@@ -119,7 +119,7 @@ for (l1 in 1:length(l1copes)) {
       
       #plot title for each of k ROIs
       plottitles <- paste(bestguess, paste(coords, paste(vsizes, "vox"), sep="; "), sep="\n")
-                 
+      
       roimask <- readAFNI("tmpclust+tlrc.HEAD", vol=1)
       #afni masks tend to read in as 4D matrix with singleton 4th dimension. Fix this
       if (length(dim(roimask)) == 4L) {
@@ -128,21 +128,21 @@ for (l1 in 1:length(l1copes)) {
       
       maskvals <- sort(unique(as.vector(roimask)))
       maskvals <- maskvals[!maskvals == 0]
-  
+      
       #generate a list of roi averages across subjects
       roimats <- lapply(maskvals, function(v) {
-            mi <- which(roimask==v, arr.ind=TRUE)
-            nsubj <- length(copefiles)
-            nvox <- nrow(mi)
-            mi4d <- cbind(pracma::repmat(mi, nsubj, 1), rep(1:nsubj, each=nvox))
-            
-            mat <- matrix(copeconcat[mi4d], nrow=nvox, ncol=nsubj) #need to manually reshape into matrix from vector
-            
-            #for each subject, compute huber m-estimator of location/center Winsorizing at 2SD across voxels (similar to voxel mean)
-            #clusavg <- apply(mat, 2, function(x) { MASS::huber(x, k=2)$mu })
-            clusavg <- apply(mat, 2, mean)
-          })      
-
+        mi <- which(roimask==v, arr.ind=TRUE)
+        nsubj <- length(copefiles)
+        nvox <- nrow(mi)
+        mi4d <- cbind(pracma::repmat(mi, nsubj, 1), rep(1:nsubj, each=nvox))
+        
+        mat <- matrix(copeconcat[mi4d], nrow=nvox, ncol=nsubj) #need to manually reshape into matrix from vector
+        
+        #for each subject, compute huber m-estimator of location/center Winsorizing at 2SD across voxels (similar to voxel mean)
+        #clusavg <- apply(mat, 2, function(x) { MASS::huber(x, k=2)$mu })
+        clusavg <- apply(mat, 2, mean)
+      })      
+      
       curoutdir <- file.path(getwd(), l1copes[l1], l2copes[l2])
       dir.create(curoutdir, showWarnings=FALSE, recursive=TRUE)
       pdf(file.path(curoutdir, paste0(l1copes[l1], "_", l2copes[l2], "_", l3copes[l3], ".pdf")), width=11, height=8)
@@ -154,25 +154,25 @@ for (l1 in 1:length(l1copes)) {
           robcorr <- covRob(na.omit(df[,c("age", "vox")]), estim="mcd", corr=TRUE)$cov[1,2]
           corr <- cor.test(df$age, df$vox)
           plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p = ", round(corr$p.value, 3), ", rob r = ", round(robcorr, 2))
-
+          
           g <- ggplot(df, aes(x=age, y=vox)) + geom_point() + stat_smooth(method="loess", color="red", size=2, se=FALSE) + stat_smooth(method="lm") +
-              ggtitle(plottitles[k]) + annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0) + theme_bw(base_size=18) +
-              ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Age (years)")
+            ggtitle(plottitles[k]) + annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0) + theme_bw(base_size=18) +
+            ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Age (years)")
           plot(g)
         } else if (l3copes[l3] == "female") {
           m <- t.test(vox ~ female_fac, df)
           plotnote <- paste0("t(", round(m$parameter, 2), ") = ", round(m$statistic, 2), ", p = ", round(m$p.value, 4))
           g <- ggplot(df, aes(x=female_fac, y=vox)) + geom_boxplot() + 
-              ggtitle(plottitles[k]) + annotate("text", x = 1, y = max(df$vox)+0.1*max(df$vox), label = plotnote, hjust=0) + theme_bw(base_size=18) +
-              ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Sex")
+            ggtitle(plottitles[k]) + annotate("text", x = 1, y = max(df$vox)+0.1*max(df$vox), label = plotnote, hjust=0) + theme_bw(base_size=18) +
+            ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Sex")
           plot(g)
         } else if (l3copes[l3] == "intercept") {
           m <- t.test(df$vox, mu=0) #test against 0
           plotnote <- paste0("t(", round(m$parameter, 2), ") = ", round(m$statistic, 2), ", p = ", round(m$p.value, 4))
           g <- ggplot(df, aes(x=factor(0), y=vox)) + geom_boxplot() + 
-              ggtitle(plottitles[k]) + annotate("text", x = 0.5, y = max(df$vox)+0.1*max(df$vox), label = plotnote, hjust=0) +
-              theme_bw(base_size=18) + ylab(paste(l1copes[l1], l2copes[l2])) +
-              theme(axis.title.x=element_blank(),
+            ggtitle(plottitles[k]) + annotate("text", x = 0.5, y = max(df$vox)+0.1*max(df$vox), label = plotnote, hjust=0) +
+            theme_bw(base_size=18) + ylab(paste(l1copes[l1], l2copes[l2])) +
+            theme(axis.title.x=element_blank(),
                   axis.text.x=element_blank(),
                   axis.ticks.x=element_blank())
           plot(g)          
@@ -182,11 +182,11 @@ for (l1 in 1:length(l1copes)) {
           eff_t <- m$coefficients["age:female","t value"]
           eff_p <- m$coefficients["age:female","Pr(>|t|)"]
           plotnote <- paste0("b = ", round(eff_b, 3), ", t = ", round(eff_t, 3), ", p = ", round(eff_p, 4))
-
+          
           g <- ggplot(df, aes(x=age, y=vox, color=female_fac)) + geom_point() + stat_smooth(method="lm") +
-              ggtitle(plottitles[k]) + annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0) +
-              theme_bw(base_size=18) +
-              ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Age (years)")
+            ggtitle(plottitles[k]) + annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0) +
+            theme_bw(base_size=18) +
+            ylab(paste(l1copes[l1], l2copes[l2])) + xlab("Age (years)")
           plot(g)
         }
         
@@ -195,7 +195,7 @@ for (l1 in 1:length(l1copes)) {
       dev.off()
       
       graphlist[[l1,l2,l3]] <- clustgraphs
-            
+      
     }
   }
 }
@@ -214,8 +214,8 @@ plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p =
 
 pdf("ventropy_fear_gt_scram_age_increases_lifg.pdf", width=8, height=6)
 g <- ggplot(df, aes(x=age, y=vox)) + geom_point(size=3) + stat_smooth(method="lm", se=FALSE, size=3, color="darkblue") +
-    annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
-    theme_bw(base_size=24) + ylab("Value entropy activity in L IFG (AU)\n") + xlab("Age (years)")
+  annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
+  theme_bw(base_size=24) + ylab("Value entropy activity in L IFG (AU)\n") + xlab("Age (years)")
 plot(g)          
 dev.off()
 
@@ -228,8 +228,8 @@ plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p =
 
 pdf("ventropy_happy_gt_scram_age_increases_mpfc.pdf", width=8, height=6)
 g <- ggplot(df, aes(x=age, y=vox)) + geom_point(size=3) + stat_smooth(method="lm", se=FALSE, size=3, color="darkblue") +
-    annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
-    theme_bw(base_size=24) + ylab("Value entropy activity in mPFC (AU)\n") + xlab("Age (years)")
+  annotate("text", x = min(df$age), y = max(df$vox), label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
+  theme_bw(base_size=24) + ylab("Value entropy activity in mPFC (AU)\n") + xlab("Age (years)")
 plot(g)          
 dev.off()
 
@@ -242,8 +242,8 @@ plotnote <- paste0("r(", corr$parameter, ") = ", round(corr$estimate, 2), ", p =
 
 pdf("rpe_pos_age_increases_sma.pdf", width=8, height=6)
 g <- ggplot(df, aes(x=age, y=vox)) + geom_point(size=3) + stat_smooth(method="lm", se=FALSE, size=3, color="darkblue") +
-    annotate("text", x = min(df$age), y = max(df$vox) - .01, label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
-    theme_bw(base_size=24) + ylab("RPE activity in SMA (AU)\n") + xlab("Age (years)")
+  annotate("text", x = min(df$age), y = max(df$vox) - .01, label = plotnote, hjust=0, size=8) + #ggtitle("Age-related increases in L IPL activation to pos. RPEs") + 
+  theme_bw(base_size=24) + ylab("RPE activity in SMA (AU)\n") + xlab("Age (years)")
 plot(g)          
 dev.off()
 

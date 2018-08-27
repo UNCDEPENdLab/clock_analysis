@@ -1,7 +1,7 @@
-# setwd(file.path(getMainDir(), "temporal_instrumental_agent/clock_task/vba_fmri"))
+setwd(file.path(getMainDir(), "temporal_instrumental_agent/clock_task/vba_fmri"))
 
 # for Alex:
-setwd("~/code/temporal_instrumental_agent/clock_task/vba_fmri/")
+#setwd("~/code/temporal_instrumental_agent/clock_task/vba_fmri/")
 
 #load(file="dataframe_for_entropy_analysis_Oct2016.RData")
 #this contains data with 24 basis functions and post-Niv learning rule
@@ -13,9 +13,10 @@ library(dplyr)
 library(tidyr)
 library(psych)
 library(gdata)
+library(emmeans)
 # source(file.path(getMainDir(), "Miscellaneous", "Global_Functions.R"))
 # for Alex:
-source("~/code/R")
+#source("~/code/R")
 library(R.matlab)
 library(reshape2)
 #bring in Luna IDs
@@ -42,9 +43,90 @@ bdf$softmax_H_sel <- softmax_H_sel$value
 # AD: I checked that we merged correctly
 #bdf$subject_check <- softmax_H_full$Var2
 
-
 ##11282 is at the floor of responding on all runs -- invalid, exclude
 bdf <- filter(bdf, LunaID != 11282)
+
+
+###20Feb2018
+nocev <- filter(bdf, !rewFunc %in% c("CEV", "CEVR"))
+cevonly <- filter(bdf, !rewFunc %in% c("DEV", "IEV"))
+summary(m1 <- lmer(rt ~ emotion + (1 | ID/run), nocev))
+car::Anova(m1)
+
+summary(m1 <- lmer(rt ~ emotion*rewFunc*trial + (1 | ID/run), nocev))
+car::Anova(m1)
+
+#In IEV, both emotions associated with faster RTs
+pairs(emmeans(m1, ~emotion | rewFunc))
+
+summary(m1 <- lmer(rt ~ emotion*omissionlag + (1 | ID/run), nocev))
+car::Anova(m1)
+
+plot(emmeans(m1, ~emotion | omissionlag))
+pairs(emmeans(m1, ~emotion * omissionlag))
+
+summary(m1 <- lmer(rt ~ emotion*pemaxlag*trial + (1 | ID/run), nocev))
+car::Anova(m1)
+
+pairs(emtrends(m1, ~emotion, var="pemaxlag"))
+plot(emtrends(m1, ~emotion, var="pemaxlag"))
+
+summary(m1 <- lmer(rt ~ rtlag*emotion*pemaxlag + (1 | ID/run), nocev))
+car::Anova(m1)
+
+plot(effect("rtlag:pemaxlag", m1, x.var="pemaxlag"))
+plot(effect("rtlag:emotion:pemaxlag", m1, x.var="pemaxlag"))
+
+
+summary(m1 <- lmer(rt ~ rtlag*emotion*omissionlag + rtlag*emotion*scorelag + (1 | ID/run), nocev))
+car::Anova(m1)
+
+summary(m1 <- lmer(rt ~ rtlag*omissionlag + rtlag*scorelag + (1 | ID/run), nocev))
+car::Anova(m1)
+
+plot(effect("rtlag:omissionlag", m1, x.var="omissionlag"))
+plot(effect("rtlag:scorelag", m1, x.var="scorelag"))
+
+summary(m1 <- lmer(rt ~ rtlag*emotion*rtvmaxlag + (1 | ID/run), nocev))
+car::Anova(m1)
+
+cm <- lmerCellMeans(m1, n.cont = 10, divide="rtvmaxlag")
+
+plot(effect("rtlag:emotion:rtvmaxlag", m1, x.var="rtlag"))
+cm$rt <- as.vector(cm$rt)
+ggplot(cm, aes(x=rtlag, y=rt, ymin=rt-se, ymax=rt+se, fill=emotion, color=emotion)) + geom_line() + facet_wrap(~rtvmaxlag, nrow=1)  #+ geom_ribbon(alpha=0.1)
+
+
+summary(m1 <- lmer(rt ~ rtlag + emotion*rtvmaxlag*pemaxlag + (1 | ID/run), nocev))
+car::Anova(m1)
+
+plot(effect("emotion:pemaxlag", m1, x.var="pemaxlag"))
+plot(effect("rtvmaxlag:pemaxlag", m1, x.var="rtvmaxlag"))
+
+summary(m1 <- lmer(rtchange ~ vdevlag*emotion*omissionlag + (1 | ID/run), nocev))
+car::Anova(m1)
+
+#Michael: look at borderlinearity, Alex: look at entropy as mediator
+
+cm <- lmerCellMeans(m1, n.cont = 10)
+cm$rt <- as.vector(cm$rt)
+ggplot(cm, aes(x=vdevlag, y=rt, color=emotion, ymin=rt-se, ymax=rt+se)) + geom_line() + geom_point() + facet_wrap(~omissionlag) + geom_errorbar() + theme_bw()
+
+
+#is there a break in the linear function for pe+ versus pe-
+#summary(m1 <- lmer(rtchange ~ vdevlag*emotion*ppelag + vdevlag*emotion*npelag + (1 | ID/run), nocev))
+summary(m1 <- lmer(rtchange ~ vdevlag*emotion*ppelag + (1 | ID/run), filter(nocev, ppelag>0)))
+car::Anova(m1)
+
+summary(m1 <- lmer(rtchange ~ vdevlag*emotion*npelag + (1 | ID/run), filter(nocev, npelag>0)))
+car::Anova(m1)
+
+
+cm <- lmerCellMeans(m1, n.cont = 10, divide="ppelag")
+
+
+
+###
 
 #plot average entropy for fixed and decay models
 edescriptives <- bdf %>% 
@@ -752,8 +834,15 @@ bdfcent %>% group_by(LunaID, run) %>% summarize(mean(entropyHlag_wicent, na.rm=T
 #2) Report effect after throwing in a bunch of other stuff
 #3) Report effect dissociating within versus between entropy
 
-msimple <- lmer(abstschange_sec ~ entropyHlag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
-summary(msimple)
+msimple1 <- lmer(abstschange_sec ~ entropyHlag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
+summary(msimple1)
+
+#use separate run and subject effects
+#msimple2 <- lmer(abstschange_sec ~ entropyHlag_c + (1 | LunaID/run), filter(bdfcent, run>1))
+#summary(msimple2)
+
+library(stargazer)
+stargazer(msimple1, report = "vcst*", digits=2, intercept.bottom=FALSE, single.row=FALSE)#, type="html")
 
 
 msimple <- lmer(abstschange_sec ~ entropyHlag_c*trial_c + abstschangelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
@@ -783,10 +872,14 @@ dev.off()
 
 #controlling for various effects and confounders
 mcontrol <- lmer(abstschange_sec ~ entropyHlag_c*trial_c + abstschangelag_c +
-        evdevlag_c*omissionlag*vdevlag_c*distfromedgelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
+    evdevlag_c*omissionlag*vdevlag_c*distfromedgelag_c + (1 | LunaID) + (1 | run), filter(bdfcent, run>1))
+
+mcontrol2 <- lmer(abstschange_sec ~ entropyHlag_c*trial_c + abstschangelag_c +
+    evdevlag_c*omissionlag*vdevlag_c*distfromedgelag_c + (1 | LunaID/run), filter(bdfcent, run>1))
 
 
-summary(mcontrol)
+
+summary(mcontrol2)
 car::Anova(mcontrol)
 
 
@@ -800,6 +893,10 @@ ggplot(cm, aes(x=entropyHlag_c, y=abstschange_sec, ymin=abstschange_sec-se, ymax
      geom_line(size=1.5) + theme_bw(base_size=20) + geom_pointrange(size=0.8) + ylab("RT swing (ms)") + xlab("Entropy of value distribution") +
      theme(axis.title.y=element_text(margin=margin(r=15)), axis.title.x=element_text(margin=margin(t=10)))
 dev.off()
+
+sink("rt_swing_supp_table.html")
+stargazer(msimple1, mcontrol, report = "vc*s", digits=2, intercept.bottom=FALSE, single.row=FALSE, type="html")
+sink()
 
 #divide into between and within
 mdivide <- lmer(abstschange_sec ~ entropyHlag_pmean_c*trial_c + entropyHlag_wicent*trial_c + abstschangelag_c +
