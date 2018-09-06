@@ -94,7 +94,7 @@ ggplot(tdf %>% filter(id %in% bad_r2), aes(x=id, y=rt_csv)) + geom_boxplot() + c
 Write out a CSV with zero RTs for further diagnosis.
 ```{r}
 zero_rts <- tdf %>% filter(rt_csv==0) %>% 
-  select(id, run, trial, rewFunc, emotion, rt_csv, score_csv, magnitude, probability, ev) %>%
+  select(id, run, trial, rewFunc, emotion, rt_csv, rt_backcalc, score_csv, magnitude, probability, ev) %>%
   arrange(id, run, trial)
 
 head(zero_rts)
@@ -198,7 +198,7 @@ The `rt_discrep` column is calculated: `rt_csv - rt_backcalc`. Thus, the consist
 
 ## Scaling up these checks to all subjects
 
-```{r}
+```{r, fig.height=8, fig.width=8}
 tdf <- tdf %>% group_by(id, run) %>% arrange(trial) %>% mutate(trial_rel = 1:n()) %>% ungroup()
 cor_diagnosis <- tdf %>% filter(!id %in% bad_r2) %>% #drop cases with all zeros since the correlation is meaningless
   select(id, trial, trial_rel, rewFunc, emotion, rt_csv, rt_backcalc, rt_vba, probability, magnitude) %>% 
@@ -226,6 +226,8 @@ kable(bad_cases)
 
 ### Find a case with lots of discrepancies
 
+Find a subject where many/all runs have low correlations.
+
 ```{r}
 kable(bad_freq <- table(bad_cases$id))
 ```
@@ -234,7 +236,7 @@ kable(bad_freq <- table(bad_cases$id))
 worst <- names(bad_freq)[which.max(bad_freq)]
 ```
 
-Looks like `r worst` is the ID with the most discrepancies. Repeat the plot above to get a sense of discrepancies
+Looks like `r worst` is the ID with the most discrepancies. Repeat the plot above to get a sense of discrepancies:
 ```{r}
 worst_subj <- cor_diagnosis %>% filter(id==worst)
 ggplot(worst_subj %>% gather(key="rtsrc", value="rt", rt_csv, rt_backcalc), aes(x=trial_rel, y=rt, color=rtsrc)) + geom_line() + facet_wrap(~emotion*rewFunc)
@@ -246,6 +248,7 @@ The low correlation appears to stem from a number of very high RT ~ 4000ms value
 filter(worst_subj, rt_backcalc > 3990)
 ```
 
+At first glance, it appears that the correlations are substantially damaged by RTs in the CSV that are zero. Is it possible that these reflect 'missed' RTs?
 Does the correlation get better if we treat these as `NA` for now?
 
 Before:
@@ -255,7 +258,7 @@ worst_subj %>% group_by(condition) %>% summarize(cor_rts=cor_match(rt_csv, rt_ba
 
 After:
 ```{r}
-worst_subj <- worst_subj %>% mutate(rt_backcalc=if_else(rt_backcalc>=4000, NA_integer_, rt_backcalc))
+worst_subj <- worst_subj %>% mutate(rt_backcalc=if_else(rt_backcalc >= 4000, NA_integer_, rt_backcalc))
 worst_subj %>% group_by(condition) %>% summarize(cor_rts=cor_match(rt_csv, rt_backcalc))
 ```
 
@@ -264,4 +267,74 @@ The plot after:
 ggplot(worst_subj %>% gather(key="rtsrc", value="rt", rt_csv, rt_backcalc), aes(x=trial_rel, y=rt, color=rtsrc)) + geom_line() + facet_wrap(~emotion*rewFunc)
 ```
 
-Conclusion: there is something funky going on for some RTs where the backcalculation evaluates to > 4000, but the RT in the CSV file is substantially less.
+## Provisional diagnosis of large gaps between rt_csv and rt_backcalc
+
+In the subject above, the rt_backcalc was > 4000ms when rt_csv was 0. This suggests that:
+
+1. The subject probably failed to respond on this trial, and the probability column reflects the time at which the trial ended (~4000ms).
+2. If this is true, we should likely use the rt_backcalc instead of the 0 because this is closer to the lived experience -- the subject waited to a late moment in time and got an omission.
+3. We should verify that the vast majority of rt_backcalc values > 4000 are associated with rt_csv = 0. There may be some late valid rt_csv responses (e.g., 3950ms), that roll over to 4000+ in backcalculation. The ~100ms discrepancy noted above seems to stem from a different source.
+4. If these considerations are corroborated, when rt_csv is 0, we should use the rt_backcalc in place of the 0 in all modeling.
+
+### Examining the rt_csv values of 0 for subjects with otherwise valid RTs
+
+Let's return to the `zero_rts_some` dataset above, which has subjects with some zero RTs but also a large number of non-zero RTs. Let's further divide into cases where rt_backcalc is > 3950 versus those that are not.
+
+```{r}
+head(zero_rts_some)
+```
+
+Number of examples of rt_csv == 0, but rt_backcalc != 0 is: `r filter(zero_rts_some, rt_csv==0 & rt_backcalc !=0) %>% nrow()`.
+
+### Cases where rt_csv is zero and rt_backcalc is > 4000
+
+Provisional diagnosis: this reflects failed responses.
+
+Number of rows where rt_backcalc is > 3950 and rt_csv is 0: `r filter(zero_rts_some, rt_csv==0 & rt_backcalc > 3950) %>% nrow()`.
+
+```{r}
+kable(filter(zero_rts_some, rt_csv==0 & rt_backcalc > 3950))
+```
+
+### Cases where rt_backcalc is < 3950 and rt_csv is 0
+
+Number of rows where rt_backcalc is < 3950 and rt_csv is 0: `r filter(zero_rts_some, rt_csv==0 & rt_backcalc < 3950) %>% nrow()`.
+
+```{r}
+kable(filter(zero_rts_some, rt_csv==0 & rt_backcalc < 3950))
+```
+
+This seems like it reflects a different kind of problem, as many of the backcalcs fall at the beginning of the interval. What if these reflect cases where the trial legitimately timed out immediately, such as could happen with a button pressed down. In fMRI, we wouldn't proceed if the button were pressed, but I don't know what happened in MEG.
+
+Let's subdivide rt_csv==0 cases into three categories: the backcalc is ~0 (suggesting immediate timeout/response), > 100 and < 3950ms, and > 3950ms
+
+```{r}
+zero_rts_some <- zero_rts_some %>% mutate(rt_cat=case_when(
+  rt_backcalc > 3950 ~ "past end",
+  rt_backcalc < 100 ~ "immediate response",
+  TRUE ~ "anomalous middle of interval"
+))
+
+kable(table(zero_rts_some$rt_cat))
+```
+
+In short, it appears that this heuristic accounts for the large majority of anomalus rt_csv==0 cases. We still need to diagnose the anomalies.
+
+### Correlations between rt_backcalc and rt_csv when we fill in rt_backcalc for the rt_csv==0 cases
+
+Here, we adopt the position that when rt_csv is 0 and rt_backcalc is > 3950, this is a missed/failed response and the late RT should be used.
+
+Does this help to rectify some of the r < 1 cases in the histogram of correlations above?
+
+```{r, fig.height=8, fig.width=8}
+cor_diagnosis <- cor_diagnosis %>% mutate(rt_csv_fillin=if_else(rt_csv==0 & rt_backcalc > 3950, rt_backcalc, rt_csv))
+results <- cor_diagnosis %>% group_by(id, condition) %>% summarize(cor_rts=cor_match(rt_csv_fillin, rt_backcalc)) %>% ungroup()
+
+ggplot(results, aes(x=cor_rts)) + geom_histogram(bins=12) + facet_wrap(~condition)
+```
+
+This is definitely moving in the right direction, but there are occasional low values. For further diagnosis:
+
+```{r}
+results %>% filter(cor_rts < .999)
+```
