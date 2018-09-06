@@ -1,0 +1,267 @@
+---
+title: "MEG RT QA and backcalculation"
+author: "Michael Hallquist"
+date: "4 Sep 2018"
+output:
+  html_document:
+    code_folding: hide
+    df_print: kable
+    mathjax: default
+    number_sections: no
+    theme: spacelab
+    toc: yes
+  pdf_document:
+    code_folding: hide
+    df_print: kable
+    number_sections: no
+    toc: yes
+    toc_depth: 4
+---
+
+<style type="text/css">
+body{ font-size: 20px; max-width: 1400px; margin: auto; padding: 1em; }
+code.r{ font-size: 20px; }
+p { padding-top: 10px; padding-bottom: 10px; }
+pre { font-size: 18px; }
+</style>
+
+
+```{r setup, include=FALSE}
+if (!require(pacman)) { install.packages("pacman"); library(pacman) }
+p_load(knitr, cowplot, tidyverse, viridis)
+knitr::opts_chunk$set(echo = TRUE) #print code by default
+options(digits=3) 
+source("RewFunction_Reversed.R") #will create a cached RT - freq translation object called 'lookup' used in pmap_dfr
+trials_per_run <- 63 #used for chunking/plotting RTs
+```
+
+## Goals
+
+The overall goal of this document is to examine the RTs for MMClock MEG data to understand better why there are
+many zeros, to verify the match between the `rt` column and the clock scoring function `getScore.m`, and to
+recover the RTs for subjects with invalid or missing values.
+
+## Diagnosis based on global (subject-level) statistics
+
+```{r, include=FALSE}
+#just used for global diagnosis at the moment
+df <- read_csv("data/mmclock_meg_decay_mfx_sceptic_global_statistics.csv")
+```
+
+Plot the association between beta (temperature) and fit ($R^2$). We expect a negative relationship, but note the subjects with extremely high $R^2$.
+
+```{r}
+ggplot(df, aes(x=beta, y=R2)) + geom_point() + stat_smooth()
+```
+
+### List subjects who had extremely high fits for unknown reasons
+
+```{r}
+cat(bad_r2 <- filter(df, R2 > .9) %>% pull(id), sep="\n")
+```
+
+## Diagnosis of trial-level RTs
+
+Let's now load the trial-level statistics for the MEG dataset for more a detailed examination
+
+```{r, include=FALSE}
+#this is the meg file that generates slight differences between rt_csv and rt_backcalc
+#add on back-calculated RTs for all subjects
+tdf <- read_csv("data/mmclock_meg_decay_mfx_trial_statistics.csv.gz") %>%
+  bind_cols(pmap_dfr(list(.$probability, .$rewFunc), RewFunction_Reversed, L=lookup))
+
+#for comparison, we don't see any discrepancies in MRI. back calculation is correct down to the millisecond
+#tdf <- read_csv("data/mmclock_fmri_decay_mfx_trial_statistics.csv.gz")
+```
+
+### Distribution of RTs for subjects with excessive R2
+
+It turns out that those high $R^2$ subjects have all zeros for RTs.
+
+```{r}
+ggplot(tdf %>% filter(id %in% bad_r2), aes(x=id, y=rt_csv)) + geom_boxplot() + coord_flip()
+```
+
+
+```{r, eval=FALSE}
+# Prior to joining on the ascending trial (i.e., the trials fitted by the computational model), the subjects with gaps in the trial sequence
+# would have improper trial joins (since the MATLAB output reflected ascending trial, but the original CSVs have trial that jumps at missing run boundaries)
+# This is now corrected upstream by using asc_trial as the join column. Keeping here for documentation only.
+# FORMER PROBLEM: some rows are missing key information such as rewFunc (contingency)
+#miss_stuff <- tdf %>% filter(is.na(rewFunc)) %>% write_csv(path="meg_missing_info.csv")
+```
+
+Write out a CSV with zero RTs for further diagnosis.
+```{r}
+zero_rts <- tdf %>% filter(rt_csv==0) %>% 
+  select(id, run, trial, rewFunc, emotion, rt_csv, score_csv, magnitude, probability, ev) %>%
+  arrange(id, run, trial)
+
+head(zero_rts)
+
+#cache for visual examination
+write_csv(x=zero_rts, path="output/zero_rts.csv")
+```
+
+The number of rows with RT = 0 is `r nrow(zero_rts)`.
+
+Now look at subjects missing some, but not all, RTs. These seem to merit further consideration, as this isn't 
+attributable to a bug that dropped all RTs.
+
+```{r}
+zero_rts_some <- zero_rts %>% filter(!id %in% bad_r2)
+head(zero_rts_some)
+write_csv(x=zero_rts_some, path="output/zero_rts_not_all.csv")
+```
+
+The number of rows with RT = 0 that doesn't reflect a subject missing all RTs is `r nrow(zero_rts_some)`.
+
+What about RTs > 4000? This could result from the 'Flip' in PsychToolbox falling just outside the trial loop. So these are not necessarily invalid, and if I recall, the subject does get an omission no matter what if they don't respond within the 4000ms window.
+
+Number of rows with RT > 4000: `r filter(tdf, rt_csv > 4000)  %>% nrow()`.
+
+## Validate backcalculation function
+
+The `RewFunction_Reversed` function calculates RT based on the condition and reward frequency recorded in the CSV file. The frequency should yield a one-to-one mapping between RT and reward probability, whereas EV wouldn't (e.g., in constant expected value).
+
+First, let's make sure the lookup table used in backcalculation matches our a prior expectation.
+
+```{r, fig.width=10, fig.height=6}
+#double check the probability -> RT lookup structure to make sure nothing is improper there
+lookup_df <- as.data.frame(lookup) %>% gather(key="frqmag", value="value", -RT) %>%
+  separate(frqmag, into=c("contingency", "frqmag"), sep="_") %>% spread(key=frqmag, value=value)
+
+frqplot <- ggplot(lookup_df, aes(x=RT, y=frq, color=contingency)) + geom_line()
+magplot <- ggplot(lookup_df, aes(x=RT, y=mag, color=contingency)) + geom_line()
+
+#yep, looks right!
+plot_grid(frqplot, magplot, align="h")
+```
+
+## Validate backcalculation of RTs
+
+Let's next validate the function on a subject with good RTs: 11262_20140312. The RTs should match!
+
+```{r}
+subj_to_diagnose <- "11262_20140312" 
+#subj_to_diagnose <- "11343_20150110" #(other MEG subj)
+#subj_to_diagnose <- 10637 #fmri comparator
+
+one_subj <- tdf %>% filter(id==subj_to_diagnose)
+one_subj$trial_rel <- 1:trials_per_run #use recycling to propagate to all runs
+
+tocorr <- one_subj %>% select(trial, trial_rel, rewFunc, emotion, rt_csv, rt_backcalc, rt_vba, probability, magnitude) %>% 
+  mutate(rt_vba=rt_vba*100, rt_discrep=rt_csv - rt_backcalc, condition=paste(rewFunc, emotion, sep="_"))
+
+
+```
+
+Number of rows in our test case where  RT = 0: `r filter(one_subj, rt_backcalc > 4000)  %>% nrow()`.
+
+Number of rows in test case where RT from CSV > 4000: `r filter(one_subj, rt_csv > 4000)  %>% nrow()`.
+Number of rows in test case where backcalculated RT > 4000: `r filter(one_subj, rt_backcalc > 4000)  %>% nrow()`.
+
+Correlations between RTs in CSV file and back-calculated RTs:
+```{r}
+xx <- split(tocorr, tocorr$condition)
+
+lapply(xx, function(df) { cor(df$rt_csv, df$rt_backcalc, use="pairwise.complete.obs")}) 
+
+#sum(is.na(tocorr$rt_backcalc))
+```
+
+### 20 randomly sampled rows with Discrepancies of > 100ms in recorded versus backcalculated RTs in subject
+
+```{r}
+filter(tocorr, abs(rt_discrep) > 100) %>% sample_n(20) %>% kable()
+```
+
+### Plot of recorded versus backcalculated RTs in subject `r subj_to_diagnose`
+
+```{r}
+#tocorr %>% filter(is.na(rt_backcalc))
+
+toplot <- tocorr %>% gather(key="rtsrc", value="rt", rt_csv, rt_backcalc) %>% select(-rt_vba)
+```
+
+```{r, fig.height=8, fig.width=10}
+ggplot(toplot, aes(x=trial_rel, y=rt, color=rtsrc)) + geom_line() + facet_wrap(~emotion*rewFunc)
+```
+
+### Plot of the distribution of differences in recorded versus backcalculated RTs
+
+```{r, fig.height=8, fig.width=10}
+ggplot(tocorr, aes(x=rt_discrep)) + geom_histogram(bins=10) + facet_wrap(~emotion*rewFunc) + geom_vline(xintercept=0)
+```
+
+The `rt_discrep` column is calculated: `rt_csv - rt_backcalc`. Thus, the consistently negative values seen here indicate that the recorded RTs in the CSV file are faster than the backcalculated RTs. The reason for this difference remains to be investigated.
+
+## Scaling up these checks to all subjects
+
+```{r}
+tdf <- tdf %>% group_by(id, run) %>% arrange(trial) %>% mutate(trial_rel = 1:n()) %>% ungroup()
+cor_diagnosis <- tdf %>% filter(!id %in% bad_r2) %>% #drop cases with all zeros since the correlation is meaningless
+  select(id, trial, trial_rel, rewFunc, emotion, rt_csv, rt_backcalc, rt_vba, probability, magnitude) %>% 
+  mutate(rt_vba=rt_vba*100, rt_discrep=rt_csv - rt_backcalc, condition=paste(rewFunc, emotion, sep="_"))
+
+cor_match <- function(rt_csv, rt_backcalc) {
+  if (sd(rt_csv, na.rm = T) == 0 || sd(rt_backcalc, na.rm=T) == 0) {
+    return(NA)
+  } else {
+    return(cor(rt_csv, rt_backcalc, use="pairwise.complete.obs"))
+  }
+}
+
+results <- cor_diagnosis %>% group_by(id, condition) %>% summarize(cor_rts=cor_match(rt_csv, rt_backcalc)) %>% ungroup()
+
+ggplot(results, aes(x=cor_rts)) + geom_histogram(bins=12) + facet_wrap(~condition)
+```
+
+### Zoom in on cases where correlation is < .99
+
+```{r}
+bad_cases <- results %>% filter(cor_rts < .99) #slight rounding challenges due to machine precision
+kable(bad_cases)
+```
+
+### Find a case with lots of discrepancies
+
+```{r}
+kable(bad_freq <- table(bad_cases$id))
+```
+
+```{r}
+worst <- names(bad_freq)[which.max(bad_freq)]
+```
+
+Looks like `r worst` is the ID with the most discrepancies. Repeat the plot above to get a sense of discrepancies
+```{r}
+worst_subj <- cor_diagnosis %>% filter(id==worst)
+ggplot(worst_subj %>% gather(key="rtsrc", value="rt", rt_csv, rt_backcalc), aes(x=trial_rel, y=rt, color=rtsrc)) + geom_line() + facet_wrap(~emotion*rewFunc)
+```
+
+The low correlation appears to stem from a number of very high RT ~ 4000ms values in the backcalculated RTs.
+
+```{r}
+filter(worst_subj, rt_backcalc > 3990)
+```
+
+Does the correlation get better if we treat these as `NA` for now?
+
+Before:
+```{r}
+worst_subj %>% group_by(condition) %>% summarize(cor_rts=cor_match(rt_csv, rt_backcalc))
+```
+
+After:
+```{r}
+worst_subj <- worst_subj %>% mutate(rt_backcalc=if_else(rt_backcalc>=4000, NA_integer_, rt_backcalc))
+worst_subj %>% group_by(condition) %>% summarize(cor_rts=cor_match(rt_csv, rt_backcalc))
+```
+
+The plot after:
+```{r}
+ggplot(worst_subj %>% gather(key="rtsrc", value="rt", rt_csv, rt_backcalc), aes(x=trial_rel, y=rt, color=rtsrc)) + geom_line() + facet_wrap(~emotion*rewFunc)
+```
+
+Conclusion: there is something funky going on for some RTs where the backcalculation evaluates to > 4000, but the RT in the CSV file is substantially less.
