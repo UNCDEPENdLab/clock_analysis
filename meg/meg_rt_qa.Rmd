@@ -217,6 +217,14 @@ results <- cor_diagnosis %>% group_by(id, condition) %>% summarize(cor_rts=cor_m
 ggplot(results, aes(x=cor_rts)) + geom_histogram(bins=12) + facet_wrap(~condition)
 ```
 
+Are there subjects where there is no discrepancy between the backcalc and the csv?
+It appears not.
+```{r}
+max_discrep <- cor_diagnosis %>% group_by(id) %>% summarize(rt_max_discrep=max(abs(rt_discrep))) %>% arrange(rt_max_discrep)
+kable(max_discrep)
+```
+
+
 ### Zoom in on cases where correlation is < .99
 
 ```{r}
