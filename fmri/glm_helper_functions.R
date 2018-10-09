@@ -90,70 +90,76 @@ gen_emo_interaction_regressors <- function(examplefile, regressors, emotions=c("
 }
 
 
-truncateRuns <- function(s, mrfiles, mrrunnums, niftivols, dropVolumes=0) {
+truncateRuns <- function(s, mrfiles, mrrunnums, niftivols, drop_volumes=0) {
   ##Identify the last valid volume acquired in a given run.
   ##Subjects often exhibit head movement after run ends (MATLAB closes), but scan hasn't stopped
   ##This occurs because the MB raw transfer of the prior run is occurring, but does not finish before the current run
   ##Thus, truncate mr files to be 12 seconds after final feedback presentation, which is how the paradigm timing files are setup
   ##note that all of this would need to be reworked if TR were not 1.0 (i.e., 1 second = 1 volume)
 
+  require(dplyr)
+  
   mrdf <- do.call(rbind, lapply(1:length(mrfiles), function(r) {
-            iti_durations <- s$runs[[ mrrunnums[r] ]]$orig_data_frame$iti_ideal
-            last_iti <- s$runs[[ mrrunnums[r] ]]$iti_onset[length(s$runs[[ mrrunnums[r] ]]$iti_onset)]
-            last_vol_behavior <- floor(last_iti + iti_durations[length(iti_durations)]) #use floor to select last vol in the iti window
-            first_vol <- dropVolumes #first volume to use for analysis 
-            
-            if (last_vol_behavior < niftivols[r]) {
-              ##more vols were acquired than presented in paradigm. Thus, truncation may be needed
-              ##check framewise displacement and truncate earlier than 12 second ITI if a big movement occurred
-              fd <- read.table(file.path(dirname(mrfiles[r]), "motion_info", "fd.txt"))$V1
-              badfd <- do.call(c, sapply(1:length(fd), function(x) { if (x >= last_iti && fd[x] > 0.9) x else NULL })) #flag volumes after last_iti with high FD
-              if (length(badfd) == 0L) {
-                ##no frames flagged in last volumes
-                last_vol_analysis <- last_vol_behavior
-              } else {
-                ##use either the last volume of the task or the volume before the earliest bad movement 
-                last_vol_analysis <- min(last_vol_behavior, (min(badfd) - 1))
-              }
-              
-              #length of truncated file
-              truncLength <- last_vol_analysis - first_vol
-              
-              #generate filename for truncated volume
-              if (first_vol > 0) {
-                truncfile <- sub("(^.*/[a-z]+_clock[0-9](?:_5)*)\\.nii\\.gz$", paste0("\\1_drop", dropVolumes, "_trunc", last_vol_analysis, ".nii.gz"), mrfiles[r], perl=TRUE)  
-              } else {
-                truncfile <- sub("(^.*/[a-z]+_clock[0-9](?:_5)*)\\.nii\\.gz$", paste0("\\1_trunc", last_vol_analysis, ".nii.gz"), mrfiles[r], perl=TRUE)
-              }
-              
-              if (!file.exists(truncfile)) { runFSLCommand(paste("fslroi", mrfiles[r], truncfile, first_vol, truncLength)) } #create truncated volume
-              mrfile_to_analyze <- truncfile
-            } else {
-              last_vol_analysis <- niftivols[r] 
-              if (dropVolumes > 0) {
-                truncLength <- niftivols[r] - dropVolumes
-                truncfile <- sub("(^.*/[a-z]+_clock[0-9](?:_5)*)\\.nii\\.gz$", paste0("\\1_drop", dropVolumes, ".nii.gz"), mrfiles[r], perl=TRUE)
-                if (!file.exists(truncfile)) { runFSLCommand(paste("fslroi", mrfiles[r], truncfile, first_vol, truncLength)) } #create truncated volume
-                mrfile_to_analyze <- truncfile
-              } else {
-                mrfile_to_analyze <- mrfiles[r] #just use original file  
-              }
-              
-            }
-            #cat(paste0(paste(mrfiles[r], niftivols[r], floor(last_iti), truncLength, sep="\t"), "\n"), file="trunclog", append=TRUE)
-            return(data.frame(last_vol_analysis, mrfile_to_analyze, stringsAsFactors=FALSE))
-          }))
+    #iti_durations <- s$runs[[ mrrunnums[r] ]]$orig_data_frame$iti_ideal #for clockfit objects
+    #last_iti <- s$runs[[ mrrunnums[r] ]]$iti_onset[length(s$runs[[ mrrunnums[r] ]]$iti_onset)]
+    
+    iti_durations <- s %>% dplyr::filter(run == mrrunnums[r]) %>% pull(iti_ideal) #for outputs from parse_sceptic_outputs (2018+)
+    last_iti <- s %>% dplyr::filter(run == mrrunnums[r]) %>% pull(iti_onset) %>% tail(n=1)
+
+    last_vol_behavior <- floor(last_iti + iti_durations[length(iti_durations)]) #use floor to select last vol in the iti window
+    first_vol <- drop_volumes #first volume to use for analysis 
+    
+    if (last_vol_behavior < niftivols[r]) {
+      ##more vols were acquired than presented in paradigm. Thus, truncation may be needed
+      ##check framewise displacement and truncate earlier than 12 second ITI if a big movement occurred
+      fd <- read.table(file.path(dirname(mrfiles[r]), "motion_info", "fd.txt"))$V1
+      badfd <- do.call(c, sapply(1:length(fd), function(x) { if (x >= last_iti && fd[x] > 0.9) x else NULL })) #flag volumes after last_iti with high FD
+      if (length(badfd) == 0L) {
+        ##no frames flagged in last volumes
+        last_vol_analysis <- last_vol_behavior
+      } else {
+        ##use either the last volume of the task or the volume before the earliest bad movement 
+        last_vol_analysis <- min(last_vol_behavior, (min(badfd) - 1))
+      }
+      
+      #length of truncated file
+      truncLength <- last_vol_analysis - first_vol
+      
+      #generate filename for truncated volume
+      if (first_vol > 0) {
+        truncfile <- sub("(^.*/[a-z]+_clock[0-9](?:_5)*)\\.nii\\.gz$", paste0("\\1_drop", drop_volumes, "_trunc", last_vol_analysis, ".nii.gz"), mrfiles[r], perl=TRUE)  
+      } else {
+        truncfile <- sub("(^.*/[a-z]+_clock[0-9](?:_5)*)\\.nii\\.gz$", paste0("\\1_trunc", last_vol_analysis, ".nii.gz"), mrfiles[r], perl=TRUE)
+      }
+      
+      if (!file.exists(truncfile)) { runFSLCommand(paste("fslroi", mrfiles[r], truncfile, first_vol, truncLength)) } #create truncated volume
+      mrfile_to_analyze <- truncfile
+    } else {
+      last_vol_analysis <- niftivols[r] 
+      if (drop_volumes > 0) {
+        truncLength <- niftivols[r] - drop_volumes
+        truncfile <- sub("(^.*/[a-z]+_clock[0-9](?:_5)*)\\.nii\\.gz$", paste0("\\1_drop", drop_volumes, ".nii.gz"), mrfiles[r], perl=TRUE)
+        if (!file.exists(truncfile)) { runFSLCommand(paste("fslroi", mrfiles[r], truncfile, first_vol, truncLength)) } #create truncated volume
+        mrfile_to_analyze <- truncfile
+      } else {
+        mrfile_to_analyze <- mrfiles[r] #just use original file  
+      }
+      
+    }
+    #cat(paste0(paste(mrfiles[r], niftivols[r], floor(last_iti), truncLength, sep="\t"), "\n"), file="trunclog", append=TRUE)
+    return(data.frame(last_vol_analysis, mrfile_to_analyze, stringsAsFactors=FALSE))
+  }))
   
   mrdf
   
 }
 
-pca_motion <- function(mrfiles, runlengths, motion_parfile="motion.par", verbose=FALSE,  numpcs=3, dropVolumes=0) {
+pca_motion <- function(mrfiles, runlengths, motion_parfile="motion.par", verbose=FALSE,  numpcs=3, drop_volumes=0) {
   #based on a vector of mr files to be analyzed, compute the PCA decomposition of motion parameters and their derivatives
   #do this for each run separately (e.g., for FSL or R glm), as well as concatenated files
   motion_runs <- lapply(1:length(mrfiles), function(i)  {
         mot <- read.table(file.path(dirname(mrfiles[i]), motion_parfile), col.names=c("r.x", "r.y", "r.z", "t.x", "t.y", "t.z"))
-        mot <- mot[(1+dropVolumes):runlengths[i],]
+        mot <- mot[(1+drop_volumes):runlengths[i],]
         motderiv <- as.data.frame(lapply(mot, function(col) { c(0, diff(col)) }))
         names(motderiv) <- paste0("d.", names(mot)) #add delta to names
         cbind(mot, motderiv)
