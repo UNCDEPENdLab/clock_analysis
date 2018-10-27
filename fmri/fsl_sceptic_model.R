@@ -1,14 +1,14 @@
 #note: this is a small adapation from the original fslSCEPTICModel to avoid use of the clockfit objects and to move to the
 #simpler build_design_matrix approach and the use of the trial_statistics csv files from vba_fmri
-fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, mrrunnums, run=FALSE,
-                              force=FALSE, drop_volumes=0, outdir=NULL, usepreconvolve=FALSE, spikeregressors=TRUE, ...) {
+fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, mrrunnums, execute_feat=FALSE, force=FALSE,
+                              drop_volumes=0, outdir=NULL, usepreconvolve=FALSE, spikeregressors=FALSE, model_suffix="", ...) {
 
   # subj_data is the trial-level data for one subject, as produced by parse_sceptic_outputs
   # sceptic_signals is a character vector of column names in subj_data used for parametric modulator regressors
   # mrfiles is a character vector of processed data to analyze
   # runlengths is the number of volumes in each run
   # mrrunnums is the numeric vector of the run numbers corresponding to mrfiles
-  # run specifies whether to execute feat for the runs after setting up the fsf files
+  # execute_feat specifies whether to execute feat for the runs after setting up the fsf files
   # drop_volumes specifies how many volumes were dropped from the beginning of the run for elements of mrfiles.
   #   This is used by build_design_matrix to ensure that the convolved regressors line up properly with the fMRI data
   # outdir is the base name of folder for the specified model. The resulting directories are nested inside the data folder for the subject
@@ -23,6 +23,8 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   if (is.null(outdir)) {
     outdir=paste0("sceptic-", paste(sceptic_signals, collapse="-")) #define output directory based on combination of signals requested
     if (usepreconvolve) { outdir=paste(outdir, "preconvolve", sep="-") }
+
+    outdir <- paste0(outdir, model_suffix) #add any model suffix, if requested
   }
 
   #determine which feat template is relevant
@@ -108,7 +110,8 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   #      durations[v] <- NA #not relevant
   #      normalizations[v] <- "none" #should not try to normalize the within-trial regressor since this starts to confused within/between trial variation
 
-  d <- build_design_matrix(events=events, signals=signals, tr=1.0, baseline_coef_order=2, write_timing_files = c("convolved", "AFNI", "FSL"),
+  #NB. The tr argument should be passed in as part of ...
+  d <- build_design_matrix(events=events, signals=signals, baseline_coef_order=2, write_timing_files = c("convolved", "AFNI", "FSL"),
     center_values=TRUE, plot=FALSE, convolve_wi_run=TRUE, output_directory=timingdir, drop_volumes=drop_volumes,
     run_volumes=runlengths, runs_to_output=mrrunnums, ...)
 
@@ -208,9 +211,9 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     allFeatFiles[[r]] <- featFile
   }
 
-  #if run is TRUE, execute feat on each fsf files at this stage, using an 8-node socket cluster (since we have 8 runs)
-  #if run is FALSE, just create the fsf files but don't execute the analysis
-  if (run == TRUE) {    
+  #if execute_feat is TRUE, execute feat on each fsf files at this stage, using an 8-node socket cluster (since we have 8 runs)
+  #if execute_feat is FALSE, just create the fsf files but don't execute the analysis
+  if (execute_feat == TRUE) {    
     cl_fork <- makeForkCluster(nnodes=8)
     runfeat <- function(fsf) {
       runname <- basename(fsf)

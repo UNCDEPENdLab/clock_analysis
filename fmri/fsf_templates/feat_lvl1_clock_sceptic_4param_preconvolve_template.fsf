@@ -301,6 +301,7 @@ set fmri(shape1) 2
 # 4 : Gamma basis functions
 # 5 : Sine basis functions
 # 6 : FIR basis functions
+# 8 : Alternate Double-Gamma
 set fmri(convolve1) 0
 
 # Convolve phase (EV 1)
@@ -356,6 +357,7 @@ set fmri(shape2) 2
 # 4 : Gamma basis functions
 # 5 : Sine basis functions
 # 6 : FIR basis functions
+# 8 : Alternate Double-Gamma
 set fmri(convolve2) 0
 
 # Convolve phase (EV 2)
@@ -411,6 +413,7 @@ set fmri(shape3) 2
 # 4 : Gamma basis functions
 # 5 : Sine basis functions
 # 6 : FIR basis functions
+# 8 : Alternate Double-Gamma
 set fmri(convolve3) 0
 
 # Convolve phase (EV 3)
@@ -466,6 +469,7 @@ set fmri(shape4) 2
 # 4 : Gamma basis functions
 # 5 : Sine basis functions
 # 6 : FIR basis functions
+# 8 : Alternate Double-Gamma
 set fmri(convolve4) 0
 
 # Convolve phase (EV 4)
@@ -521,6 +525,7 @@ set fmri(shape5) 2
 # 4 : Gamma basis functions
 # 5 : Sine basis functions
 # 6 : FIR basis functions
+# 8 : Alternate Double-Gamma
 set fmri(convolve5) 0
 
 # Convolve phase (EV 5)
@@ -576,6 +581,7 @@ set fmri(shape6) 2
 # 4 : Gamma basis functions
 # 5 : Sine basis functions
 # 6 : FIR basis functions
+# 8 : Alternate Double-Gamma
 set fmri(convolve6) 0
 
 # Convolve phase (EV 6)
