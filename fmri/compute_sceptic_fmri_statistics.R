@@ -548,6 +548,7 @@ bdf <- bdf %>% group_by(ID, run) %>%
         rtlag=lag(rt, order_by=trial),
         rtlag2=lag(rt, order_by=trial, n=2),
         rtlag3=lag(rt, order_by=trial, n=3),
+        rtchange = c(NA, diff(rt)),
         pemaxlag=lag(pemax, order_by=trial),
         abspe=abs(pemax),
         abspelag=lag(abspe, order_by=trial),
@@ -580,7 +581,8 @@ bdf <- bdf %>% group_by(ID, run) %>%
         wizentropy = as.vector(scale(entropy)),
         wizabstschange = as.vector(scale(abstschange)),
         distfromedge = sapply(timestep, function(x) { min(40-x,x) }),
-        distfromedgelag = lag(distfromedge, order_by=trial)
+        distfromedgelag = lag(distfromedge, order_by=trial),
+        scorelag = lag(score, order_by=trial)
     ) %>% ungroup() %>% arrange(ID, run, trial)
 
 # counting process dataframe for survival analysis
