@@ -2,7 +2,7 @@
 set -e
 
 if command -v module >/dev/null; then
-    module load "fsl/5.0.10" >/dev/null 2>&1
+    module load "fsl/5.0.11" >/dev/null 2>&1
 fi
 
 #this script is used to setup reg dirs for first-level analyses in Feat.
@@ -46,8 +46,8 @@ for dir in ${featDirs}; do
     cp "${FSLDIR}/etc/flirtsch/ident.mat" "${dir}/reg/example_standard2example_func.mat"
 
     #for some reason, FSL 5.0.8 is now giving errors following this symlink... switch to copy (at the expense of disk space)
-    #ln -sfn ~/standard/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_brain_2.3mm.nii "${dir}/reg/standard.nii"
-    cp $MRI_STDDIR/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_brain_2.3mm.nii "${dir}/reg/standard.nii"
+    ln -sfn $MRI_STDDIR/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_brain_2.3mm.nii "${dir}/reg/standard.nii"
+    #cp $MRI_STDDIR/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_brain_2.3mm.nii "${dir}/reg/standard.nii"
 
     cd "${dir}/reg"
     slicer example_func2standard standard -s 2 -x 0.35 sla.png -x 0.45 slb.png -x 0.55 slc.png -x 0.65 sld.png \
@@ -65,6 +65,5 @@ for dir in ${featDirs}; do
     pngappend example_func2standard1.png - example_func2standard2.png example_func2standard.png
 
     rm -f sl?.png example_func2standard2.png
-    #cd -
 
 done

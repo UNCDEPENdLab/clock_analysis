@@ -66,19 +66,19 @@ allData$timestep <- plyr::round_any(allData$rt, 100)/100 #1:40 coding
 #newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/val_based_shannon_H.mat"))
 #newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/H_values_decay_and_fixed_multisession.mat"))
 #newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/unisession_decay_and_fixed_rand_priors.mat"))
-#newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/unisession_decay_and_fixed_rand_priors_full.mat"))
+newEntropy <- readMat("~/Box Sync/skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/unisession_decay_and_fixed_rand_priors_full.mat")
 
 #value distribution entropy under decay and fixed LR V 
-#ventropy_decay_matlab <- melt(newEntropy$decay.H, varnames=c("rowID", "trial"), value.name="entropyH")
-#ventropy_fixedlrv_matlab <- melt(newEntropy$fixed.H, varnames=c("rowID", "trial"), value.name="entropyFixed")
+ventropy_decay_matlab <- melt(newEntropy$decay.H, varnames=c("rowID", "trial"), value.name="entropyH")
+ventropy_fixedlrv_matlab <- melt(newEntropy$fixed.H, varnames=c("rowID", "trial"), value.name="entropyFixed")
 
-#ventropy_decay_matlab <- ventropy_decay_matlab %>% arrange(rowID, trial)
-#ventropy_decay_matlab$run <- rep(1:8, each=50)
-#ventropy_decay_matlab$trial <- 1:50
+ventropy_decay_matlab <- ventropy_decay_matlab %>% arrange(rowID, trial)
+ventropy_decay_matlab$run <- rep(1:8, each=50)
+ventropy_decay_matlab$trial <- 1:50
 
-#ventropy_fixedlrv_matlab <- ventropy_fixedlrv_matlab %>% arrange(rowID, trial)
-#ventropy_fixedlrv_matlab$run <- rep(1:8, each=50)
-#ventropy_fixedlrv_matlab$trial <- 1:50
+ventropy_fixedlrv_matlab <- ventropy_fixedlrv_matlab %>% arrange(rowID, trial)
+ventropy_fixedlrv_matlab$run <- rep(1:8, each=50)
+ventropy_fixedlrv_matlab$trial <- 1:50
 
 #with(allData, table(ID, rewFunc, emotion))
 #allData$rewarded <- factor(allData$score > 0, levels=c(TRUE, FALSE), labels=c("Reward", "Omission"))
@@ -380,6 +380,10 @@ mmdf <- merge(mmdf,udf, by = c("ID", "run", "trial", "timestep"))
 
 mmdf <- merge(mmdf, allData %>% dplyr::rename(timestep_chosen=timestep), by=c("ID", "run", "trial")) %>% arrange(ID, run, trial, timestep)
 
+# set aside uncensored data (alldf) for uncertainty plots
+alldf <- mmdf
+alldf <- select(alldf, ID, run, trial, value, uncertainty) #timestep, timestep_chosen,
+
 #so now we have the timestep chosen merged in. Seems we would just need to filter to observations before chosen value
 mmdf <- mmdf %>% filter(timestep <= timestep_chosen)
 
@@ -594,6 +598,18 @@ sdf <- sdf %>% group_by(ID,run,trial) %>%
   t1 = t2-.1
   ) %>% ungroup() %>% arrange(ID, run, trial)
 
+# also make an uncensored (adf for 'all') df for uncertainty checks only
+# adf <- as.tibble(merge(alldf,bdf, by = c("ID", "run", "trial")))
+adf <- as.tibble(merge(alldf,bdf, by = c(intersect(names(alldf), names(bdf)))))
+adf <- adf %>% arrange(ID, run, trial)
+adf <- adf %>% group_by(ID,run,trial) %>% 
+  dplyr::mutate(
+    t2 = seq(n())/10,
+    t1 = t2-.1
+  ) %>% ungroup() %>% arrange(ID, run, trial)
+
+
+
 # sanity check: plot value by condition.  Checks out.
 p <- ggplot(sdf,aes(t2,value, color = rewFunc)) + geom_jitter() + facet_wrap(~ID)
 ggsave("binned_value_for_coxme_by_subject.pdf", p, width = 20, height = 20)
@@ -601,10 +617,23 @@ p <- ggplot(sdf,aes(t2,value, color = rewFunc)) + geom_jitter(size = 0.25) + fac
 ggsave("binned_value_for_coxme_early_late.pdf", p, width = 10, height = 10)
 
 # it seems to check out!
-p <- ggplot(sdf,aes(t2,uncertainty, color = rewFunc)) + geom_jitter() + facet_wrap(~ID)
+p <- ggplot(adf,aes(t2,uncertainty, color = rewFunc)) + geom_jitter() + facet_wrap(~ID)
 ggsave("binned_uncertainty_for_coxme_by_subject.pdf", p, width = 20, height = 20)
-p <- ggplot(sdf,aes(t2,uncertainty, color = rewFunc)) + geom_jitter(size = 0.25) + facet_wrap(rewFunc~trial>10, nrow = 4)
+p <- ggplot(adf,aes(t2,uncertainty, color = rewFunc)) + geom_jitter(size = 0.25) + facet_wrap(rewFunc~trial>10, nrow = 4)
 ggsave("binned_uncertainty_for_coxme_early_late.pdf", p, width = 10, height = 10)
+
+library(RColorBrewer)
+# 2d bins
+p <- ggplot(adf,aes(t2,uncertainty, color = rewFunc)) + geom_bin2d(bins = 10) + facet_wrap(~rewFunc) + xlim(0,4.1) + scale_fill_distiller(palette = "Spectral")
+ggsave("binned_uncertainty_for_coxme_all.pdf", p, width = 10, height = 10)
+
+# and value for comparison
+p <- ggplot(adf,aes(t2,value, color = rewFunc)) + geom_bin2d(bins = 10) + facet_wrap(~rewFunc) + xlim(0,4.1) + scale_fill_distiller(palette = "Spectral")
+ggsave("binned_value_for_coxme_all.pdf", p, width = 10, height = 10)
+
+
+p <- ggplot(adf,aes(t2,uncertainty, color = rewFunc)) + geom_smooth(method = 'gam') #+ facet_wrap(~ID)
+ggsave("smoothed_uncertainty_for_coxme_overall.pdf", p, width = 10, height = 10)
 
 
 # save data for coxme analyses

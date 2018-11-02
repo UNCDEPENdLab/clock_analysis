@@ -45,4 +45,4 @@ runfeat <- function(fsf) {
 clusterApply(cl_fork, torun, runfeat)
 stopCluster(cl_fork)
 
-system(paste0("bash /gpfs/group/mnh5174/default/clock_analysis/fmri/genRegDir.bash ", target))
+system(paste0("bash /gpfs/group/mnh5174/default/clock_analysis/fmri/gen_feat_reg_dir.bash ", target))
