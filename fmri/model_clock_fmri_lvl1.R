@@ -3,18 +3,17 @@
 
 model_clock_fmri_lvl1 <- function(trial_statistics, fmri_dir=NULL, idexpr=NULL, iddf=NULL, drop_volumes=6, runpar=FALSE, ncpus=1,
                                   expectdir="mni_5mm_aroma", expectfile = "nfaswuktm_clock[0-9]_5.nii.gz",
-                                  sceptic_run_variants=list(c("v_chosen", "v_entropy", "d_auc", "pe_max")), #which signals to model jointly in LVL1
+                                  sceptic_run_signals=c("v_chosen", "v_entropy", "d_auc", "pe_max"), #which signals to model jointly in LVL1
                                   outdir=NULL,
                                   ...) {
 
   #setup parallel worker pool, if requested
   if (runpar) {
-    require(doSNOW)
-    setDefaultClusterOptions(master="localhost")
-    clusterobj <- makeSOCKcluster(ncpus)
-    registerDoSNOW(clusterobj)
+    require(doParallel)
+    cl <- makeCluster(ncpus)
+    registerDoParallel(cl)
     
-    on.exit(try(stopCluster(clusterobj))) #cleanup pool upon exit of this function
+    on.exit(try(stopCluster(cl))) #cleanup pool upon exit of this function
   } else {
     registerDoSEQ() #formally register a sequential 'pool' so that dopar is okay
   }
@@ -82,15 +81,13 @@ model_clock_fmri_lvl1 <- function(trial_statistics, fmri_dir=NULL, idexpr=NULL, 
 
       if ("d_auc" %in% names(b)) { b$d_auc <- -1*b$d_auc } #invert decay such that higher values indicate greater decay
 
-      #loop over LVL 1 run variants, setting up separate models for each combination of signals
-
-      if (!is.null(outdir)) {
-        stopifnot (length(outdir) == length(sceptic_run_variants))
-      }
-
-      for (v in 1:length(sceptic_run_variants)) {
-        fsl_sceptic_model(b, sceptic_run_variants[[v]], mrfiles, runlengths, mrrunnums, drop_volumes=drop_volumes, outdir=outdir[v], ...)
-      }
+      #Setup FSL SCEPTIC run-level models for each combination of signals
+      tryCatch(fsl_sceptic_model(b, sceptic_run_signals, mrfiles, runlengths, mrrunnums, drop_volumes=drop_volumes, outdir=outdir, ...),
+        error=function(e) {
+          cat("Subject: ", b$id[1], ", run variant: ", paste(sceptic_run_signals, collapse="-"), " failed with mrfiles: \n",
+            paste(mrfiles, collapse="\n"), "\n\n", file="lvl1_crashlog.txt", append=TRUE)
+          print(e)
+        })
 
       message("completed processing of subject: ", subid)
       cat("\n\n\n")

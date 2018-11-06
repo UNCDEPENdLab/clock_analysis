@@ -20,6 +20,7 @@ module load afni/18.1.15
 
 export PATH
 
-#the fsl_lvl1_pipeline_file environment variable must be passed in through qsub, which is picked up by the R script
+#the fsl_pipeline_file environment variable must be passed in through qsub, which is picked up by the R script
+#run_model_index is also passed in to determine which model variant to run within sceptic_run_variant
 
-R CMD BATCH --no-save --no-restore execute_fsl_lvl1_pipeline.R
+R CMD BATCH --no-save --no-restore execute_fsl_lvl1_pipeline.R outputs/execute_fsl_lvl1_pipeline_${run_model_index}.Rout

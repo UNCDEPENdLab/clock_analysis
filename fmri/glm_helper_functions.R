@@ -235,19 +235,3 @@ visualizeDesignMatrix <- function(d, outfile=NULL, runboundaries=NULL, events=NU
   return(invisible(g))
 }
 
-#worker function to submit a single job and return the jobid
-qsub_file <- function(script, pbs_args=NULL, echo=TRUE) {
-  if (!is.null(pbs_args)) {
-    pbs_args <- paste(pbs_args, collapse=" ")
-  }
-  
-  stopifnot(file.exists(script))
-  qsubdir <- dirname(script)
-  qsubstdout <- paste0(tools::file_path_sans_ext(script), "_stdout")
-  qsubstderr <- paste0(tools::file_path_sans_ext(script), "_stderr")
-  setwd(qsubdir) #execute qsub from the temporary directory so that output files go there
-  jobres=system2("qsub", args=paste(script, pbs_args), stdout=qsubstdout, stderr=qsubstderr) #submit the qsub script and return the jobid
-  if (jobres != 0) { stop("qsub submission failed: ", script) }
-  jobid <- scan(file=qsubstdout, what="char", sep="\n", quiet=TRUE)
-  return(jobid)
-}
