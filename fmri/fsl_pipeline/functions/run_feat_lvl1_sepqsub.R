@@ -14,9 +14,9 @@
 ## wait_for <- Sys.getenv("WAIT_FOR")
 
 ## #call function below
-## run_fsl_lvl1_sepqsub(fsl_model_arguments, run_model_index, rerun=FALSE, wait_for=wait_for)
+## run_feat_lvl1_sepqsub(feat_model_arguments, run_model_index, rerun=FALSE, wait_for=wait_for)
 
-run_fsl_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FALSE, wait_for="") {
+run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FALSE, wait_for="") {
 
   #This function is now called within run_fsl_pipeline, rather than being run in its own qsub
   #to_run <- Sys.getenv("fsl_pipeline_file")
@@ -65,13 +65,15 @@ run_fsl_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FAL
   cat("About to run the following fsf files in parallel:\n\n")
   cat(torun, sep="\n")
 
+  # Omit emails for LVL1 estimation because it generates *many* emails
+  #  "#PBS -M michael.hallquist@psu.edu",
+  
   preamble <- c(
     "#PBS -A mnh5174_a_g_hc_default",
     paste0("#PBS -l nodes=1:ppn=", cpusperjob, ":himem"),
     ifelse(wait_for != "", paste0("#PBS -W depend=afterok:", wait_for), ""), #allow job dependency on upstream setup
     "#PBS -l walltime=4:00:00",
     "#PBS -j oe",
-    "#PBS -M michael.hallquist@psu.edu",
     "#PBS -m abe",
     "#PBS -W group_list=mnh5174_collab",
     "",

@@ -1,14 +1,16 @@
 # fit behavioral data for all participants who completed emo clock in scanner
 # setup model-based fMRI GLM analysis for based on fitted data
 
-model_clock_fmri_lvl1 <- function(trial_statistics, fmri_dir=NULL, idexpr=NULL, iddf=NULL, drop_volumes=6, runpar=FALSE, ncpus=1,
+model_clock_fmri_lvl1 <- function(trial_statistics, fmri_dir=NULL, idexpr=NULL, iddf=NULL, drop_volumes=6, ncpus=1,
                                   expectdir="mni_5mm_aroma", expectfile = "nfaswuktm_clock[0-9]_5.nii.gz",
                                   sceptic_run_signals=c("v_chosen", "v_entropy", "d_auc", "pe_max"), #which signals to model jointly in LVL1
                                   outdir=NULL,
                                   ...) {
 
+  stopifnot(is.numeric(ncpus) && ncpus >= 1)
+  
   #setup parallel worker pool, if requested
-  if (runpar) {
+  if (ncpus > 1) {
     require(doParallel)
     cl <- makeCluster(ncpus)
     registerDoParallel(cl)
@@ -54,6 +56,7 @@ model_clock_fmri_lvl1 <- function(trial_statistics, fmri_dir=NULL, idexpr=NULL, 
       ##cat(paste0("command: find ", mrmatch, " -iname '", expectfile, "' -ipath '*", expectdir, "*' -type f\n"))
       mrfiles <- system(paste0("find ", mrmatch, " -iname '", expectfile, "' -ipath '*", expectdir, "*' -type f | sort -n"), intern=TRUE)
       mrfiles <- mrfiles[!grepl("(exclude|bbr_noref|old)", mrfiles, ignore.case=TRUE)] #if exclude is in path/filename, then skip
+
       ##mrrunnums <- as.integer(sub(paste0(".*", expectfile, "$"), "\\1", mrfiles, perl=TRUE))
       mrrunnums <- as.integer(sub(paste0(".*clock(\\d+)_.*$"), "\\1", mrfiles, perl=TRUE)) #extract run number from file name
 

@@ -7,7 +7,7 @@
 # 3) Load emotion conditions from first-level design matrices
 # 4) Save all valid inputs into a single data.frame .RData object to be digested/run
 
-setup_fsl_lvl2_inputs <- function(fsl_model_arguments, run_model_index) {
+setup_feat_lvl2_inputs <- function(fsl_model_arguments, run_model_index) {
   require(plyr)
   
   #define run-level model folder name for analysis
@@ -81,8 +81,6 @@ setup_fsl_lvl2_inputs <- function(fsl_model_arguments, run_model_index) {
 
   #figure out emotion and rew contingency for all runs
   run_conditions <- do.call(rbind, lapply(1:nrow(feat_l2_inputs_df), function(i) {
-    ##loc <- local({load(file.path(fitDir, paste0(as.character(feat_l2_inputs_df$subid[i]), "_fitinfo.RData"))); environment()})$f #time-clock fit object (load as local var)
-    ##loc <- local({load(file.path(fitDir, paste0(as.character("10873"), "_fitinfo.RData"))); environment()})$f #time-clock fit object (load as local var)
     designmat <- file.path(dirname(feat_l2_inputs_df[i,"feat_run"]), "designmatrix.RData")
     loc <- local({load(designmat); environment()})$subj_data #load subj_data data.frame from designmatrix.RData
     head(subset(loc, run==feat_l2_inputs_df$run_num[i], select=c(emotion, rewFunc)), n=1) #just get emotion and contingency as a single-row data.frame
@@ -98,7 +96,7 @@ setup_fsl_lvl2_inputs <- function(fsl_model_arguments, run_model_index) {
 
   feat_l2_inputs_df <- feat_l2_inputs_df %>% select(subid, run_num, contingency, emotion, model, feat_run, everything())
 
-  save(feat_l2_inputs_df, motexclude, file=paste0("fsl_pipeline_configurations/", paste(fsl_model_arguments$analysis_name, odir, "lvl2_inputs", sep="_"), ".RData"))
+  save(feat_l2_inputs_df, motexclude, file=file.path(fsl_model_arguments$pipeline_home, "configuration_files", paste0(paste(fsl_model_arguments$analysis_name, odir, "lvl2_inputs", sep="_"), ".RData")))
 
   return(feat_l2_inputs_df) #return run-level information for passing onto run_feat_lvl2
 }

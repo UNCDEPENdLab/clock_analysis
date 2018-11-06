@@ -18,7 +18,15 @@ module load r/3.5.0
 module load fsl/5.0.11
 module load afni/18.1.15
 
-export PATH
+ni_tools="$G/lab_resources"
+
+#location of MRI template directory for preprocessing
+MRI_STDDIR="${ni_tools}/standard"
+
+#add preprocessing scripts that may be called in this pipeline
+PATH="${ni_tools}/c3d-1.1.0-Linux-x86_64/bin:${ni_tools}/fmri_processing_scripts:${ni_tools}/fmri_processing_scripts/autopreproc:${ni_tools}/bin:${PATH}"
+
+export PATH MRI_STDDIR
 
 #the fsl_pipeline_file environment variable must be passed in through qsub, which is picked up by the R script
 #run_model_index is also passed in to determine which model variant to run within sceptic_run_variant
