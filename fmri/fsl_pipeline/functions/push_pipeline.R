@@ -102,6 +102,20 @@ push_pipeline <- function(fsl_model_arguments, ncpus=1) { #should this read from
         run_model_index=run_model_index,
         fsl_pipeline_file=file.path(fsl_model_arguments$pipeline_home, "configuration_files", paste0(fsl_model_arguments$analysis_name, ".RData")))
     )
+
+    if (!is.null(l2_execution_jobid)) {
+      wait_string <- paste0("-W depend:afterok:", l2_execution_jobid)
+    } else { wait_string <- NULL }
+
+    #only need 1 CPU for l3 because it mostly sets up the .fsf files, then qsubs them.
+    l3_execution_jobid <- qsub_file(script="qsub_fmri_r_script.bash",
+      pbs_args=c("-l nodes=1:ppn=1", "-l walltime=2:00:00", wait_string),
+      env_variables=c(
+        R_SCRIPT="execute_fsl_lvl3_pipeline.R",
+        run_model_index=run_model_index,
+        fsl_pipeline_file=file.path(fsl_model_arguments$pipeline_home, "configuration_files", paste0(fsl_model_arguments$analysis_name, ".RData")))
+    )
+
     
   }
 

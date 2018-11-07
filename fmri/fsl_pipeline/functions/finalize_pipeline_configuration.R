@@ -12,6 +12,8 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
   fsl_model_arguments$pipeline_cpus <- length(fsl_model_arguments$sceptic_run_variants) #number of workers to setup at the pipeline level (i.e., over run variants)
   if (is.null(fsl_model_arguments$l2_cpus)) { fsl_model_arguments$l2_cpus <- 20 } #number of cores to use in Feat LVL2 analyses (fixed effects combination of runs)
   if (is.null(fsl_model_arguments$pipeline_home)) { fsl_model_arguments$pipeline_home <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline" }
+  if (is.null(fsl_model_arguments$group_output_dir)) { fsl_model_arguments$group_output_dir <- file.path(dirname(fsl_model_arguments$fmri_dir), "group_analyses", fsl_model_arguments$analysis_name) }
+  if (is.null(fsl_model_arguments$center_l3_predictors)) { fsl_model_arguments$center_l3_predictors <- TRUE }
   
   return(fsl_model_arguments)
 }
