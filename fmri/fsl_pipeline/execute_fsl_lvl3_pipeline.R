@@ -22,6 +22,8 @@ ncopes <- fsl_model_arguments$n_l1_copes[run_model_index] #number of l1 copes de
 
 subinfo$dir_found <- file.exists(subinfo$mr_dir)
 
+rerun <- FALSE #TODO: move to fsl_model_arguments list
+
 cat("The following subjects were in the covariate file, but not the processed MRI data\n")
 print(subset(subinfo, dir_found==FALSE))
 
@@ -103,13 +105,18 @@ for (cope in 1:length(bycope)) {
     rownames(cmat) <- this_model #just name the contrasts after the EVs themselves
 
     fsf_syntax <- c(fsf_syntax, generate_fsf_contrast_syntax(cmat))
-    
+
     #write the FSF to file
     out_fsf <- file.path(model_output_dir, paste0(paste(this_model, collapse="-"), ".fsf"))
-    writeLines(fsf_syntax, con=out_fsf)
 
-    #run the L3 analysis in parallel using qsub
-    qsub_file(script=file.path(fsl_model_arguments$pipeline_home, "qsub_feat_lvl3.bash"), env_variables=c(torun=out_fsf))
+    if (!file.exists(out_fsf) || rerun) {
+      writeLines(fsf_syntax, con=out_fsf)
+    }
+
+    if (!file.exists(sub(".fsf", ".gfeat", out_fsf, fixed=TRUE)) || rerun) {
+      #run the L3 analysis in parallel using qsub
+      qsub_file(script=file.path(fsl_model_arguments$pipeline_home, "qsub_feat_lvl3.bash"), env_variables=c(torun=out_fsf))
+    }
     
   }
 

@@ -96,7 +96,7 @@ fsl_model_arguments <- list(
   tr=1.0, #seconds
   spikeregressors=FALSE, #don't include spike regressors in nuisance variables since we are using AROMA
   idexpr=expression(subid), #how to match between the subject ID in trial_statistics and the folder structure on the file system
-  idregex="([0-9]{5})_\\d+", #5 digit ID, followed by irrelevant date. A bit inelegant, but used in setup_fsl_lvl2_inputs to infer the subject's ID from the MR folder structure
+  idregex="([0-9]{5})_\\d+", #5 digit ID, followed by irrelevant date. A bit inelegant, but used in setup_feat_lvl2_inputs to infer the subject's ID from the MR folder structure
   sceptic_run_variants=list(
     c("v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
     c("v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function

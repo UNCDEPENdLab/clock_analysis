@@ -14,7 +14,7 @@ load(to_run)
 library(tidyverse)
 
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "run_feat_lvl2.R"))
-source(file.path(fsl_model_arguments$pipeline_home, "functions", "setup_fsl_lvl2_inputs.R"))
+source(file.path(fsl_model_arguments$pipeline_home, "functions", "setup_feat_lvl2_inputs.R"))
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "glm_helper_functions.R"))
 
 #first, identify the inputs for LVL2 analysis (doesn't really benefit from parallel execution)
