@@ -79,12 +79,25 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
       value=subj_data %>% select(run, trial, v_chosen) %>% rename(value=v_chosen))
   }
 
+  if ("v_auc" %in% sceptic_signals) {
+    #value of chosen action, aligned with choice
+    signals[["v_auc"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_auc) %>% rename(value=v_auc))
+  }
+  
   if ("v_entropy" %in% sceptic_signals) {
     #entropy of values, computed on normalized basis weights, aligned with choice
     signals[["v_entropy"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, v_entropy) %>% rename(value=v_entropy))
   }
 
+  #drop first 5 trials
+  if ("v_entropy_no5" %in% sceptic_signals) {
+    #entropy of values, computed on normalized basis weights, aligned with choice
+    signals[["v_entropy_no5"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy_no5) %>% rename(value=v_entropy_no5))
+  }
+  
   if ("v_entropy_func" %in% sceptic_signals) {
     #entropy of values, computed on discretized evaluated value function, aligned with choice
     signals[["v_entropy_func"]] <- list(event="clock", normalization="evtmax_1",
@@ -102,6 +115,13 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     signals[["d_auc"]] <- list(event="feedback", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, d_auc) %>% rename(value=d_auc))
   }
+
+  if ("d_auc_sqrt" %in% sceptic_signals) {
+    # decay AUC, aligned with outcome
+    signals[["d_auc_sqrt"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, d_auc_sqrt) %>% rename(value=d_auc_sqrt))
+  }
+
   
   #not currently handling vtime
   # else if (thisName == "vtime") {

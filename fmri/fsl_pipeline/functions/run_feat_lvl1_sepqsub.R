@@ -74,7 +74,7 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
     ifelse(wait_for != "", paste0("#PBS -W depend=afterok:", wait_for), ""), #allow job dependency on upstream setup
     "#PBS -l walltime=4:00:00",
     "#PBS -j oe",
-    "#PBS -m abe",
+    "#PBS -m n",
     "#PBS -W group_list=mnh5174_collab",
     "",
     "",

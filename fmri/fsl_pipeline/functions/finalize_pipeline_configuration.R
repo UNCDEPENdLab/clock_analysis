@@ -14,6 +14,14 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
   if (is.null(fsl_model_arguments$pipeline_home)) { fsl_model_arguments$pipeline_home <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline" }
   if (is.null(fsl_model_arguments$group_output_dir)) { fsl_model_arguments$group_output_dir <- file.path(dirname(fsl_model_arguments$fmri_dir), "group_analyses", fsl_model_arguments$analysis_name) }
   if (is.null(fsl_model_arguments$center_l3_predictors)) { fsl_model_arguments$center_l3_predictors <- TRUE }
+  if (is.null(fsl_model_arguments$l1_cope_names)) {
+    fsl_model_arguments$l1_cope_names <- sapply(fsl_model_arguments$sceptic_run_variants, function(x) {
+      signal_copes <- x
+      names(signal_copes) <- paste0("cope", 2 + 1:length(x))
+      cope_names <- c(cope1="clock_onset", cope2="feedback_onset", signal_copes)
+      return(cope_names)
+    })
+  }
   
   return(fsl_model_arguments)
 }

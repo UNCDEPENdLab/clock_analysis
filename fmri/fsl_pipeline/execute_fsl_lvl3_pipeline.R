@@ -19,6 +19,7 @@ subinfo <- fsl_model_arguments$subject_covariates
 feat_run_outdir <- fsl_model_arguments$outdir[run_model_index] #the name of the subfolder for the current run-level model
 feat_lvl3_outdir <- file.path(fsl_model_arguments$group_output_dir, feat_run_outdir) #output directory for this run-level model
 ncopes <- fsl_model_arguments$n_l1_copes[run_model_index] #number of l1 copes determines number of FEAT LVL3 analyses to run (1 per LVL1 cope)
+l1_cope_names <- fsl_model_arguments$l1_cope_names[[run_model_index]] #names of l1 copes (used for folder naming)
 
 subinfo$dir_found <- file.exists(subinfo$mr_dir)
 
@@ -73,15 +74,19 @@ l3template <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_t
 for (cope in 1:length(bycope)) {
   if (is.null(bycope[[cope]]$Intercept)) { bycope[[cope]]$Intercept <- 1 } #add the column of ones
 
+  copename <- l1_cope_names[cope]
+  
   #cope-level subfolder
-  model_output_dir <- file.path(feat_lvl3_outdir, paste0("cope", cope))
+  #currently organized by run_model_name/l1_cope/l3_model (promotes comparisons of alternative l3 models of a given run-level effect)
+  #could reorganize as run_model_name/l3_model/l1_cope (promotes comparisons of maps within an l3 model)
+  model_output_dir <- file.path(feat_lvl3_outdir, copename) # paste0("cope", cope))
   dir.create(model_output_dir, showWarnings=FALSE)
   
   for (this_model in models) {
 
     model_df <- bycope[[cope]]
     fsf_syntax <- l3template #copy shared ingredients
-    fsf_syntax <- gsub(".OUTPUTDIR.", file.path(model_output_dir, paste(this_model, collapse="-")), fsf_syntax, fixed=TRUE)
+    fsf_syntax <- gsub(".OUTPUTDIR.", file.path(model_output_dir, paste0(copename, paste(this_model, collapse="-"))), fsf_syntax, fixed=TRUE)
     if (!"Intercept" %in% this_model) { this_model <- c("Intercept", this_model) } #at present, force an intercept column
     
     if (fsl_model_arguments$center_l3_predictors) {
@@ -107,11 +112,9 @@ for (cope in 1:length(bycope)) {
     fsf_syntax <- c(fsf_syntax, generate_fsf_contrast_syntax(cmat))
 
     #write the FSF to file
-    out_fsf <- file.path(model_output_dir, paste0(paste(this_model, collapse="-"), ".fsf"))
+    out_fsf <- file.path(model_output_dir, paste0(copename, paste(this_model, collapse="-"), ".fsf"))
 
-    if (!file.exists(out_fsf) || rerun) {
-      writeLines(fsf_syntax, con=out_fsf)
-    }
+    if (!file.exists(out_fsf) || rerun) { writeLines(fsf_syntax, con=out_fsf) }
 
     if (!file.exists(sub(".fsf", ".gfeat", out_fsf, fixed=TRUE)) || rerun) {
       #run the L3 analysis in parallel using qsub

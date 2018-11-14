@@ -42,6 +42,13 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
     #unbalanced design, so need to set weights based on relative frequency
     props <- prop.table(table(subdf$emotion))
 
+    #at present, we can't easily work around subjects that are missing an emotion altogether (11343 only in the MMClock sample)
+    #this would require an alternative approach to propagating contrasts to LVL3 since some contrasts would be undefined in LVL2.
+    if (any(props < .01)) {
+      warning("Missing at least one emotion altogether in combining the LVL1 runs: ", subdf$subid[1])
+      return(NULL)
+    }
+    
     #1 for intercept/reference, proportions for other cells, add mean run value from emmeans computation
     gm_coef <- c(`(Intercept)`=1, props[2:length(props)], run_num=condmeans[1,"run_num"])
     names(gm_coef)[2:3] <- colnames(contrasts)[2:3] #should be safe because contrasts in lm() and table() ordering follow factor levels

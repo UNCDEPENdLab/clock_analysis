@@ -14,18 +14,8 @@ source(file.path(scripts_dir, "functions", "push_pipeline.R"))
 source(file.path(scripts_dir, "functions", "finalize_pipeline_configuration.R"))
 
 
-#################
-# FSL LEVEL 1
 
-#N.B. in examining initial results from single subject analyses, it is clear that steady state magnetization is not achieved by the first volume acquired
-#ICA analysis suggests that it takes up to 6 volumes to reach steady state, and the rel and mean uncertainty maps are being adversely affected by this problem
-#because they also start high and decay... Mean uncertainty was consequently soaking up a huge amount of CSF in activation maps.
-#Because the first presentation occurs at 8 seconds, it seems fine to drop 6 volumes (6s) 
-
-#Jun2017: further ICAs on these data do not suggest a long steady-state problem. Drop 2 volumes for good measure
-
-#abstract all necessary run specifications to this script
-#write an RData object that contains all necessary arguments to call model_clock_fmri_lvl1.R
+#Jun2017: further ICAs on the MMClock data suggest a short steady-state problem. Drop 2 volumes for good measure.
 
 ###
 # SCEPTIC MMClock Y3
@@ -34,39 +24,22 @@ source(file.path(scripts_dir, "functions", "finalize_pipeline_configuration.R"))
 #trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_mfx_trial_statistics.csv.gz")
 
 
-### LEFTOVERS FROM OLD LVL3
-
-####
-##SCEPTIC L3 ANALYSIS
-##models <- c("sceptic_dauc_preconvolve", "sceptic_pemax_preconvolve", "sceptic_vmax_preconvolve", "sceptic_vchosen_preconvolve", "sceptic_ventropy_preconvolve")
-## library(dplyr)
-## options(dplyr.width=200)
-## #preproc_dirname <- "mni_5mm_aroma"
-## preproc_dirname <- "mni_5mm_3ddespike"
-## fsl_dirname <- "FEAT_LVL2_runtrend.gfeat"
-## ##models <- c("sceptic_vchosen_ventropy_decay_matlab_dauc_pemax_preconvolve")
-## models <- c("sceptic_vchosen_ventropy_dauc_pemax_preconvolve")
-
-## #dataset <- "MMY3"
-## dataset <- "SPECC"
-
-## if (dataset=="MMY3") {
-##   subinfo <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/subinfo_db", header=TRUE)
-##   subinfo <- subinfo %>% rename(ID=lunaid, Age=age, Female=female, ScanDate=scandate)
-##   subinfo$mr_dir <- with(subinfo, paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d"))) #convert to Date, then reformat YYYYMMDD
-##   outdir <- "/gpfs/group/mnh5174/default/MMClock/fsl_sceptic_group_jun2017"
-## } else if (dataset=="SPECC") {
-##   subinfo <- read.csv("/gpfs/group/mnh5174/default/SPECC/SPECC_Participant_Info.csv", header=TRUE)
-##   subinfo <- subinfo %>% rowwise() %>% mutate(mr_dir=ifelse(LunaMRI==1,
-##     paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", Luna_ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
-##     paste0("/gpfs/group/mnh5174/default/SPECC/MR_Proc/", tolower(SPECC_ID), "_", tolower(format((as.Date(ScanDate, format="%Y-%m-%d")), "%d%b%Y")))))
-##   subinfo <- subinfo %>% rename(ID=SPECC_ID, Age=AgeAtScan)
-##   outdir <- "/gpfs/group/mnh5174/default/SPECC/fsl_sceptic_group"  
-## }
-
-
 #factorized, selective maintenance, equal basis-generalization width
-trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")
+trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz") %>%
+  mutate(trial_rel=case_when(
+    trial >= 1 & trial <= 50 ~ trial,
+    trial >= 51 & trial <= 100 ~ trial - 50L, #dplyr/rlang has gotten awfully picky about data types!!
+    trial >= 101 & trial <= 150 ~ trial - 100L,
+    trial >= 151 & trial <= 200 ~ trial - 150L,
+    trial >= 201 & trial <= 250 ~ trial - 200L,
+    trial >= 251 & trial <= 300 ~ trial - 250L,
+    trial >= 301 & trial <= 350 ~ trial - 300L,
+    trial >= 351 & trial <= 400 ~ trial - 350L,
+    TRUE ~ NA_integer_
+  ), v_entropy_no5=if_else(trial_rel <= 5, NA_real_, v_entropy),
+  d_auc_sqrt=if_else(d_auc > 0, NA_real_, sqrt(-1*d_auc)), #only compute the sqrt of d_auc for negative (i.e., reasonable) observations
+  v_entropy_sqrt=sqrt(v_entropy))
+
 subject_df <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/mmy3_demographics.tsv", header=TRUE) %>%
   rename(ID=lunaid, Age=age, Female=female, ScanDate=scandate) %>%
   mutate(mr_dir = paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
@@ -104,7 +77,10 @@ fsl_model_arguments <- list(
     c("v_entropy"),
     c("v_entropy_func"),
     c("d_auc"),
-    c("pe_max")
+    c("pe_max"),
+    c("v_entropy_no5"),
+    c("v_auc"),
+    c("d_auc_sqrt")
   ),
   group_model_variants=list(
     c("Intercept"),
@@ -128,35 +104,3 @@ push_pipeline(fsl_model_arguments, ncpus=fsl_model_arguments$pipeline_cpus)
 
 
 ## Other pipelines go here
-
-
-
-
-
-
-
-
-
-### Some leftovers
-
-
-## I have now converted all SPECC MR directory names to all lower case to allow for match on case-sensitive filesystem and to make the naming consistent
-## idfile <- "/gpfs/group/mnh5174/default/SPECC/SPECC_Participant_Info.csv"
-## idinfo <- read.csv(idfile)
-## library(dplyr)
-## options(dplyr.width=200)
-## idinfo <- idinfo %>% rowwise() %>% mutate(mr_dir=ifelse(LunaMRI==1,
-##   paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", Luna_ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
-##   paste0("/gpfs/group/mnh5174/default/SPECC/MR_Proc/", tolower(SPECC_ID), "_", tolower(format((as.Date(ScanDate, format="%Y-%m-%d")), "%d%b%Y"))))) %>% ungroup()
-
-## ##verify that mr_dir is present as expected
-## idinfo$dirfound <- file.exists(idinfo$mr_dir)
-## subset(idinfo, dirfound==FALSE)
-
-##subject CSVs in subjects/SPECC are names according to numeric SPECC_ID
-##need to use idinfo data.frame to line up with MMClock, look in Luna dir as needed, etc.
-#need SPECC here...
-#trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_mfx_trial_statistics.csv.gz")
-#fit_all_fmri(trial_statistics=trial_df, iddf = idinfo, model="sceptic", usepreconvolve=TRUE, parmax1=TRUE, ncpus=1) #rescale to 1.0 max
-
-###################################################

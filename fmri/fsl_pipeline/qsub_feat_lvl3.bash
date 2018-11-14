@@ -35,4 +35,4 @@ fi
 ${G}/lab_resources/bin/feat_parallel "$torun"
 
 #agglomerate into single AFNI file
-${ni_tools}/fmri_processing_scripts/feat_lvl2_to_afni.R --gfeat-dir ${torun/.fsf/.gfeat} --no_subjstats --no_varcope --stat_outfile ${torun/.fsf/_gfeat_stats}
+${ni_tools}/fmri_processing_scripts/feat_lvl2_to_afni.R --gfeat_dir ${torun/.fsf/.gfeat} --no_subjstats --no_varcope --stat_outfile ${torun/.fsf/_gfeat_stats}
