@@ -86,7 +86,7 @@ for (cope in 1:length(bycope)) {
 
     model_df <- bycope[[cope]]
     fsf_syntax <- l3template #copy shared ingredients
-    fsf_syntax <- gsub(".OUTPUTDIR.", file.path(model_output_dir, paste0(copename, paste(this_model, collapse="-"))), fsf_syntax, fixed=TRUE)
+    fsf_syntax <- gsub(".OUTPUTDIR.", file.path(model_output_dir, paste0(copename, "-", paste(this_model, collapse="-"))), fsf_syntax, fixed=TRUE)
     if (!"Intercept" %in% this_model) { this_model <- c("Intercept", this_model) } #at present, force an intercept column
     
     if (fsl_model_arguments$center_l3_predictors) {
@@ -112,7 +112,7 @@ for (cope in 1:length(bycope)) {
     fsf_syntax <- c(fsf_syntax, generate_fsf_contrast_syntax(cmat))
 
     #write the FSF to file
-    out_fsf <- file.path(model_output_dir, paste0(copename, paste(this_model, collapse="-"), ".fsf"))
+    out_fsf <- file.path(model_output_dir, paste0(copename, "-", paste(this_model, collapse="-"), ".fsf"))
 
     if (!file.exists(out_fsf) || rerun) { writeLines(fsf_syntax, con=out_fsf) }
 

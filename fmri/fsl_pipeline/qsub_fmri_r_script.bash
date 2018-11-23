@@ -5,7 +5,7 @@
 #PBS -l walltime=10:00:00
 #PBS -j oe
 #PBS -M michael.hallquist@psu.edu
-#PBS -m abe
+#PBS -m n
 #PBS -W group_list=mnh5174_collab
 
 cd $PBS_O_WORKDIR

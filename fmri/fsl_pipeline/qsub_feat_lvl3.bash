@@ -5,7 +5,7 @@
 #PBS -l walltime=72:00:00
 #PBS -j oe
 #PBS -M michael.hallquist@psu.edu
-#PBS -m abe
+#PBS -m n
 
 export G=/gpfs/group/mnh5174/default
 
