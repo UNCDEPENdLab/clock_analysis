@@ -1,0 +1,71 @@
+l1_contrast,l2_contrast,l3_contrast,cluster_number,cluster_size,cluster_threshold,z_threshold,x,y,z,labels
+v_entropy,scram,Intercept,1,1078,34,3.09,1,-66,57,Focus point: Right Precuneus
+v_entropy,scram,Intercept,2,459,34,3.09,25,-0,57,Focus point: Right Superior Frontal Gyrus
+v_entropy,scram,Intercept,3,308,34,3.09,-26,-4,59,Focus point: Left Middle Frontal Gyrus
+v_entropy,scram,Intercept,4,265,34,3.09,-38,-59,-33,Focus point: Left Cerebellum (Crus 1)
+v_entropy,scram,Intercept,5,204,34,3.09,30,58,4,Focus point: Right Middle Frontal Gyrus
+v_entropy,scram,Intercept,6,158,34,3.09,-7,50,-9,Focus point: Left Mid Orbital Gyrus
+v_entropy,scram,Intercept,7,137,34,3.09,41,-57,-32,Focus point: Right Cerebellum (Crus 1)
+v_entropy,scram,Intercept,8,78,34,3.09,-29,-19,-16,Focus point: Left Hippocampus
+v_entropy,scram,Intercept,9,72,34,3.09,35,46,27,Focus point: Right Middle Frontal Gyrus
+v_entropy,scram,Intercept,10,49,34,3.09,38,-79,31,Focus point: Right Middle Occipital Gyrus
+v_entropy,scram,Intercept,11,44,34,3.09,-57,-4,-17,Focus point: Left Middle Temporal Gyrus
+v_entropy,scram,I_Age,1,100,34,3.09,1,-4,55,Focus point: Left SMA
+v_entropy,fear,Intercept,1,150,34,3.09,62,-21,19,Focus point: Right SupraMarginal Gyrus
+v_entropy,fear,Intercept,2,63,34,3.09,-59,-20,15,Focus point: Left Postcentral Gyrus
+v_entropy,fear,I_Age,1,41,34,3.09,64,-29,36,Focus point: Right SupraMarginal Gyrus
+v_entropy,happy,Intercept,1,2364,34,3.09,14,-60,52,Focus point: Right Superior Parietal Lobule
+v_entropy,happy,Intercept,2,559,34,3.09,-34,-63,-35,Focus point: Left Cerebellum (Crus 1)
+v_entropy,happy,Intercept,3,363,34,3.09,26,0,55,Focus point: Right Superior Frontal Gyrus
+v_entropy,happy,Intercept,4,224,34,3.09,-8,53,-2,Focus point: Left Anterior Cingulate Cortex
+v_entropy,happy,Intercept,5,181,34,3.09,-26,-4,59,Focus point: Left Middle Frontal Gyrus
+v_entropy,happy,Intercept,6,136,34,3.09,36,54,3,Focus point: Right Middle Frontal Gyrus
+v_entropy,happy,Intercept,7,94,34,3.09,55,10,20,Focus point: Right Inferior Frontal Gyrus (p. Opercularis)
+v_entropy,happy,Intercept,8,84,34,3.09,38,42,18,Focus point: Right Middle Frontal Gyrus
+v_entropy,happy,Intercept,9,59,34,3.09,-32,16,5,Focus point: Left Insula Lobe
+v_entropy,happy,Intercept,10,58,34,3.09,-7,-74,-27,Focus point: Left Cerebellum (Crus 1)
+v_entropy,happy,Intercept,11,52,34,3.09,22,44,-17,Focus point: Right Middle Orbital Gyrus
+v_entropy,happy,Intercept,12,51,34,3.09,-26,-70,34,Focus point: Left Superior Occipital Gyrus
+v_entropy,happy,Intercept,13,46,34,3.09,-13,-58,-51,Focus point: Left Cerebellum (IX)
+v_entropy,happy,Intercept,14,46,34,3.09,40,41,30,Focus point: Right Middle Frontal Gyrus
+v_entropy,happy,Intercept,15,44,34,3.09,-24,-43,-13,Focus point: Left Fusiform Gyrus
+v_entropy,happy,Intercept,16,43,34,3.09,-27,-96,-1,Focus point: Left Middle Occipital Gyrus
+v_entropy,happy,Intercept,17,41,34,3.09,-31,-21,-21,Focus point: Left ParaHippocampal Gyrus
+v_entropy,happy,Intercept,18,38,34,3.09,48,-54,-32,Focus point: Right Cerebellum (Crus 1)
+v_entropy,happy,Female,1,38,34,3.09,-2,15,-3,Focus point: Left Olfactory cortex
+v_entropy,overall,Intercept,1,2748,34,3.09,7,-61,54,Focus point: Right Precuneus
+v_entropy,overall,Intercept,2,738,34,3.09,26,1,57,Focus point: Right Superior Frontal Gyrus
+v_entropy,overall,Intercept,3,668,34,3.09,-36,-59,-33,Focus point: Left Cerebellum (Crus 1)
+v_entropy,overall,Intercept,4,395,34,3.09,-26,-2,59,Focus point: Left Precentral Gyrus
+v_entropy,overall,Intercept,5,356,34,3.09,-27,-30,-16,Focus point: Left ParaHippocampal Gyrus
+v_entropy,overall,Intercept,6,339,34,3.09,-6,51,-7,Focus point: Left Mid Orbital Gyrus
+v_entropy,overall,Intercept,7,281,34,3.09,35,47,22,Focus point: Right Middle Frontal Gyrus
+v_entropy,overall,Intercept,8,173,34,3.09,41,-56,-32,Focus point: Right Cerebellum (Crus 1)
+v_entropy,overall,Intercept,9,150,34,3.09,30,59,-1,Focus point: Right Middle Frontal Gyrus
+v_entropy,overall,Intercept,10,110,34,3.09,37,-79,32,Focus point: Right Middle Occipital Gyrus
+v_entropy,overall,Intercept,11,66,34,3.09,56,-21,17,Focus point: Right Rolandic Operculum
+v_entropy,overall,Intercept,12,59,34,3.09,-56,-9,14,Focus point: Left Postcentral Gyrus
+v_entropy,overall,Intercept,13,58,34,3.09,-12,-58,-49,Focus point: Left Cerebellum (IX)
+v_entropy,overall,Intercept,14,56,34,3.09,33,-46,-47,Focus point: Right Cerebellum (VIII)
+v_entropy,overall,Intercept,15,54,34,3.09,27,-58,-6,Focus point: Right Lingual Gyrus
+v_entropy,overall,Intercept,16,48,34,3.09,20,-49,-15,Focus point: Right Cerebellum (IV-V)
+v_entropy,overall,Intercept,17,46,34,3.09,28,-17,-18,Focus point: Right Hippocampus
+v_entropy,overall,Intercept,18,46,34,3.09,-32,-27,62,Focus point: Left Precentral Gyrus
+v_entropy,overall,Intercept,19,40,34,3.09,23,47,-16,Focus point: Right Superior Orbital Gyrus
+v_entropy,overall,Intercept,20,39,34,3.09,-1,30,-4,Focus point: Left Anterior Cingulate Cortex
+v_entropy,overall,Intercept,21,38,34,3.09,57,12,22,Focus point: Right Inferior Frontal Gyrus (p. Opercularis)
+v_entropy,overall,Intercept,22,35,34,3.09,-38,-67,-55,Focus point: Left Cerebellum (VII)
+v_entropy,scram_gt_happy,Intercept,1,81,34,3.09,28,-66,56,Focus point: Right Superior Parietal Lobule
+v_entropy,scram_gt_happy,Intercept,2,40,34,3.09,48,-51,-12,Focus point: Right Inferior Temporal Gyrus
+v_entropy,scram_gt_happy,I_Age,1,37,34,3.09,55,1,48,Focus point: Right Precentral Gyrus
+v_entropy,fear_gt_happy,Intercept,1,58,34,3.09,65,-16,26,Focus point: Right SupraMarginal Gyrus
+v_entropy,fear_gt_happy,Intercept,2,38,34,3.09,19,-71,53,Focus point: Right Superior Parietal Lobule
+v_entropy,fear_gt_happy,Intercept,3,35,34,3.09,-50,26,8,Focus point: Left Inferior Frontal Gyrus (p. Triangularis)
+v_entropy,run,I_Age,1,61,34,3.09,-14,17,64,Focus point: Left Superior Frontal Gyrus
+v_entropy,run,Female,1,185,34,3.09,-27,38,33,Focus point: Left Middle Frontal Gyrus
+v_entropy,run,Female,2,105,34,3.09,42,-13,45,Focus point: Right Precentral Gyrus
+v_entropy,run,Female,3,83,34,3.09,-12,-88,35,Focus point: Left Cuneus
+v_entropy,run,Female,4,76,34,3.09,-4,12,57,Focus point: Left SMA
+v_entropy,run,Female,5,72,34,3.09,54,-5,35,Focus point: Right Postcentral Gyrus
+v_entropy,run,Female,6,44,34,3.09,-14,-65,-13,Focus point: Left Cerebellum (VI)
+v_entropy,run,Female,7,40,34,3.09,12,-62,-20,Focus point: Right Cerebellum (VI)
