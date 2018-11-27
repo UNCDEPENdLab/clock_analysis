@@ -552,7 +552,7 @@ set fmri(ftest_orig3.2) 0
 set fmri(conpic_orig.3) 1
 
 # Title for contrast_orig 3
-set fmri(conname_orig.3) ".V_CON."
+set fmri(conname_orig.3) ".V1_CON."
 
 # Real contrast_orig vector 3 element 1
 set fmri(con_orig3.1) 0

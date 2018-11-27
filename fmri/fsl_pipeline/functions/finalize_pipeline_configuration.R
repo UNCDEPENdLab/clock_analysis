@@ -22,6 +22,9 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
       return(cope_names)
     })
   }
+
+  if (is.null(fsl_model_arguments$zthresh)) { fsl_model_arguments$zthresh <- 3.09 }  #1-tailed p=.001 for z stat
+  if (is.null(fsl_model_arguments$clustsize)) { fsl_model_arguments$clustsize <- 34 } #based on 3dClustSim using ACFs for first-level FEAT runs
   
   return(fsl_model_arguments)
 }

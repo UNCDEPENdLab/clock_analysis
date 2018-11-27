@@ -144,7 +144,7 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
     runfeat <- function(fsf) {
       runname <- basename(fsf)
       runFSLCommand(paste("feat", fsf), stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)), stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)))
-      system(paste0("feat_lvl2_to_afni.R --gfeat_dir ", sub(".fsf", ".gfeat", fsf, fixed=TRUE), " --no_subjstats --no_varcope")) #aggregate FEAT statistics into a single file
+      system(paste0("feat_lvl2_to_afni.R --gfeat_dir ", sub(".fsf", ".gfeat", fsf, fixed=TRUE), " --no_subjstats --no_varcope --stat_outfile ", sub(".fsf", "_gfeat_stats", fsf, fixed=TRUE))) #aggregate FEAT statistics into a single file
     }
     clusterApply(cl_fork, allFeatRuns, runfeat)
     stopCluster(cl_fork)

@@ -85,6 +85,12 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
       value=subj_data %>% select(run, trial, v_auc) %>% rename(value=v_auc))
   }
   
+  if ("v_max" %in% sceptic_signals) {
+    #value of best action, aligned with choice
+    signals[["v_max"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_max) %>% rename(value=v_max))
+  }
+
   if ("v_entropy" %in% sceptic_signals) {
     #entropy of values, computed on normalized basis weights, aligned with choice
     signals[["v_entropy"]] <- list(event="clock", normalization="evtmax_1",
@@ -122,6 +128,13 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
       value=subj_data %>% select(run, trial, d_auc_sqrt) %>% rename(value=d_auc_sqrt))
   }
 
+  if ("rt_swing" %in% sceptic_signals) {
+    #value of chosen action, aligned with choice
+    signals[["rt_swing"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, rt_swing) %>% rename(value=rt_swing))
+  }
+
+  
   
   #not currently handling vtime
   # else if (thisName == "vtime") {
