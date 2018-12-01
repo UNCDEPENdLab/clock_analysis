@@ -73,6 +73,17 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     feedback=list(event="feedback", normalization="none", value=1)
   )
 
+  if ("rt_swing" %in% sceptic_signals) {
+    signals[["rt_swing"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, rt_swing) %>% rename(value=rt_swing))
+  }
+
+  #sqrt transform of rt swing
+  if ("rt_swing_sqrt" %in% sceptic_signals) {
+    signals[["rt_swing_sqrt"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, rt_swing_sqrt) %>% rename(value=rt_swing_sqrt))
+  }
+  
   if ("v_chosen" %in% sceptic_signals) {
     #value of chosen action, aligned with choice
     signals[["v_chosen"]] <- list(event="clock", normalization="evtmax_1",
@@ -96,7 +107,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     signals[["v_entropy"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, v_entropy) %>% rename(value=v_entropy))
   }
-
+  
   #drop first 5 trials
   if ("v_entropy_no5" %in% sceptic_signals) {
     #entropy of values, computed on normalized basis weights, aligned with choice
@@ -122,19 +133,24 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
       value=subj_data %>% select(run, trial, d_auc) %>% rename(value=d_auc))
   }
 
+  if ("d_auc_clock" %in% sceptic_signals) {
+    # decay AUC, aligned with choice
+    signals[["d_auc_clock"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, d_auc) %>% rename(value=d_auc))
+  }
+  
   if ("d_auc_sqrt" %in% sceptic_signals) {
     # decay AUC, aligned with outcome
     signals[["d_auc_sqrt"]] <- list(event="feedback", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, d_auc_sqrt) %>% rename(value=d_auc_sqrt))
   }
 
-  if ("rt_swing" %in% sceptic_signals) {
-    #value of chosen action, aligned with choice
-    signals[["rt_swing"]] <- list(event="clock", normalization="evtmax_1",
-      value=subj_data %>% select(run, trial, rt_swing) %>% rename(value=rt_swing))
+  #align entropy at feedback, not clock
+  if ("v_entropy_feedback" %in% sceptic_signals) {
+    #entropy of values, computed on normalized basis weights, aligned with choice
+    signals[["v_entropy_feedback"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy) %>% rename(value=v_entropy))
   }
-
-  
   
   #not currently handling vtime
   # else if (thisName == "vtime") {

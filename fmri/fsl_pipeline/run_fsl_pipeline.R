@@ -13,8 +13,6 @@ setwd(scripts_dir)
 source(file.path(scripts_dir, "functions", "push_pipeline.R"))
 source(file.path(scripts_dir, "functions", "finalize_pipeline_configuration.R"))
 
-
-
 #Jun2017: further ICAs on the MMClock data suggest a short steady-state problem. Drop 2 volumes for good measure.
 
 ###
@@ -25,7 +23,8 @@ source(file.path(scripts_dir, "functions", "finalize_pipeline_configuration.R"))
 
 
 #factorized, selective maintenance, equal basis-generalization width
-trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz") %>%
+#trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz") %>%
+trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_selective_psequate_fixedparams_ffx_trial_statistics.csv.gz") %>%
   mutate(trial_rel=case_when(
     trial >= 1 & trial <= 50 ~ trial,
     trial >= 51 & trial <= 100 ~ trial - 50L, #dplyr/rlang has gotten awfully picky about data types!!
@@ -38,7 +37,9 @@ trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/cl
     TRUE ~ NA_integer_
   ), v_entropy_no5=if_else(trial_rel <= 5, NA_real_, v_entropy),
   d_auc_sqrt=if_else(d_auc > 0, NA_real_, sqrt(-1*d_auc)), #only compute the sqrt of d_auc for negative (i.e., reasonable) observations
-  v_entropy_sqrt=sqrt(v_entropy))
+  v_entropy_sqrt=sqrt(v_entropy)) %>%
+  group_by(id, run) %>%  dplyr::mutate(rt_swing = abs( c(NA, diff(rt_csv)))/1000, rt_swing_sqrt=sqrt(rt_swing)) %>% ungroup() #compute rt_swing within run and subject
+
 
 subject_df <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/mmy3_demographics.tsv", header=TRUE) %>%
   rename(ID=lunaid, Age=age, Female=female, ScanDate=scandate) %>%
@@ -57,7 +58,8 @@ subject_df <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/m
 
 #Setup the global configuration for the full FSL pipeline
 fsl_model_arguments <- list(
-  analysis_name="MMClock_aroma_preconvolve_fse",
+  #analysis_name="MMClock_aroma_preconvolve_fse",
+  analysis_name="MMClock_aroma_preconvolve_fse_groupfixed",
   trial_statistics = trial_df,
   subject_covariates = subject_df,
   fmri_dir = "/gpfs/group/mnh5174/default/MMClock/MR_Proc",
@@ -71,27 +73,34 @@ fsl_model_arguments <- list(
   idexpr=expression(subid), #how to match between the subject ID in trial_statistics and the folder structure on the file system
   idregex="([0-9]{5})_\\d+", #5 digit ID, followed by irrelevant date. A bit inelegant, but used in setup_feat_lvl2_inputs to infer the subject's ID from the MR folder structure
   sceptic_run_variants=list(
-    c("v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
-    c("v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
+#    c("v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
+#    c("v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
     c("v_chosen"), #individual regressors
-    c("v_entropy"),
-    c("v_entropy_func"),
-    c("d_auc"),
+    c("v_entropy"), #clock-aligned
+    c("v_entropy_feedback"), #feedback-aligned
+#    c("v_entropy_func"),
+    c("d_auc"), #feedback-aligned
+    c("d_auc_clock"), #clock-aligned
     c("pe_max"),
-    c("v_entropy_no5"),
+#    c("v_entropy_no5"),
     c("v_auc"),
-    c("d_auc_sqrt")
+#    c("d_auc_sqrt"),
+    c("rt_swing"),
+    c("rt_swing_sqrt"),
+    c("v_max")
   ),
   group_model_variants=list(
     c("Intercept"),
-    c("Intercept", "Age"),
-    c("Intercept", "Age", "Female"),
-    c("Intercept", "I_Age"),
-    c("Intercept", "I_Age", "Female")
+    c("Intercept", "Age")
+#    c("Intercept", "Age", "Female"),
+#    c("Intercept", "I_Age"),
+#    c("Intercept", "I_Age", "Female")
   ),    
   execute_feat=FALSE, #passed through to fsl_sceptic_model to create fsf, but not run the model
-  model_suffix="_fse", #factorized, selective, equal generalization width
-  root_workdir="/gpfs/scratch/mnh5174/run_fsl_pipeline_qsub_tmp"
+  #model_suffix="_fse", #factorized, selective, equal generalization width
+  model_suffix="_fse_groupfixed", #factorized, selective, equal generalization width
+  root_workdir="/gpfs/scratch/mnh5174/run_fsl_pipeline_qsub_tmp",
+  n_cluster_beta_cpus=8 #should be number of l2 contrasts, or lower
 )
 
 #validate and populate any other pipeline details before execution

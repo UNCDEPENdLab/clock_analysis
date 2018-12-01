@@ -1,5 +1,9 @@
 # This script sets up the .fsf files to run a group analysis
-## FSL Feat Level 2 analysis -- that is, fixed effects combinations of runs.
+## FSL Feat Level 3 analysis -- that is, mixed effects combination of subjects
+
+#used for testing: group fixed entropy
+#Sys.setenv(fsl_pipeline_file="/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/MMClock_aroma_preconvolve_fse_groupfixed.RData")
+#Sys.setenv(run_model_index=2)
 
 #load the master configuration file
 to_run <- Sys.getenv("fsl_pipeline_file")
@@ -101,6 +105,7 @@ for (cope in 1:length(bycope)) {
     mform <- as.formula(paste("dummy_ ~ -1 + ", paste(this_model, collapse=" + ")))
     fit_lm <- lm(mform, model_df)
     dmat <- model.matrix(fit_lm) #eventually allow interactions and so on??
+    model_df$dummy_ <- NULL #clean up
     
     #add design matrix
     fsf_syntax <- c(fsf_syntax, generate_fsf_ev_syntax(inputs=model_df$fsldir, dmat=dmat))
@@ -116,11 +121,18 @@ for (cope in 1:length(bycope)) {
 
     if (!file.exists(out_fsf) || rerun) { writeLines(fsf_syntax, con=out_fsf) }
 
+    if (!file.exists(dmat_file <- sub(".fsf", "_design.txt", out_fsf, fixed=TRUE)) || rerun) {
+      #write the design matrix to file for matching with extracted betas later
+      model_df$feat_input_id <- 1:nrow(model_df) #for matching with extracted betas
+      model_df <- model_df %>% select(-dir_found, -mr_dir) %>% select(ID, feat_input_id, model, cope, fsldir, everything())
+      write.table(model_df, file=dmat_file, row.names=FALSE)
+    }
+    
     if (!file.exists(sub(".fsf", ".gfeat", out_fsf, fixed=TRUE)) || rerun) {
       #run the L3 analysis in parallel using qsub
       qsub_file(script=file.path(fsl_model_arguments$pipeline_home, "qsub_feat_lvl3.bash"), env_variables=c(torun=out_fsf))
     }
-    
+
   }
 
 }

@@ -1,6 +1,11 @@
 # This script saves the significant clusters for each map in a SCEPTIC group analysis
 
+#used for testing: group fixed entropy
+#Sys.setenv(fsl_pipeline_file="/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/MMClock_aroma_preconvolve_fse_groupfixed.RData")
+#Sys.setenv(run_model_index=2)
+
 #load the master configuration file
+
 to_run <- Sys.getenv("fsl_pipeline_file")
 
 run_model_index <- as.numeric(Sys.getenv("run_model_index")) #which variant to execute
@@ -44,17 +49,19 @@ registerDoParallel(cl)
 subinfo$dir_found <- file.exists(subinfo$mr_dir)
 
 feat_lvl2_dirname <- "FEAT_LVL2_runtrend.gfeat" #should populate this to the structure at some point
-models <- fsl_model_arguments$group_model_variants #different covariate models for the current run-level model (run_model_index)
+models <- sapply(fsl_model_arguments$group_model_variants, function(x) { paste(x, collapse="-") }) #different covariate models for the current run-level model (run_model_index)
 
-all_metadata <- list()
-all_rois <- list()
 
 for (l1 in 1:n_l1_copes) {
   l1_contrast_name <- l1_cope_names[l1]
   model_output_dir <- file.path(feat_lvl3_outdir, l1_contrast_name)
+
+  #generate separate files for each l1 contrast (reset here)
+  all_metadata <- list()
+  all_rois <- list()
   
   for (this_model in models) {
-    expect_gfeat <- file.path(model_output_dir, paste0(l1_contrast_name, "-", paste(this_model, collapse="-"), ".gfeat"))
+    expect_gfeat <- file.path(model_output_dir, paste0(l1_contrast_name, "-", this_model, ".gfeat"))
 
     if (!file.exists(expect_gfeat)) {
       message("Could not locate expected .gfeat directory for group analysis: ", expect_gfeat)
@@ -82,7 +89,7 @@ for (l1 in 1:n_l1_copes) {
     dmat[cbind(subnums,evnums)] <- ev_values
     colnames(dmat) <- make.names(gsub("\"", "", l3_ev_names[order(ev_title_nums)], fixed=TRUE))
 
-    design_df <- data.frame(dmat) %>% mutate(subject=1:n())
+    design_df <- data.frame(dmat) %>% mutate(feat_input_id=1:n())
 
     #figure out what the l2 contrasts are and read relevant statistics for each
     l2fsf <- file.path(subject_inputs[1], "design.fsf")
@@ -95,6 +102,10 @@ for (l1 in 1:n_l1_copes) {
 
     n_l2_contrasts <- max(l2_contrast_nums)
     l2_contrast_names <- l2_contrast_names[order(l2_contrast_nums)] #order l2 contrast names in ascending order to match l2 loop below
+
+    #to get L1 betas (per run), we need to extract the inputs to the L2 analysis. These are embedded in the L2 FSF file
+    #for () {
+    #}
     
     #loop over l2 contrasts
     l2_loop_outputs <- foreach(l2=iter(1:n_l2_contrasts), .packages=c("oro.nifti", "dplyr")) %dopar% {
@@ -156,9 +167,9 @@ for (l1 in 1:n_l1_copes) {
         coords_p <- as.numeric(sub("^\\s*(-*\\d+) mm \\[(?:L|R)\\],\\s+(-*\\d+) mm.*", "\\2", coords, perl=TRUE))
         coords_i <- as.numeric(sub("^\\s*(-*\\d+) mm \\[(?:L|R)\\],\\s+(-*\\d+) mm \\[(?:A|P)\\],\\s+(-*\\d+) mm.*", "\\3", coords, perl=TRUE))
         
-        cluster_metadata <- data.frame(l1_contrast=l1_contrast_name, l2_contrast=l2_contrast_name, l3_contrast=l3_contrast_name,
+        cluster_metadata <- data.frame(model=this_model, l1_contrast=l1_contrast_name, l2_contrast=l2_contrast_name, l3_contrast=l3_contrast_name,
           cluster_number=1:length(coords_l), cluster_size=vsizes, cluster_threshold=clustsize, z_threshold=zthresh,
-          x=coords_l, y=coords_p, z=coords_i, labels=bestguess, stringsAsFactors=FALSE)
+          x=coords_l, y=coords_p, z=coords_i, label=bestguess, stringsAsFactors=FALSE)
         
         roimask <- readAFNI(paste0(clust_brik, "+tlrc.HEAD"), vol=1)
         #afni masks tend to read in as 4D matrix with singleton 4th dimension. Fix this
@@ -184,10 +195,10 @@ for (l1 in 1:n_l1_copes) {
           #return(t(mat)) #transpose to get subjects x voxels matrix            
         })
         
-        roi_df <- reshape2::melt(roimats, value.name="cope_value", varnames=c("subject", "cluster_number")) %>%
-          mutate(l1_contrast=l1_contrast_name, l2_contrast=l2_contrast_name, l3_contrast=l3_contrast_name) %>%
+        roi_df <- reshape2::melt(roimats, value.name="cope_value", varnames=c("feat_input_id", "cluster_number")) %>%
+          mutate(model=this_model, l1_contrast=l1_contrast_name, l2_contrast=l2_contrast_name, l3_contrast=l3_contrast_name) %>%
           #full_join(design_df %>% select(subject, !!l3_contrast_name), by="subject") #merge with relevant covariate
-          full_join(design_df, by="subject") #merge with all covariates
+          full_join(design_df, by="feat_input_id") #merge with all covariates
 
         coords <- lapply(maskvals, function(v) {
           mi <- which(roimask==v, arr.ind=TRUE)
@@ -214,14 +225,21 @@ for (l1 in 1:n_l1_copes) {
       return(list(cluster_metadata=l2_loop_cluster_metadata, rois=l2_loop_rois))
     }
 
-    all_metadata <- bind_rows(rlang::flatten(lapply(l2_loop_outputs, "[[", "cluster_metadata")))
-    all_rois <- bind_rows(rlang::flatten(lapply(l2_loop_outputs, "[[", "rois")))
-  }  
+    #tack on metadata and roi betas from this l2 contrast to the broader set
+    all_metadata <- bind_rows(all_metadata, rlang::flatten(lapply(l2_loop_outputs, "[[", "cluster_metadata")))
+    all_rois <- bind_rows(all_rois, rlang::flatten(lapply(l2_loop_outputs, "[[", "rois")))
+  }
+
+  #organize models intelligently
+  all_metadata <- all_metadata %>% arrange(model, l1_contrast, l2_contrast, l3_contrast)
+  all_rois <- all_rois %>% arrange(model, l1_contrast, l2_contrast, l3_contrast, cluster_number, feat_input_id)
+
+  readr::write_csv(x=all_metadata, file.path(model_output_dir, paste0(l1_contrast_name, "_cluster_metadata.csv")))
+  readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_roi_betas.csv")))
+
+  #not uniquely useful at present (CSVs have it all)
+  #save(all_metadata, all_rois, dmat, file=file.path(model_output_dir, "sceptic_clusters.RData"))
+
 }
-
-readr::write_csv(x=all_metadata, file.path(model_output_dir, "cluster_metadata.csv"))
-readr::write_csv(x=all_rois, file.path(model_output_dir, "roi_betas.csv"))
-
-save(all_metadata, all_rois, dmat,  file=file.path(model_output_dir,"sceptic_clusters.RData"))
 
 try(stopCluster(cl)) #cleanup pool upon exit of this script

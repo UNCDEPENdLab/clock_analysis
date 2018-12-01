@@ -3,6 +3,7 @@
 #PBS -A mnh5174_a_g_hc_default
 #PBS -l nodes=1:ppn=30
 #PBS -l walltime=72:00:00
+#PBS -l pmem=8gb
 #PBS -j oe
 #PBS -M michael.hallquist@psu.edu
 #PBS -m n
@@ -36,3 +37,5 @@ ${G}/lab_resources/bin/feat_parallel "$torun"
 
 #agglomerate into single AFNI file
 ${ni_tools}/fmri_processing_scripts/feat_lvl2_to_afni.R --gfeat_dir ${torun/.fsf/.gfeat} --no_subjstats --no_varcope --stat_outfile ${torun/.fsf/_gfeat_stats}
+
+[ ! -L "$( dirname $torun )/template_brain.nii" ] && ln -s ${ni_tools}/standard/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_brain.nii "$( dirname $torun )/template_brain.nii"

@@ -1,7 +1,9 @@
 #!/usr/bin/env sh
 
 #PBS -A mnh5174_a_g_hc_default
+#-A m5m_a_g_sc_default
 #PBS -l nodes=1:ppn=20
+#PBS -l pmem=8gb
 #PBS -l walltime=10:00:00
 #PBS -j oe
 #PBS -M michael.hallquist@psu.edu
@@ -15,8 +17,11 @@ export G=/gpfs/group/mnh5174/default
 module use $G/sw/modules
 
 module load r/3.5.0
-module load fsl/5.0.11
-module load afni/18.1.15
+#module load fsl/5.0.11
+#module load afni/18.1.15
+module load openblas/0.2.20
+module load fsl/6.0.0
+module load afni/18.3.03
 
 ni_tools="$G/lab_resources"
 

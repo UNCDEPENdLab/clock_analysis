@@ -1,4 +1,4 @@
-##this version of the FSL LVL1 feat estimation creates multiple qsub scripts in a temporary directory
+#this version of the FSL LVL1 feat estimation creates multiple qsub scripts in a temporary directory
 ##where each script has a number of feat calls that are forked, then the script waits for completion
 ##This circumvents the ICS limit on multiple nodes in R using a SNOW cluster.
 ##The primary calculation is how many files there are to run relative to processors and files per processor (chunking)
@@ -69,8 +69,11 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
   #  "#PBS -M michael.hallquist@psu.edu",
   
   preamble <- c(
+    #"#PBS -A m5m_a_g_sc_default",
+    #paste0("#PBS -l nodes=1:ppn=", cpusperjob),
     "#PBS -A mnh5174_a_g_hc_default",
     paste0("#PBS -l nodes=1:ppn=", cpusperjob, ":himem"),
+    paste0("#PBS -l pmem=8gb"),
     ifelse(wait_for != "", paste0("#PBS -W depend=afterok:", wait_for), ""), #allow job dependency on upstream setup
     "#PBS -l walltime=4:00:00",
     "#PBS -j oe",
@@ -79,7 +82,10 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
     "",
     "",
     "source /gpfs/group/mnh5174/default/lab_resources/ni_path.bash",
-    "module load \"fsl/5.0.11\" >/dev/null 2>&1",
+    "#module load \"fsl/5.0.11\" >/dev/null 2>&1",
+    "module unload fsl", #make sure that the ni_path version of FSL is unloaded
+    "module load \"openblas/0.2.20\" >/dev/null 2>&1",
+    "module load \"fsl/6.0.0\" >/dev/null 2>&1",
     "",
     "cd $PBS_O_WORKDIR"
   )
