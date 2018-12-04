@@ -271,6 +271,9 @@ ggplot(df, aes(v_max,rt_swing, color = h_f2>0)) + geom_point() + geom_smooth(met
 # just entropy
 summary(mr1 <- lmer(scale(rt_csv) ~ (scale(run_trial) + scale(rt_vmax) + scale(rt_lag) + h_f1 + h_f2)^3 + rewFunc + (1|id/run), df))
 car::Anova(mr1)
+ggplot(df,aes(rt_vmax,rt_csv, color = h_f1>0)) + facet_wrap(~run_trial>20) + geom_smooth(method = "glm")
+ggplot(df,aes(rt_vmax,rt_csv, color = h_f2<0)) + facet_wrap(~run_trial>20) + geom_smooth(method = "glm")
+ggplot(df,aes(rt_vmax,rt_csv, color = h_f2<0, lty = h_f1>0)) + geom_smooth(method = "glm")
 
 # + value
 summary(mr2 <- lmer(scale(rt_csv) ~ (scale(run_trial) + scale(rt_vmax) + scale(rt_lag) + v_f1 + v_f2)^3 + rewFunc + (1|id/run), df))
@@ -311,11 +314,26 @@ summary(m0 <- lmer(log(rt_swing) ~ scale(run_trial) * scale(v_max) * scale(v_ent
 
 # toward the goal of dissociating exploitative behavioral adjustment from H-driven exploration
 # dm = dissociation model
-summary(dm1 <- lmer(log(rt_swing) ~ (scale(run_trial) +  scale(v_entropy) + omission_lag + scale(v_max))^3 + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,]))
+# unfortunately does not work all that well due to collinearity
+summary(dm1 <- lmer(log(rt_swing) ~ (scale(run_trial) + omission_lag + scale(v_max))^3 + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,]))
 ggplot(na.omit(df), aes(v_entropy, rt_swing, color = v_max>25, lty = omission_lag)) + geom_smooth(method = "gam")
 
-summary(dm2 <- lmer(rt_csv ~ (scale(rt_lag) +  scale(v_entropy) + omission_lag + scale(rt_vmax))^3 + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,]))
+summary(dm2 <- lmer(rt_csv ~ (scale(rt_lag) + omission_lag + scale(rt_vmax))^3 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
 
+summary(dm3 <- lmer(rt_csv ~ (scale(rt_lag) + omission_lag + scale(rt_vmax) + h_f1 + h_f2)^3 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
+
+# more focused test of dislodgment
+summary(dm3a <- lmer(rt_csv ~ (scale(rt_lag) + omission_lag + scale(rt_vmax) + h_f1)^3 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
+summary(dm3b <- lmer(rt_csv ~ (scale(rt_lag) + omission_lag + scale(rt_vmax) + h_f2)^3 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
+
+# plot 3-way interactions
+ggplot(df, aes(rt_lag, rt_csv, color = omission_lag, lty = h_f1>0)) + geom_smooth(method = "glm")
+ggplot(df, aes(rt_lag, rt_csv, color = omission_lag, lty = h_f2<0)) + geom_smooth(method = "glm")
+# the interesting one:
+ggplot(na.omit(df), aes(rt_vmax, rt_csv, color = omission_lag, lty = h_f1>0)) + geom_smooth(method = "glm")
+ggplot(na.omit(df), aes(rt_vmax, rt_csv, color = omission_lag, lty = h_f2<0)) + geom_smooth(method = "glm")
+
+anova(dm1,dm2,dm3)
 
 summary(dm2 <- lmer(log(rt_swing) ~ (scale(run_trial) +  scale(v_entropy) + omission_lag + scale(v_max) + h_f1 + h_f2)^3 + (1|id/run), df[df$rt_swing>0,]))
 anova(dm1,dm2)
