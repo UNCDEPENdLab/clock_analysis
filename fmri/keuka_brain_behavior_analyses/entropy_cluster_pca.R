@@ -97,7 +97,7 @@ v_wide$v_f1 <- vfscores[,1]
 v_wide$v_f2 <- vfscores[,2]
 
 # a bit crazy, but let's put v and h into a single factor analysis
-vh_wide <- inner_join(v_wide[,c(1,16:17)],h_wide[,c(1,14:15)], by = "feat_input_id")
+vh_wide <- inner_join(v_wide[,c(1,18:19)],h_wide[,c(1,14:15)], by = "feat_input_id")
 vhjust_rois <- vh_wide[,2:ncol(vh_wide)]
 vhclust_cor <- cor(vhjust_rois,method = 'pearson')
 pdf("vh_cluster_corr_fixed.pdf", width=12, height=12)
@@ -198,7 +198,7 @@ params <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize
 sub_df <- inner_join(beta_sum,params)
 params_beta <- sub_df[,c("v_f1","v_f2","h_f1", "h_f2","d_f1","d_f2","d_f3", "total_earnings", "LL", "alpha", "gamma", "beta")]
 param_cor <- cor(params_beta,method = 'pearson')
-param_cor <- corr.test(params_beta,method = 'pearson')
+param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("dvhbeta_param_corr_fixed.pdf", width=12, height=12)
@@ -234,9 +234,12 @@ summary(m5 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + h_f1 + h_f
 anova(m1,m2,m3,m4,m5)
 # value clusters explain more than entropy (diffAIC = 31), but each set explains unique variance; d_auc adds little
 
-# EV analyses: "exploitation" -- does not converge with fixed params betas (must be the ev ~ v_max)
-# summary(m4 <- lmer(ev ~ scale(run_trial) * scale(v_max) + (1|id/run), df[df$rt_swing>0,]))
-# summary(m5 <- lmer(ev ~ (scale(run_trial) + scale(v_max) + h_f1) ^2 + (1|id/run), df[df$rt_swing>0,]))
+# EV analyses: "exploitation" -- run removed from RE to avoid singular fit
+summary(ev1 <- lmer(ev ~ scale(run_trial) * rewFunc + (1|id), df))
+summary(ev2 <- lmer(ev ~ (scale(run_trial) + rewFunc + h_f1) ^3 + (1|id), df))
+summary(ev3 <- lmer(ev ~ (scale(run_trial) + rewFunc + I(-h_f2)) ^3 + (1|id), df))
+summary(ev4 <- lmer(ev ~ (scale(run_trial) + rewFunc + h_f1 + I(-h_f2)) ^3 + (1|id), df))
+anova(ev1,ev2,ev3,ev4)
 # car::Anova(m5, '3')
 # summary(m6 <- lmer(ev ~ (scale(run_trial) + scale(v_max) + h_f2) ^2 + (1|id/run), df[df$rt_swing>0,]))
 # car::Anova(m6, '3')
