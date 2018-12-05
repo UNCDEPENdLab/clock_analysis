@@ -54,8 +54,8 @@ h_wide$vmPFC <- h_wide$`6`
 # add value betas -- use v_max as theoretically interesting and unbiased by choice
 setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-v_max-preconvolve_fse_groupfixed/v_max/')
 vmeta <- read_csv("v_max_cluster_metadata.csv")
-vmeta$label <- substr(meta$label,14,100)
-vmeta_overall <- meta[meta$l2_contrast == 'overall' & meta$l3_contrast == 'Intercept' & meta$model == 'Intercept-Age',]
+vmeta$label <- substr(vmeta$label,14,100)
+vmeta_overall <- vmeta[vmeta$l2_contrast == 'overall' & vmeta$l3_contrast == 'Intercept' & vmeta$model == 'Intercept-Age',]
 vbetas <- read_csv("v_max_roi_betas.csv")
 v <- as.tibble(vbetas[vbetas$l2_contrast == 'overall' & vbetas$l3_contrast == 'Intercept' & vbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<15)
 # head(merge(h,meta))
@@ -214,9 +214,10 @@ df <- inner_join(trial_df,sub_df)
 df$rewFunc <- relevel(as.factor(df$rewFunc),ref = "DEV")
 
 summary(m01 <- lmer(log(rt_swing) ~ scale(run_trial) * rewFunc + (1|id/run), df[df$rt_swing>0,]))
-summary(m02 <- lmer(log(rt_swing) ~ (scale(run_trial) + rewFunc + h_f1 + h_f2)^3 + (1|id/run), df[df$rt_swing>0,]))
+summary(m02 <- lmer(log(rt_swing) ~ (scale(run_trial) + rewFunc + h_f1 + h_f2)^2 + (1|id/run), df[df$rt_swing>0,]))
 car::Anova(m02,'3')
 anova(m01,m02)
+summary(m03 <- lmer(rt_csv ~ (scale(rt_lag) + scale(run_trial) + rewFunc + h_f1 + h_f2)^4 + (1|id/run), df[df$rt_swing>0,]))
 
 
 # RT swings analyses: "exploration"
@@ -242,12 +243,13 @@ anova(m1,m2,m3,m4,m5)
 #
 # anova(m4,m5,m6)
 
-# a condition-based look at H timecourses -- there is a bigger effect in learnable > unlearnable (esp. CEVR)
+# model-free look at H timecourses -- there is a bigger effect in learnable > unlearnable (esp. CEVR)
 ggplot(df, aes(run_trial, v_entropy, color = rewFunc, lty = h_f1 >0)) + geom_smooth(method = "loess")
-ggplot(df, aes(run_trial, v_entropy, color = rewFunc, lty = h_f2 <0)) + geom_smooth(method = "loess")
 
-ggplot(df, aes(run_trial, log(rt_swing), color = rewFunc, lty = h_f1 >0)) + geom_smooth(method = "loess")
-ggplot(df, aes(run_trial, log(rt_swing), color = rewFunc, lty = h_f2 <0)) + geom_smooth(method = "loess")
+ggplot(df, aes(run_trial, log(rt_swing), color = h_f2<0, lty = h_f1 >0)) + geom_smooth(method = "loess")
+ggplot(df, aes(run_trial, log(rt_swing), color = h_f2<0, lty = h_f1 >0)) + geom_smooth(method = "gam")
+# V
+ggplot(df, aes(run_trial, log(rt_swing), color = h_f2<0, lty = h_f1 >0)) + geom_smooth(method = "gam")
 
 
 # coupling between entropy and RT swings -- betas don't really interact with entropy
