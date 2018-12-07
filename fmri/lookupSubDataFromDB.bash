@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+set -e
+#dynamically generate subject list based on MR data directory
+datadir=/Volumes/Serena/MMClock/MR_Raw
+find $datadir -type d -maxdepth 1 -mindepth 1 | xargs basename | tr '_' '\t' > sublist_id_date
 
 #hard code header
 hdr="lunaid age adult female scandate" # wverb_iq wperf_iq wfull4 wfull2 bdiTotal sssTAS sssES sssDIS sssB sssTOT asrTInternal asrTExternal asrTTotalProb"
@@ -7,8 +11,10 @@ echo $hdr | tr " " "\t" > subinfo_db
 
 while read lunaid scandate; do
 
-  #echo -ne "$lunaid	$age	$scandate	$rest	"
-  mysql -h lncddb -u lncd lunadb_nightly -BNe "
+    #echo -ne "$lunaid	$age	$scandate	$rest	"
+    #mysql -h lncddb --user=lncd --password=B@ngal0re lunadb_nightly -BNe "
+    #mysql -h arnold.wpic.upmc.edu --user=lncd --password=B@ngal0re lncddb3 -BNe "
+    mysql -h arnold.wpic.upmc.edu --user=lncd --password=B@ngal0re lunadb_nightly -BNe "
 select
   info.lunaid,
   TIMESTAMPDIFF(HOUR,info.DateOfBirth,lg.VisitDate)/8766.0 AS age,

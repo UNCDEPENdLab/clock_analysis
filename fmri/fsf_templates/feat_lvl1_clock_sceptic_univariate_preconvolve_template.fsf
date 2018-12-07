@@ -78,6 +78,9 @@ set fmri(sh_yn) 0
 # B0 fieldmap unwarping?
 set fmri(regunwarp_yn) 0
 
+# GDC Test
+set fmri(gdc) ""
+
 # EPI dwell time (ms)
 set fmri(dwell) 0.7
 
@@ -145,6 +148,9 @@ set fmri(robust_yn) 0
 # 2 : Mixed Effects: FLAME 1
 # 1 : Mixed Effects: FLAME 1+2
 set fmri(mixed_yn) 2
+
+# Higher-level permutations
+set fmri(randomisePermutations) 5000
 
 # Number of EVs
 set fmri(evs_orig) 3
@@ -257,7 +263,7 @@ set fmri(regstandard_nonlinear_yn) 0
 set fmri(regstandard_nonlinear_warpres) 10 
 
 # High pass filter cutoff
-set fmri(paradigm_hp) 100
+set fmri(paradigm_hp) 120
 
 # Total voxels
 set fmri(totalVoxels) 123310080
@@ -295,6 +301,7 @@ set fmri(shape1) 2
 # 4 : Gamma basis functions
 # 5 : Sine basis functions
 # 6 : FIR basis functions
+# 8 : Alternate Double-Gamma
 set fmri(convolve1) 0
 
 # Convolve phase (EV 1)
@@ -341,6 +348,7 @@ set fmri(shape2) 2
 # 4 : Gamma basis functions
 # 5 : Sine basis functions
 # 6 : FIR basis functions
+# 8 : Alternate Double-Gamma
 set fmri(convolve2) 0
 
 # Convolve phase (EV 2)
@@ -368,7 +376,7 @@ set fmri(ortho2.2) 0
 set fmri(ortho2.3) 0
 
 # EV 3 title
-set fmri(evtitle3) ".VNAME."
+set fmri(evtitle3) ".V1NAME."
 
 # Basic waveform shape (EV 3)
 # 0 : Square
@@ -387,6 +395,7 @@ set fmri(shape3) 2
 # 4 : Gamma basis functions
 # 5 : Sine basis functions
 # 6 : FIR basis functions
+# 8 : Alternate Double-Gamma
 set fmri(convolve3) 0
 
 # Convolve phase (EV 3)
@@ -399,7 +408,7 @@ set fmri(tempfilt_yn3) 1
 set fmri(deriv_yn3) 0
 
 # Custom EV file (EV 3)
-set fmri(custom3) ".V_TIMES."
+set fmri(custom3) ".V1_TIMES."
 
 # Orthogonalise EV 3 wrt EV 0
 set fmri(ortho3.0) 0
@@ -471,7 +480,7 @@ set fmri(ftest_real3.2) 0
 set fmri(conpic_real.3) 1
 
 # Title for contrast_real 3
-set fmri(conname_real.3) ".V_CON."
+set fmri(conname_real.3) ".V1_CON."
 
 # Real contrast_real vector 3 element 1
 set fmri(con_real3.1) 0
@@ -543,7 +552,7 @@ set fmri(ftest_orig3.2) 0
 set fmri(conpic_orig.3) 1
 
 # Title for contrast_orig 3
-set fmri(conname_orig.3) ".V_CON."
+set fmri(conname_orig.3) ".V1_CON."
 
 # Real contrast_orig vector 3 element 1
 set fmri(con_orig3.1) 0
