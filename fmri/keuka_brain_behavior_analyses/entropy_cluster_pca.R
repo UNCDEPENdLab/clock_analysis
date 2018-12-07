@@ -381,6 +381,20 @@ anova(dm1,dm2,dm3)
 summary(dm2 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) +  scale(v_entropy) + omission_lag + scale(v_max) + h_f1_fp + h_f2_neg_paralimb)^3 + (1|id/run), df[df$rt_swing>0,]))
 anova(dm1,dm2)
 
+
+# obtain within-subject v_max and entropy 
+
+df <- df %>% group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
+  v_entropy_wi = scale(v_entropy)
+)
+ggplot(df, aes(run_trial, v_entropy_wi, color = h_f1>0, lty = h_f2>0)) + geom_smooth(method = "loess") + facet_wrap(~gamma>0)
+ggplot(df, aes( v_entropy_wi,log(rt_swing), color = h_f1>0, lty = h_f2>0)) + geom_smooth(method = "gam") + facet_wrap(~run_trial > 10)
+ggplot(df, aes( v_max_wi,log(rt_swing), color = h_f1>0, lty = h_f2>0)) + geom_smooth(method = "gam") + facet_wrap(~run_trial > 10)
+
+summary(w1 <- lmer(log(rt_swing) ~ (scale(run_trial) + v_max_wi + v_entropy_wi)^2 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
+summary(w2 <- lmer(log(rt_swing) ~ (scale(run_trial) + v_max_wi + v_entropy_wi + h_f1 + h_f2)^3 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
+car::Anova(w2)
+
 vif.lme <- function (fit) {
   ## adapted from rms::vif
   v <- vcov(fit)

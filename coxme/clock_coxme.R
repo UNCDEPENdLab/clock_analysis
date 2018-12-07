@@ -91,6 +91,15 @@ summary(c6a <- coxme(Surv(t1,t2,response) ~ rtlag + trial + value + uncertainty 
 # limit to IEV to r/o uncertainty/value tradeoff explanation: U-aversion holds
 summary(c7 <- coxme(Surv(t1,t2,response) ~ rtlag + trial + value + uncertainty +  (1|ID/run), sdf[sdf$rewFunc=='IEV' & sdf$t1>1 & sdf$t1<3,]))
 
+# late in learning
+
+summary(c7 <- coxme(Surv(t1,t2,response) ~ rtlag + value + uncertainty + entropylag + distfromedgelag +  (1|ID/run), sdf[sdf$rewFunc=='IEV',]))
+library(s)
+
+summary(test <- lmer(scale(uncertainty) ~ scale(value)*as.factor(trial) + (1|ID/run), sdf[sdf$rewFunc=='IEV',]))
+summary(test <- lmer(scale(uncertainty) ~ scale(value)*as.factor(trial) + (1|ID/run), sdf[sdf$rewFunc=='DEV',]))
+summary(test <- lmer(scale(uncertainty) ~ scale(value)*as.factor(trial) + (1|ID/run), sdf[sdf$rewFunc=='CEVR',]))
+
 # limit to CEVR to r/o probability/magnitude tradeoff explanation: U-aversion holds
 summary(c8 <- coxme(Surv(t1,t2,response) ~ rtlag + trial + value + uncertainty +  (1|ID/run), sdf[sdf$rewFunc=='CEVR',]))
 
