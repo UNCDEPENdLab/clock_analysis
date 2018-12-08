@@ -16,4 +16,3 @@ fmri/fmri_fits
 td_model/
 
 *.Rout
-fmri/keuka_brain_behavior_analyses/entropy_cluster_pca.R
