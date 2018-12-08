@@ -198,7 +198,7 @@ params <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize
 sub_df <- inner_join(beta_sum,params)
 params_beta <- sub_df[,c("v_f1","v_f2","h_f1", "h_f2","d_f1","d_f2","d_f3", "total_earnings", "LL", "alpha", "gamma", "beta")]
 param_cor <- cor(params_beta,method = 'pearson')
-param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
+param_cor <- corr.test(params_beta,method = 'pearson')
 
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("dvhbeta_param_corr_fixed.pdf", width=12, height=12)
@@ -211,16 +211,13 @@ dev.off()
 
 # merge into trial-level data
 df <- inner_join(trial_df,sub_df)
-df$rewFunc <- relevel(as.factor(df$rewFunc),ref = "CEV")
+df$rewFunc <- relevel(as.factor(df$rewFunc),ref = "DEV")
 
-#####
-# these simple RT swing prediction models only reveal that both networks catalyze convergence regardless of condition
 summary(m01 <- lmer(log(rt_swing) ~ scale(run_trial) * rewFunc + (1|id/run), df[df$rt_swing>0,]))
-summary(m02 <- lmer(log(rt_swing) ~ (scale(run_trial) + rewFunc + h_f1 + h_f2)^3 + (1|id/run), df[df$rt_swing>0,]))
+summary(m02 <- lmer(log(rt_swing) ~ (scale(run_trial) + rewFunc + h_f1 + h_f2)^2 + (1|id/run), df[df$rt_swing>0,]))
 car::Anova(m02,'3')
 anova(m01,m02)
-# over-engineered, does not add much
-# summary(m03 <- lmer(rt_csv ~ (scale(rt_lag) + scale(run_trial) + rewFunc + h_f1 + h_f2)^4 + (1|id/run), df[df$rt_swing>0,]))
+summary(m03 <- lmer(rt_csv ~ (scale(rt_lag) + scale(run_trial) + rewFunc + h_f1 + h_f2)^4 + (1|id/run), df[df$rt_swing>0,]))
 
 
 # RT swings analyses: "exploration"
@@ -237,19 +234,9 @@ summary(m5 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + h_f1 + h_f
 anova(m1,m2,m3,m4,m5)
 # value clusters explain more than entropy (diffAIC = 31), but each set explains unique variance; d_auc adds little
 
-###########
-# EV analyses: "exploitation" -- run removed from RE to avoid singular fit
-# Differences emerge in IEV (explains why total earnings are not informative)
-summary(ev1 <- lmer(ev ~ scale(run_trial) * rewFunc + (1|id), df))
-summary(ev2 <- lmer(ev ~ (scale(run_trial) + rewFunc + h_f1) ^3 + (1|id), df))
-summary(ev3 <- lmer(ev ~ (scale(run_trial) + rewFunc + I(-h_f2)) ^3 + (1|id), df))
-summary(ev4 <- lmer(ev ~ (scale(run_trial) + rewFunc + h_f1 + I(-h_f2)) ^3 + (1|id), df))
-anova(ev1,ev2,ev3,ev4)
-
-pdf('ev_by_condition_and_brain_betas.pdf', height = 8, width = 8)
-ggplot(df, aes(run_trial, ev, color = h_f2<0, lty = h_f1 >0)) + geom_smooth(method = "loess") + facet_wrap (~rewFunc)
-dev.off()
-
+# EV analyses: "exploitation" -- does not converge with fixed params betas (must be the ev ~ v_max)
+# summary(m4 <- lmer(ev ~ scale(run_trial) * scale(v_max) + (1|id/run), df[df$rt_swing>0,]))
+# summary(m5 <- lmer(ev ~ (scale(run_trial) + scale(v_max) + h_f1) ^2 + (1|id/run), df[df$rt_swing>0,]))
 # car::Anova(m5, '3')
 # summary(m6 <- lmer(ev ~ (scale(run_trial) + scale(v_max) + h_f2) ^2 + (1|id/run), df[df$rt_swing>0,]))
 # car::Anova(m6, '3')
@@ -257,49 +244,47 @@ dev.off()
 # anova(m4,m5,m6)
 
 # model-free look at H timecourses -- there is a bigger effect in learnable > unlearnable (esp. CEVR)
-# need both networks to transition
-ggplot(df, aes(run_trial, v_entropy, color = h_f1 >0, lty = h_f2 <0)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)
-ggplot(df, aes(run_trial, log(rt_swing), color = h_f1 >0, lty = h_f2 <0)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)
+ggplot(df, aes(run_trial, v_entropy, color = rewFunc, lty = h_f1 >0)) + geom_smooth(method = "loess")
 
-# value clusters -- similar, but weaker
-ggplot(df, aes(run_trial, log(rt_swing), color = v_f1 >0, lty = v_f2 <0)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)
+ggplot(df, aes(run_trial, log(rt_swing), color = h_f2<0, lty = h_f1 >0)) + geom_smooth(method = "loess")
+ggplot(df, aes(run_trial, log(rt_swing), color = h_f2<0, lty = h_f1 >0)) + geom_smooth(method = "gam")
+# V
+ggplot(df, aes(run_trial, log(rt_swing), color = v_f2<0, lty = v_f1 >0)) + geom_smooth(method = "gam")
 
 
-# coupling between entropy and RT swings -- betas don't moderate effects of entropy.  Rather, they influence entropy as it unfolds.
-# summary(m7 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + scale(v_entropy))^2 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
-# summary(m8 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + scale(v_entropy) + h_f1) ^2 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
-# car::Anova(m8, '3')
-# summary(m9 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + scale(v_entropy) + h_f2) ^2 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
-# car::Anova(m9, '3')
-# summary(m10 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + scale(v_entropy) +h_f1 + h_f2) ^2 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
-# car::Anova(m10, '3')
-# # a bunch of relatively weak interactions, set a side for now:
-# summary(m11 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + scale(v_entropy) +h_f1 + h_f2 + v_f1 + v_f2) ^3 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
-# car::Anova(m11, '3')
-# anova(m7,m8,m9, m10)
+# coupling between entropy and RT swings -- betas don't really interact with entropy
+summary(m7 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + scale(v_entropy))^2 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
+summary(m8 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + scale(v_entropy) + h_f1) ^2 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
+car::Anova(m8, '3')
+summary(m9 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + scale(v_entropy) + h_f2) ^2 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
+car::Anova(m9, '3')
+summary(m10 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + scale(v_entropy) +h_f1 + h_f2) ^2 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
+car::Anova(m10, '3')
+# a bunch of relatively weak interactions, set a side for now:
+summary(m11 <- lmer(log(rt_swing) ~ (scale(run_trial) + scale(v_max) + scale(v_entropy) +h_f1 + h_f2 + v_f1 + v_f2) ^3 + rewFunc + (1|id/run), df[df$rt_swing>0,]))
+car::Anova(m11, '3')
+
+anova(m7,m8,m9, m10)
 
 # plot out the relationships
 ggplot(df, aes(v_entropy,rt_swing, color = h_f1>0)) + geom_point() +  geom_smooth(method = "glm") + facet_wrap(~gamma>0)
 ggplot(df, aes(v_max,rt_swing, color = h_f2>0)) + geom_point() + geom_smooth(method = "glm") + facet_wrap(~gamma>0)
 
 # just entropy
-summary(rt1 <- lmer(scale(rt_csv) ~ (scale(run_trial) + scale(rt_vmax) + scale(rt_lag) + h_f1 + h_f2)^3 + rewFunc + (1|id/run), df))
-car::Anova(rt1)
+summary(mr1 <- lmer(scale(rt_csv) ~ (scale(run_trial) + scale(rt_vmax) + scale(rt_lag) + h_f1 + h_f2)^3 + rewFunc + (1|id/run), df))
+car::Anova(mr1)
 ggplot(df,aes(rt_vmax,rt_csv, color = h_f1>0)) + facet_wrap(~run_trial>20) + geom_smooth(method = "glm")
 ggplot(df,aes(rt_vmax,rt_csv, color = h_f2<0)) + facet_wrap(~run_trial>20) + geom_smooth(method = "glm")
 ggplot(df,aes(rt_vmax,rt_csv, color = h_f2<0, lty = h_f1>0)) + geom_smooth(method = "glm")
 
 # + value
-summary(rt2 <- lmer(scale(rt_csv) ~ (scale(run_trial) + scale(rt_vmax) + scale(rt_lag) + v_f1 + v_f2)^3 + rewFunc + (1|id/run), df))
-car::Anova(rt2)
+summary(mr2 <- lmer(scale(rt_csv) ~ (scale(run_trial) + scale(rt_vmax) + scale(rt_lag) + v_f1 + v_f2)^3 + rewFunc + (1|id/run), df))
+car::Anova(mr2)
 
 # + d_auc
-summary(rt3 <- lmer(scale(rt_csv) ~ (scale(run_trial) + scale(rt_vmax) + scale(rt_lag) + d_f1 + d_f2 + d_f3)^3 + rewFunc + (1|id/run), df))
-car::Anova(rt3)
-
-summary(rt4 <- lmer(scale(rt_csv) ~ (scale(run_trial) + scale(rt_vmax) + scale(rt_lag) + h_f1 + h_f2 + v_f1 +v_f2 + d_f1 + d_f2 + d_f3)^3 + rewFunc + (1|id/run), df))
-anova(rt2,rt1,rt3, rt4) # H predicts best, but the combination improves the prediction further (by >300 AIC points)
-
+summary(mr3 <- lmer(scale(rt_csv) ~ (scale(run_trial) + scale(rt_vmax) + scale(rt_lag) + d_f1 + d_f2 + d_f3)^3 + rewFunc + (1|id/run), df))
+car::Anova(mr3)
+anova(mr2,mr1,mr3) # H predicts best
 
 # vmPFC/hippocampus no longer explain more variance than factors/PCs
 # summary(mr2 <- lmer(scale(rt_csv) ~ (scale(run_trial) + scale(rt_vmax) + scale(rt_lag) + h_f1 + scale(vmPFC))^3 + rewFunc + (1|id/run), df))
