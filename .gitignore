@@ -16,3 +16,4 @@ fmri/fmri_fits
 td_model/
 
 *.Rout
+coxme/clock_coxme.R
