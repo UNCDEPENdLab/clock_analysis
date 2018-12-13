@@ -37,9 +37,9 @@ trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/cl
     TRUE ~ NA_integer_
   ), v_entropy_no5=if_else(trial_rel <= 5, NA_real_, v_entropy),
   d_auc_sqrt=if_else(d_auc > 0, NA_real_, sqrt(-1*d_auc)), #only compute the sqrt of d_auc for negative (i.e., reasonable) observations
-  v_entropy_sqrt=sqrt(v_entropy)) %>%
+  v_entropy_sqrt=sqrt(v_entropy),
+  rew_om=if_else(score_vba > 0, 1, 0)) %>% #for win/loss maps
   group_by(id, run) %>%  dplyr::mutate(rt_swing = abs( c(NA, diff(rt_csv)))/1000, rt_swing_sqrt=sqrt(rt_swing)) %>% ungroup() #compute rt_swing within run and subject
-
 
 subject_df <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/mmy3_demographics.tsv", header=TRUE) %>%
   rename(ID=lunaid, Age=age, Female=female, ScanDate=scandate) %>%
@@ -87,7 +87,9 @@ fsl_model_arguments <- list(
 #    c("d_auc_sqrt"),
     c("rt_swing"),
     c("rt_swing_sqrt"),
-    c("v_max")
+    c("v_max"),
+    c("rew_om"),
+    c("pe_max", "rew_om")
   ),
   group_model_variants=list(
     c("Intercept"),

@@ -127,6 +127,11 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
       value=subj_data %>% select(run, trial, pe_max) %>% rename(value=pe_max))
   }
 
+  if ("rew_om" %in% sceptic_signals) {
+    signals[["rew_om"]] <- list(event="feedback", normalization="none",
+      value=subj_data %>% select(run, trial, rew_om) %>% rename(value=rew_om))
+  }
+  
   if ("d_auc" %in% sceptic_signals) {
     # decay AUC, aligned with outcome
     signals[["d_auc"]] <- list(event="feedback", normalization="evtmax_1",
