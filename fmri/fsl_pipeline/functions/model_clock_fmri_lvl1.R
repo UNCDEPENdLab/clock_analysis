@@ -12,7 +12,7 @@ model_clock_fmri_lvl1 <- function(trial_statistics, fmri_dir=NULL, idexpr=NULL, 
   #setup parallel worker pool, if requested
   if (ncpus > 1) {
     require(doParallel)
-    cl <- makeCluster(ncpus)
+    cl <- makePSOCKcluster(ncpus)
     registerDoParallel(cl)
     
     on.exit(try(stopCluster(cl))) #cleanup pool upon exit of this function

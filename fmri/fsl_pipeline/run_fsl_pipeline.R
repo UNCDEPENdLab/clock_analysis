@@ -73,23 +73,24 @@ fsl_model_arguments <- list(
   idexpr=expression(subid), #how to match between the subject ID in trial_statistics and the folder structure on the file system
   idregex="([0-9]{5})_\\d+", #5 digit ID, followed by irrelevant date. A bit inelegant, but used in setup_feat_lvl2_inputs to infer the subject's ID from the MR folder structure
   sceptic_run_variants=list(
-#    c("v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
-#    c("v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
-    c("v_chosen"), #individual regressors
-    c("v_entropy"), #clock-aligned
-    c("v_entropy_feedback"), #feedback-aligned
-#    c("v_entropy_func"),
-    c("d_auc"), #feedback-aligned
-    c("d_auc_clock"), #clock-aligned
-    c("pe_max"),
-#    c("v_entropy_no5"),
-    c("v_auc"),
-#    c("d_auc_sqrt"),
-    c("rt_swing"),
-    c("rt_swing_sqrt"),
-    c("v_max"),
-    c("rew_om"),
-    c("pe_max", "rew_om")
+#    c("clock", "feedback", "v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
+#    c("clock", "feedback", "v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
+#    c("clock", "feedback", "v_chosen"), #individual regressors
+#    c("clock", "feedback", "v_entropy"), #clock-aligned
+#    c("clock", "feedback", "v_entropy_feedback"), #feedback-aligned
+#    c("clock", "feedback", "v_entropy_func"),
+#    c("clock", "feedback", "d_auc"), #feedback-aligned
+#    c("clock", "feedback", "d_auc_clock"), #clock-aligned
+#    c("clock", "feedback", "pe_max"),
+#    c("clock", "feedback", "v_entropy_no5"),
+#    c("clock", "feedback", "v_auc"),
+#    c("clock", "feedback", "d_auc_sqrt"),
+#    c("clock", "feedback", "rt_swing"),
+#    c("clock", "feedback", "rt_swing_sqrt"),
+#    c("clock", "feedback", "v_max"),
+#    c("clock", "feedback", "rew_om"),
+#    c("clock", "feedback", "pe_max", "rew_om"),
+    c("clock_bs", "feedback")
   ),
   group_model_variants=list(
     c("Intercept"),

@@ -10,7 +10,6 @@ load(to_run)
 
 library(dependlab)
 library(foreach)
-library(doSNOW)
 
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "model_clock_fmri_lvl1.R"))
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "fsl_sceptic_model.R"))

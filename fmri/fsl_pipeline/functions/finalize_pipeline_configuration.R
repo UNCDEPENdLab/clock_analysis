@@ -17,14 +17,21 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
   if (is.null(fsl_model_arguments$l1_cope_names)) {
     fsl_model_arguments$l1_cope_names <- lapply(fsl_model_arguments$sceptic_run_variants, function(x) {
       signal_copes <- x
-      names(signal_copes) <- paste0("cope", 2 + 1:length(x))
-      cope_names <- c(cope1="clock_onset", cope2="feedback_onset", signal_copes)
-      return(cope_names)
+      names(signal_copes) <- paste0("cope", 1:length(x))
+      return(signal_copes)
     })
   }
 
   if (is.null(fsl_model_arguments$zthresh)) { fsl_model_arguments$zthresh <- 3.09 }  #1-tailed p=.001 for z stat
   if (is.null(fsl_model_arguments$clustsize)) { fsl_model_arguments$clustsize <- 34 } #based on 3dClustSim using ACFs for first-level FEAT runs
+
+  #ensure that the user has specified some sort of clock event in the model
+  for (v in fsl_model_arguments$sceptic_run_variants) {
+    if (!any(c("clock", "clock_bs") %in% v)) {
+      stop("No clock event is in the model: ", paste(v, collapse=","))
+    }
+  }
+  
   
   return(fsl_model_arguments)
 }

@@ -16,10 +16,10 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   # any additional arguments trapped by ... are passed forward to build_design_matrix  
   
   require(Rniftilib)
-  require(parallel)
   require(dplyr)
   require(tidyr)
-
+  require(dependlab)
+  
   if (is.null(outdir)) {
     outdir=paste0("sceptic-", paste(sceptic_signals, collapse="-")) #define output directory based on combination of signals requested
     if (usepreconvolve) { outdir=paste(outdir, "preconvolve", sep="-") }
@@ -28,28 +28,32 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   }
 
   #determine which feat template is relevant
-  univariate <- FALSE
-  if (length(sceptic_signals) == 1L) {
-    ##single model-based regressor
-    if (usepreconvolve) {
-      fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_univariate_preconvolve_template.fsf"))
-    } else {
-      fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_univariate_template.fsf"))
-    }
-    univariate <- TRUE
-  } else if (length(sceptic_signals) == 4L) { #pemax, dauc, vchosen, ventropy
-    if (usepreconvolve) {
-      fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_4param_preconvolve_template.fsf"))
-    } else {
-      stop("not implemented yet")
-    }
-  } else if (length(sceptic_signals) == 5L) { #pemax, dauc, vchosen, ventropy, vtime
-    if (usepreconvolve) {
-      fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_5param_preconvolve_template.fsf"))
-    } else { stop("not implemented yet") }      
-  } else { stop("not implemented yet") }
+  use_new <- TRUE #generate EV and contrast syntax dynamically
+  if (use_new) {
+    fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_nparam_template.fsf"))
+  } else {    
+    if (length(sceptic_signals) == 1L) {
+      ##single model-based regressor
+      if (usepreconvolve) {
+        fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_univariate_preconvolve_template.fsf"))
+      } else {
+        fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_univariate_template.fsf"))
+      }
+    } else if (length(sceptic_signals) == 4L) { #pemax, dauc, vchosen, ventropy
+      if (usepreconvolve) {
+        fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_4param_preconvolve_template.fsf"))
+      } else {
+        stop("not implemented yet")
+      }
+    } else if (length(sceptic_signals) == 5L) { #pemax, dauc, vchosen, ventropy, vtime
+      if (usepreconvolve) {
+        fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_5param_preconvolve_template.fsf"))
+      } else { stop("not implemented yet") }      
+    } else { stop("not implemented yet") }
+  }
   
-  fsl_run_output_dir <- file.path(normalizePath(file.path(dirname(mrfiles[1L]), "..")), outdir) #note: normalizePath will fail to evaluate properly if directory does not exist
+  #note: normalizePath will fail to evaluate properly if directory does not exist
+  fsl_run_output_dir <- file.path(normalizePath(file.path(dirname(mrfiles[1L]), "..")), outdir)
 
   if (file.exists(fsl_run_output_dir) && force==FALSE) { message(fsl_run_output_dir, " exists. Skipping."); return(0) }
   cat("fsl_run_output_dir create: ", fsl_run_output_dir, "\n")
@@ -65,13 +69,21 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     tidyr::separate(col = key, into = c("event", "onset_duration")) %>%
     tidyr::spread(key=onset_duration, value=value) %>% dplyr::select(event, run, trial, onset, duration)
 
-  signals <- list(
-    #clock event task regressor
-    clock=list(event="clock", normalization="none", value=1),
+  signals <- list()
+  if ("clock_bs" %in% sceptic_signals) {
+    #beta series variant of clock onset
+    signals[["clock_bs"]] <- list(event="clock", normalization="none", value=1, beta_series=TRUE)
+  }
 
+  if ("clock" %in% sceptic_signals) {
+    #clock event task regressor
+    signals[["clock"]] <- list(event="clock", normalization="none", value=1)
+  }
+
+  if ("feedback" %in% sceptic_signals) {
     #feedback event task regressor
-    feedback=list(event="feedback", normalization="none", value=1)
-  )
+    signals[["feedback"]] <- list(event="feedback", normalization="none", value=1)
+  }
 
   if ("rt_swing" %in% sceptic_signals) {
     signals[["rt_swing"]] <- list(event="clock", normalization="evtmax_1",
@@ -165,7 +177,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   #      normalizations[v] <- "none" #should not try to normalize the within-trial regressor since this starts to confused within/between trial variation
 
   #NB. The tr argument should be passed in as part of ...
-  d <- build_design_matrix(events=events, signals=signals, baseline_coef_order=2, write_timing_files = c("convolved", "AFNI", "FSL"),
+  d <- build_design_matrix(events=events, signals=signals, baseline_coef_order=2, write_timing_files = c("convolved"), #, "FSL"),
     center_values=TRUE, plot=FALSE, convolve_wi_run=TRUE, output_directory=timingdir, drop_volumes=drop_volumes,
     run_volumes=runlengths, runs_to_output=mrrunnums, ...)
 
@@ -240,22 +252,42 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     thisTemplate <- gsub(".NVOL.", nvol, thisTemplate, fixed=TRUE)
     thisTemplate <- gsub(".FUNCTIONAL.", gsub(".nii(.gz)*$", "", mrfiles[r]), thisTemplate, fixed=TRUE)
     thisTemplate <- gsub(".CONFOUNDS.", motfile, thisTemplate, fixed=TRUE)
-    if (usepreconvolve) {
-      thisTemplate <- gsub(".CLOCK_TIMES.", file.path(timingdir, paste0("run", runnum, "_clock.1D")), thisTemplate, fixed=TRUE)
-      thisTemplate <- gsub(".FEEDBACK_TIMES.", file.path(timingdir, paste0("run", runnum, "_feedback.1D")), thisTemplate, fixed=TRUE)
-    } else {
-      thisTemplate <- gsub(".CLOCK_TIMES.", file.path(timingdir, paste0("run", runnum, "_clock_FSL3col.txt")), thisTemplate, fixed=TRUE)
-      thisTemplate <- gsub(".FEEDBACK_TIMES.", file.path(timingdir, paste0("run", runnum, "_feedback_FSL3col.txt")), thisTemplate, fixed=TRUE)
-    }
 
-    for (s in 1:length(sceptic_signals)) {
+    if (use_new) {
+      #generate ev syntax
+      dmat <- d$design_convolved[[paste0("run", runnum)]] %>% select(-matches("base\\d+")) #drop baseline columns
+      regressors <- as.list(names(dmat))
+
+      #add common ingredients for preconvolved regressors
+      regressors <- lapply(regressors, function(x) { list(name=x, waveform="custom_1", convolution="none", tempfilt=1, timing_file=file.path(timingdir, paste0("run", runnum, "_", x, ".1D"))) })
+
+      ev_syn <- dependlab::generate_fsf_lvl1_ev_syntax(regressors)
+
+      #generate a diagonal matrix of contrasts
+      cmat <- diag(length(regressors))
+      rownames(cmat) <- sapply(regressors, "[[", "name")
+      cmat_syn <- dependlab::generate_fsf_contrast_syntax(cmat)
+
+      thisTemplate <- c(thisTemplate, ev_syn, cmat_syn)      
+    } else {
       if (usepreconvolve) {
-        thisTemplate <- gsub(paste0(".V", s, "_TIMES."), file.path(timingdir, paste0("run", runnum, "_", sceptic_signals[s], ".1D")), thisTemplate, fixed=TRUE)
+        thisTemplate <- gsub(".CLOCK_TIMES.", file.path(timingdir, paste0("run", runnum, "_clock.1D")), thisTemplate, fixed=TRUE)
+        thisTemplate <- gsub(".FEEDBACK_TIMES.", file.path(timingdir, paste0("run", runnum, "_feedback.1D")), thisTemplate, fixed=TRUE)
       } else {
-        thisTemplate <- gsub(paste0(".V", s, "_TIMES."), file.path(timingdir, paste0("run", runnum, "_", sceptic_signals[s], "_FSL3col.txt")), thisTemplate, fixed=TRUE)
+        thisTemplate <- gsub(".CLOCK_TIMES.", file.path(timingdir, paste0("run", runnum, "_clock_FSL3col.txt")), thisTemplate, fixed=TRUE)
+        thisTemplate <- gsub(".FEEDBACK_TIMES.", file.path(timingdir, paste0("run", runnum, "_feedback_FSL3col.txt")), thisTemplate, fixed=TRUE)
       }
-      thisTemplate <- gsub(paste0(".V", s, "NAME."), sceptic_signals[s], thisTemplate) #define EV name
-      thisTemplate <- gsub(paste0(".V", s, "_CON."), sceptic_signals[s], thisTemplate) #define contrast name
+
+      for (s in 1:length(sceptic_signals)) {
+        if (usepreconvolve) {
+          thisTemplate <- gsub(paste0(".V", s, "_TIMES."), file.path(timingdir, paste0("run", runnum, "_", sceptic_signals[s], ".1D")), thisTemplate, fixed=TRUE)
+        } else {
+          thisTemplate <- gsub(paste0(".V", s, "_TIMES."), file.path(timingdir, paste0("run", runnum, "_", sceptic_signals[s], "_FSL3col.txt")), thisTemplate, fixed=TRUE)
+        }
+        thisTemplate <- gsub(paste0(".V", s, "NAME."), sceptic_signals[s], thisTemplate) #define EV name
+        thisTemplate <- gsub(paste0(".V", s, "_CON."), sceptic_signals[s], thisTemplate) #define contrast name
+      }
+
     }
     
     featFile <- file.path(fsl_run_output_dir, paste0("FEAT_LVL1_run", runnum, ".fsf"))
@@ -267,7 +299,8 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
 
   #if execute_feat is TRUE, execute feat on each fsf files at this stage, using an 8-node socket cluster (since we have 8 runs)
   #if execute_feat is FALSE, just create the fsf files but don't execute the analysis
-  if (execute_feat == TRUE) {    
+  if (execute_feat == TRUE) {
+    require(parallel)
     cl_fork <- makeForkCluster(nnodes=8)
     runfeat <- function(fsf) {
       runname <- basename(fsf)
