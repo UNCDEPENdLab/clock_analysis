@@ -8,6 +8,8 @@ model_clock_fmri_lvl1 <- function(trial_statistics, fmri_dir=NULL, idexpr=NULL, 
                                   ...) {
 
   stopifnot(is.numeric(ncpus) && ncpus >= 1)
+
+  require(foreach) #contains registerDoSEQ
   
   #setup parallel worker pool, if requested
   if (ncpus > 1) {
@@ -88,8 +90,7 @@ model_clock_fmri_lvl1 <- function(trial_statistics, fmri_dir=NULL, idexpr=NULL, 
       tryCatch(fsl_sceptic_model(b, sceptic_run_signals, mrfiles, runlengths, mrrunnums, drop_volumes=drop_volumes, outdir=outdir, ...),
         error=function(e) {
           cat("Subject: ", b$id[1], ", run variant: ", paste(sceptic_run_signals, collapse="-"), " failed with mrfiles: \n",
-            paste(mrfiles, collapse="\n"), "\n\n", file="lvl1_crashlog.txt", append=TRUE)
-          print(e)
+            paste(mrfiles, collapse="\n"), "\n", "error: ", e, "\n\n", file="lvl1_crashlog.txt", append=TRUE)
         })
 
       message("completed processing of subject: ", subid)
