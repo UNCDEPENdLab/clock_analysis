@@ -15,23 +15,25 @@ if (is.na(run_model_index)) { stop("Couldn't identify usable run_model_index var
 
 load(to_run)
 
-source(file.path(fsl_model_arguments$pipeline_home, "functions", "glm_helper_functions.R"))
+#load("/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/MMClock_aroma_preconvolve_fse_groupfixed.RData") #current arguments
+#run_model_index <- 1
 
-library(tidyverse)
-library(dependlab)
-library(oro.nifti)
-library(parallel)
+source(file.path(fsl_model_arguments$pipeline_home, "functions", "glm_helper_functions.R"))
 
 #1) load spatial maps RData object
 #2) rebuild into 4d cube (where fourth dimension is run/subject)
 #3) clusterize each effect of interest in stats outputs using 3dclust and generating mask
 #library(ggplot2)
+library(tidyverse)
 library(abind)
 library(oro.nifti)
 library(reshape2)
 library(robust)
 library(car)
-library(dplyr)
+library(dependlab)
+library(oro.nifti)
+library(parallel)
+library(foreach)
 library(doParallel)
 
 #verify that mr_dir is present as expected
@@ -43,6 +45,7 @@ l1_cope_names <- fsl_model_arguments$l1_cope_names[[run_model_index]] #names of 
 zthresh <- fsl_model_arguments$zthresh #3.09
 clustsize <- fsl_model_arguments$clustsize #34
 
+#registerDoSEQ()
 cl <- makeCluster(fsl_model_arguments$n_cluster_beta_cpus)
 registerDoParallel(cl)
 
@@ -51,7 +54,6 @@ subinfo$dir_found <- file.exists(subinfo$mr_dir)
 feat_lvl2_dirname <- "FEAT_LVL2_runtrend.gfeat" #should populate this to the structure at some point
 models <- sapply(fsl_model_arguments$group_model_variants, function(x) { paste(x, collapse="-") }) #different covariate models for the current run-level model (run_model_index)
 
-
 for (l1 in 1:n_l1_copes) {
   l1_contrast_name <- l1_cope_names[l1]
   model_output_dir <- file.path(feat_lvl3_outdir, l1_contrast_name)
@@ -59,6 +61,7 @@ for (l1 in 1:n_l1_copes) {
   #generate separate files for each l1 contrast (reset here)
   all_metadata <- list()
   all_rois <- list()
+  all_beta_series <- list()
   
   for (this_model in models) {
     expect_gfeat <- file.path(model_output_dir, paste0(l1_contrast_name, "-", this_model, ".gfeat"))
@@ -106,10 +109,15 @@ for (l1 in 1:n_l1_copes) {
     #to get L1 betas (per run), we need to extract the inputs to the L2 analysis. These are embedded in the L2 FSF file
     #for () {
     #}
+
+    #hard coding location of beta series analysis for now
+    beta_series_inputs <- sub(paste0("^(", fsl_model_arguments$fmri_dir, "/", fsl_model_arguments$idregex, "/", fsl_model_arguments$expectdir,
+      ")/.*"), "\\1/sceptic-clock_bs-feedback-preconvolve_fse_groupfixed", subject_inputs)
     
     #loop over l2 contrasts
-    l2_loop_outputs <- foreach(l2=iter(1:n_l2_contrasts), .packages=c("oro.nifti", "dplyr")) %dopar% {
-      #for (l2 in 1:n_l2_contrasts) {
+    #l2_loop_outputs <- foreach(l2=iter(1:n_l2_contrasts), .packages=c("oro.nifti", "dplyr")) %do% {
+    l2_loop_outputs <- list()
+    for (l2 in 1:n_l2_contrasts) {
       l2_loop_cluster_metadata <- list()
       l2_loop_rois <- list()
       
@@ -180,26 +188,22 @@ for (l1 in 1:n_l1_copes) {
         
         #generate a matrix of roi averages across subjects
         #this should be subjects x clusters in size
-        roimats <- sapply(maskvals, function(v) {
-          mi <- which(roimask==v, arr.ind=TRUE)
-          nsubj <- length(copefiles)
-          nvox <- nrow(mi)
-          mi4d <- cbind(pracma::repmat(mi, nsubj, 1), rep(1:nsubj, each=nvox))
-          
-          mat <- matrix(copeconcat[mi4d], nrow=nvox, ncol=nsubj) #need to manually reshape into matrix from vector
-          #for each subject, compute huber m-estimator of location/center Winsorizing at 2SD across voxels (similar to voxel mean)
-          #clusavg <- apply(mat, 2, function(x) { MASS::huber(x, k=2)$mu })
-          clusavg <- apply(mat, 2, mean)
-          return(clusavg)
-          
-          #return(t(mat)) #transpose to get subjects x voxels matrix            
-        })
+        roimats <- get_cluster_means(roimask, copeconcat)
         
         roi_df <- reshape2::melt(roimats, value.name="cope_value", varnames=c("feat_input_id", "cluster_number")) %>%
           mutate(model=this_model, l1_contrast=l1_contrast_name, l2_contrast=l2_contrast_name, l3_contrast=l3_contrast_name) %>%
           #full_join(design_df %>% select(subject, !!l3_contrast_name), by="subject") #merge with relevant covariate
           full_join(design_df, by="feat_input_id") #merge with all covariates
 
+        #handle beta series extraction (NB. beta_series_inputs should be in same order as subject_inputs based on use of sub above)
+        beta_series_df <- get_beta_series(beta_series_inputs, roimask, n_bs=50)
+
+        #for identification, add cluster information to beta series from ROI data.frame
+        beta_series_df <- beta_series_df %>% left_join(roi_df, by=c("feat_input_id", "cluster_number")) %>%
+          select(feat_input_id, run, trial, cluster_number, everything())
+
+        #beta_series_df %>% group_by(feat_input_id) %>% summarize(mean(bs_value), mean(cope_value))
+        
         coords <- lapply(maskvals, function(v) {
           mi <- which(roimask==v, arr.ind=TRUE)
           return(mi)
@@ -220,22 +224,27 @@ for (l1 in 1:n_l1_copes) {
         
         l2_loop_cluster_metadata[[paste(l1, l2, l3, sep=".")]] <- cluster_metadata
         l2_loop_rois[[paste(l1, l2, l3, sep=".")]] <- roi_df
+        l2_loop_bs[[paste(l1, l2, l3, sep=".")]] <- beta_series_df
       }
 
-      return(list(cluster_metadata=l2_loop_cluster_metadata, rois=l2_loop_rois))
+      #return(list(cluster_metadata=l2_loop_cluster_metadata, rois=l2_loop_rois))
+      l2_loop_outputs[[l2]] <- list(cluster_metadata=l2_loop_cluster_metadata, rois=l2_loop_rois, beta_series=l2_loop_bs)
     }
 
     #tack on metadata and roi betas from this l2 contrast to the broader set
     all_metadata <- bind_rows(all_metadata, rlang::flatten(lapply(l2_loop_outputs, "[[", "cluster_metadata")))
     all_rois <- bind_rows(all_rois, rlang::flatten(lapply(l2_loop_outputs, "[[", "rois")))
+    all_beta_series <- bind_rows(all_beta_series, rlang::flatten(lapply(l2_loop_outputs, "[[", "beta_series")))
   }
 
   #organize models intelligently
   all_metadata <- all_metadata %>% arrange(model, l1_contrast, l2_contrast, l3_contrast)
   all_rois <- all_rois %>% arrange(model, l1_contrast, l2_contrast, l3_contrast, cluster_number, feat_input_id)
+  all_beta_series <- all_beta_series %>% arrange(model, l1_contrast, l2_contrast, l3_contrast, cluster_number, feat_input_id, run, trial)
 
   readr::write_csv(x=all_metadata, file.path(model_output_dir, paste0(l1_contrast_name, "_cluster_metadata.csv")))
   readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_roi_betas.csv")))
+  readr::write_csv(x=all_beta_series, file.path(model_output_dir, paste0(l1_contrast_name, "_roi_beta_series.csv.gz")))
 
   #not uniquely useful at present (CSVs have it all)
   #save(all_metadata, all_rois, dmat, file=file.path(model_output_dir, "sceptic_clusters.RData"))

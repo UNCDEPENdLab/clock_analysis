@@ -48,8 +48,9 @@ runFSLCommand <- function(args, fsldir=NULL, stdout=NULL, stderr=NULL) {
     }
   }
   
+  #Sys.setenv(LD_LIBRARY_PATH="/gpfs/group/mnh5174/default/sw/openblas/lib")
   Sys.setenv(FSLDIR=fsldir) #export to R environment
-  fslsetup=paste0("FSLDIR=", fsldir, "; PATH=${FSLDIR}/bin:${PATH}; . ${FSLDIR}/etc/fslconf/fsl.sh; ${FSLDIR}/bin/")
+  fslsetup=paste0("FSLDIR=", fsldir, "; PATH=${FSLDIR}/bin:${PATH}; . ${FSLDIR}/etc/fslconf/fsl.sh; LD_LIBRARY_PATH=/gpfs/group/mnh5174/default/sw/openblas/lib ${FSLDIR}/bin/")
   fslcmd=paste0(fslsetup, args)
   if (!is.null(stdout)) { fslcmd=paste(fslcmd, ">", stdout) }
   if (!is.null(stderr)) { fslcmd=paste(fslcmd, "2>", stderr) }
@@ -235,3 +236,62 @@ visualizeDesignMatrix <- function(d, outfile=NULL, runboundaries=NULL, events=NU
   return(invisible(g))
 }
 
+#compute the mean of each cluster in roimask
+#within a 4d array: x, y, z, subbrik
+#
+#roimask is an x,y,z array with integer mask values
+#ni4d is a concatenated set of cope values, either across subjects
+# or, in the case of beta series, within a subject (over trials)
+get_cluster_means <- function(roimask, ni4d) {
+  #ni4d should be a 4s array in which the fourth dimension is either subject (single beta) or a beta series (single subject)
+  maskvals <- sort(unique(as.vector(roimask)))
+  maskvals <- maskvals[!maskvals == 0]
+
+  roimats <- sapply(maskvals, function(v) {
+    mi <- which(roimask==v, arr.ind=TRUE)
+    nsubbriks <- dim(ni4d)[4]
+    nvox <- nrow(mi)
+    mi4d <- cbind(pracma::repmat(mi, nsubbriks, 1), rep(1:nsubbriks, each=nvox))
+    
+    mat <- matrix(ni4d[mi4d], nrow=nvox, ncol=nsubbriks) #need to manually reshape into matrix from vector
+    #for each subject, compute huber m-estimator of location/center Winsorizing at 2SD across voxels (similar to voxel mean)
+    #clusavg <- apply(mat, 2, function(x) { MASS::huber(x, k=2)$mu })
+    clusavg <- apply(mat, 2, mean)
+    
+    return(clusavg)
+  })          
+}
+
+#function to extract mean beta series
+get_beta_series <- function(inputs, roimask, n_bs=50) {
+  #inputs <- inputs[1:5] #speed up testing
+
+  beta_res <- foreach(i=iter(1:length(inputs)), .packages=c("reshape2", "oro.nifti", "dplyr", "abind"), .export="get_cluster_means") %dopar% {
+  #beta_res <- lapply(1:length(inputs), function(i) {
+    run_dirs <- list.files(path=inputs[i], pattern="FEAT_LVL1_run\\d+\\.feat", recursive=FALSE, full.names=TRUE)
+    run_betas <- list()
+    
+    for (r in 1:length(run_dirs)) {
+      runnum <- as.numeric(sub(".*/FEAT_LVL1_run(\\d+)\\.feat", "\\1", run_dirs[r], perl=TRUE))
+      copes <- file.path(run_dirs[r], "stats", paste0("cope", 1:n_bs, ".nii.gz"))
+
+      stopifnot(all(file.exists(copes)))
+      #in testing, it is faster to use readNIfTI to read each cope file individually (7.5s) than to use fslmerge + readNIfTI on the 4d (13s)
+      #concat_file <- tempfile()
+      #system.time(runFSLCommand(paste("fslmerge -t", concat_file, paste(copes, collapse=" "))))
+      #system.time(cout <- readNIfTI(concat_file, reorient=FALSE)@.Data)
+      
+      cout <- do.call(abind, list(along=4, lapply(copes, function(x) { readNIfTI(x, reorient=FALSE)@.Data })))
+      beta_series_cluster_means <- get_cluster_means(roimask, cout)
+      beta_melt <- reshape2::melt(beta_series_cluster_means, value.name="bs_value", varnames=c("trial", "cluster_number")) %>%
+        mutate(feat_input_id=i, run=runnum)
+
+      run_betas[[r]] <- beta_melt
+    }
+
+    return(do.call(rbind, run_betas))
+    
+  }
+
+  return(do.call(rbind, beta_res))
+}
