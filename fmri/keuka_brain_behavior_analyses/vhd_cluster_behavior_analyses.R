@@ -48,19 +48,27 @@ car::Anova(r3,'3')
 anova(r1,r2,r3)
 
 # these simple RT swing prediction models only reveal that both networks catalyze convergence regardless of condition
+# statistics parallel amazing plots
 mf1 <- lmer(log(rt_swing) ~ scale(-1/run_trial) * rewFuncIEVsum + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(mf1)
 ## favorite simple model ##
 mf2 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + h_f1_fp + I(-h_f2_neg_paralimb))^2 + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(mf2)
 ##
+# only V
+mf3a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum +  I(-v_f1_neg_cog) + v_f2_paralimb)^2 + (1|id/run), df[df$rt_swing>0,])
+screen.lmerTest(mf3a)
 # add V to check for dissociation
 mf3 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(mf3)
 # H effects stand, V does not add to fit
 mf4 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + (1|id/run), df[df$rt_swing>0,])
-screen.lmerTest(mf4)
-# addition of decay does not help beyond H alone
+screen.lmerTest(mf4,0.05)
+# only decay
+mf4a <- lmer(log(rt_swing) ~ (scale(run_trial) + rewFuncIEVsum + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^3 + (1|id/run), df[df$rt_swing>0,])
+screen.lmerTest(mf4a,0.05)
+
+
 anova(mf1,mf2,mf3, mf4)
 
 
