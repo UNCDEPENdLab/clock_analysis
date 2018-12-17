@@ -163,9 +163,9 @@ d_wide$d_pc2 <- d.pca$x[,2]
 
 d.fa = psych::fa(djust_rois, nfactors=3)
 dfscores <- factor.scores(djust_rois, d.fa)$scores
-d_wide$d_f1 <- dfscores[,1]
-d_wide$d_f2 <- dfscores[,2]
-d_wide$d_f3 <- dfscores[,3]
+d_wide$d_f1_FP_SMA <- dfscores[,1]
+d_wide$d_f2_VS <- dfscores[,2]
+d_wide$d_f3_ACC_ins <- dfscores[,3]
 
 # a bit crazy, but let's put v and h into a single factor analysis
 dvh_wide <- inner_join(vh_wide,d_wide[,c(1,18:20)], by = "feat_input_id")
@@ -193,10 +193,11 @@ trial_df <- trial_df %>%
                                        rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
                                        rt_lag = lag(rt_csv) ,
                                        omission_lag = lag(score_csv==0),
+                                       rt_vmax_lag = lag(rt_vmax),
                                        run_trial=1:50) %>% ungroup() #compute rt_swing within run and subject
 
 # performance
-sum_df <- trial_df %>% group_by(id) %>% summarize(total_earnings = sum(score_csv)) %>% arrange(total_earnings)
+sum_df <- trial_df %>% group_by(id) %>% dplyr::summarize(total_earnings = sum(score_csv)) %>% arrange(total_earnings)
 beta_sum <- inner_join(pc_scores,sum_df)
 plot(beta_sum$h_f1_fp,beta_sum$total_earnings)
 plot(beta_sum$h_f2_neg_paralimb,beta_sum$total_earnings)
@@ -206,7 +207,7 @@ plot(beta_sum$v_f2_paralimb,beta_sum$total_earnings)
 # model parameters
 params <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")
 sub_df <- inner_join(beta_sum,params)
-params_beta <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_paralimb","d_f1","d_f2","d_f3", "total_earnings", "LL", "alpha", "gamma", "beta")]
+params_beta <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_paralimb","d_f1_FP_SMA","d_f2_VS","d_f3_ACC_ins", "total_earnings", "LL", "alpha", "gamma", "beta")]
 param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
@@ -221,7 +222,9 @@ dev.off()
 # merge into trial-level data
 df <- inner_join(trial_df,sub_df)
 df$rewFunc <- relevel(as.factor(df$rewFunc),ref = "CEV")
-
+df$rewFuncIEVsum <- df$rewFunc
+contrasts(df$rewFuncIEVsum) <- contr.sum
+colnames(contrasts(df$rewFuncIEVsum)) <- c('CEV','CEVR', 'DEV')
 # dichotomize betas for plotting
 df$h_fp <- 'low'
 df$h_fp[df$h_f1_fp>0] <- 'high'
@@ -243,8 +246,42 @@ df$learning_epoch[df$run_trial>10] <- 'trials 11-50'
 # obtain within-subject v_max and entropy: correlated at -.37
 
 df <- df %>% group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
-                                         v_entropy_wi = scale(v_entropy)
+                                         v_max_wi_lag = lag(v_max_wi),
+                                         v_entropy_wi = scale(v_entropy),
+                                         v_max_b = mean(na.omit(v_max)),
+                                         v_entropy_b = mean(na.omit(v_entropy))
 )
+
+# correlate between-subject V and H with clusters
+b_df <- df %>% group_by(id) %>% dplyr::summarise(v_maxB = mean(v_max, na.rm = T),
+                                          v_entropyB = mean(v_entropy, na.rm = T))
+
+sub_df <- inner_join(sub_df, b_df, by = 'id')
+bdf <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_paralimb","d_f1_FP_SMA","d_f2_VS","d_f3_ACC_ins", 
+                 "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]
+b_cor <- corr.test(bdf,method = 'pearson', adjust = 'none')
+
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+pdf("between_subject_v_h_beh_corr_fixed.pdf", width=12, height=12)
+corrplot(b_cor$r, cl.lim=c(-1,1),
+         method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+         order = "hclust", diag = FALSE,
+         addCoef.col="black", addCoefasPercent = FALSE,
+         p.mat = b_cor$p, sig.level=0.05, insig = "blank")
+dev.off()
+df$d_f1_FP_SMAresp <- 'low'
+df$d_f1_FP_SMAresp[df$d_f1_FP_SMA>0] <- 'high'
+df$d_f2_VSresp <- 'low'
+df$d_f2_VSresp[df$d_f2_VS>0] <- 'high'
+df$d_f3_ACC_ins_resp <- 'low'
+df$d_f3_ACC_ins_resp[df$d_f3_ACC_ins>0] <- 'high'
+df$d_f2_VSresp <- as.factor(df$d_f2_VSresp)
+df$d_f2_VSresp <- relevel(df$d_f2_VSresp, ref = 'low') 
+
+df$last_outcome <- NA
+df$last_outcome[df$omission_lag] <- 'Omission'
+df$last_outcome[!df$omission_lag] <- 'Reward'
+
 # circular, but just check to what extent each area conforms to SCEPTIC-SM: looks like there is an interaction, both need to be involved again
 ggplot(df, aes(run_trial, v_entropy_wi, color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "loess") #+ facet_wrap(~gamma>0)
 # I think this means again that H estimates are more precise for high-paralimbic people, esp. late in learning
