@@ -65,11 +65,36 @@ screen.lmerTest(mf3)
 mf4 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(mf4,0.05)
 # only decay
-mf4a <- lmer(log(rt_swing) ~ (scale(run_trial) + rewFuncIEVsum + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^3 + (1|id/run), df[df$rt_swing>0,])
+mf4a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(mf4a,0.05)
-
-
 anova(mf1,mf2,mf3, mf4)
+
+dfl <- df[df$rt_swing>1 & (df$rewFunc=='IEV' | df$rewFunc == 'DEV'),]
+# only learnable
+lmf1 <- lmer(log(rt_swing) ~ scale(-1/run_trial) * rewFunc + (1|id/run), dfl)
+screen.lmerTest(lmf1)
+## favorite simple model ##
+lmf2 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + h_f1_fp + I(-h_f2_neg_paralimb))^2 + (1|id/run), dfl)
+screen.lmerTest(lmf2)
+##
+# only V
+lmf3a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc +  I(-v_f1_neg_cog) + v_f2_paralimb)^2 + (1|id/run), dfl)
+screen.lmerTest(lmf3a)
+# add V to check for dissociation
+lmf3 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + (1|id/run), dfl)
+screen.lmerTest(lmf3)
+# H effects stand, V does not add to fit
+lmf4 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + (1|id/run), dfl)
+screen.lmerTest(lmf4,0.05)
+# only decay
+lmf4a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^3 + (1|id/run), dfl)
+screen.lmerTest(lmf4a,0.05)
+anova(lmf1,lmf2,lmf3,lmf3a, lmf4,lmf4a)
+
+# entropy predicted by decay only
+h1 <- lmer(v_entropy ~ (scale(-1/run_trial) + rewFunc + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^3 + (1|id/run), dfl)
+screen.lmerTest(h1)
+
 
 
 # continuing with mb* models, add within-run entropy
@@ -161,6 +186,8 @@ dev.off()
 t1 <- ggplot(df[df$run>1,],aes(run_trial,log(rt_swing), color = d_f1_FP_SMAresp)) + geom_smooth() + facet_wrap(~rewFunc) + scale_color_brewer(palette = 'Set3', direction = -1) + scale_x_continuous(breaks = c(1,50)) + guides(color=FALSE)+ theme(axis.title.x=element_blank())
 t2 <- ggplot(df[df$run>1,],aes(run_trial,log(rt_swing), color = d_f2_VSresp)) + geom_smooth() + facet_wrap(~rewFunc) + scale_color_brewer(palette = 'Dark2', direction = 1)+ scale_x_continuous(breaks = c(1,50)) + guides(color=FALSE)+ theme(axis.title.x=element_blank())
 t3 <- ggplot(df[df$run>1,],aes(run_trial,log(rt_swing), color = d_f3_ACC_ins_resp)) + geom_smooth() + facet_wrap(~rewFunc) + scale_color_brewer(palette = 'Set1', direction = 1)+ scale_x_continuous(breaks = c(1,50)) + guides(color=FALSE)
+# just double-check the d3 effect
+# ggplot(df[df$run>1 & df$rt_swing>1,],aes(run_trial,(rt_swing), color = d_f3_ACC_ins_resp)) + geom_smooth() + facet_wrap(~rewFunc) + scale_color_brewer(palette = 'Set1', direction = 1)+ scale_x_continuous(breaks = c(1,50)) + guides(color=FALSE)
 t4 <- ggplot(df[df$run>1,],aes(run_trial,log(rt_swing), color = low_v_fp_acc_vlpfc)) + geom_smooth() + facet_wrap(~rewFunc) + scale_color_brewer(palette = 'Paired', direction = -1)+ scale_x_continuous(breaks = c(1,50)) + guides(color=FALSE)+ theme(axis.title.x=element_blank())
 t5 <- ggplot(df[df$run>1,],aes(run_trial,log(rt_swing), color = v_paralimbic)) + geom_smooth() + facet_wrap(~rewFunc) + scale_color_brewer(palette = 'Pastel1', direction = 1)+ scale_x_continuous(breaks = c(1,50)) + guides(color=FALSE)+ theme(axis.title.x=element_blank())
 t6 <- ggplot(df[df$run>1,],aes(run_trial,log(rt_swing), color = h_fp)) + geom_smooth() + facet_wrap(~rewFunc) + scale_color_brewer(palette = 'Pastel2', direction = -1)+ scale_x_continuous(breaks = c(1,50)) + guides(color=FALSE)+ theme(axis.title.x=element_blank())
