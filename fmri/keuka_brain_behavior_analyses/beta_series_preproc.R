@@ -13,6 +13,8 @@ remove_outliers <- function(x, na.rm = TRUE, ...) {
   y
 }
 
+scale_within <- T
+
 # get cluster meta-data, first for H
 setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/beta_series_dec2018/')
 metaH <- read_csv("v_entropy_cluster_metadata.csv")
@@ -36,7 +38,8 @@ hb <- hb %>% mutate_at(.vars = 'bs_value', remove_outliers)
 ggplot(hb,aes(bs_value)) + geom_histogram() + facet_wrap(~labeled_cluster)
 
 # scale each region within subject
-hb <- hb %>% dplyr::group_by(feat_input_id,labeled_cluster) %>% mutate(bs_value = scale(bs_value)) %>% ungroup
+if (scale_within)
+{hb <- hb %>% dplyr::group_by(feat_input_id,labeled_cluster) %>% mutate(bs_value = scale(bs_value)) %>% ungroup}
 ggplot(hb,aes(bs_value)) + geom_histogram() + facet_wrap(~labeled_cluster)
 
 #just the bs and 
@@ -98,8 +101,9 @@ ggplot(vb,aes(bs_value)) + geom_histogram() + facet_wrap(~label)
 vb <- vb %>% mutate_at(.vars = 'bs_value', remove_outliers)
 ggplot(vb,aes(scale(bs_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
 #just the bs and 
-
-vb <- vb %>% dplyr::group_by(feat_input_id,labeled_cluster) %>% mutate(bs_value = scale(bs_value)) %>% ungroup
+if (scale_within)
+  
+{vb <- vb %>% dplyr::group_by(feat_input_id,labeled_cluster) %>% mutate(bs_value = scale(bs_value)) %>% ungroup}
 
 
 vb_wide <- spread(vb[,c("feat_input_id", "run", "trial", "bs_value", "labeled_cluster")],labeled_cluster,bs_value)
@@ -168,7 +172,8 @@ ggplot(db,aes(scale(bs_value))) + geom_histogram() + facet_wrap(~label)
 # db <- db %>% mutate_at(.vars = 'bs_value', winsor, trim = .025)
 db <- db %>% mutate_at(.vars = 'bs_value', remove_outliers)
 ggplot(db,aes(bs_value)) + geom_histogram() + facet_wrap(~labeled_cluster)
-db <- db %>% dplyr::group_by(feat_input_id,labeled_cluster) %>% mutate(bs_value = scale(bs_value)) %>% ungroup
+if (scale_within)
+{db <- db %>% dplyr::group_by(feat_input_id,labeled_cluster) %>% mutate(bs_value = scale(bs_value)) %>% ungroup}
 
 
 #just the bs and 
@@ -226,7 +231,9 @@ dev.off()
 dvh_b_wide$run_trial <- dvh_b_wide$trial
 
 # factor analysis of factors!
-dvh.fa = psych::fa(dvh, nfactors=3)
+dvh.fa = psych::fa(dvh, nfactors=1)
+# without rescaling, only a single-factor solution works
+
 # this was instructive
 # for further analyses, we want the following regions:
 # hb_f1_DAN (alt. vb_f1_lo_DAN)
@@ -285,6 +292,20 @@ bdf <- bdf[,c(names(beta_fscores), "LL", "alpha", "gamma", "beta")]
 
 df <- inner_join(trial_df,bdf)
 
+# check correlation with RTs -- at least not uniform
+dvh_rt <- df[,c(names(dvh), "rt_csv")]
+rt_cor <- corr.test(dvh_rt,method = 'pearson', adjust = 'none')
+
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+pdf("dvh_bs_rt_corr.pdf", width=12, height=12)
+corrplot(rt_cor$r, cl.lim=c(-1,1),
+         method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+         order = "hclust", diag = FALSE,
+         addCoef.col="black", addCoefasPercent = FALSE,
+         p.mat = rt_cor$p, sig.level=0.05, insig = "blank")
+dev.off()
+
+
 df$rewFunc <- relevel(as.factor(df$rewFunc),ref = "CEV")
 df$rewFuncIEVsum <- df$rewFunc
 contrasts(df$rewFuncIEVsum) <- contr.sum
@@ -313,13 +334,21 @@ df <- df %>% dplyr::group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
                                          v_max_wi_lag = lag(v_max_wi),
                                          v_entropy_wi = scale(v_entropy),
                                          v_max_b = mean(na.omit(v_max)),
-                                         v_entropy_b = mean(na.omit(v_entropy))
-)
+                                         v_entropy_b = mean(na.omit(v_entropy)),
+                                         rt_swing_lead = lead(rt_swing)
+) %>% ungroup
 
 df$performance <- cut_number(df$total_earnings,2)
+levels(df$performance) <- c( "below median", "above median")
+#sanity check
+# ggplot(df,aes(performance, total_earnings)) + geom_boxplot()
 df$last_outcome <- NA
 df$last_outcome[df$omission_lag] <- 'Omission'
 df$last_outcome[!df$omission_lag] <- 'Reward'
+# BS by trial and condition
+df$decay <- NA
+df$decay[df$gamma>0] <- 'high'
+df$decay[df$gamma<0] <- 'low'
 
 
 save(file = 'trial_df_and_vhd_bs.Rdata', df)
