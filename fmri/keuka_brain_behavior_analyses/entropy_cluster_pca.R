@@ -192,6 +192,7 @@ trial_df <- trial_df %>%
   group_by(id, run) %>%  dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))),
                                        rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
                                        rt_lag = lag(rt_csv) ,
+                                       rt_swing_lag = lag(rt_swing),
                                        omission_lag = lag(score_csv==0),
                                        rt_vmax_lag = lag(rt_vmax),
                                        run_trial=1:50) %>% ungroup() #compute rt_swing within run and subject
