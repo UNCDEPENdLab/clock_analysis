@@ -275,7 +275,12 @@ get_beta_series <- function(inputs, roimask, n_bs=50) {
       runnum <- as.numeric(sub(".*/FEAT_LVL1_run(\\d+)\\.feat", "\\1", run_dirs[r], perl=TRUE))
       copes <- file.path(run_dirs[r], "stats", paste0("cope", 1:n_bs, ".nii.gz"))
 
-      stopifnot(all(file.exists(copes)))
+      if (!all(file.exists(copes))) {
+        cat("File listing in dir:", run_dirs[r], list.files(run_dirs[r], recursive=FALSE), sep="\n", append=TRUE)
+        cat("Cannot find all ", length(copes), " beta series copes in: ", run_dirs[r], "\n", file="beta_series_errors.txt", append=TRUE)
+        next #don't error for now, just omit
+      }
+      
       #in testing, it is faster to use readNIfTI to read each cope file individually (7.5s) than to use fslmerge + readNIfTI on the 4d (13s)
       #concat_file <- tempfile()
       #system.time(runFSLCommand(paste("fslmerge -t", concat_file, paste(copes, collapse=" "))))

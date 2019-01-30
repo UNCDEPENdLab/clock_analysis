@@ -120,6 +120,7 @@ for (l1 in 1:n_l1_copes) {
     for (l2 in 1:n_l2_contrasts) {
       l2_loop_cluster_metadata <- list()
       l2_loop_rois <- list()
+      l2_loop_bs <- list()
       
       l2_contrast_name <- l2_contrast_names[l2] #current l2 contrast
       copefiles <- file.path(subject_inputs, "stats", paste0("cope", l2, ".nii.gz"))
