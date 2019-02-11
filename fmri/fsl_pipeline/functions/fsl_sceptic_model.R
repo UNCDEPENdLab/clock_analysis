@@ -168,6 +168,31 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     signals[["v_entropy_feedback"]] <- list(event="feedback", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, v_entropy) %>% rename(value=v_entropy))
   }
+
+  #K-L distance measures
+  if ("intrinsic_discrepancy" %in% sceptic_signals) {
+    #intrinsic discrepancy measure of transition in value vector (basis weights) on t-1 vs. t
+    signals[["intrinsic_discrepancy"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, intrinsic_discrepancy) %>% rename(value=intrinsic_discrepancy))
+  }
+
+  if ("intrinsic_discrepancy_feedback" %in% sceptic_signals) {
+    #feedback-aligned intrinsic discrepancy measure of transition in value vector (basis weights) on t-1 vs. t
+    signals[["intrinsic_discrepancy_feedback"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, intrinsic_discrepancy) %>% rename(value=intrinsic_discrepancy))
+  }
+
+  if ("mean_kld" %in% sceptic_signals) {
+    #intrinsic discrepancy measure of transition in value vector (basis weights) on t-1 vs. t
+    signals[["mean_kld"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, mean_kld) %>% rename(value=mean_kld))
+  }
+
+  if ("mean_kld_feedback" %in% sceptic_signals) {
+    #feedback-aligned intrinsic discrepancy measure of transition in value vector (basis weights) on t-1 vs. t
+    signals[["mean_kld_feedback"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, mean_kld) %>% rename(value=mean_kld))
+  }
   
   #not currently handling vtime
   # else if (thisName == "vtime") {

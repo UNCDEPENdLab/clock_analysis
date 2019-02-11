@@ -7,7 +7,7 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
       fsl_model_arguments$model_suffix)
   })
 
-  fsl_model_arguments$n_l1_copes <- sapply(fsl_model_arguments$sceptic_run_variants, function(x) { length(x) + 2 }) #compute number of l1 copes for each variant
+  fsl_model_arguments$n_l1_copes <- sapply(fsl_model_arguments$sceptic_run_variants, function(x) { length(x) }) #compute number of l1 copes for each variant
   fsl_model_arguments$workdir <- file.path(fsl_model_arguments$root_workdir, fsl_model_arguments$outdir) #temp folder for each analysis variant
   fsl_model_arguments$pipeline_cpus <- length(fsl_model_arguments$sceptic_run_variants) #number of workers to setup at the pipeline level (i.e., over run variants)
   if (is.null(fsl_model_arguments$l2_cpus)) { fsl_model_arguments$l2_cpus <- 20 } #number of cores to use in Feat LVL2 analyses (fixed effects combination of runs)

@@ -87,7 +87,11 @@ fsl_model_arguments <- list(
 #    c("clock", "feedback", "d_auc_sqrt"),
 #    c("clock", "feedback", "rt_swing"),
 #    c("clock", "feedback", "rt_swing_sqrt"),
-    c("clock", "feedback", "v_max")
+    c("clock", "feedback", "v_max"),
+    c("clock", "feedback", "mean_kld"),
+    c("clock", "feedback", "intrinsic_discrepancy"),
+    c("clock", "feedback", "mean_kld_feedback"),
+    c("clock", "feedback", "intrinsic_discrepancy_feedback")
 #    c("clock", "feedback", "rew_om"),
 #    c("clock", "feedback", "pe_max", "rew_om"),
 #    c("clock_bs", "feedback")
