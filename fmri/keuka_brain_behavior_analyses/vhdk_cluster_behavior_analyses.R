@@ -98,6 +98,12 @@ screen.lmerTest(mf2)
 mf2k <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + k_f1_IPL_ventr_stream + k_f2_prefrontal_bg)^2 + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(mf2k)
 
+mf2kf <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + kf_f1_fp_temp + kf_f3_str_front_ins + kf_f2_vmpfc_precun)^2 + (1|id/run), df[df$rt_swing>0,])
+screen.lmerTest(mf2kf)
+
+mf2dhp <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + dhp_f1_dlpfc_r + dhp_f2_str + dhp_f3_ventr_stream_cerebell + dhp_f4_prefront_l)^2 + (1|id/run), df[df$rt_swing>0,])
+screen.lmerTest(mf2dhp)
+
 ##
 # only V
 mf3a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum +  I(-v_f1_neg_cog) + v_f2_paralimb)^2 + (1|id/run), df[df$rt_swing>0,])
@@ -106,38 +112,38 @@ screen.lmerTest(mf3a)
 mf3 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(mf3)
 # H effects stand, V does not add to fit
-mf4 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + (1|id/run), df[df$rt_swing>0,])
-screen.lmerTest(mf4,0.05)
-# only decay
-mf4a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + (1|id/run), df[df$rt_swing>0,])
-screen.lmerTest(mf4a,0.05)
-anova(mf1,mf2,mf3, mf4)
+# mf4 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + (1|id/run), df[df$rt_swing>0,])
+# screen.lmerTest(mf4,0.05)
+# # only decay
+# mf4a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + (1|id/run), df[df$rt_swing>0,])
+# screen.lmerTest(mf4a,0.05)
+# anova(mf1,mf2,mf3, mf4)
 
-dfl <- df[df$rt_swing>1 & (df$rewFunc=='IEV' | df$rewFunc == 'DEV'),]
-# only learnable
-lmf1 <- lmer(log(rt_swing) ~ scale(-1/run_trial) * rewFunc + (1|id/run), dfl)
-screen.lmerTest(lmf1)
-## favorite simple model ##
-lmf2 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + h_f1_fp + I(-h_f2_neg_paralimb))^2 + (1|id/run), dfl)
-screen.lmerTest(lmf2)
-##
-# only V
-lmf3a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc +  I(-v_f1_neg_cog) + v_f2_paralimb)^2 + (1|id/run), dfl)
-screen.lmerTest(lmf3a)
-# add V to check for dissociation
-lmf3 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + (1|id/run), dfl)
-screen.lmerTest(lmf3)
-# H effects stand, V does not add to fit
-lmf4 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + (1|id/run), dfl)
-screen.lmerTest(lmf4,0.05)
-# only decay
-lmf4a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^3 + (1|id/run), dfl)
-screen.lmerTest(lmf4a,0.05)
-anova(lmf1,lmf2,lmf3,lmf3a, lmf4,lmf4a)
+ dfl <- df[df$rt_swing>1 & (df$rewFunc=='IEV' | df$rewFunc == 'DEV'),]
+# # only learnable
+# lmf1 <- lmer(log(rt_swing) ~ scale(-1/run_trial) * rewFunc + (1|id/run), dfl)
+# screen.lmerTest(lmf1)
+# ## favorite simple model ##
+# lmf2 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + h_f1_fp + I(-h_f2_neg_paralimb))^2 + (1|id/run), dfl)
+# screen.lmerTest(lmf2)
+# ##
+# # only V
+# lmf3a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc +  I(-v_f1_neg_cog) + v_f2_paralimb)^2 + (1|id/run), dfl)
+# screen.lmerTest(lmf3a)
+# # add V to check for dissociation
+# lmf3 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + (1|id/run), dfl)
+# screen.lmerTest(lmf3)
+# # H effects stand, V does not add to fit
+# lmf4 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + (1|id/run), dfl)
+# screen.lmerTest(lmf4,0.05)
+# # only decay
+# lmf4a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFunc + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^3 + (1|id/run), dfl)
+# screen.lmerTest(lmf4a,0.05)
+# anova(lmf1,lmf2,lmf3,lmf3a, lmf4,lmf4a)
 
-# entropy predicted by decay only
-h1 <- lmer(v_entropy ~ (scale(-1/run_trial) + rewFunc + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^3 + (1|id/run), dfl)
-screen.lmerTest(h1)
+# # entropy predicted by decay only
+# h1 <- lmer(v_entropy ~ (scale(-1/run_trial) + rewFunc + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^3 + (1|id/run), dfl)
+# screen.lmerTest(h1)
 
 
 
@@ -152,6 +158,17 @@ screen.lmerTest(w2v)
 # KLD
 w2k <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + k_f1_IPL_ventr_stream + k_f2_prefrontal_bg)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(w2k)
+# KL at feedback
+w2kf <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi +  kf_f1_fp_temp + kf_f3_str_front_ins + kf_f2_vmpfc_precun)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
+screen.lmerTest(w2kf)
+# entropy change
+w2dh <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + dh_f1_co_bg + dh_f2_dan + dh_f_neg_vmpfc_precun)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
+screen.lmerTest(w2dh)
+# pos entropy change  
+w2dhp <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + 
+                                 dhp_f1_dlpfc_r + dhp_f2_str + dhp_f3_ventr_stream_cerebell + dhp_f4_prefront_l)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
+screen.lmerTest(w2dhp)
+
 # PE -- the hippocampal factor seems to predict exploration...
 w2pe <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + pe_f1_cort_str + pe_f2_hipp)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(w2pe)
@@ -168,7 +185,9 @@ w4hvd <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v
                                  I(-v_f1_neg_cog) + v_f2_paralimb + 
                                  d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(w4hvd)
-anova(w1,w2h,w2v,w3hv,w2d,w4hvd)
+anova(w1,w2h,w2v,w2k, w2kf, w2dh, w2dhp,w3hv,w2d,w4hvd)
+# despicable dAUC explains more than the refined KLD or entropy change...
+
 # plot out scale(run_trial):v_entropy_wi:h_f2_neg_paralimb
 ggplot(df, aes(v_entropy_wi, log(rt_swing),color = low_h_paralimbic, lty = h_fp)) +
   geom_smooth(method = 'gam') + facet_wrap(~run_trial>20)
@@ -189,6 +208,20 @@ screen.lmerTest(wr2v)
 # add KLD -- prefronto-striatal makes them a bit faster, but does not interact with anything
 wr2k <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + k_f1_IPL_ventr_stream + k_f2_prefrontal_bg)^2 + v_max_b + v_entropy_b +   (1|id/run), df)
 screen.lmerTest(wr2k)
+
+# KLD at feedback
+wr2kf <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + kf_f1_fp_temp + kf_f3_str_front_ins + kf_f2_vmpfc_precun)^2 + v_max_b + v_entropy_b +   (1|id/run), df)
+screen.lmerTest(wr2kf)
+
+# entropy change
+wr2dh <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + 
+                          dh_f1_co_bg + dh_f2_dan + dh_f_neg_vmpfc_precun)^2 + v_max_b + v_entropy_b +   (1|id/run), df)
+screen.lmerTest(wr2dh)
+
+wr2dhp <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + 
+                          dhp_f1_dlpfc_r + dhp_f2_str + dhp_f3_ventr_stream_cerebell + dhp_f4_prefront_l)^2 + v_max_b + v_entropy_b +   (1|id/run), df)
+screen.lmerTest(wr2dhp)
+
 # PE
 wr2pe <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str + pe_f2_hipp)^2 + v_max_b + v_entropy_b +   (1|id/run), df)
 screen.lmerTest(wr2pe)
@@ -204,6 +237,7 @@ wr4hvd <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag
                                  I(-v_f1_neg_cog) + v_f2_paralimb + 
                                  d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + v_max_b + v_entropy_b +  (1|id/run), df)
 screen.lmerTest(wr4hvd, .01)
+##### BEST MODEL
 wr4hvd3 <-  update(wr4hvd, . ~ . + 
                      scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + 
                   scale(rt_lag):omission_lag:I(-v_f1_neg_cog) +scale(rt_lag):omission_lag:v_f2_paralimb + 
@@ -216,10 +250,8 @@ wr4hvd3a <-  update(wr4hvd3, . ~ . +
                       scale(rt_vmax_lag):v_max_wi_lag:d_f1_FP_SMA +scale(rt_vmax_lag):v_max_wi_lag:d_f2_VS + scale(rt_vmax_lag):v_max_wi_lag:d_f3_ACC_ins + (1|id/run), df)
 screen.lmerTest(wr4hvd3a, .01)
 
-anova(wr1,wr2h,wr2v,wr3hv,wr2d,wr4hvd)
-anova(wr1,wr2h,wr4hvd)
-# v and d add a bit to H, but H is the best among single-signal models
-
+anova(wr1,wr2h,wr2v,wr3hv,wr2d,wr2pe, wr2dh, wr2dhp,wr4hvd, wr4hvd3,wr4hvd3a)
+# at the end of the day, the h clusters explain the most
 ###########
 ## PLOTS ##
 #####
@@ -242,7 +274,7 @@ ggplot(df,aes(run_trial,rt_csv, lty = k_f2_prefrontal_bg_resp)) + geom_smooth() 
 ggplot(df,aes(run_trial,rt_csv, color = kf_f1_fp_temp_resp, lty = kf_f3_str_front_ins_resp, size = kf_f2_vmpfc_precun_resp)) + geom_smooth() + facet_wrap(~rewFunc)
 ggplot(df,aes(run_trial,rt_csv, color = kf_f1_fp_temp_resp)) + geom_smooth() + facet_wrap(~rewFunc)
 ggplot(df,aes(run_trial,rt_csv, lty = kf_f3_str_front_ins_resp)) + geom_smooth() + facet_wrap(~rewFunc)
-ggplot(df,aes(run_trial,rt_csv, size = kf_f2_vmpfc_precun_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+ggplot(df,aes(run_trial,rt_csv, color = kf_f2_vmpfc_precun_resp)) + geom_smooth() + facet_wrap(~rewFunc)
 
 ggplot(df,aes(run_trial,log(rt_swing), color = kf_f1_fp_temp_resp)) + geom_smooth() + facet_wrap(~rewFunc)
 # well, maybe with striato-fronto_insular and RT swings
