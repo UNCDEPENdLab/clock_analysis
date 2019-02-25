@@ -6,7 +6,7 @@ library(lme4)
 library(lmerTest)
 # source('~/code/Rhelpers/')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
-load('trial_df_and_vhdk_clusters.Rdata')
+load('trial_df_and_vhdkfpe_clusters.Rdata')
 ######
 # end of preprocessing
 
@@ -48,13 +48,43 @@ car::Anova(r3,'3')
 anova(r1,r2,r3)
 
 # same for KL distance
-rk2 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFuncIEVsum + k_f1_IPL_crbl_MFG_ITG + k_f2_visual + k_f3_OFC)^2 + (1|id/run), df)
+## paradox: plots show that it speeds them up, but the model does not detect it!!!
+rk0 <- lmer(rt_csv ~ scale(-1/run_trial) + rewFuncIEVsum + k_f1_IPL_ventr_stream + k_f2_prefrontal_bg + (1|id/run), df)
+screen.lmerTest(rk0)
+car::Anova(rk0,'3')
+
+rk2 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFuncIEVsum + k_f1_IPL_ventr_stream )^3 +
+              (scale(-1/run_trial) + rewFuncIEVsum + k_f2_prefrontal_bg )^3 + (1|id/run), df)
 screen.lmerTest(rk2)
 car::Anova(rk2,'3')
-rk3 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFunc + I(-v_f1_neg_cog) + v_f2_paralimb)^3 + (1|id/run), df)
-screen.lmerTest(r3)
-car::Anova(r3,'3')
-anova(r1,r2,r3)
+anova(r1,rk2)
+
+# same for KLD at feedback -- not much going on here
+rkf0 <- lmer(rt_csv ~ scale(-1/run_trial) + rewFuncIEVsum + kf_f1_fp_temp + kf_f3_str_front_ins + kf_f2_vmpfc_precun + (1|id/run), df)
+screen.lmerTest(rkf0)
+car::Anova(rkf0,'3')
+
+rkf2 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFuncIEVsum + kf_f1_fp_temp )^3 +
+              (scale(-1/run_trial) + rewFuncIEVsum + kf_f3_str_front_ins )^3 + 
+               (scale(-1/run_trial) + rewFuncIEVsum + kf_f2_vmpfc_precun )^3 +  (1|id/run), df)
+screen.lmerTest(rkf2)
+car::Anova(rkf2,'3')
+anova(r1,rkf2)
+
+
+# same for PE
+rpe0 <- lmer(rt_csv ~ scale(-1/run_trial) + rewFuncIEVsum + pe_f1_cort_str + pe_f2_hipp + (1|id/run), df)
+screen.lmerTest(rpe0)
+car::Anova(rpe0,'3')
+
+rpe2 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFuncIEVsum + pe_f1_cort_str )^3 +
+              (scale(-1/run_trial) + rewFuncIEVsum + pe_f2_hipp )^3 + (1|id/run), df)
+screen.lmerTest(rpe2)
+car::Anova(rpe2,'3')
+anova(r1,rk2,rpe2)
+
+
+
 
 # these simple RT swing prediction models only reveal that both networks catalyze convergence regardless of condition
 # statistics parallel amazing plots
@@ -63,6 +93,11 @@ screen.lmerTest(mf1)
 ## favorite simple model ##
 mf2 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + h_f1_fp + I(-h_f2_neg_paralimb))^2 + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(mf2)
+
+### also for KLD -- it does not predict RT swings
+mf2k <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum + k_f1_IPL_ventr_stream + k_f2_prefrontal_bg)^2 + (1|id/run), df[df$rt_swing>0,])
+screen.lmerTest(mf2k)
+
 ##
 # only V
 mf3a <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + rewFuncIEVsum +  I(-v_f1_neg_cog) + v_f2_paralimb)^2 + (1|id/run), df[df$rt_swing>0,])
@@ -114,6 +149,17 @@ w2h <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_e
 screen.lmerTest(w2h)
 w2v <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(w2v)
+# KLD
+w2k <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + k_f1_IPL_ventr_stream + k_f2_prefrontal_bg)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
+screen.lmerTest(w2k)
+# PE -- the hippocampal factor seems to predict exploration...
+w2pe <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + pe_f1_cort_str + pe_f2_hipp)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
+screen.lmerTest(w2pe)
+w3hpe <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + pe_f1_cort_str + pe_f2_hipp)^2 +
+              (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + h_f1_fp + I(-h_f2_neg_paralimb))^2+ v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
+screen.lmerTest(w3hpe)
+
+
 w3hv <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
 screen.lmerTest(w3hv)
 w2d <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), df[df$rt_swing>0,])
@@ -140,6 +186,16 @@ wr2h <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) 
 screen.lmerTest(wr2h)
 wr2v <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + v_max_b + v_entropy_b +   (1|id/run), df)
 screen.lmerTest(wr2v)
+# add KLD -- prefronto-striatal makes them a bit faster, but does not interact with anything
+wr2k <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + k_f1_IPL_ventr_stream + k_f2_prefrontal_bg)^2 + v_max_b + v_entropy_b +   (1|id/run), df)
+screen.lmerTest(wr2k)
+# PE
+wr2pe <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str + pe_f2_hipp)^2 + v_max_b + v_entropy_b +   (1|id/run), df)
+screen.lmerTest(wr2pe)
+
+wr3hpe <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_f1_fp + I(-h_f2_neg_paralimb) + pe_f1_cort_str + pe_f2_hipp)^2 + v_max_b + v_entropy_b +   (1|id/run), df)
+screen.lmerTest(wr3hpe)
+
 wr3hv <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag  + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + v_max_b + v_entropy_b +  (1|id/run), df)
 screen.lmerTest(wr3hv)
 wr2d <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag  + d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + v_max_b + v_entropy_b +  (1|id/run), df)
@@ -176,11 +232,37 @@ ggplot(df,aes(run_trial,log(rt_swing), size = d_f2_VSresp)) + geom_smooth() + fa
 ggplot(df,aes(run_trial,log(rt_swing), color = d_f3_ACC_ins_resp)) + geom_smooth() + facet_wrap(~rewFunc)
 ggplot(df,aes(run_trial,log(rt_swing), color = d_f3_ACC_ins_resp, lty = d_f1_FP_SMAresp, size = d_f2_VSresp)) + geom_smooth() + facet_wrap(~rewFunc)
 
-ggplot(df,aes(v_max_wi,log(rt_swing), lty = d_f1_FP_SMAresp)) + geom_smooth() + facet_wrap(~rewFunc)
-ggplot(df,aes(v_max_wi,log(rt_swing), size = d_f2_VSresp)) + geom_smooth() + facet_wrap(~rewFunc)
-ggplot(df,aes(v_max_wi,log(rt_swing), color = d_f3_ACC_ins_resp)) + geom_smooth() + facet_wrap(~rewFunc)
-# this may mean that Dauc indexes heterogeneous cognitive processes
-# does decay control H?
+# analogously, for KLD:
+ggplot(df,aes(run_trial,rt_csv, color = k_f1_IPL_ventr_stream_resp, lty = k_f2_prefrontal_bg_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+ggplot(df,aes(run_trial,rt_csv, color = k_f1_IPL_ventr_stream_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+ggplot(df,aes(run_trial,rt_csv, lty = k_f2_prefrontal_bg_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+
+# analogously, for KLD at feedback
+# not seeing much
+ggplot(df,aes(run_trial,rt_csv, color = kf_f1_fp_temp_resp, lty = kf_f3_str_front_ins_resp, size = kf_f2_vmpfc_precun_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+ggplot(df,aes(run_trial,rt_csv, color = kf_f1_fp_temp_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+ggplot(df,aes(run_trial,rt_csv, lty = kf_f3_str_front_ins_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+ggplot(df,aes(run_trial,rt_csv, size = kf_f2_vmpfc_precun_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+
+ggplot(df,aes(run_trial,log(rt_swing), color = kf_f1_fp_temp_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+# well, maybe with striato-fronto_insular and RT swings
+ggplot(df,aes(run_trial,log(rt_swing), lty = kf_f3_str_front_ins_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+# and perhaps 
+ggplot(df,aes(run_trial,log(rt_swing), size = kf_f2_vmpfc_precun_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+
+
+# and for PE
+ggplot(df,aes(run_trial,rt_csv, color = pe_f1_cort_str_resp, lty = pe_f2_hipp_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+ggplot(df,aes(run_trial,rt_csv, color = pe_f1_cort_str_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+ggplot(df,aes(run_trial,rt_csv, lty = pe_f2_hipp_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+
+
+# not a huge impact of KLD betas on RT swings...
+# hold off on further plotting for now (2/19/19)
+ggplot(df,aes(v_max_wi,log(rt_swing), lty = k_f1_IPL_crbl_MFG_ITG_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+ggplot(df,aes(v_max_wi,log(rt_swing), size = k_f2_visual_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+ggplot(df,aes(v_max_wi,log(rt_swing), color = k_f3_OFC_resp)) + geom_smooth() + facet_wrap(~rewFunc)
+# does KL control H?
 p1 <- ggplot(df[df$run>1,],aes(run_trial,v_entropy, color = d_f1_FP_SMAresp)) + geom_smooth() + facet_wrap(~rewFunc) + scale_color_brewer(palette = 'Set3', direction = -1)+ scale_x_continuous(breaks = c(1,50)) + guides(color=FALSE) + theme(axis.title.x=element_blank())
 p2 <- ggplot(df[df$run>1,],aes(run_trial,v_entropy, color = d_f2_VSresp)) + geom_smooth() + facet_wrap(~rewFunc) + scale_color_brewer(palette = 'Dark2', direction = 1)+ scale_x_continuous(breaks = c(1,50)) + guides(color=FALSE)+ theme(axis.title.x=element_blank())
 p3 <- ggplot(df[df$run>1,],aes(run_trial,v_entropy, color = d_f3_ACC_ins_resp)) + geom_smooth() + facet_wrap(~rewFunc) + scale_color_brewer(palette = 'Set1', direction = 1)+ scale_x_continuous(breaks = c(1,50)) + guides(color=FALSE)
