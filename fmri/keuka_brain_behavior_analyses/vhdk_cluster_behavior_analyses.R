@@ -237,21 +237,31 @@ wr4hvd <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag
                                  I(-v_f1_neg_cog) + v_f2_paralimb + 
                                  d_f1_FP_SMA + d_f2_VS + d_f3_ACC_ins)^2 + v_max_b + v_entropy_b +  (1|id/run), df)
 screen.lmerTest(wr4hvd, .01)
-##### BEST MODEL
 wr4hvd3 <-  update(wr4hvd, . ~ . + 
                      scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + 
                   scale(rt_lag):omission_lag:I(-v_f1_neg_cog) +scale(rt_lag):omission_lag:v_f2_paralimb + 
                     scale(rt_lag):omission_lag:d_f1_FP_SMA +scale(rt_lag):omission_lag:d_f2_VS + scale(rt_lag):omission_lag:d_f3_ACC_ins + (1|id/run), df)
 screen.lmerTest(wr4hvd3, .01)
 
-wr4hvd3a <-  update(wr4hvd3, . ~ . + 
-                      scale(rt_vmax_lag):v_max_wi_lag:h_f1_fp + scale(rt_vmax_lag):v_max_wi_lag:I(-h_f2_neg_paralimb) + 
-                      scale(rt_vmax_lag):v_max_wi_lag:I(-v_f1_neg_cog) +scale(rt_vmax_lag):v_max_wi_lag:v_f2_paralimb + 
-                      scale(rt_vmax_lag):v_max_wi_lag:d_f1_FP_SMA +scale(rt_vmax_lag):v_max_wi_lag:d_f2_VS + scale(rt_vmax_lag):v_max_wi_lag:d_f3_ACC_ins + (1|id/run), df)
-screen.lmerTest(wr4hvd3a, .01)
+##### BEST MODEL
+wr3hpe3 <-  update(wr3hpe, . ~ . + 
+                     scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + 
+                     scale(rt_lag):omission_lag:pe_f1_cort_str +scale(rt_lag):omission_lag:pe_f2_hipp + 
+                     scale(rt_vmax_lag):scale(-1/run_trial):h_f1_fp + scale(rt_vmax_lag):scale(-1/run_trial):I(-h_f2_neg_paralimb) + 
+                     scale(rt_vmax_lag):scale(-1/run_trial):pe_f1_cort_str + scale(rt_vmax_lag):scale(-1/run_trial):pe_f2_hipp  +
+                     (1|id/run), df)
+screen.lmerTest(wr3hpe3, .01)
 
-anova(wr1,wr2h,wr2v,wr3hv,wr2d,wr2pe, wr2dh, wr2dhp,wr4hvd, wr4hvd3,wr4hvd3a)
+
+# wr4hvd3a <-  update(wr4hvd3, . ~ . + 
+#                       scale(rt_vmax_lag):v_max_wi_lag:h_f1_fp + scale(rt_vmax_lag):v_max_wi_lag:I(-h_f2_neg_paralimb) + 
+#                       scale(rt_vmax_lag):v_max_wi_lag:I(-v_f1_neg_cog) +scale(rt_vmax_lag):v_max_wi_lag:v_f2_paralimb + 
+#                       scale(rt_vmax_lag):v_max_wi_lag:d_f1_FP_SMA +scale(rt_vmax_lag):v_max_wi_lag:d_f2_VS + scale(rt_vmax_lag):v_max_wi_lag:d_f3_ACC_ins + (1|id/run), df)
+# screen.lmerTest(wr4hvd3a, .01)
+
+anova(wr1,wr2h,wr2v,wr3hv,wr2d,wr2pe, wr2dh, wr2dhp,wr4hvd, wr4hvd3,wr3hpe3)
 # at the end of the day, the h clusters explain the most
+# pe is better than KLD or entropy change
 ###########
 ## PLOTS ##
 #####
