@@ -5,9 +5,9 @@ library(corrplot)
 library(lme4)
 
 # get H betas
-setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-v_entropy-preconvolve_fse_groupfixed/v_entropy/')
-meta <- read_csv("~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy_cluster_metadata.csv")
-meta$label <- substr(meta$label,14,100)
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/')
+meta <- read_csv("~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy_cluster_metadata.csv")
+meta$label <- substr(meta$label,22,100)
 meta_overall <- meta[meta$l2_contrast == 'overall' & meta$l3_contrast == 'Intercept' & meta$model == 'Intercept-Age',]
 Hbetas <- read_csv("v_entropy_roi_betas.csv")
 h <- as.tibble(Hbetas[Hbetas$l2_contrast == 'overall' & Hbetas$l3_contrast == 'Intercept' & Hbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<11)
@@ -40,11 +40,7 @@ corrplot(clust_cor, cl.lim=c(-1,1),
          p.mat = 1-clust_cor, sig.level=0.75, insig = "blank")
 dev.off()
 
-h.pca = prcomp((just_rois),scale = TRUE, center = TRUE)
-h_wide$h_pc1 <- h.pca$x[,1]
-h_wide$h_pc2 <- h.pca$x[,2]
-
-h.fa = psych::fa(just_rois, nfactors=2)
+h.fa = psych::fa(just_rois, nfactors=4, fm = 'mle')
 fscores <- factor.scores(just_rois, h.fa)$scores
 h_wide$h_f1_fp <- fscores[,1]
 h_wide$h_f2_neg_paralimb <- fscores[,2]
@@ -52,7 +48,7 @@ h_wide$ParaHippL <- h_wide$`9`
 h_wide$vmPFC <- h_wide$`6`
 
 # add value betas -- use v_max as theoretically interesting and unbiased by choice
-setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-v_max-preconvolve_fse_groupfixed/v_max/')
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_max-preconvolve_fse_groupfixed/v_max/')
 vmeta <- read_csv("v_max_cluster_metadata.csv")
 vmeta$label <- substr(vmeta$label,14,100)
 vmeta_overall <- vmeta[vmeta$l2_contrast == 'overall' & vmeta$l3_contrast == 'Intercept' & vmeta$model == 'Intercept-Age',]
@@ -120,7 +116,7 @@ dev.off()
 # the first value (V+) factor is correlated with the entropy hippocampal factor (.55)
 
 # OK, that went well -- let's add dAUC
-setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-d_auc-preconvolve_fse_groupfixed/d_auc/')
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-d_auc-preconvolve_fse_groupfixed/d_auc/')
 dmeta <- read_csv("d_auc_cluster_metadata.csv")
 dmeta$label <- substr(dmeta$label,14,100)
 dmeta_overall <- dmeta[dmeta$l2_contrast == 'overall' & dmeta$l3_contrast == 'Intercept' & dmeta$model == 'Intercept-Age',]
@@ -179,10 +175,349 @@ corrplot(dvhclust_cor$r, cl.lim=c(-1,1),
          p.mat = dvhclust_cor$p, sig.level=0.05, insig = "blank")
 dev.off()
 
-# add ids
-map_df  <- as.tibble(read.csv("~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy-Intercept_design.txt", sep=""))
+#####
+# add KLD
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-mean_kld-preconvolve_fse_groupfixed/mean_kld/')
+kmeta <- read_csv("mean_kld_cluster_metadata.csv")
+kmeta$label <- substr(kmeta$label,22,100)
+kmeta_overall <- kmeta[kmeta$l2_contrast == 'overall' & kmeta$l3_contrast == 'Intercept' & kmeta$model == 'Intercept-Age',]
+kbetas <- read_csv("mean_kld_roi_betas.csv")
+k <- as.tibble(kbetas[kbetas$l2_contrast == 'overall' & kbetas$l3_contrast == 'Intercept' & kbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<10 | cluster_number == 11 | cluster_number == 14)
+# head(merge(h,meta))
+krois_list <- distinct(kmeta_overall[,c(5,12)])
 
-pc_scores <- inner_join(dvh_wide,map_df[,c(1:2,4:15)])
+# inspect distributions
+# for some reason, the clusters do not seem to fit the map -- check with MNH (big clusters broken down?) !!
+krois <- inner_join(k,kmeta_overall)
+krois$labeled_cluster <- paste(krois$cluster_number,krois$label)
+kmeta_overall$labeled_cluster <- paste(kmeta_overall$cluster_number,kmeta_overall$label)
+ggplot(krois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
+
+k_labeled <- inner_join(k,krois_list)
+k_labeled$labeled_cluster <- paste(k_labeled$cluster_number,k_labeled$label)
+k_labeled <- select(k_labeled,c(1,3,5))
+
+k_wide <- spread(k_labeled,labeled_cluster,cope_value)
+
+# some outliers, let's winsorize for now
+k_wide <- k_wide %>% mutate_if(is.double, winsor,trim = .075)
+
+kjust_rois <- k_wide[,2:ncol(k_wide)]
+# winsorize to deal with beta ouliers
+
+# non-parametric correlations to deal with outliers
+kclust_cor <- corr.test(kjust_rois,method = 'pearson', adjust = 'none')
+# parametric correlations on winsorised betas
+# clust_cor <- cor(just_rois_w,method = 'pearson')
+
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+pdf("k_cluster_corr_fixed.pdf", width=12, height=12)
+corrplot(kclust_cor$r, cl.lim=c(-1,1),
+         method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+         order = "hclust", diag = FALSE,
+         addCoef.col="black", addCoefasPercent = FALSE,
+         p.mat = kclust_cor$p, sig.level=0.05, insig = "blank")
+dev.off()
+# looks like a single dimension
+
+k.pca = prcomp((kjust_rois),scale = TRUE, center = TRUE)
+k_wide$k_pc1 <- k.pca$x[,1]
+k_wide$k_pc2 <- k.pca$x[,2]
+
+k.fa = psych::fa(kjust_rois, nfactors=2)
+kfscores <- factor.scores(kjust_rois, k.fa)$scores
+k_wide$k_f1_IPL_ventr_stream <- kfscores[,1]
+k_wide$k_f2_prefrontal_bg <- kfscores[,2]
+
+dvhk_wide <- inner_join(dvh_wide,k_wide[,c("feat_input_id","k_f1_IPL_ventr_stream", "k_f2_prefrontal_bg")])
+### KLD at feedback
+#####
+# add KLD
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-mean_kld_feedback-preconvolve_fse_groupfixed/mean_kld_feedback/')
+kfmeta <- read_csv("mean_kld_feedback_cluster_metadata.csv")
+kfmeta$label <- substr(kfmeta$label,22,100)
+kfmeta_overall <- kfmeta[kfmeta$l2_contrast == 'overall' & kfmeta$l3_contrast == 'Intercept' & kfmeta$model == 'Intercept-Age',]
+kfbetas <- read_csv("mean_kld_feedback_roi_betas.csv")
+kf <- as.tibble(kfbetas[kfbetas$l2_contrast == 'overall' & kfbetas$l3_contrast == 'Intercept' & kfbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<23)
+# head(merge(h,meta))
+kfrois_list <- distinct(kfmeta_overall[,c(5,12)])
+
+# inspect distributions
+# for some reason, the clusters do not seem to fit the map -- check with MNH (big clusters broken down?) !!
+kfrois <- inner_join(kf,kfmeta_overall)
+kfrois$labeled_cluster <- paste(kfrois$cluster_number,kfrois$label)
+kfmeta_overall$labeled_cluster <- paste(kfmeta_overall$cluster_number,kfmeta_overall$label)
+ggplot(kfrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
+
+kf_labeled <- inner_join(kf,kfrois_list)
+kf_labeled$labeled_cluster <- paste(kf_labeled$cluster_number,kf_labeled$label)
+kf_labeled <- select(kf_labeled,c(1,3,5))
+
+kf_wide <- spread(kf_labeled,labeled_cluster,cope_value)
+
+# some outliers, let's winsorize for now
+kf_wide <- kf_wide %>% mutate_if(is.double, winsor,trim = .075)
+
+kfjust_rois <- kf_wide[,2:ncol(kf_wide)]
+# winsorize to deal with beta ouliers
+
+# non-parametric correlations to deal with outliers
+kfclust_cor <- corr.test(kfjust_rois,method = 'pearson', adjust = 'none')
+# parametric correlations on winsorised betas
+# clust_cor <- cor(just_rois_w,method = 'pearson')
+
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+pdf("kf_cluster_corr_fixed.pdf", width=12, height=12)
+corrplot(kfclust_cor$r, cl.lim=c(-1,1),
+         method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+         order = "hclust", diag = FALSE,
+         addCoef.col="black", addCoefasPercent = FALSE,
+         p.mat = kfclust_cor$p, sig.level=0.05, insig = "blank")
+dev.off()
+# looks like a single dimension
+
+kf.pca = prcomp((kfjust_rois),scale = TRUE, center = TRUE)
+kf_wide$kf_pc1 <- kf.pca$x[,1]
+kf_wide$kf_pc2 <- kf.pca$x[,2]
+
+kf.fa = psych::fa(kfjust_rois, nfactors=4)
+kffscores <- factor.scores(kfjust_rois, kf.fa)$scores
+kf_wide$kf_f1_fp_temp <- kffscores[,1]
+kf_wide$kf_f2_vmpfc_precun <- kffscores[,2]
+kf_wide$kf_f3_str_front_ins <- kffscores[,3]
+
+dvhkf_wide <- inner_join(dvhk_wide,kf_wide[,c("feat_input_id","kf_f1_fp_temp", "kf_f2_vmpfc_precun", "kf_f3_str_front_ins")])
+
+
+#####
+# add PE
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-pe_max-preconvolve_fse_groupfixed/pe_max/')
+pemeta <- read_csv("pe_max_cluster_metadata.csv")
+pemeta$label <- substr(pemeta$label,22,100)
+pemeta_overall <- pemeta[pemeta$l2_contrast == 'overall' & pemeta$l3_contrast == 'Intercept' & pemeta$model == 'Intercept-Age',]
+pebetas <- read_csv("pe_max_roi_betas.csv")
+pe <- as.tibble(pebetas[pebetas$l2_contrast == 'overall' & pebetas$l3_contrast == 'Intercept' & pebetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<8 | cluster_number == 10 | cluster_number == 11)
+# head(merge(h,meta))
+perois_list <- distinct(pemeta_overall[c(1:7, 10:11),c(5,12)])
+
+# inspect distributions
+# for some reason, the clusters do not seem to fit the map -- check with MNH (big clusters broken down?) !!
+perois <- inner_join(pe,pemeta_overall)
+perois$labeled_cluster <- paste(perois$cluster_number,perois$label)
+pemeta_overall$labeled_cluster <- paste(pemeta_overall$cluster_number,pemeta_overall$label)
+ggplot(perois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
+
+pe_labeled <- inner_join(pe,perois_list)
+pe_labeled$labeled_cluster <- paste(pe_labeled$cluster_number,pe_labeled$label)
+pe_labeled <- select(pe_labeled,c(1,3,5))
+
+pe_wide <- spread(pe_labeled,labeled_cluster,cope_value)
+
+# some outliers, let's winsorize for now
+pe_wide <- pe_wide %>% mutate_if(is.double, winsor,trim = .075)
+
+pejust_rois <- pe_wide[,2:ncol(pe_wide)]
+# winsorize to deal with beta ouliers
+
+# non-parametric correlations to deal with outliers
+peclust_cor <- corr.test(pejust_rois,method = 'pearson', adjust = 'none')
+# parametric correlations on winsorised betas
+# clust_cor <- cor(just_rois_w,method = 'pearson')
+
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+pdf("pe_cluster_corr_fixed.pdf", width=12, height=12)
+corrplot(peclust_cor$r, cl.lim=c(-1,1),
+         method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+         order = "hclust", diag = FALSE,
+         addCoef.col="black", addCoefasPercent = FALSE,
+         p.mat = peclust_cor$p, sig.level=0.05, insig = "blank")
+dev.off()
+# looks like a single dimension
+
+pe.pca = prcomp((pejust_rois),scale = TRUE, center = TRUE)
+# pe_wide$pe_pc1 <- pe.pca$x[,1]
+# pe_wide$pe_pc2 <- pe.pca$x[,2]
+
+pe.fa = psych::fa(pejust_rois, nfactors=2)
+pefscores <- factor.scores(pejust_rois, pe.fa)$scores
+pe_wide$pe_f1_cort_str <- pefscores[,1]
+pe_wide$pe_f2_hipp <- pefscores[,2]
+
+dvhkpe_wide <- inner_join(dvhkf_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp")])
+
+# add entropy change betas.  Having looked at the maps vs. PE, only signed H change and H pos change seem promising; H neg is slim and RTvmax change a shadow of PE
+#####
+# add signed H change
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/compiled_outputs/change_betas/sceptic-clock-feedback-v_entropy_change-preconvolve_fse_groupfixed/v_entropy_change/')
+dhmeta <- read_csv("v_entropy_change_cluster_metadata.csv")
+dhmeta$label <- substr(dhmeta$label,22,100)
+dhmeta_overall <- dhmeta[dhmeta$l2_contrast == 'overall' & dhmeta$l3_contrast == 'Intercept' & dhmeta$model == 'Intercept-Age',]
+dhbetas <- read_csv("v_entropy_change_roi_betas.csv")
+# only positive clusters
+dh <- as.tibble(dhbetas[dhbetas$l2_contrast == 'overall' & dhbetas$l3_contrast == 'Intercept' & dhbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<7 | cluster_number==8 
+                                                                                                                                                  | cluster_number==9 | cluster_number==11 | cluster_number==12
+                                                                                                                                                  | cluster_number==13 | cluster_number==14  )
+# head(merge(h,meta))
+dhrois_list <- distinct(dhmeta_overall[c(1:14),c(5,12)])
+
+# inspect distributions
+# for some reason, the clusters do not seem to fit the map -- check with MNH (big clusters broken down?) !!
+dhrois <- inner_join(dh,dhmeta_overall)
+dhrois$labeled_cluster <- paste(dhrois$cluster_number,dhrois$label)
+dhmeta_overall$labeled_cluster <- paste(dhmeta_overall$cluster_number,dhmeta_overall$label)
+ggplot(dhrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
+
+dh_labeled <- inner_join(dh,dhrois_list)
+dh_labeled$labeled_cluster <- paste(dh_labeled$cluster_number,dh_labeled$label)
+dh_labeled <- select(dh_labeled,c(1,3,5))
+
+dh_wide <- spread(dh_labeled,labeled_cluster,cope_value)
+
+# some outliers, let's winsorize for now
+dh_wide <- dh_wide %>% mutate_if(is.double, winsor,trim = .075)
+
+dhjust_rois <- dh_wide[,2:ncol(dh_wide)]
+# winsorize to deal with beta ouliers
+
+# non-parametric correlations to deal with outliers
+dhclust_cor <- corr.test(dhjust_rois,method = 'pearson', adjust = 'none')
+# parametric correlations on winsorised betas
+# clust_cor <- cor(just_rois_w,method = 'pearson')
+
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+pdf("dh_cluster_corr_fixed.pdf", width=12, height=12)
+corrplot(dhclust_cor$r, cl.lim=c(-1,1),
+         method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+         order = "hclust", diag = FALSE,
+         addCoef.col="black", addCoefasPercent = FALSE,
+         p.mat = dhclust_cor$p, sig.level=0.05, insig = "blank")
+dev.off()
+# looks like a single dimension
+
+dh.pca = prcomp((dhjust_rois),scale = TRUE, center = TRUE)
+# dh_wide$dh_pc1 <- dh.pca$x[,1]
+# dh_wide$dh_pc2 <- dh.pca$x[,2]
+
+dh.fa = psych::fa(dhjust_rois, nfactors=2)
+dhfscores <- factor.scores(dhjust_rois, dh.fa)$scores
+dh_wide$dh_f1_co_bg <- dhfscores[,1]
+dh_wide$dh_f2_dan <- dhfscores[,2]
+dvhkpedh_wide <- inner_join(dvhkpedh_wide,dh_wide[,c("feat_input_id","dh_f1_co_bg", "dh_f2_dan")])
+
+# only negative clusters
+dh <- as.tibble(dhbetas[dhbetas$l2_contrast == 'overall' & dhbetas$l3_contrast == 'Intercept' & dhbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number==7 | cluster_number==10)
+# head(merge(h,meta))
+dhrois_list <- distinct(dhmeta_overall[c(7,10),c(5,12)])
+
+# inspect distributions
+# for some reason, the clusters do not seem to fit the map -- check with MNH (big clusters broken down?) !!
+dhrois <- inner_join(dh,dhmeta_overall)
+dhrois$labeled_cluster <- paste(dhrois$cluster_number,dhrois$label)
+dhmeta_overall$labeled_cluster <- paste(dhmeta_overall$cluster_number,dhmeta_overall$label)
+ggplot(dhrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
+
+dh_labeled <- inner_join(dh,dhrois_list)
+dh_labeled$labeled_cluster <- paste(dh_labeled$cluster_number,dh_labeled$label)
+dh_labeled <- select(dh_labeled,c(1,3,5))
+
+dh_wide <- spread(dh_labeled,labeled_cluster,cope_value)
+
+# some outliers, let's winsorize for now
+dh_wide <- dh_wide %>% mutate_if(is.double, winsor,trim = .075)
+
+dhjust_rois <- dh_wide[,2:ncol(dh_wide)]
+# winsorize to deal with beta ouliers
+
+# non-parametric correlations to deal with outliers
+dhclust_cor <- corr.test(dhjust_rois,method = 'pearson', adjust = 'none')
+# parametric correlations on winsorised betas
+# clust_cor <- cor(just_rois_w,method = 'pearson')
+
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+pdf("dh_neg_cluster_corr_fixed.pdf", width=12, height=12)
+corrplot(dhclust_cor$r, cl.lim=c(-1,1),
+         method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+         order = "hclust", diag = FALSE,
+         addCoef.col="black", addCoefasPercent = FALSE,
+         p.mat = dhclust_cor$p, sig.level=0.05, insig = "blank")
+dev.off()
+# looks like a single dimension
+
+dh.pca = prcomp((dhjust_rois),scale = TRUE, center = TRUE)
+# dh_wide$dh_pc1 <- dh.pca$x[,1]
+# dh_wide$dh_pc2 <- dh.pca$x[,2]
+
+dh.fa = psych::fa(dhjust_rois, nfactors=1)
+dhfscores <- factor.scores(dhjust_rois, dh.fa)$scores
+dh_wide$dh_f_neg_vmpfc_precun <- dhfscores[,1]
+
+
+dvhkpedh_wide <- inner_join(dvhkpedh_wide,dh_wide[,c("feat_input_id","dh_f_neg_vmpfc_precun")])
+
+# add pos H change
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/compiled_outputs/change_betas/sceptic-clock-feedback-v_entropy_change_pos-preconvolve_fse_groupfixed/v_entropy_change_pos/')
+dhpmeta <- read_csv("v_entropy_change_pos_cluster_metadata.csv")
+dhpmeta$label <- substr(dhpmeta$label,22,100)
+dhpmeta_overall <- dhpmeta[dhpmeta$l2_contrast == 'overall' & dhpmeta$l3_contrast == 'Intercept' & dhpmeta$model == 'Intercept-Age',]
+dhpbetas <- read_csv("v_entropy_change_pos_roi_betas.csv")
+# only positive clusters
+dhp <- as.tibble(dhpbetas[dhpbetas$l2_contrast == 'overall' & dhpbetas$l3_contrast == 'Intercept' & dhpbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<15 & cluster_number != 12 & cluster_number !=4)
+# head(merge(h,meta))
+dhprois_list <- distinct(dhpmeta_overall[c(1:3,5:11,13:14),c(5,12)])
+
+# inspect distributions
+# for some reason, the clusters do not seem to fit the map -- check with MNH (big clusters broken down?) !!
+dhprois <- inner_join(dhp,dhpmeta_overall)
+dhprois$labeled_cluster <- paste(dhprois$cluster_number,dhprois$label)
+dhpmeta_overall$labeled_cluster <- paste(dhpmeta_overall$cluster_number,dhpmeta_overall$label)
+ggplot(dhprois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
+
+dhp_labeled <- inner_join(dhp,dhprois_list)
+dhp_labeled$labeled_cluster <- paste(dhp_labeled$cluster_number,dhp_labeled$label)
+dhp_labeled <- select(dhp_labeled,c(1,3,5))
+
+dhp_wide <- spread(dhp_labeled,labeled_cluster,cope_value)
+
+# some outliers, let's winsorize for now
+dhp_wide <- dhp_wide %>% mutate_if(is.double, winsor,trim = .05)
+
+dhpjust_rois <- dhp_wide[,2:ncol(dhp_wide)]
+# winsorize to deal with beta ouliers
+
+# non-parametric correlations to deal with outliers
+dhpclust_cor <- corr.test(dhpjust_rois,method = 'pearson', adjust = 'none')
+# parametric correlations on winsorised betas
+# clust_cor <- cor(just_rois_w,method = 'pearson')
+
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+pdf("dhp_cluster_corr_fixed.pdf", width=12, height=12)
+corrplot(dhpclust_cor$r, cl.lim=c(-1,1),
+         method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+         order = "hclust", diag = FALSE,
+         addCoef.col="black", addCoefasPercent = FALSE,
+         p.mat = dhpclust_cor$p, sig.level=0.05, insig = "blank")
+dev.off()
+# looks like a single dimension
+
+# dhp.pca = prcomp((dhpjust_rois),scale = TRUE, center = TRUE)
+# dhp_wide$dhp_pc1 <- dhp.pca$x[,1]
+# dhp_wide$dhp_pc2 <- dhp.pca$x[,2]
+
+dhp.fa = psych::fa(dhpjust_rois, nfactors=4, fm = "mle")
+dhpfscores <- factor.scores(dhpjust_rois, dhp.fa)$scores
+dhp_wide$dhp_f3_ventr_stream_cerebell <- dhpfscores[,3]
+dhp_wide$dhp_f2_str <- dhpfscores[,2]
+dhp_wide$dhp_f1_dlpfc_r <- dhpfscores[,1]
+dhp_wide$dhp_f4_prefront_l <- dhpfscores[,4]
+
+dvhkpedh_wide <- inner_join(dvhkpedh_wide,dhp_wide[,c("feat_input_id","dhp_f1_dlpfc_r", "dhp_f2_str", "dhp_f3_ventr_stream_cerebell", "dhp_f4_prefront_l")])
+
+
+#####
+# add ids
+map_df  <- as.tibble(read.csv("~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy-Intercept_design.txt", sep=""))
+
+pc_scores <- inner_join(dvhkpedh_wide,map_df[,c(1:2,4:15)])
 pc_scores$id <- pc_scores$ID
 
 
@@ -192,6 +527,7 @@ trial_df <- trial_df %>%
   group_by(id, run) %>%  dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))),
                                        rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
                                        rt_lag = lag(rt_csv) ,
+                                       rt_swing_lag = lag(rt_swing),
                                        omission_lag = lag(score_csv==0),
                                        rt_vmax_lag = lag(rt_vmax),
                                        run_trial=1:50) %>% ungroup() #compute rt_swing within run and subject
@@ -199,19 +535,30 @@ trial_df <- trial_df %>%
 # performance
 sum_df <- trial_df %>% group_by(id) %>% dplyr::summarize(total_earnings = sum(score_csv)) %>% arrange(total_earnings)
 beta_sum <- inner_join(pc_scores,sum_df)
-plot(beta_sum$h_f1_fp,beta_sum$total_earnings)
-plot(beta_sum$h_f2_neg_paralimb,beta_sum$total_earnings)
-plot(beta_sum$v_f1_neg_cog,beta_sum$total_earnings)
-plot(beta_sum$v_f2_paralimb,beta_sum$total_earnings)
+# plot(beta_sum$h_f1_fp,beta_sum$total_earnings)
+# plot(beta_sum$h_f2_neg_paralimb,beta_sum$total_earnings)
+# plot(beta_sum$v_f1_neg_cog,beta_sum$total_earnings)
+# plot(beta_sum$v_f2_paralimb,beta_sum$total_earnings)
+# plot(beta_sum$k_f1_IPL_ventr_stream,beta_sum$total_earnings)
+# plot(beta_sum$k_f2_prefrontal_bg,beta_sum$total_earnings)
+# plot(beta_sum$pe_f1_cort_str,beta_sum$total_earnings)
+# plot(beta_sum$pe_f2_hipp,beta_sum$total_earnings)
 
 # model parameters
 params <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")
 sub_df <- inner_join(beta_sum,params)
-params_beta <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_paralimb","d_f1_FP_SMA","d_f2_VS","d_f3_ACC_ins", "total_earnings", "LL", "alpha", "gamma", "beta")]
+params_beta <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_paralimb",
+                         "d_f1_FP_SMA","d_f2_VS","d_f3_ACC_ins", 
+                         "k_f1_IPL_ventr_stream", "k_f2_prefrontal_bg",
+                         "kf_f1_fp_temp", "kf_f2_vmpfc_precun", "kf_f3_str_front_ins",
+                         "pe_f1_cort_str", "pe_f2_hipp", 
+                         "dh_f1_co_bg","dh_f2_dan",  "dh_f_neg_vmpfc_precun",
+                         "dhp_f1_dlpfc_r", "dhp_f2_str", "dhp_f3_ventr_stream_cerebell", "dhp_f4_prefront_l",
+                         "total_earnings", "LL", "alpha", "gamma", "beta")]
 param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
-pdf("dvhbeta_param_corr_fixed.pdf", width=12, height=12)
+pdf("dvhkfpedh_beta_param_corr_fixed.pdf", width=12, height=12)
 corrplot(param_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
          order = "hclust", diag = FALSE,
@@ -257,12 +604,16 @@ b_df <- df %>% group_by(id) %>% dplyr::summarise(v_maxB = mean(v_max, na.rm = T)
                                           v_entropyB = mean(v_entropy, na.rm = T))
 
 sub_df <- inner_join(sub_df, b_df, by = 'id')
-bdf <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_paralimb","d_f1_FP_SMA","d_f2_VS","d_f3_ACC_ins", 
+bdf <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_paralimb",
+                 "d_f1_FP_SMA","d_f2_VS","d_f3_ACC_ins", 
+                 "k_f1_IPL_ventr_stream", "k_f2_prefrontal_bg",
+                 "pe_f1_cort_str", "pe_f2_hipp",
+                 "kf_f1_fp_temp", "kf_f2_vmpfc_precun", "kf_f3_str_front_ins",
                  "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]
 b_cor <- corr.test(bdf,method = 'pearson', adjust = 'none')
 
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
-pdf("between_subject_v_h_beh_corr_fixed.pdf", width=12, height=12)
+pdf("between_subject_v_h_kf_pe_beh_corr_fixed.pdf", width=12, height=12)
 corrplot(b_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
          order = "hclust", diag = FALSE,
@@ -278,6 +629,25 @@ df$d_f3_ACC_ins_resp[df$d_f3_ACC_ins>0] <- 'high'
 df$d_f2_VSresp <- as.factor(df$d_f2_VSresp)
 df$d_f2_VSresp <- relevel(df$d_f2_VSresp, ref = 'low') 
 
+df$k_f1_IPL_ventr_stream_resp <- 'low'
+df$k_f1_IPL_ventr_stream_resp[df$k_f1_IPL_ventr_stream>0] <- 'high'
+df$k_f2_prefrontal_bg_resp <- 'low'
+df$k_f2_prefrontal_bg_resp[df$k_f2_prefrontal_bg>0] <- 'high'
+
+df$kf_f1_fp_temp_resp <- 'low'
+df$kf_f1_fp_temp_resp[df$kf_f1_fp_temp>0] <- 'high'
+df$kf_f2_vmpfc_precun_resp <- 'low'
+df$kf_f2_vmpfc_precun_resp[df$kf_f2_vmpfc_precun>0] <- 'high'
+df$kf_f3_str_front_ins_resp <- 'low'
+df$kf_f3_str_front_ins_resp[df$kf_f3_str_front_ins>0] <- 'high'
+
+
+df$pe_f1_cort_str_resp <- 'low'
+df$pe_f1_cort_str_resp[df$pe_f1_cort_str>0] <- 'high'
+df$pe_f2_hipp_resp <- 'low'
+df$pe_f2_hipp_resp[df$pe_f2_hipp>0] <- 'high'
+
+
 df$last_outcome <- NA
 df$last_outcome[df$omission_lag] <- 'Omission'
 df$last_outcome[!df$omission_lag] <- 'Reward'
@@ -288,4 +658,8 @@ ggplot(df, aes(run_trial, v_entropy_wi, color = low_h_paralimbic, lty = h_fp)) +
 ggplot(df, aes( v_entropy_wi,log(rt_swing), color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "gam") + facet_wrap(~learning_epoch)
 ggplot(df, aes( v_max_wi,log(rt_swing), color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "gam") + facet_wrap(~run_trial > 10)
 
-save(file = 'trial_df_and_vhd_clusters.Rdata', df)
+# Okay, some behavioral relevance of KLD
+ggplot(df, aes(run_trial, v_entropy_wi, color = k_f1_IPL_ventr_stream_resp, lty = k_f2_prefrontal_bg_resp)) + geom_smooth(method = "loess")
+
+
+save(file = 'trial_df_and_vhdkfpe_clusters.Rdata', df)

@@ -19,7 +19,8 @@ fi
 
 cd "$1"
 
-featDirs=$(find $PWD -iname "FEAT_LVL1_run[0-9].feat" -type d)
+#featDirs=$(find $PWD -iname "FEAT_LVL1_run[0-9].feat" -type d)
+featDirs=$(find $PWD -iname "FEAT_LVL1_*.feat" -type d)
 
 for dir in ${featDirs}; do
     if [ -d "${dir}/reg" ]; then

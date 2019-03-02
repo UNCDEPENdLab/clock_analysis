@@ -6,7 +6,7 @@ library(lme4)
 library(lmerTest)
 # source('~/code/Rhelpers/')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
-load('trial_df_and_vhd_clusters.Rdata')
+load('trial_df_and_vhdk_clusters.Rdata')
 ######
 # end of preprocessing
 
@@ -43,6 +43,15 @@ r2 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFuncIEVsum +h_f1_fp + I(-h_f2_neg_
 screen.lmerTest(r2)
 car::Anova(r2,'3')
 r3 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFunc + I(-v_f1_neg_cog) + v_f2_paralimb)^3 + (1|id/run), df)
+screen.lmerTest(r3)
+car::Anova(r3,'3')
+anova(r1,r2,r3)
+
+# same for KL distance
+rk2 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFuncIEVsum + k_f1_IPL_crbl_MFG_ITG + k_f2_visual + k_f3_OFC)^2 + (1|id/run), df)
+screen.lmerTest(rk2)
+car::Anova(rk2,'3')
+rk3 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFunc + I(-v_f1_neg_cog) + v_f2_paralimb)^3 + (1|id/run), df)
 screen.lmerTest(r3)
 car::Anova(r3,'3')
 anova(r1,r2,r3)

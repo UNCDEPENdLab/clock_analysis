@@ -130,45 +130,69 @@ screen.lmerTest(mf4)
 
 # model-based
 
-w1 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+# first, does DAN improve prediction of RTs and EXPLAIN effects of v_entropy_wi?
+# it improves prediction, but seems to contain information independent of entropy_wi...
+w0 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma)^2 + 
+             v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
+screen.lmerTest(w0)
+
+w0dan <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + hb_f1_DAN_vlPFC + gamma)^2 + 
+             v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
+screen.lmerTest(w0dan)
+anova(w0, w0dan)
+
+
+w1 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma)^2 + v_max_b + v_entropy_b +scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w1)
-w2h <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + hb_f1_DAN_vlPFC + gamma)^2 + 
-              (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + hb_f2_neg_paralimb + gamma)^2  + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+w2h <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + hb_f1_DAN_vlPFC + gamma)^3 + 
+              (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + hb_f2_neg_paralimb + gamma)^2  + v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w2h)
-# reduced model without entropy -- now h1 interacts with v_max
+# reduced model without entropy -- now h1 interacts with v_max, but just barely
 w1h <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi +  hb_f1_DAN_vlPFC + gamma)^2 + 
-              (scale(-1/run_trial) + omission_lag + v_max_wi +  hb_f2_neg_paralimb + gamma)^2  + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+              (scale(-1/run_trial) + omission_lag + v_max_wi +  hb_f2_neg_paralimb + gamma)^2  + v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w1h)
 
 # the same as full
 w1ha <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_entropy_wi +  hb_f1_DAN_vlPFC + gamma)^2 + 
-              (scale(-1/run_trial) + omission_lag + v_entropy_wi +  hb_f2_neg_paralimb + gamma)^2  + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+              (scale(-1/run_trial) + omission_lag + v_entropy_wi +  hb_f2_neg_paralimb + gamma)^2  + v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w1ha)
 
+# control for current RT because of RT convolution
+# RT swing effect stands essentially unchanged
+w1hb <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_entropy_wi +  hb_f1_DAN_vlPFC + gamma)^2 + 
+               (scale(-1/run_trial) + omission_lag + v_entropy_wi +  hb_f2_neg_paralimb + gamma)^2  + v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_csv) + (1|id/run), dfc)
+screen.lmerTest(w1hb)
+
+
 # screen factors in separate models b/c collinearity
-w2d1 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f1_rIFG_rSMA + gamma)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+w2d1 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f1_rIFG_rSMA + gamma)^2 +scale(rt_swing_lag) +scale(rt_swing_lag) +  v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w2d1)
-w2d2 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f2_VS + gamma)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+# VS seems to accentuate the effect of v_max
+w2d2 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f2_VS + gamma)^2 + v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w2d2)
-w2d3 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f3_occ_parietal + gamma)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+# effect of d3
+w2d3 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f3_occ_parietal + gamma)^2 + v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w2d3)
-w2d4 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f4_ACC_ins + gamma)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+# effect of d4 relatively subtle
+w2d4 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f4_ACC_ins + gamma)^2 + v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w2d4,.1)
-w2v3 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + vb_f3_hi_blITG + gamma)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+# no effect of ITG/v3
+w2v3 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + vb_f3_hi_blITG + gamma)^2 + v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w2v3)
-w2v4 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + vb_f4_lo_cerebell_crus + gamma)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+# no effect of cerebellar v4
+w2v4 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + vb_f4_lo_cerebell_crus + gamma)^2 + v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w2v4)
-# predicts and interacts with gamma
-w2v5 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + vb_f5_lo_ACC + gamma)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+# the more properly anterior v5 ACC predicts RT and interacts with gamma
+w2v5 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + vb_f5_lo_ACC + gamma)^2 + v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w2v5)
 
-
+# conclusions: focus on d1, d4 (despite moderate effect), v5
 
 
 w3hd <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + hb_f1_DAN_vlPFC + gamma)^2 + 
                 (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f1_rIFG_rSMA + gamma)^2  + 
                 (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f4_ACC_ins + gamma)^2  + 
-                v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+                v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w3hd)
 w4vhd <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + hb_f1_DAN_vlPFC + gamma)^2 + 
                 (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + hb_f2_neg_paralimb + gamma)^2  + 
@@ -179,7 +203,7 @@ w4vhd <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v
                 (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f2_VS + gamma)^2  + 
                 (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f3_occ_parietal + gamma)^2  + 
                 (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + db_f4_ACC_ins + gamma)^2  + 
-                 v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
+                 v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(w4vhd)
 anova(w1,w2h,w3hd,w4vhd)
 # these other regions explain a lot of variance, but the multi-collinearity is tough
@@ -191,6 +215,12 @@ wr2h <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) 
              +(scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + rewFuncIEVsum + hb_f2_neg_paralimb + gamma)^3 
              + v_max_b + v_entropy_b +  (1|id/run), dfc)
 screen.lmerTest(wr2h)
+# reduced
+wr2h <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + hb_f1_DAN_vlPFC + gamma)^3 
+             +(scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag +  hb_f2_neg_paralimb + gamma)^3 
+             + v_max_b + v_entropy_b +  (1|id/run), dfc)
+
+
 wr3hd <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + hb_f1_DAN_vlPFC + gamma)^3 
              +(scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + hb_f2_neg_paralimb + gamma)^3 
              +(scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + db_f1_rIFG_rSMA + gamma)^3 
@@ -209,3 +239,78 @@ wr4hvd <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag
 
 screen.lmerTest(wr4hvd)
 anova(wr1,wr2h,wr3hd,wr4hvd)
+
+#####
+## prediction of BS
+# lagged relationship between ACC and DAN
+b1 <- lmer(hb_f1_DAN_vlPFC ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + h1_lag + gamma)^2 
+              + v_max_b + v_entropy_b + scale(rt_csv) + rewFuncIEVsum + (1|id) + (1|run), df)
+screen.lmerTest(b1)
+# control for RT
+b1a <- lmer(hb_f1_DAN_vlPFC ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + h1_lag + gamma)^2 
+           + v_max_b + v_entropy_b + scale(rt_csv) +  (1|id) + (1|run), df)
+screen.lmerTest(b1a)
+b1b <- lmer(hb_f2_neg_paralimb ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + h1_lag + gamma)^2 
+            + v_max_b + v_entropy_b + scale(rt_csv) +  (1|id) + (1|run), df)
+screen.lmerTest(b1b)
+# how does RT scale with entropy?
+ggplot(df,aes(rt_csv, v_entropy)) + geom_smooth(method = 'gam')
+
+# shockingly, it is present in high-gamma subjects
+b2 <- lmer(hb_f1_DAN_vlPFC ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma + h1_lag + d4_lag)^2 
+           + v_max_b + v_entropy_b + (1|run), df)
+screen.lmerTest(b2)
+# does this happen with any region?
+b3 <- lmer(hb_f1_DAN_vlPFC ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma + h1_lag + h2_lag)^2 
+           + v_max_b + v_entropy_b + (1|run), df)
+screen.lmerTest(b3)
+# it does for h2_paralimbic, but not for VS
+b4 <- lmer(hb_f1_DAN_vlPFC ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma + 
+                                h1_lag + db_f1_rIFG_rSMA + d1_lag + db_f4_ACC_ins + d4_lag)^2 
+           + v_max_b + v_entropy_b + (1|run), df)
+screen.lmerTest(b4)
+b5 <- lmer(hb_f1_DAN_vlPFC ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma + h1_lag + d2_lag)^2 
+           + v_max_b + v_entropy_b + (1|run), df)
+screen.lmerTest(b5)
+# is it really a lagged relationship?
+# yes, although VIF = 2.73
+b5 <- lmer(hb_f1_DAN_vlPFC ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma + h1_lag + db_f4_ACC_ins + d4_lag)^2 
+           + v_max_b + v_entropy_b + (1|run), df)
+screen.lmerTest(b5)
+# seems to hold with h2, although VIFs are atrocious
+b6 <- lmer(hb_f1_DAN_vlPFC ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma + 
+                                h1_lag + db_f4_ACC_ins + d4_lag + hb_f2_neg_paralimb + h2_lag)^2 
+           + v_max_b + v_entropy_b + (1|run), df)
+screen.lmerTest(b6)
+
+# similar for V- ACC region
+b7 <- lmer(hb_f1_DAN_vlPFC ~ scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma + 
+                                h1_lag + vb_f5_lo_ACC + v5_lag + hb_f2_neg_paralimb + h2_lag
+           + v_max_b + v_entropy_b + (1|run), df)
+screen.lmerTest(b7)
+
+# a lot of interactions between regions...
+b8 <- lmer(hb_f1_DAN_vlPFC ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma + 
+                                h1_lag + vb_f5_lo_ACC + v5_lag + hb_f2_neg_paralimb + h2_lag)^3 
+           + v_max_b + v_entropy_b + (1|run), df)
+screen.lmerTest(b8)
+
+# is this the case for RT swing prediction?
+# lagged beta series do not explain much
+s0 <- lmer(log(rt_swing) ~  (scale(-1/run_trial) + + omission_lag + v_max_wi_lag + v_entropy_wi + 
+                  h1_lag + h2_lag + d1_lag + d4_lag + gamma)^2 
+              + v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
+screen.lmerTest(s0)
+
+
+#####
+## value or entropy in DAN?
+## ENTROPY even in V-negative region!
+v1 <- lmer(vb_f1_lo_DAN ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + v1_lag + gamma)^2 
+           + v_max_b + v_entropy_b +  (1|id) + (1|run), dfc)
+screen.lmerTest(v1)
+v2 <- lmer(vb_f2_hi_vmPFC_cOFC ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + v2_lag + gamma)^2 
+           + v_max_b + v_entropy_b +  (1|id) + (1|run), dfc)
+screen.lmerTest(v2)
+
+

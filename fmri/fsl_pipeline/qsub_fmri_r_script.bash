@@ -21,7 +21,7 @@ module load r/3.5.0
 #module load afni/18.1.15
 module load openblas/0.2.20
 module load fsl/6.0.0
-module load afni/18.3.03
+module load afni/18.3.15
 
 ni_tools="$G/lab_resources"
 
