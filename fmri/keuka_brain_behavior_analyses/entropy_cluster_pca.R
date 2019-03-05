@@ -39,29 +39,37 @@ corrplot(clust_cor, cl.lim=c(-1,1),
          addCoef.col="black", addCoefasPercent = FALSE,
          p.mat = 1-clust_cor, sig.level=0.75, insig = "blank")
 dev.off()
-
-h.fa = psych::fa(just_rois, nfactors=4, fm = 'mle')
+mh <- nfactors(clust_cor, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
+h.fa = psych::fa(just_rois, nfactors=2, rotate = "oblimin", fm = "pa")
 fscores <- factor.scores(just_rois, h.fa)$scores
 h_wide$h_f1_fp <- fscores[,1]
 h_wide$h_f2_neg_paralimb <- fscores[,2]
-h_wide$ParaHippL <- h_wide$`9`
-h_wide$vmPFC <- h_wide$`6`
+h_wide$h_HippAntL <- h_wide$`9`
+h_wide$h_vmPFC <- h_wide$`6`
 
 # add value betas -- use v_max as theoretically interesting and unbiased by choice
 setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_max-preconvolve_fse_groupfixed/v_max/')
 vmeta <- read_csv("v_max_cluster_metadata.csv")
-vmeta$label <- substr(vmeta$label,14,100)
+vmeta$label <- substr(vmeta$label,21,100)
 vmeta_overall <- vmeta[vmeta$l2_contrast == 'overall' & vmeta$l3_contrast == 'Intercept' & vmeta$model == 'Intercept-Age',]
 vbetas <- read_csv("v_max_roi_betas.csv")
 v <- as.tibble(vbetas[vbetas$l2_contrast == 'overall' & vbetas$l3_contrast == 'Intercept' & vbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<15)
 vrois_list <- distinct(vmeta_overall[,c(5,12)])
 
-
-# inspect distributions
 vrois <- inner_join(v,vmeta_overall)
 vrois$labeled_cluster <- paste(vrois$cluster_number,vrois$label)
+vmeta_overall$labeled_cluster <- paste(vmeta_overall$cluster_number,vmeta_overall$label)
+
+v_labeled <- inner_join(v,vrois_list)
+v_labeled$labeled_cluster <- paste(v_labeled$cluster_number,v_labeled$label)
+v_labeled <- select(v_labeled,c(1,3,5))
+
+
+
+# inspect distributions
+vrois <- inner_join(v_labeled,vmeta_overall)
 ggplot(vrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
-v_wide <- spread(v,cluster_number,cope_value)
+v_wide <- spread(v_labeled,labeled_cluster,cope_value)
 # try v winsorization given the left outliers
 # v_wide <- v_wide %>% mutate_if(is.double, winsor,trim = .075)
 
@@ -71,7 +79,7 @@ v_wide <- spread(v,cluster_number,cope_value)
 # I am worried about these scores: a lot of the V+ f2 variance comes from fusiform gyri (4,11)
 # let's redo using only fronto-striatal clusters (vmPFC - 10, BG - 2, vlPFC - 9,14) removing fusiform (4,11)
 # and cerebellar (8) clusters
-v_wide <- subset(v_wide, select = -c(`4`, `11`,`8`))
+v_wide <- subset(v_wide, select = -c(`11  Right Inferior Temporal Gyrus`, `4  Left Inferior Temporal Gyrus` ,`8  Right Cerebellum (Crus 2)`))
 v_wide <- v_wide %>% mutate_if(is.double, winsor,trim = .075)
 
 
@@ -80,12 +88,10 @@ vjust_rois <- v_wide[,2:ncol(v_wide)]
 
 # non-parametric correlations to deal with outliers
 # parametric correlations on winsorised betas
-# clust_cor <- cor(just_rois_w,method = 'pearson')
-v.pca = prcomp((vjust_rois),scale = TRUE, center = TRUE)
-v_wide$v_pc1 <- v.pca$x[,1]
-v_wide$v_pc2 <- v.pca$x[,2]
+vclust_cor <- cor(vjust_rois,method = 'pearson')
 
-v.fa = psych::fa(vjust_rois, nfactors=3)
+mv <- nfactors(vclust_cor, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
+v.fa = psych::fa(vjust_rois, nfactors=2, rotate = "oblimin", fm = "pa")
 vfscores <- factor.scores(vjust_rois, v.fa)$scores
 v_wide$v_f1_neg_cog <- vfscores[,1]
 v_wide$v_f2_paralimb <- vfscores[,2]
@@ -103,7 +109,7 @@ dev.off()
 
 # a bit crazy, but let's put v and h into a single factor analysis
 vh_wide <- inner_join(subset(v_wide, select = c("feat_input_id","v_f1_neg_cog","v_f2_paralimb")),
-                      subset(h_wide, select = c("feat_input_id","h_f1_fp","h_f2_neg_paralimb")), by = "feat_input_id")
+                      subset(h_wide, select = c("feat_input_id","h_f1_fp","h_f2_neg_paralimb", "h_HippAntL")), by = "feat_input_id")
 vhjust_rois <- vh_wide %>% select_if(is.double)
 vhclust_cor <- corr.test(vhjust_rois,method = 'pearson', adjust = 'none')
 pdf("vh_cluster_corr_fixed.pdf", width=12, height=12)
@@ -153,9 +159,6 @@ corrplot(dclust_cor, cl.lim=c(-1,1),
 dev.off()
 # looks like a single dimension
 
-d.pca = prcomp((djust_rois),scale = TRUE, center = TRUE)
-d_wide$d_pc1 <- d.pca$x[,1]
-d_wide$d_pc2 <- d.pca$x[,2]
 
 d.fa = psych::fa(djust_rois, nfactors=3)
 dfscores <- factor.scores(djust_rois, d.fa)$scores
@@ -164,7 +167,7 @@ d_wide$d_f2_VS <- dfscores[,2]
 d_wide$d_f3_ACC_ins <- dfscores[,3]
 
 # a bit crazy, but let's put v and h into a single factor analysis
-dvh_wide <- inner_join(vh_wide,d_wide[,c(1,18:20)], by = "feat_input_id")
+dvh_wide <- inner_join(vh_wide,d_wide[,c("feat_input_id","d_f1_FP_SMA","d_f2_VS", "d_f3_ACC_ins")], by = "feat_input_id")
 dvhjust_rois <- dvh_wide[,2:ncol(dvh_wide)]
 dvhclust_cor <- corr.test(dvhjust_rois,method = 'pearson', adjust = 'none')
 pdf("dvh_cluster_corr_fixed.pdf", width=12, height=12)
@@ -220,16 +223,15 @@ corrplot(kclust_cor$r, cl.lim=c(-1,1),
 dev.off()
 # looks like a single dimension
 
-k.pca = prcomp((kjust_rois),scale = TRUE, center = TRUE)
-k_wide$k_pc1 <- k.pca$x[,1]
-k_wide$k_pc2 <- k.pca$x[,2]
+mk <- nfactors(kclust_cor$r, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
+k.fa = psych::fa(kjust_rois, nfactors=1, rotate = "oblimin", fm = "pa")
 
-k.fa = psych::fa(kjust_rois, nfactors=2)
 kfscores <- factor.scores(kjust_rois, k.fa)$scores
-k_wide$k_f1_IPL_ventr_stream <- kfscores[,1]
-k_wide$k_f2_prefrontal_bg <- kfscores[,2]
+k_wide$k_f1_all_pos <- kfscores[,1]
+# k_wide$k_f1_IPL_ventr_stream <- kfscores[,1]
+# k_wide$k_f2_prefrontal_bg <- kfscores[,2]
 
-dvhk_wide <- inner_join(dvh_wide,k_wide[,c("feat_input_id","k_f1_IPL_ventr_stream", "k_f2_prefrontal_bg")])
+dvhk_wide <- inner_join(dvh_wide,k_wide[,c("feat_input_id","k_f1_all_pos")])
 ### KLD at feedback
 #####
 # add KLD
@@ -275,18 +277,17 @@ corrplot(kfclust_cor$r, cl.lim=c(-1,1),
          p.mat = kfclust_cor$p, sig.level=0.05, insig = "blank")
 dev.off()
 # looks like a single dimension
+mkf <- nfactors(kfclust_cor$r, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
+kf.fa = psych::fa(kfjust_rois, nfactors=2, rotate = "oblimin", fm = "pa")
 
-kf.pca = prcomp((kfjust_rois),scale = TRUE, center = TRUE)
-kf_wide$kf_pc1 <- kf.pca$x[,1]
-kf_wide$kf_pc2 <- kf.pca$x[,2]
-
-kf.fa = psych::fa(kfjust_rois, nfactors=4)
 kffscores <- factor.scores(kfjust_rois, kf.fa)$scores
-kf_wide$kf_f1_fp_temp <- kffscores[,1]
+kf_wide$kf_f1_pos <- kffscores[,1]
 kf_wide$kf_f2_vmpfc_precun <- kffscores[,2]
-kf_wide$kf_f3_str_front_ins <- kffscores[,3]
+# kf_wide$kf_f1_fp_temp <- kffscores[,1]
+# kf_wide$kf_f2_vmpfc_precun <- kffscores[,2]
+# kf_wide$kf_f3_str_front_ins <- kffscores[,3]
 
-dvhkf_wide <- inner_join(dvhk_wide,kf_wide[,c("feat_input_id","kf_f1_fp_temp", "kf_f2_vmpfc_precun", "kf_f3_str_front_ins")])
+dvhkf_wide <- inner_join(dvhk_wide,kf_wide[,c("feat_input_id","kf_f1_pos", "kf_f2_vmpfc_precun")])
 
 
 #####
@@ -309,14 +310,19 @@ ggplot(perois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_c
 
 pe_labeled <- inner_join(pe,perois_list)
 pe_labeled$labeled_cluster <- paste(pe_labeled$cluster_number,pe_labeled$label)
+pe_num <- select(pe_labeled,c(1,2,3))
 pe_labeled <- select(pe_labeled,c(1,3,5))
 
 pe_wide <- spread(pe_labeled,labeled_cluster,cope_value)
+pe_wide_num <- spread(pe_num,cluster_number,cope_value)
 
 # some outliers, let's winsorize for now
 pe_wide <- pe_wide %>% mutate_if(is.double, winsor,trim = .075)
+# pe_wide_num <- pe_wide_num %>% mutate_if(is.double, winsor,trim = .075)
 
 pejust_rois <- pe_wide[,2:ncol(pe_wide)]
+pejust_rois_num <- pe_wide_num[,2:ncol(pe_wide_num)]
+
 # winsorize to deal with beta ouliers
 
 # non-parametric correlations to deal with outliers
@@ -324,19 +330,44 @@ peclust_cor <- corr.test(pejust_rois,method = 'pearson', adjust = 'none')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
-pdf("pe_cluster_corr_fixed.pdf", width=12, height=12)
-corrplot(peclust_cor$r, cl.lim=c(-1,1),
-         method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
-         order = "hclust", diag = FALSE,
-         addCoef.col="black", addCoefasPercent = FALSE,
-         p.mat = peclust_cor$p, sig.level=0.05, insig = "blank")
-dev.off()
-# looks like a single dimension
+# setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+# pdf("pe_cluster_corr_fixed.pdf", width=12, height=12)
+# corrplot(peclust_cor$r, cl.lim=c(-1,1),
+#          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+#          order = "hclust", diag = FALSE,
+#          addCoef.col="black", addCoefasPercent = FALSE,
+#          p.mat = peclust_cor$p, sig.level=0.05, insig = "blank")
+# dev.off()
 
-pe.pca = prcomp((pejust_rois),scale = TRUE, center = TRUE)
-# pe_wide$pe_pc1 <- pe.pca$x[,1]
-# pe_wide$pe_pc2 <- pe.pca$x[,2]
+mpe <- nfactors(peclust_cor$r, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
+pe.fa = psych::fa(pejust_rois_num, nfactors=2, rotate = "varimax", fm = "pa")
+
+# library("lavaan")
+# msyn <- '
+# cort_str =~ 1*`1` + `11` + `2` + `3` +
+#             `4` + `5` +
+#             `6` #putting the 1* here for clarity, but it is the lavaan default
+# hipp =~ 1*`10` + `7`
+# cort_str ~~ 0*hipp #force orthogonal (uncorrelated) factors
+# cort_str ~~ cort_str #explicitly indicate that lavaan should estimate a free parameters for factor variances
+# hipp ~~ hipp
+# '
+# msyn_cor <- '
+# cort_str =~ 1*`1` + `11` + `2` + `3` +
+#             `4` + `5` +
+# `6` #putting the 1* here for clarity, but it is the lavaan default
+# hipp =~ 1*`10` + `7`
+# cort_str ~~ hipp #force orthogonal (uncorrelated) factors
+# cort_str ~~ cort_str #explicitly indicate that lavaan should estimate a free parameters for factor variances
+# hipp ~~ hipp
+# '
+# 
+# 
+# mcfa <- cfa(msyn, pejust_rois_num)
+# summary(mcfa, standardized=TRUE)
+# mcfa_cor <- cfa(msyn_cor, pejust_rois_num)
+# summary(mcfa_cor, standardized=TRUE)
+# anova(mcfa,mcfa_cor)
 
 pe.fa = psych::fa(pejust_rois, nfactors=2)
 pefscores <- factor.scores(pejust_rois, pe.fa)$scores
@@ -394,15 +425,17 @@ corrplot(dhclust_cor$r, cl.lim=c(-1,1),
 dev.off()
 # looks like a single dimension
 
-dh.pca = prcomp((dhjust_rois),scale = TRUE, center = TRUE)
+mdh <- nfactors(dhclust_cor$r, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
+dh.fa = psych::fa(dhjust_rois, nfactors=2, rotate = "oblimin", fm = "pa")
+
+# dh.pca = prcomp((dhjust_rois),scale = TRUE, center = TRUE)
 # dh_wide$dh_pc1 <- dh.pca$x[,1]
 # dh_wide$dh_pc2 <- dh.pca$x[,2]
 
-dh.fa = psych::fa(dhjust_rois, nfactors=2)
 dhfscores <- factor.scores(dhjust_rois, dh.fa)$scores
 dh_wide$dh_f1_co_bg <- dhfscores[,1]
 dh_wide$dh_f2_dan <- dhfscores[,2]
-dvhkpedh_wide <- inner_join(dvhkpedh_wide,dh_wide[,c("feat_input_id","dh_f1_co_bg", "dh_f2_dan")])
+dvhkpedh_wide <- inner_join(dvhkpe_wide,dh_wide[,c("feat_input_id","dh_f1_co_bg", "dh_f2_dan")])
 
 # only negative clusters
 dh <- as.tibble(dhbetas[dhbetas$l2_contrast == 'overall' & dhbetas$l3_contrast == 'Intercept' & dhbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number==7 | cluster_number==10)
@@ -441,13 +474,9 @@ corrplot(dhclust_cor$r, cl.lim=c(-1,1),
          addCoef.col="black", addCoefasPercent = FALSE,
          p.mat = dhclust_cor$p, sig.level=0.05, insig = "blank")
 dev.off()
-# looks like a single dimension
 
-dh.pca = prcomp((dhjust_rois),scale = TRUE, center = TRUE)
-# dh_wide$dh_pc1 <- dh.pca$x[,1]
-# dh_wide$dh_pc2 <- dh.pca$x[,2]
-
-dh.fa = psych::fa(dhjust_rois, nfactors=1)
+# two regions, one factor
+dh.fa = psych::fa(dhjust_rois, nfactors=1, rotate = "oblimin", fm = "pa")
 dhfscores <- factor.scores(dhjust_rois, dh.fa)$scores
 dh_wide$dh_f_neg_vmpfc_precun <- dhfscores[,1]
 
@@ -502,15 +531,19 @@ dev.off()
 # dhp.pca = prcomp((dhpjust_rois),scale = TRUE, center = TRUE)
 # dhp_wide$dhp_pc1 <- dhp.pca$x[,1]
 # dhp_wide$dhp_pc2 <- dhp.pca$x[,2]
+mdhp <- nfactors(dhpclust_cor$r, n=5, rotate = "oblimin", diagonal = FALSE,fm = "mle", n.obs = 70, SMC = FALSE)
+dhp.fa = psych::fa(dhpjust_rois, nfactors=1, rotate = "oblimin", fm = "mle")
 
-dhp.fa = psych::fa(dhpjust_rois, nfactors=4, fm = "mle")
+# dhp.fa = psych::fa(dhpjust_rois, nfactors=4, fm = "mle")
 dhpfscores <- factor.scores(dhpjust_rois, dhp.fa)$scores
-dhp_wide$dhp_f3_ventr_stream_cerebell <- dhpfscores[,3]
-dhp_wide$dhp_f2_str <- dhpfscores[,2]
-dhp_wide$dhp_f1_dlpfc_r <- dhpfscores[,1]
-dhp_wide$dhp_f4_prefront_l <- dhpfscores[,4]
+dhp_wide$dhp_f1_all <- dhpfscores[,1]
 
-dvhkpedh_wide <- inner_join(dvhkpedh_wide,dhp_wide[,c("feat_input_id","dhp_f1_dlpfc_r", "dhp_f2_str", "dhp_f3_ventr_stream_cerebell", "dhp_f4_prefront_l")])
+# dhp_wide$dhp_f3_ventr_stream_cerebell <- dhpfscores[,3]
+# dhp_wide$dhp_f2_str <- dhpfscores[,2]
+# dhp_wide$dhp_f1_dlpfc_r <- dhpfscores[,1]
+# dhp_wide$dhp_f4_prefront_l <- dhpfscores[,4]
+
+dvhkpedh_wide <- inner_join(dvhkpedh_wide,dhp_wide[,c("feat_input_id","dhp_f1_all")])
 
 
 #####
@@ -547,13 +580,13 @@ beta_sum <- inner_join(pc_scores,sum_df)
 # model parameters
 params <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")
 sub_df <- inner_join(beta_sum,params)
-params_beta <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_paralimb",
+params_beta <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_paralimb","h_HippAntL",
                          "d_f1_FP_SMA","d_f2_VS","d_f3_ACC_ins", 
-                         "k_f1_IPL_ventr_stream", "k_f2_prefrontal_bg",
-                         "kf_f1_fp_temp", "kf_f2_vmpfc_precun", "kf_f3_str_front_ins",
+                         "k_f1_all_pos",
+                         "kf_f1_pos", "kf_f2_vmpfc_precun", 
                          "pe_f1_cort_str", "pe_f2_hipp", 
-                         "dh_f1_co_bg","dh_f2_dan",  "dh_f_neg_vmpfc_precun",
-                         "dhp_f1_dlpfc_r", "dhp_f2_str", "dhp_f3_ventr_stream_cerebell", "dhp_f4_prefront_l",
+                         "dh_f1_co_bg","dh_f2_dan","dh_f_neg_vmpfc_precun",
+                         "dhp_f1_all", 
                          "total_earnings", "LL", "alpha", "gamma", "beta")]
 param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
@@ -596,7 +629,11 @@ df <- df %>% group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
                                          v_max_wi_lag = lag(v_max_wi),
                                          v_entropy_wi = scale(v_entropy),
                                          v_max_b = mean(na.omit(v_max)),
-                                         v_entropy_b = mean(na.omit(v_entropy))
+                                         v_entropy_b = mean(na.omit(v_entropy)),
+                                         rt_change = rt_csv - rt_lag,
+                                         pe_max_lag = lag(pe_max), 
+                                         abs_pe_max_lag = abs(pe_max_lag), 
+                                         rt_vmax_change = rt_vmax - rt_vmax_lag
 )
 
 # correlate between-subject V and H with clusters
@@ -606,9 +643,9 @@ b_df <- df %>% group_by(id) %>% dplyr::summarise(v_maxB = mean(v_max, na.rm = T)
 sub_df <- inner_join(sub_df, b_df, by = 'id')
 bdf <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_paralimb",
                  "d_f1_FP_SMA","d_f2_VS","d_f3_ACC_ins", 
-                 "k_f1_IPL_ventr_stream", "k_f2_prefrontal_bg",
+                 "k_f1_all_pos",
                  "pe_f1_cort_str", "pe_f2_hipp",
-                 "kf_f1_fp_temp", "kf_f2_vmpfc_precun", "kf_f3_str_front_ins",
+                 "kf_f1_pos", "kf_f2_vmpfc_precun",
                  "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]
 b_cor <- corr.test(bdf,method = 'pearson', adjust = 'none')
 
@@ -629,37 +666,34 @@ df$d_f3_ACC_ins_resp[df$d_f3_ACC_ins>0] <- 'high'
 df$d_f2_VSresp <- as.factor(df$d_f2_VSresp)
 df$d_f2_VSresp <- relevel(df$d_f2_VSresp, ref = 'low') 
 
-df$k_f1_IPL_ventr_stream_resp <- 'low'
-df$k_f1_IPL_ventr_stream_resp[df$k_f1_IPL_ventr_stream>0] <- 'high'
-df$k_f2_prefrontal_bg_resp <- 'low'
-df$k_f2_prefrontal_bg_resp[df$k_f2_prefrontal_bg>0] <- 'high'
+df$k_f1_all_pos_resp <- 'low'
+df$k_f1_all_pos_resp[df$k_f1_all_pos>0] <- 'high'
 
-df$kf_f1_fp_temp_resp <- 'low'
-df$kf_f1_fp_temp_resp[df$kf_f1_fp_temp>0] <- 'high'
+df$kf_f1_pos_resp <- 'low'
+df$kf_f1_pos_resp[df$kf_f1_pos>0] <- 'high'
 df$kf_f2_vmpfc_precun_resp <- 'low'
 df$kf_f2_vmpfc_precun_resp[df$kf_f2_vmpfc_precun>0] <- 'high'
-df$kf_f3_str_front_ins_resp <- 'low'
-df$kf_f3_str_front_ins_resp[df$kf_f3_str_front_ins>0] <- 'high'
-
 
 df$pe_f1_cort_str_resp <- 'low'
 df$pe_f1_cort_str_resp[df$pe_f1_cort_str>0] <- 'high'
 df$pe_f2_hipp_resp <- 'low'
 df$pe_f2_hipp_resp[df$pe_f2_hipp>0] <- 'high'
 
-
+df$h_HippAntL_resp <- 'low'
+df$h_HippAntL_resp[df$h_HippAntL<mean(df$h_HippAntL)] <- 'high'
 df$last_outcome <- NA
 df$last_outcome[df$omission_lag] <- 'Omission'
 df$last_outcome[!df$omission_lag] <- 'Reward'
 
 # circular, but just check to what extent each area conforms to SCEPTIC-SM: looks like there is an interaction, both need to be involved again
-ggplot(df, aes(run_trial, v_entropy_wi, color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "loess") #+ facet_wrap(~gamma>0)
-# I think this means again that H estimates are more precise for high-paralimbic people, esp. late in learning
-ggplot(df, aes( v_entropy_wi,log(rt_swing), color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "gam") + facet_wrap(~learning_epoch)
-ggplot(df, aes( v_max_wi,log(rt_swing), color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "gam") + facet_wrap(~run_trial > 10)
-
+# ggplot(df, aes(run_trial, v_entropy_wi, color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "loess") #+ facet_wrap(~gamma>0)
+# # I think this means again that H estimates are more precise for high-paralimbic people, esp. late in learning
+# ggplot(df, aes( v_entropy_wi,log(rt_swing), color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "gam") + facet_wrap(~learning_epoch)
+# ggplot(df, aes( v_max_wi,log(rt_swing), color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "gam") + facet_wrap(~run_trial > 10)
+# 
 # Okay, some behavioral relevance of KLD
-ggplot(df, aes(run_trial, v_entropy_wi, color = k_f1_IPL_ventr_stream_resp, lty = k_f2_prefrontal_bg_resp)) + geom_smooth(method = "loess")
+# ggplot(df, aes(run_trial, v_entropy_wi, color = k_f1_all_pos_resp)) + geom_smooth(method = "loess")
 
 
 save(file = 'trial_df_and_vhdkfpe_clusters.Rdata', df)
+
