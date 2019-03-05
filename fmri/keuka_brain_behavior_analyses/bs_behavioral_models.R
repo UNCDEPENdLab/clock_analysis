@@ -44,51 +44,6 @@ screen.lmerTest <- function (mod,p=NULL) {
 
 dfc <- na.omit(df[df$rt_swing>0,])
 
-# convert to long and see if gamma and performance differentially predict certain networks
-dfl <- gather(dfc, network, signal, vb_f5_lo_ACC:db_f4_ACC_ins, factor_key = T)
-s1 <- lmer(signal ~ gamma * network * scale(-1/run_trial) + rewFuncIEVsum + (1|id/run), dfl)
-summary(s1)
-screen.lmerTest(s1)
-
-# strangely higher betas in low-performance subjects
-# perhaps the meaning of betas is not quite what we think
-s2 <- lmer(signal ~ performance * network * scale(-1/run_trial) + rewFuncIEVsum + (1|id/run), dfl)
-screen.lmerTest(s2)
-
-# does decay predict activity better in high-gamma people? only in the posterior networks, vb_f4 and db_f3...
-d2 <- lmer(signal ~ gamma * network * scale(d_auc) + rewFuncIEVsum + (1|id/run), dfl)
-screen.lmerTest(d2)
-
-# how much specificity do these regions show?
-# not much -- the d_auc networks respond more to v_max_wi than to d_auc
-s3 <- lmer(signal ~  network * scale(-1/run_trial) + 
-             network * rewFuncIEVsum + 
-             network * scale(v_max_wi) * gamma + 
-             network * scale(v_entropy_wi) * gamma + 
-             network * scale(d_auc) * gamma + (1|id/run), dfl)
-screen.lmerTest(s3, .01)
-
-# compare v_max and entropy models for v_max regions
-v1v <- lmer(vb_f1_lo_DAN ~ v_max + (1|id/run), dfc)
-v1h <- lmer(vb_f1_lo_DAN ~ v_entropy + (1|id/run), dfc)
-v1vh <- lmer(vb_f1_lo_DAN ~ v_max + v_entropy + (1|id/run), dfc)
-anova(v1v,v1h,v1vh)
-# H blows Vmax out of the water, and adding Vmax back explains very little
-
-v2v <- lmer(vb_f2_hi_vmPFC_cOFC ~ v_max + (1|id/run), dfc)
-v2h <- lmer(vb_f2_hi_vmPFC_cOFC ~ v_entropy + (1|id/run), dfc)
-v2vh <- lmer(vb_f2_hi_vmPFC_cOFC ~ v_max + v_entropy + (1|id/run), dfc)
-anova(v2v,v2h,v2vh)
-# Vmax explains a bit more for the paralimbic ventral prefrontal network
-
-# what about the low-H paralimbic network?
-h2v <- lmer(hb_f2_neg_paralimb ~ v_max + (1|id/run), dfc)
-h2h <- lmer(hb_f2_neg_paralimb ~ v_entropy + (1|id/run), dfc)
-h2vh <- lmer(hb_f2_neg_paralimb ~ v_max + v_entropy + (1|id/run), dfc)
-anova(h2v,h2h,h2vh)
-# more H than Vmax, but not by a huge margin
-
-
 # parallel to the beta models
 
 ## "model-free analyses"
@@ -211,8 +166,8 @@ anova(w1,w2h,w3hd,w4vhd)
 # RTs
 wr1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + gamma)^2 + v_max_b + v_entropy_b + scale(rt_lag) + (1|id/run), dfc)
 screen.lmerTest(wr1)
-wr2h <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + rewFuncIEVsum + hb_f1_DAN_vlPFC + gamma)^3 
-             +(scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + rewFuncIEVsum + hb_f2_neg_paralimb + gamma)^3 
+wr2h <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + hb_f1_DAN_vlPFC + gamma)^3 
+             +(scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + hb_f2_neg_paralimb + gamma)^3 
              + v_max_b + v_entropy_b +  (1|id/run), dfc)
 screen.lmerTest(wr2h)
 # reduced

@@ -13,7 +13,7 @@ remove_outliers <- function(x, na.rm = TRUE, ...) {
   y
 }
 
-scale_within <- F
+scale_within <- T
 
 # get cluster meta-data, first for H
 setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/beta_series_dec2018/')
@@ -349,7 +349,6 @@ df <- df %>% dplyr::group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
 
 df$performance <- cut_number(df$total_earnings,2)
 levels(df$performance) <- c( "below median", "above median")
-df$performance <- relevel(df$performance,ref = "above median")
 #sanity check
 # ggplot(df,aes(performance, total_earnings)) + geom_boxplot()
 df$last_outcome <- NA
@@ -359,6 +358,6 @@ df$last_outcome[!df$omission_lag] <- 'Reward'
 df$decay <- NA
 df$decay[df$gamma>0] <- 'high'
 df$decay[df$gamma<0] <- 'low'
-dfc <- na.omit(df[df$rt_swing>0,])
 
-save(file = 'trial_df_and_vhd_bs.Rdata',list = c("df", "dfc"))
+
+save(file = 'trial_df_and_vhd_bs.Rdata', df)
