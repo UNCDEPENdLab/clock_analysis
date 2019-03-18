@@ -46,6 +46,14 @@ dfc <- na.omit(df[df$rt_swing>0,])
 
 # parallel to the beta models
 
+####### NEW
+# follow cluster beta analyses
+mfh <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag  + h_ant_hipp_b_f + peb_f2_p_hipp + performance)^2 + 
+               scale(rt_lag)*omission_lag*h_ant_hipp_b_f*performance + scale(rt_lag)*omission_lag*peb_f2_p_hipp*performance +
+               (1|id/run), df)
+screen.lmerTest(mfh)
+#######
+
 ## "model-free analyses"
 mf1 <- lmer(log(rt_swing) ~ scale(-1/run_trial) +  rewFuncIEVsum + (1|id/run), dfc)
 screen.lmerTest(mf1)
@@ -85,6 +93,55 @@ screen.lmerTest(mf4)
 
 # model-based
 
+###### NEW, hippocampal, following cluster betas
+mbhipp1a <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f)^2 + 
+                  scale(rt_lag):omission_lag:h_ant_hipp_b_f +
+                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f + 
+                  scale(rt_vmax_lag):v_max_wi_lag:h_ant_hipp_b_f + 
+                  scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f +  
+                  v_max_b + v_entropy_b +  (1|id/run), df)
+screen.lmerTest(mbhipp1a)
+
+mbhipp1p <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change + peb_f2_p_hipp)^2 + 
+                  scale(rt_lag):omission_lag:peb_f2_p_hipp +
+                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp +
+                  scale(rt_vmax_lag):v_max_wi_lag:peb_f2_p_hipp +
+                  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp +
+                  v_max_b + v_entropy_b +  (1|id/run), df)
+screen.lmerTest(mbhipp1p)
+
+
+mbhipp1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+                 scale(rt_lag):omission_lag:h_ant_hipp_b_f + scale(rt_lag):omission_lag:peb_f2_p_hipp +
+                scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f + scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp +
+                 scale(rt_vmax_lag):v_max_wi_lag:h_ant_hipp_b_f + scale(rt_vmax_lag):v_max_wi_lag:peb_f2_p_hipp +
+                 scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f +  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp +
+                 v_max_b + v_entropy_b +  (1|id/run), df)
+screen.lmerTest(mbhipp1)
+
+# is this driven by slowing to high Vmax, particularly in IEV?  Let's remove Vmax from the model
+mbhipp2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag +  v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+                  scale(rt_lag):omission_lag:h_ant_hipp_b_f + scale(rt_lag):omission_lag:peb_f2_p_hipp +
+                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f + scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp +
+                  scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f +  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp +
+                  v_max_b + v_entropy_b +  (1|id/run), df)
+screen.lmerTest(mbhipp2)
+
+
+e1 <- summary(em1 <- emmeans::emtrends(mbhipp1,var = 'rt_lag', specs = c("omission_lag", "rt_vmax_lag","peb_f2_p_hipp"), 
+                              at  = list(peb_f2_p_hipp = c(-1,1), rt_vmax_lag = c(10,20,30))), horiz = F)
+
+ggplot(e1, aes(rt_vmax_lag, rt_lag.trend, color = omission_lag)) + geom_line() + facet_wrap(~peb_f2_p_hipp)
+
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots/')
+
+pdf("lose_shift.pdf", width = 12, height = 10)
+ggplot(df[!is.na(df$peb_f2_p_hipp) & !is.na(df$rt_vmax_lag) ,], aes(rt_lag, rt_csv, color = omission_lag, lty = rt_vmax_lag>20)) + geom_smooth(method = 'glm') #+ facet_wrap(~rewFunc)
+dev.off()
+
+pdf("p_hipp_lose_shift.pdf", width = 12, height = 10)
+ggplot(df[!is.na(df$peb_f2_p_hipp) & !is.na(df$rt_vmax_lag) ,], aes(rt_lag, rt_csv, color = peb_f2_p_hipp>0, lty = rt_vmax_lag>20)) + geom_smooth(method = 'glm') + facet_wrap(~omission_lag)
+dev.off()
 # first, does DAN improve prediction of RTs and EXPLAIN effects of v_entropy_wi?
 # it improves prediction, but seems to contain information independent of entropy_wi...
 w0 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma)^2 + 

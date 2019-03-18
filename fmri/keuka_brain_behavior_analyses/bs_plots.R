@@ -9,6 +9,8 @@ library(grid)
 source('~/code/Rhelpers/')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 load('trial_df_and_vhd_bs.Rdata')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+
 ######
 # end of preprocessing
 #####
@@ -18,11 +20,37 @@ load('trial_df_and_vhd_bs.Rdata')
 ## PLOTS ##
 #####
 
+dfc <- na.omit(df[df$rt_swing>0,])
+
+
 # for further analyses, we want the following regions:
 # hb_f1_DAN (alt. vb_f1_lo_DAN)
 # hb_f2_paralimbic (alt vb_f2_hi_paralimbic)
 # db_f4_ACC_ins -- compression
 # db_f1_rIFG_SMA -- ?overload
+
+# sanity check spaghetti
+pdf("sanity_check_pe_spaghetti.pdf", height = 20, width = 20)
+ggplot(dfc,aes(run_trial,peb_f2_p_hipp, color = rewFunc)) + geom_smooth(method = 'glm') + facet_grid(~id)
+dev.off()
+
+pdf("sanity_check_pe.pdf", height = 10, width = 10)
+ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = performance, color = rewFunc)) + geom_smooth(method = 'glm') 
+dev.off()
+
+
+# compare ant. vs. post hippocampus
+rts <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_csv, color = performance)) + geom_smooth(method = 'gam',  formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
+swings <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_swing, color = performance)) + geom_smooth(method = 'gam',  formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
+ah <- ggplot(dfc[dfc$run>1,],aes(run_trial, h_ant_hipp_b_f, color = performance)) + geom_smooth(method = 'gam',  formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
+ph <- ggplot(dfc[dfc$run>1,],aes(run_trial, peb_f2_p_hipp, color = performance)) + geom_smooth(method = 'gam',  formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
+h <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_entropy, color = performance)) + geom_smooth(method = 'gam',  formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc) + scale_x_continuous(breaks = c(1,50))
+peabs <-  ggplot(dfc[dfc$run>1,],aes(run_trial, abs(pe_max), color = performance)) + geom_smooth(method = 'gam',  formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc) + scale_x_continuous(breaks = c(1,50))
+pe <-  ggplot(dfc[dfc$run>1,],aes(run_trial, pe_max, color = performance)) + geom_smooth(method = 'gam',  formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc) + scale_x_continuous(breaks = c(1,50))
+
+pdf("hipp_bs_beh_timecourse_by_condition_gamma.pdf", width = 12, height = 10)
+ggpubr::ggarrange(rts, swings, h, ah,ph, pe, ncol = 3, nrow = 2)
+dev.off()
 
 ggplot(dfc[dfc$run>1,],aes(run_trial,hb_f1_DAN_vlPFC, color = rewFunc, lty = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)
 ggplot(dfc[dfc$run>1,],aes(run_trial,hb_f2_neg_paralimb, color = rewFunc, lty = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)

@@ -26,7 +26,7 @@ vif.lme <- function (fit) {
   v }
 
 # check VIFs of significant effects
-#screen.lmerTest <- function (mod,p=NULL) {
+screen.lmerTest <- function (mod,p=NULL) {
   if (is.null(p)) {p <- .05}
   c1 <- as.data.frame(coef(summary(mod))[,4:5])
   dd <- cbind(c1[2:nrow(c1),],as.data.frame(vif.lme(mod)))
@@ -225,7 +225,18 @@ mb2pe_hipp <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax
                 scale(rt_vmax_lag):v_max_wi_lag:pe_f2_hipp +
                 scale(-1/run_trial):scale(rt_vmax_lag):pe_f2_hipp +
                 v_max_b + v_entropy_b + (1|id/run), df)
-#screen.lmerTest(mb2pe_hipp)
+screen.lmerTest(mb2pe_hipp)
+
+# add h_HippAntL
+mb2hipp_pa <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + rt_vmax_change + h_HippAntL + pe_f2_hipp)^2 + 
+                     scale(rt_lag):omission_lag:h_HippAntL +
+                     scale(rt_lag):omission_lag:pe_f2_hipp +
+                     scale(rt_vmax_lag):v_max_wi_lag:h_HippAntL +
+                     scale(rt_vmax_lag):v_max_wi_lag:pe_f2_hipp +
+                     scale(-1/run_trial):scale(rt_vmax_lag):h_HippAntL +
+                     scale(-1/run_trial):scale(rt_vmax_lag):pe_f2_hipp +
+                     v_max_b + v_entropy_b + (1|id/run), df)
+screen.lmerTest(mb2hipp_pa)
 
 
 # # add trial-wise PEmax -- not feasible
@@ -336,7 +347,7 @@ mb3hpedh_p_cur3 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(r
 
 
 ##################
-anova(mb1,mb2h,mb2v,mb2d,mb2pe,mb2kf, mb2dh, mb2dhp, mb3hpedh3, mb3hpedh_p4, mb3hpedh_p_cur2, mb3hpedh_p_cur3)
+anova(mb1a,mb2h,mb2v,mb2d,mb2pe,mb2kf, mb2dh, mb2dhp, mb3hpedh3, mb3hpedh_p4, mb3hpedh_p_cur2, mb3hpedh_p_cur3)
 # at the end of the day, the h clusters explain the most
 # pe is better than KLD or entropy change
 
@@ -391,8 +402,8 @@ ggplot(df,aes(run_trial,rt_csv, lty = pe_f2_hipp_resp)) + geom_smooth() + facet_
 ggplot(df,aes(run_trial,rt_csv, color = h_HippAntL_resp)) + geom_smooth() + facet_wrap(~rewFunc)
 ggplot(df,aes(run_trial,rt_csv, lty = pe_f2_hipp_resp)) + geom_smooth() + facet_wrap(~rewFunc)
 
-ggplot(df,aes(rt_lag,rt_csv, color = h_HippAntL_resp)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
-ggplot(df,aes(rt_lag,rt_csv, lty = pe_f2_hipp_resp)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
+ggplot(df,aes(rt_lag,rt_csv, color = h_HippAntL_resp)) + geom_smooth(method = 'loess') #+ facet_wrap(~rewFunc)
+ggplot(df,aes(rt_lag,rt_csv, lty = pe_f2_hipp_resp)) + geom_smooth(method = 'loess') 
 
 ggplot(df,aes(rt_vmax,rt_csv, color = h_HippAntL_resp)) + geom_smooth(method = 'loess') 
 ggplot(df,aes(rt_vmax,rt_csv, lty = pe_f2_hipp_resp)) + geom_smooth(method = 'loess') 
