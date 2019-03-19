@@ -114,13 +114,13 @@ screen.lmerTest(mbhipp1p)
 test <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag)   +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
                    (1|id/run), df)
 
-mbhipp1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+mbhipp1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp)^3 + 
                  scale(rt_lag):omission_lag:h_ant_hipp_b_f + scale(rt_lag):omission_lag:peb_f2_p_hipp +
                 scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f + scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp +
                  scale(rt_vmax_lag):v_max_wi_lag:h_ant_hipp_b_f + scale(rt_vmax_lag):v_max_wi_lag:peb_f2_p_hipp +
                  scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f +  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp +
                  v_max_b + v_entropy_b + (1|id/run), df)
-screen.lmerTest(mbhipp1)
+screen.lmerTest(mbhipp1, .01)
 
 # is this driven by slowing to high Vmax, particularly in IEV?  Let's remove Vmax from the model
 mbhipp2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag +  v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
@@ -314,7 +314,7 @@ b9a <- lmer(h_ant_hipp_b_f ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_
            + v_max_b + v_entropy_b + (1|run), df)
 screen.lmerTest(b9a)
 
-b10a <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + scale(pe_max)
+b10a <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + scale(pe_max)
             + v_max_b + v_entropy_b + (1|run), df)
 screen.lmerTest(b10a)
 
