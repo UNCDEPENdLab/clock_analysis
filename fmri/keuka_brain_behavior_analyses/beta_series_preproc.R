@@ -6,7 +6,7 @@ library(lme4)
 
 remove_outliers <- function(x, na.rm = TRUE, ...) {
   qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
-  H <- 1.0 * IQR(x, na.rm = na.rm)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
   y <- x
   y[x < (qnt[1] - H)] <- NA
   y[x > (qnt[2] + H)] <- NA
@@ -317,9 +317,9 @@ peb_wide$peb_f2_p_hipp <- pefscores[,2]
 
 # just the factors
 peb_wide <-  peb_wide[,c(1:3,13:14)]
-
+peb_wide$run_trial <- peb_wide$trial
 # merge with other BS
-dvhpe_b_wide <- inner_join(dvh_bs_factors_wide,peb_wide)
+dvhpe_b_wide <- inner_join(dvh_bs_factors_wide,peb_wide, by = c("feat_input_id", "run", "run_trial"))
 # add in a. hipp
 dvhpe_b_wide <- inner_join(dvhpe_b_wide,hb_wide[,c(1:3,12)])
 dvhpe_b_wide$h_ant_hipp_b_f <- dvhpe_b_wide$`9 Left Hippocampus`
@@ -349,6 +349,7 @@ trial_df <- trial_df %>%
                                        rt_lag = lag(rt_csv) ,
                                        omission_lag = lag(score_csv==0),
                                        rt_vmax_lag = lag(rt_vmax),
+                                       v_entropy_wi = scale(v_entropy),
                                        run_trial=1:50) %>% ungroup() #compute rt_swing within run and subject
 # remove trial variable to avoid confusion
 trial_df <- trial_df[,c(1:4,6:40)]
@@ -414,27 +415,17 @@ df$learning_epoch[df$run_trial>10] <- 'trials 11-50'
 
 
 # obtain within-subject v_max and entropy: correlated at -.37
-
-df <- df %>% dplyr::group_by(id,run,trial) %>% mutate(v_max_wi = scale(v_max),
+df <- df %>% group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
                                          v_max_wi_lag = lag(v_max_wi),
                                          v_entropy_wi = scale(v_entropy),
                                          v_max_b = mean(na.omit(v_max)),
                                          v_entropy_b = mean(na.omit(v_entropy)),
-                                         rt_swing_lag = lag(rt_swing),
-                                         rt_swing_lead = lead(rt_swing),
+                                         rt_change = rt_csv - rt_lag,
                                          pe_max_lag = lag(pe_max), 
                                          abs_pe_max_lag = abs(pe_max_lag), 
-                                         rt_vmax_change = rt_vmax - rt_vmax_lag,
-                                         h1_lag = lag(hb_f1_DAN_vlPFC),
-                                         h2_lag = lag(hb_f2_neg_paralimb),
-                                         v1_lag = lag(vb_f1_lo_DAN),
-                                         v2_lag = lag(vb_f2_hi_vmPFC_cOFC),
-                                         v5_lag = lag(vb_f5_lo_ACC),
-                                         d1_lag = lag(db_f1_rIFG_rSMA),
-                                         d2_lag = lag(db_f2_VS),
-                                         d4_lag = lag(db_f4_ACC_ins), 
-                                         vdev_lag = rt_lag - 100*rt_vmax_lag
-) %>% ungroup
+                                         rt_vmax_change = rt_vmax - rt_vmax_lag
+)
+
 
 df$performance <- cut_number(df$total_earnings,2)
 levels(df$performance) <- c( "below median", "above median")

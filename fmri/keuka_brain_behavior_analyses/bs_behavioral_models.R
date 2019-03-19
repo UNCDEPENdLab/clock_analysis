@@ -48,7 +48,8 @@ dfc <- na.omit(df[df$rt_swing>0,])
 
 ####### NEW
 # follow cluster beta analyses
-mfh <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag  + h_ant_hipp_b_f + peb_f2_p_hipp + performance)^2 + 
+mfh <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f  + performance)^2 + 
+              (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + peb_f2_p_hipp + performance)^2 + 
                scale(rt_lag)*omission_lag*h_ant_hipp_b_f*performance + scale(rt_lag)*omission_lag*peb_f2_p_hipp*performance +
                (1|id/run), df)
 screen.lmerTest(mfh)
@@ -110,13 +111,15 @@ mbhipp1p <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_l
                   v_max_b + v_entropy_b +  (1|id/run), df)
 screen.lmerTest(mbhipp1p)
 
+test <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag)   +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+                   (1|id/run), df)
 
 mbhipp1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
                  scale(rt_lag):omission_lag:h_ant_hipp_b_f + scale(rt_lag):omission_lag:peb_f2_p_hipp +
                 scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f + scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp +
                  scale(rt_vmax_lag):v_max_wi_lag:h_ant_hipp_b_f + scale(rt_vmax_lag):v_max_wi_lag:peb_f2_p_hipp +
                  scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f +  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp +
-                 v_max_b + v_entropy_b +  (1|id/run), df)
+                 v_max_b + v_entropy_b + (1|id/run), df)
 screen.lmerTest(mbhipp1)
 
 # is this driven by slowing to high Vmax, particularly in IEV?  Let's remove Vmax from the model
@@ -306,6 +309,15 @@ b8 <- lmer(hb_f1_DAN_vlPFC ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_
                                 h1_lag + vb_f5_lo_ACC + v5_lag + hb_f2_neg_paralimb + h2_lag)^3 
            + v_max_b + v_entropy_b + (1|run), df)
 screen.lmerTest(b8)
+
+b9a <- lmer(h_ant_hipp_b_f ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + scale(pe_max))^2 
+           + v_max_b + v_entropy_b + (1|run), df)
+screen.lmerTest(b9a)
+
+b10a <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + scale(pe_max)
+            + v_max_b + v_entropy_b + (1|run), df)
+screen.lmerTest(b10a)
+
 
 # is this the case for RT swing prediction?
 # lagged beta series do not explain much
