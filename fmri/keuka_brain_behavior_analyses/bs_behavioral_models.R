@@ -125,13 +125,15 @@ mbhipp1 <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_l
                  v_max_b + v_entropy_b + (run|id/run), df)
 screen.lmerTest(mbhipp1, .01)
 
-# is this driven by slowing to high Vmax, particularly in IEV?  Let's remove Vmax from the model
-mbhipp2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag +  v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
-                  scale(rt_lag):omission_lag:h_ant_hipp_b_f + scale(rt_lag):omission_lag:peb_f2_p_hipp +
-                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f + scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp +
-                  scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f +  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp +
-                  v_max_b + v_entropy_b +  (1|id/run), df)
-screen.lmerTest(mbhipp2)
+
+ 
+# add the clusters
+mbhipp2 <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp + h_HippAntL + pe_f2_hipp)^3 + 
+                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f*h_HippAntL + scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp*pe_f2_hipp +
+                  scale(rt_vmax_lag)*v_max_wi_lag*h_ant_hipp_b_f*h_HippAntL + scale(rt_vmax_lag)*v_max_wi_lag*peb_f2_p_hipp*pe_f2_hipp +
+                  scale(-1/run_trial)*scale(rt_vmax_lag)*h_ant_hipp_b_f*h_HippAntL +  scale(-1/run_trial)*scale(rt_vmax_lag)*peb_f2_p_hipp*pe_f2_hipp +
+                  v_max_b + v_entropy_b + (run|id/run), df)
+screen.lmerTest(mbhipp1, .01)
 # 
 # 
 # e1 <- summary(em1 <- emmeans::emtrends(mbhipp1,var = 'rt_lag', specs = c("omission_lag", "rt_vmax_lag","peb_f2_p_hipp"), 
