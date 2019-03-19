@@ -352,7 +352,7 @@ trial_df <- trial_df %>%
                                        v_entropy_wi = scale(v_entropy),
                                        run_trial=1:50) %>% ungroup() #compute rt_swing within run and subject
 # remove trial variable to avoid confusion
-trial_df <- trial_df[,c(1:4,6:40)]
+trial_df <- trial_df[,c(1:4,6:41)]
 # performance
 sum_df <- trial_df %>% group_by(id) %>% dplyr::summarize(total_earnings = sum(score_csv)) %>% arrange(total_earnings)
 beta_fscores <- inner_join(beta_fscores,sum_df)

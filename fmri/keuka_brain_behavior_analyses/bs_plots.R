@@ -8,7 +8,8 @@ library(ggpubr)
 library(grid)
 source('~/code/Rhelpers/')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
-load('trial_df_and_vhd_bs.Rdata')
+# load('trial_df_and_vhd_bs.Rdata')
+load('clusters_and_beta_series.Rdata')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 
 ######
@@ -38,8 +39,17 @@ pdf("sanity_check_ph.pdf", height = 10, width = 10)
 ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = performance, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
 dev.off()
 
+pdf("ph_bs_by_pe_resp.pdf", height = 10, width = 10)
+ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = pe_f2_hipp_resp, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+dev.off()
+
+
 pdf("sanity_check_ah.pdf", height = 10, width = 10)
 ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = performance, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+dev.off()
+
+pdf("ah_bs_by_h_resp.pdf", height = 10, width = 10)
+ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = h_HippAntL_resp, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
 dev.off()
 
 
