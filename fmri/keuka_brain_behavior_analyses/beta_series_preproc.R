@@ -439,5 +439,6 @@ df$decay <- NA
 df$decay[df$gamma>0] <- 'high'
 df$decay[df$gamma<0] <- 'low'
 
+# dichotomize BS for plotting
 
 save(file = 'trial_df_and_vhd_bs.Rdata', df)

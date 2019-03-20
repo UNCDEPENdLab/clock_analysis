@@ -48,6 +48,8 @@ screen.lmerTest <- function (mod,p=NULL) {
 # db_f4_ACC_ins -- compression
 # db_f1_rIFG_SMA -- ?overload
 
+
+
 dfc <- na.omit(df[df$rt_swing>0,])
 
 # parallel to the beta models
@@ -58,9 +60,31 @@ mfh <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_an
               (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + peb_f2_p_hipp + pe_f2_hipp)^3 + 
                (1|id/run), df)
 screen.lmerTest(mfh)
-#######
-# 
-# ## "model-free analyses"
+
+# add region interactions
+mfh1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f + h_HippAntL+ peb_f2_p_hipp + pe_f2_hipp)^3 + 
+              (1|id/run), df)
+screen.lmerTest(mfh1)
+
+# remove the clusters
+mfh2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f + peb_f2_p_hipp)^3 + 
+               (1|id/run), df)
+screen.lmerTest(mfh2)
+
+# simple model by contingency
+mfh3 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + rewFuncIEVsum + h_ant_hipp_b_f + peb_f2_p_hipp)^3 + 
+               (1|id/run), df)
+screen.lmerTest(mfh3)
+
+# ## "model-free" RT swings analyses
+
+wh1 <- lmer(rt_swing ~ (scale(-1/run_trial) + omission_lag + rewFuncIEVsum + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+              (1|id/run), df)
+screen.lmerTest(wh1)
+summary(wh1)
+######
+ 
+
 # mf1 <- lmer(log(rt_swing) ~ scale(-1/run_trial) +  rewFuncIEVsum + (1|id/run), dfc)
 # screen.lmerTest(mf1)
 # ## favorite simple model ##
@@ -108,6 +132,20 @@ mbhipp1a <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_l
                   v_max_b + v_entropy_b +  (1|id/run), df)
 screen.lmerTest(mbhipp1a)
 
+# large positive interaction
+mb_ah_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * h_ant_hipp_b_f + 
+                   (1|id/run), df)
+screen.lmerTest(mb_ah_rtvmax)
+# do we see it with the high-value network?  No!
+mb_v2_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * vb_f2_hi_vmPFC_cOFC + 
+                       (1|id/run), df)
+screen.lmerTest(mb_v2_rtvmax)
+
+# no substantial interaction
+mb_ph_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * peb_f2_p_hipp + 
+                       (1|id/run), df)
+screen.lmerTest(mb_ph_rtvmax)
+
 mbhipp1p <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change + peb_f2_p_hipp)^2 + 
                   scale(rt_lag):omission_lag:peb_f2_p_hipp +
                   scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp +
@@ -117,17 +155,21 @@ mbhipp1p <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_l
 screen.lmerTest(mbhipp1p)
 
 
-mbhipp1 <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp)^3 + 
-                 scale(rt_lag):omission_lag:h_ant_hipp_b_f + scale(rt_lag):omission_lag:peb_f2_p_hipp +
+mbhipp1 <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
                 scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f + scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp +
                  scale(rt_vmax_lag):v_max_wi_lag:h_ant_hipp_b_f + scale(rt_vmax_lag):v_max_wi_lag:peb_f2_p_hipp +
                  scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f +  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp +
-                 v_max_b + v_entropy_b + (run|id/run), df)
+                 v_max_b + v_entropy_b + (1|id/run), df)
 screen.lmerTest(mbhipp1, .01)
+
+# simplified model
+mbhipp1simp <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+                  v_max_b + v_entropy_b + (1|id/run), df)
+screen.lmerTest(mbhipp1simp, .01)
 
 
  
-# add the clusters
+# add the clusters: they don't seem to interact with BS
 mbhipp2 <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp + h_HippAntL + pe_f2_hipp)^3 + 
                   scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f*h_HippAntL + scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp*pe_f2_hipp +
                   scale(rt_vmax_lag)*v_max_wi_lag*h_ant_hipp_b_f*h_HippAntL + scale(rt_vmax_lag)*v_max_wi_lag*peb_f2_p_hipp*pe_f2_hipp +
@@ -135,6 +177,7 @@ mbhipp2 <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_l
                   v_max_b + v_entropy_b + (run|id/run), df)
 screen.lmerTest(mbhipp1, .01)
 # 
+
 # 
 # e1 <- summary(em1 <- emmeans::emtrends(mbhipp1,var = 'rt_lag', specs = c("omission_lag", "rt_vmax_lag","peb_f2_p_hipp"), 
 #                               at  = list(peb_f2_p_hipp = c(-1,1), rt_vmax_lag = c(10,20,30))), horiz = F)
@@ -150,17 +193,24 @@ dev.off()
 pdf("p_hipp_lose_shift.pdf", width = 12, height = 10)
 ggplot(df[!is.na(df$peb_f2_p_hipp) & !is.na(df$rt_vmax_lag) ,], aes(rt_lag, rt_csv, color = peb_f2_p_hipp>0, lty = rt_vmax_lag>20)) + geom_smooth(method = 'glm') + facet_wrap(~omission_lag)
 dev.off()
-# # first, does DAN improve prediction of RTs and EXPLAIN effects of v_entropy_wi?
-# # it improves prediction, but seems to contain information independent of entropy_wi...
-# w0 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma)^2 + 
-#              v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
-# screen.lmerTest(w0)
-# 
-# w0dan <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + hb_f1_DAN_vlPFC + gamma)^2 + 
-#              v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
-# screen.lmerTest(w0dan)
-# anova(w0, w0dan)
-# 
+
+# first, does DAN improve prediction of RTs and EXPLAIN effects of v_entropy_wi?
+# it improves prediction, but seems to contain information independent of entropy_wi...
+w0 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma)^2 +
+             v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
+screen.lmerTest(w0)
+
+w0dan <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + hb_f1_DAN_vlPFC + gamma)^2 +
+             v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
+screen.lmerTest(w0dan)
+anova(w0, w0dan)
+
+w0hipp <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + h_ant_hipp_b_f + hb_f1_DAN_vlPFC + gamma)^2 +
+                v_max_b + v_entropy_b + scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
+screen.lmerTest(w0dan)
+anova(w0, w0dan)
+
+
 # 
 # w1 <- lmer(log(rt_swing) ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + gamma)^2 + v_max_b + v_entropy_b +scale(rt_swing_lag) + scale(rt_lag) + (1|id/run), dfc)
 # screen.lmerTest(w1)
@@ -315,12 +365,14 @@ dev.off()
 #            + v_max_b + v_entropy_b + (1|run), df)
 # screen.lmerTest(b8)
 
-b9a <- lmer(h_ant_hipp_b_f ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + scale(pe_max))^2 
-           + v_max_b + v_entropy_b + (1|run), df)
+# posterior-to-anterior connectivity seems to be modulated by entropy and ?rt_vmax_lag
+b9a <- lmer(h_ant_hipp_b_f ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + scale(pe_max) + rt_vmax_lag + peb_f2_p_hipp)^2 
+           + (1|run), df)
 screen.lmerTest(b9a)
 
-b10a <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + scale(pe_max)
-            + v_max_b + v_entropy_b + (1|run), df)
+# anterior-to-posterior connectivity may be modulated by rt_vmax_lag
+b10a <- lmer(peb_f2_p_hipp ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + scale(pe_max) + rt_vmax_lag + h_ant_hipp_b_f)^2
+            + (1|run), df)
 screen.lmerTest(b10a)
 
 

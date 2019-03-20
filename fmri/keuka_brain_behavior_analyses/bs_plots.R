@@ -36,31 +36,84 @@ ggplot(dfc,aes(run_trial,peb_f2_p_hipp, color = rewFunc)) + geom_smooth(method =
 dev.off()
 
 pdf("sanity_check_ph.pdf", height = 10, width = 10)
-ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = performance, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 dev.off()
 
+ph <- ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad"), formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
+ah <- ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
+rts <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_csv, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
+swings <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_swing, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
+h <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_entropy, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
+peabs <-  ggplot(dfc[dfc$run>1,],aes(run_trial, abs(pe_max), lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
+pe <-  ggplot(dfc[dfc$run>1,],aes(run_trial, abs(pe_max), lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
+
+pdf("sanity_check_aph.pdf", height = 10, width = 20)
+ggarrange(ah,ph,nrow = 2)
+dev.off()
+
+pdf("rts_signals_aph.pdf", height = 20, width = 20)
+ggarrange(rts, swings, h, pe, ah,ph,nrow = 6)
+dev.off()
+
+
 pdf("ph_bs_by_pe_resp.pdf", height = 10, width = 10)
-ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = pe_f2_hipp_resp, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = pe_f2_hipp_resp, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 dev.off()
 
 
 pdf("sanity_check_ah.pdf", height = 10, width = 10)
-ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = performance, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 dev.off()
 
 pdf("ah_bs_by_h_resp.pdf", height = 10, width = 10)
-ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = h_HippAntL_resp, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = h_HippAntL_resp, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
+dev.off()
+
+
+# plot the between-regions interaction on RTs
+pdf("ant_by_post_on_rt.pdf", width = 10, height = 10)
+ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_lag, rt_csv, lty = h_ant_hipp_b_f>0, color = peb_f2_p_hipp>0)) + 
+  # geom_smooth(method = 'gam', formula = y ~ s(x, bs = "tp")) + facet_grid(~rewFunc)
+  geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+
+dev.off()
+
+pdf("ant_by_post_rt_timecourse.pdf", width = 10, height = 10)
+ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(run_trial, rt_csv, lty = h_ant_hipp_b_f>0, color = peb_f2_p_hipp>0)) + 
+  # geom_smooth(method = 'gam', formula = y ~ s(x, bs = "tp")) + facet_grid(~rewFunc)
+  geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+dev.off()
+
+# looks like anterior decreases and posterior increases RT swings
+as <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(h_ant_hipp_b_f, rt_swing)) + geom_smooth(method = 'gam') 
+ps <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_swing)) + geom_smooth(method = 'gam') 
+pdf("ant_post_rt_swing.pdf", width = 16, height = 10)
+ggpubr::ggarrange(as,ps, ncol = 2)
+dev.off()
+
+# check within subjects -- not day and night...
+asi <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(h_ant_hipp_b_f, rt_swing)) + geom_point() + facet_wrap(~id)
+psi <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_swing)) + geom_point() + facet_wrap(~id)
+pdf("ant_post_rtswings_subjects.pdf", width = 16, height = 10)
+ggpubr::ggarrange(asi,psi, ncol = 2)
+dev.off()
+
+# subtle, but anterior causes convergence and posterior, exploration
+am <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_vmax,rt_csv, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'gam') 
+pm <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_vmax,rt_csv, color = peb_f2_p_hipp>0)) + geom_smooth(method = 'gam') 
+pdf("ant_post_rt_vmax.pdf", width = 16, height = 10)
+ggpubr::ggarrange(am,pm, ncol = 2)
 dev.off()
 
 
 # compare ant. vs. post hippocampus
-rts <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_csv, color = performance)) + geom_smooth(method = 'gam') + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
-swings <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_swing, color = performance)) + geom_smooth(method = 'gam') + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
-ah <- ggplot(dfc[dfc$run>1,],aes(run_trial, h_ant_hipp_b_f, color = performance)) + geom_smooth(method = 'gam') + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
-ph <- ggplot(dfc[dfc$run>1,],aes(run_trial, peb_f2_p_hipp, color = performance)) + geom_smooth(method = 'gam') + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
-h <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_entropy, color = performance)) + geom_smooth(method = 'gam') + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
-peabs <-  ggplot(dfc[dfc$run>1,],aes(run_trial, abs(pe_max), color = performance)) + geom_smooth(method = 'gam') + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
-pe <-  ggplot(dfc[dfc$run>1,],aes(run_trial, pe_max, color = performance)) + geom_smooth(method = 'gam') + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
+rts <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_csv, color = performance)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
+swings <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_swing, color = performance)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
+ah <- ggplot(dfc[dfc$run>1,],aes(run_trial, h_ant_hipp_b_f, color = performance)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
+ph <- ggplot(dfc[dfc$run>1,],aes(run_trial, peb_f2_p_hipp, color = performance)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
+h <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_entropy, color = performance)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
+peabs <-  ggplot(dfc[dfc$run>1,],aes(run_trial, abs(pe_max), color = performance)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
+pe <-  ggplot(dfc[dfc$run>1,],aes(run_trial, pe_max, color = performance)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))#+ guides(color = F)
 
 pdf("hipp_bs_beh_timecourse_by_condition_gamma.pdf", width = 12, height = 10)
 ggpubr::ggarrange(rts, swings, h, ah,ph, pe, ncol = 3, nrow = 2)
