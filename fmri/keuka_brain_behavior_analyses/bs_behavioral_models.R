@@ -78,7 +78,7 @@ screen.lmerTest(mfh3)
 
 # ## "model-free" RT swings analyses
 
-wh1 <- lmer(rt_swing ~ (scale(-1/run_trial) + omission_lag + rewFuncIEVsum + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+wh1 <- lmer(rt_swing ~ (scale(-1/run_trial) + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
               (1|id/run), df)
 screen.lmerTest(wh1)
 summary(wh1)
@@ -161,6 +161,18 @@ mbhipp1 <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_l
                  scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f +  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp +
                  v_max_b + v_entropy_b + (1|id/run), df)
 screen.lmerTest(mbhipp1, .01)
+
+
+# this slowing to AH*PH is kinda shocking.  Is it also seen on the next trial?  Not at all -- must be the result of convolution
+mbhipp1_1 <- lmer(rt_next ~ (scale(-1/run_trial)  + scale(rt_csv) + scale(rt_vmax) + v_max_wi + v_entropy_wi + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+                  v_max_b + v_entropy_b + (1|id/run), df)
+screen.lmerTest(mbhipp1_1, .01)
+
+# how do they predict ev?
+ev_hipp<- lmer(rt_next ~ (scale(-1/run_trial)  + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+                 (1|id/run), df)
+screen.lmerTest(ev_hipp, .01)
+
 
 # simplified model
 mbhipp1simp <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
