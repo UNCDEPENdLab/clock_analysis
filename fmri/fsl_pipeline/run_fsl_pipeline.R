@@ -25,7 +25,8 @@ source(file.path(scripts_dir, "functions", "finalize_pipeline_configuration.R"))
 #factorized, selective maintenance, equal basis-generalization width
 #trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz") %>%
 trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_selective_psequate_fixedparams_ffx_trial_statistics.csv.gz") %>%
-  mutate(trial_rel=case_when(
+  mutate(
+    trial_rel=case_when(
     trial >= 1 & trial <= 50 ~ trial,
     trial >= 51 & trial <= 100 ~ trial - 50L, #dplyr/rlang has gotten awfully picky about data types!!
     trial >= 101 & trial <= 150 ~ trial - 100L,
@@ -34,12 +35,24 @@ trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/cl
     trial >= 251 & trial <= 300 ~ trial - 250L,
     trial >= 301 & trial <= 350 ~ trial - 300L,
     trial >= 351 & trial <= 400 ~ trial - 350L,
-    TRUE ~ NA_integer_
-  ), v_entropy_no5=if_else(trial_rel <= 5, NA_real_, v_entropy),
-  d_auc_sqrt=if_else(d_auc > 0, NA_real_, sqrt(-1*d_auc)), #only compute the sqrt of d_auc for negative (i.e., reasonable) observations
-  v_entropy_sqrt=sqrt(v_entropy),
-  rew_om=if_else(score_vba > 0, 1, 0)) %>% #for win/loss maps
-  group_by(id, run) %>%  dplyr::mutate(rt_swing = abs( c(NA, diff(rt_csv)))/1000, rt_swing_sqrt=sqrt(rt_swing)) %>% ungroup() #compute rt_swing within run and subject
+    TRUE ~ NA_integer_),
+    v_entropy_no5=if_else(trial_rel <= 5, NA_real_, v_entropy),
+    d_auc_sqrt=if_else(d_auc > 0, NA_real_, sqrt(-1*d_auc)), #only compute the sqrt of d_auc for negative (i.e., reasonable) observations
+    v_entropy_sqrt=sqrt(v_entropy),
+    rew_om=if_else(score_vba > 0, 1, 0)
+  ) %>% #for win/loss maps
+  group_by(id, run) %>%
+  dplyr::mutate(   #compute rt_swing within run and subject
+    rt_vmax_lag = dplyr::lag(rt_vmax, 1, order_by=trial),
+    rt_vmax_change = abs(rt_vmax - rt_vmax_lag),
+    v_entropy_lag = dplyr::lag(v_entropy, 1, order_by=trial),
+    v_entropy_change = v_entropy - v_entropy_lag, #change in entropy
+    v_entropy_change_pos = v_entropy_change*(v_entropy_change > 0),
+    v_entropy_change_neg = abs(v_entropy_change*(v_entropy_change < 0)),
+    rt_swing = abs( c(NA, diff(rt_csv)))/1000,
+    rt_swing_sqrt=sqrt(rt_swing)) %>%
+  ungroup()
+
 
 subject_df <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/mmy3_demographics.tsv", header=TRUE) %>%
   rename(ID=lunaid, Age=age, Female=female, ScanDate=scandate) %>%
@@ -75,26 +88,30 @@ fsl_model_arguments <- list(
   sceptic_run_variants=list(
 #    c("clock", "feedback", "v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
 #    c("clock", "feedback", "v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
-    c("clock", "feedback", "v_chosen"), #individual regressors
-    c("clock", "feedback", "v_entropy"), #clock-aligned
+#    c("clock", "feedback", "v_chosen"), #individual regressors
+#    c("clock", "feedback", "v_entropy"), #clock-aligned
 #    c("clock", "feedback", "v_entropy_feedback"), #feedback-aligned
 #    c("clock", "feedback", "v_entropy_func"),
-    c("clock", "feedback", "d_auc"), #feedback-aligned
+#    c("clock", "feedback", "d_auc"), #feedback-aligned
 #    c("clock", "feedback", "d_auc_clock"), #clock-aligned
-    c("clock", "feedback", "pe_max"),
+#    c("clock", "feedback", "pe_max"),
 #    c("clock", "feedback", "v_entropy_no5"),
-    c("clock", "feedback", "v_auc"),
+#    c("clock", "feedback", "v_auc"),
 #    c("clock", "feedback", "d_auc_sqrt"),
 #    c("clock", "feedback", "rt_swing"),
 #    c("clock", "feedback", "rt_swing_sqrt"),
-    c("clock", "feedback", "v_max"),
-    c("clock", "feedback", "mean_kld"),
-    c("clock", "feedback", "intrinsic_discrepancy"),
-    c("clock", "feedback", "mean_kld_feedback"),
-    c("clock", "feedback", "intrinsic_discrepancy_feedback")
+#    c("clock", "feedback", "v_max"),
+#    c("clock", "feedback", "mean_kld"),
+#    c("clock", "feedback", "intrinsic_discrepancy"),
+#    c("clock", "feedback", "mean_kld_feedback"),
+#    c("clock", "feedback", "intrinsic_discrepancy_feedback"),
+#    c("clock", "feedback", "rt_vmax_change"),
+#    c("clock", "feedback", "v_entropy_change"),
+#    c("clock", "feedback", "v_entropy_change_pos"),
+#    c("clock", "feedback", "v_entropy_change_neg")
 #    c("clock", "feedback", "rew_om"),
 #    c("clock", "feedback", "pe_max", "rew_om"),
-#    c("clock_bs", "feedback")
+    c("clock_bs", "feedback")
   ),
   group_model_variants=list(
     c("Intercept"),

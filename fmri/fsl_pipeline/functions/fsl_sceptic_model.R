@@ -72,7 +72,9 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   signals <- list()
   if ("clock_bs" %in% sceptic_signals) {
     #beta series variant of clock onset
-    signals[["clock_bs"]] <- list(event="clock", normalization="none", value=1, beta_series=TRUE)
+    #NB. Using RT convolution with a normalization of "none" yields a peculiar beta distribution where
+    #longer responses have smaller betas because the convolved signal goes higher (scaling problem)
+    signals[["clock_bs"]] <- list(event="clock", normalization="evtmax_1", value=1, beta_series=TRUE)
   }
 
   if ("clock" %in% sceptic_signals) {
@@ -114,6 +116,12 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
       value=subj_data %>% select(run, trial, v_max) %>% rename(value=v_max))
   }
 
+  if ("rt_vmax_change" %in% sceptic_signals) {
+    #absolute value of change in best RT (vmax)
+    signals[["rt_vmax_change"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, rt_vmax_change) %>% rename(value=rt_vmax_change))
+  }
+  
   if ("v_entropy" %in% sceptic_signals) {
     #entropy of values, computed on normalized basis weights, aligned with choice
     signals[["v_entropy"]] <- list(event="clock", normalization="evtmax_1",
@@ -131,6 +139,24 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     #entropy of values, computed on discretized evaluated value function, aligned with choice
     signals[["v_entropy_func"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, v_entropy_func) %>% rename(value=v_entropy_func))
+  }
+
+  if ("v_entropy_change" %in% sceptic_signals) {
+    #directed change in entropy on trial t (current) versus t-1
+    signals[["v_entropy_change"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy_change) %>% rename(value=v_entropy_change))
+  }
+
+  if ("v_entropy_change_pos" %in% sceptic_signals) {
+    #only the positive change in entropy
+    signals[["v_entropy_change_pos"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy_change_pos) %>% rename(value=v_entropy_change_pos))
+  }
+
+  if ("v_entropy_change_neg" %in% sceptic_signals) {
+    #only the negative change in entropy
+    signals[["v_entropy_change_neg"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy_change_neg) %>% rename(value=v_entropy_change_neg))
   }
   
   if ("pe_max" %in% sceptic_signals) {
