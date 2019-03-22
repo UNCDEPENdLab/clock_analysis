@@ -387,6 +387,39 @@ b10a <- lmer(peb_f2_p_hipp ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_
             + (1|run), df)
 screen.lmerTest(b10a)
 
+# positive control: robust but mostly unsigned PE signals in f1/cortico-thalamo-striatal network
+b10b <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + pe_max_lag +
+             + (1|id/run), df)
+screen.lmerTest(b10b)
+b10b1 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + abs(pe_max_lag) +
+               + (1|id/run), df)
+screen.lmerTest(b10b1)
+b10b2 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + omission_lag +
+                + (1|id/run), df)
+screen.lmerTest(b10b2)
+# adding pe_max_lag to reward/omission improves AIC by 9 points
+b10b3 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + omission_lag + pe_max_lag +
+                + (1|id/run), df)
+screen.lmerTest(b10b3)
+
+anova(b10b,b10b1,b10b2,b10b3)
+
+# interestingly, even though the PE signal in PH is weaker than in the f1 network, it is signed rather than unsigned.
+b10c <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_csv) + pe_max_lag +
+               + (1|id/run), df)
+screen.lmerTest(b10c)
+b10c1 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_csv) + abs(pe_max_lag) +
+               + (1|id/run), df)
+screen.lmerTest(b10c1)
+# also, it responds to rewards vs. omissions, and PE does not explain additional variance
+b10c2 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_csv) + omission_lag +
+                + (1|id/run), df)
+# adding PE to reward/omission does not improve the model -- PH responds to valence more so than to PE
+b10c3 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_csv) + omission_lag + pe_max_lag +
+                + (1|id/run), df)
+summary(b10c3)
+screen.lmerTest(b10c2)
+anova(b10c1,b10c,b10c2,b10c3)
 
 # is this the case for RT swing prediction?
 # lagged beta series do not explain much
