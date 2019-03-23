@@ -421,6 +421,11 @@ summary(b10c3)
 screen.lmerTest(b10c2)
 anova(b10c1,b10c,b10c2,b10c3)
 
+# PH not sensitive to magnitude of positive outcomes
+dfp <- df[!df$omission_lag,]
+b10c4 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_csv) + scale(magnitude) +
+                + (1|id), dfp)
+summary(b10c4)
 # is this the case for RT swing prediction?
 # lagged beta series do not explain much
 # s0 <- lmer(log(rt_swing) ~  (scale(-1/run_trial) + + omission_lag + v_max_wi_lag + v_entropy_wi + 

@@ -69,6 +69,11 @@ pdf("ah_bs_by_h_resp.pdf", height = 10, width = 10)
 ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = h_HippAntL_resp, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 dev.off()
 
+# how does Hipp scale with PEs?
+pdf("ph_vs_pe.pdf", height = 10, width = 10)
+ggplot(dfc,aes(pe_max_lag,peb_f2_p_hipp, color = rewFunc)) + geom_smooth(method = 'gam') + facet_grid(~rewFunc)
+dev.off()
+
 
 # plot the between-regions interaction on RTs
 pdf("ant_by_post_on_rt.pdf", width = 10, height = 10)
@@ -103,6 +108,22 @@ am <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_v
 pm <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_vmax,rt_csv, color = peb_f2_p_hipp>0)) + geom_smooth(method = 'gam') 
 pdf("ant_post_rt_vmax.pdf", width = 16, height = 10)
 ggpubr::ggarrange(am,pm, ncol = 2)
+dev.off()
+
+
+# further investigation of RT convolution effect on beta series
+rt_bs <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_csv, peb_f2_p_hipp)) + geom_smooth() + facet_wrap(~rewFunc)
+pdf("post_rt.pdf", width = 16, height = 10)
+rt_bs
+dev.off()
+
+ph <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp,rt_csv, color = rewFunc)) + geom_smooth()
+ah <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(h_ant_hipp_b_f,rt_csv, color = rewFunc)) + geom_smooth()
+dan <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(hb_f1_DAN_vlPFC,rt_csv, color = rewFunc)) + geom_smooth()
+pe1 <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f1_cort_str,rt_csv, color = rewFunc)) + geom_smooth()
+
+pdf("rt_bs.pdf", width = 20, height = 20)
+ggpubr::ggarrange(ah, dan, ph, pe1, ncol = 2, nrow = 2)
 dev.off()
 
 
