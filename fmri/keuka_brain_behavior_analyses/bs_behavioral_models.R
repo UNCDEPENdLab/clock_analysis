@@ -377,14 +377,12 @@ anova(w0, w0dan)
 #            + v_max_b + v_entropy_b + (1|run), df)
 # screen.lmerTest(b8)
 
-# posterior-to-anterior connectivity seems to be modulated by entropy and ?rt_vmax_lag
-b9a <- lmer(h_ant_hipp_b_f ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + scale(pe_max) + rt_vmax_lag + peb_f2_p_hipp)^2 
-           + (1|run), df)
+# AH much more sensitive to entropy
+summary(b9a <- lmer(h_ant_hipp_b_f ~ v_entropy_wi + omission_lag + scale(rt_csv) + (1|run), df))
 screen.lmerTest(b9a)
 
-# anterior-to-posterior connectivity may be modulated by rt_vmax_lag
-b10a <- lmer(peb_f2_p_hipp ~ (scale(-1/run_trial) + omission_lag + v_max_wi + v_entropy_wi + scale(pe_max) + rt_vmax_lag + h_ant_hipp_b_f)^2
-            + (1|run), df)
+# PH slightly more sensitive to reward/omission and INsensitive to entropy
+summary(b10a <- lmer(peb_f2_p_hipp ~ v_entropy_wi + omission_lag + scale(rt_csv) + (1|run), df))
 screen.lmerTest(b10a)
 
 # positive control: robust but mostly unsigned PE signals in f1/cortico-thalamo-striatal network
@@ -423,9 +421,23 @@ anova(b10c1,b10c,b10c2,b10c3)
 
 # PH not sensitive to magnitude of positive outcomes
 dfp <- df[!df$omission_lag,]
+dfn <- df[df$omission_lag,]
 b10c4 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_csv) + scale(magnitude) +
                 + (1|id), dfp)
 summary(b10c4)
+# but peb1 is sensitive to magnitude...
+b10c5 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + scale(magnitude) +
+                + (1|id), dfp)
+summary(b10c5)
+# PH relatively more sensitive to PE-
+b10c6 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_csv) + scale(pe_max_lag) +
+                + (1|id), dfn)
+summary(b10c6)
+# cortico-striatal peb1 is NOT sensitive to PE-
+b10c7 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + scale(pe_max_lag) +
+                + (1|id), dfn)
+summary(b10c7)
+
 # is this the case for RT swing prediction?
 # lagged beta series do not explain much
 # s0 <- lmer(log(rt_swing) ~  (scale(-1/run_trial) + + omission_lag + v_max_wi_lag + v_entropy_wi + 
