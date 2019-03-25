@@ -88,30 +88,30 @@ fsl_model_arguments <- list(
   sceptic_run_variants=list(
 #    c("clock", "feedback", "v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
 #    c("clock", "feedback", "v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
-#    c("clock", "feedback", "v_chosen"), #individual regressors
-#    c("clock", "feedback", "v_entropy"), #clock-aligned
+    c("clock", "feedback", "v_chosen"), #individual regressors
+    c("clock", "feedback", "v_entropy"), #clock-aligned
 #    c("clock", "feedback", "v_entropy_feedback"), #feedback-aligned
 #    c("clock", "feedback", "v_entropy_func"),
-#    c("clock", "feedback", "d_auc"), #feedback-aligned
+    c("clock", "feedback", "d_auc"), #feedback-aligned
 #    c("clock", "feedback", "d_auc_clock"), #clock-aligned
-#    c("clock", "feedback", "pe_max"),
+    c("clock", "feedback", "pe_max"),
 #    c("clock", "feedback", "v_entropy_no5"),
 #    c("clock", "feedback", "v_auc"),
 #    c("clock", "feedback", "d_auc_sqrt"),
-#    c("clock", "feedback", "rt_swing"),
+    c("clock", "feedback", "rt_swing"),
 #    c("clock", "feedback", "rt_swing_sqrt"),
 #    c("clock", "feedback", "v_max"),
 #    c("clock", "feedback", "mean_kld"),
 #    c("clock", "feedback", "intrinsic_discrepancy"),
 #    c("clock", "feedback", "mean_kld_feedback"),
 #    c("clock", "feedback", "intrinsic_discrepancy_feedback"),
-#    c("clock", "feedback", "rt_vmax_change"),
-#    c("clock", "feedback", "v_entropy_change"),
-#    c("clock", "feedback", "v_entropy_change_pos"),
-#    c("clock", "feedback", "v_entropy_change_neg")
+    c("clock", "feedback", "rt_vmax_change"),
+    c("clock", "feedback", "v_entropy_change"),
+    c("clock", "feedback", "v_entropy_change_pos"),
+    c("clock", "feedback", "v_entropy_change_neg")
 #    c("clock", "feedback", "rew_om"),
 #    c("clock", "feedback", "pe_max", "rew_om"),
-    c("clock_bs", "feedback")
+#    c("clock_bs", "feedback")
   ),
   group_model_variants=list(
     c("Intercept"),
@@ -124,7 +124,14 @@ fsl_model_arguments <- list(
   #model_suffix="_fse", #factorized, selective, equal generalization width
   model_suffix="_fse_groupfixed", #factorized, selective, equal generalization width
   root_workdir="/gpfs/scratch/mnh5174/run_fsl_pipeline_qsub_tmp",
-  n_cluster_beta_cpus=8 #should be number of l2 contrasts, or lower
+  n_cluster_beta_cpus=8, #should be number of l2 contrasts, or lower
+  badids = c(11335, #low IQ, ADHD Hx, loss of consciousness
+    11332, #should be excluded, but scan was terminated early due to repeated movement
+    11282, #RTs at the floor for essentially all runs. Not appropriate
+    11246, #huge movement and RTs at floor
+    #10637, #large and many movements in later runs (need to revisit to confirm) ### OCT2018: 6 of 8 runs pass our algorithmic thresholds for motion
+    10662  #I think there are reconstruction problems here -- need to revisit
+  )
 )
 
 #validate and populate any other pipeline details before execution

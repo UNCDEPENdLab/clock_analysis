@@ -22,7 +22,7 @@ library(dependlab)
 subinfo <- fsl_model_arguments$subject_covariates
 feat_run_outdir <- fsl_model_arguments$outdir[run_model_index] #the name of the subfolder for the current run-level model
 feat_lvl3_outdir <- file.path(fsl_model_arguments$group_output_dir, feat_run_outdir) #output directory for this run-level model
-ncopes <- fsl_model_arguments$n_l1_copes[run_model_index] #number of l1 copes determines number of FEAT LVL3 analyses to run (1 per LVL1 cope)
+n_l1_copes <- fsl_model_arguments$n_l1_copes[run_model_index] #number of l1 copes determines number of FEAT LVL3 analyses to run (1 per LVL1 cope)
 l1_cope_names <- fsl_model_arguments$l1_cope_names[[run_model_index]] #names of l1 copes (used for folder naming)
 
 subinfo$dir_found <- file.exists(subinfo$mr_dir)
@@ -46,7 +46,7 @@ models <- fsl_model_arguments$group_model_variants #different covariate models f
 ##rework using subinfo structure as the authoritative guide (rather than repeated searches)
 copedf <- c()
 for (s in 1:nrow(subinfo)) {
-  for (cope in 1:ncopes) {
+  for (cope in 1:n_l1_copes) {
     expectdir <- file.path(subinfo[s,"mr_dir"], fsl_model_arguments$expectdir, feat_run_outdir, feat_lvl2_dirname, paste0("cope", cope, ".feat"))
     if (dir.exists(expectdir)) {
       copedf <- rbind(copedf, data.frame(ID=subinfo[s,"ID"], model=feat_run_outdir, cope=cope, fsldir=expectdir))
@@ -57,15 +57,9 @@ for (s in 1:nrow(subinfo)) {
 }
 
 mdf <- merge(subinfo, copedf, by="ID", all.y=TRUE)
-badids <- c(11335, #low IQ, ADHD Hx, loss of consciousness
-            11332, #should be excluded, but scan was terminated early due to repeated movement
-            11282, #RTs at the floor for essentially all runs. Not appropriate
-            11246, #huge movement and RTs at floor
-            #10637, #large and many movements in later runs (need to revisit to confirm) ### OCT2018: 6 of 8 runs pass our algorithmic thresholds for motion
-            10662  #I think there are reconstruction problems here -- need to revisit
-            ) 
 
-mdf <- mdf %>% filter(!ID %in% badids)
+#remove bad ids
+mdf <- mdf %>% filter(!ID %in% fsl_model_arguments$badids)
 mdf <- arrange(mdf, ID, model, cope)
 
 ##fsl constructs models by cope

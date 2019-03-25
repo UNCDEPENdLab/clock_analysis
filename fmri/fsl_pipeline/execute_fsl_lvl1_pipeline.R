@@ -1,5 +1,9 @@
 #load the specified RData object and call the LVL fitting function requested
 
+#For testing
+#Sys.setenv(fsl_pipeline_file="/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/MMClock_aroma_preconvolve_fse_groupfixed.RData")
+#Sys.setenv(run_model_index=1)
+
 to_run <- Sys.getenv("fsl_pipeline_file")
 run_model_index <- as.numeric(Sys.getenv("run_model_index")) #which variant to execute
 if (nchar(to_run) == 0L) { stop("Cannot locate environment variable fsl_pipeline_file") }

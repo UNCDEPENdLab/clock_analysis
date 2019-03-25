@@ -40,7 +40,7 @@ model_clock_fmri_lvl1 <- function(trial_statistics, fmri_dir=NULL, idexpr=NULL, 
         mrmatch <- iddf$mr_dir[iddf$NUM_ID == subid]
       } else {
         ##identify corresponding fmri directory
-        mrmatch <- grep(eval(idexpr), list.files(fmri_dir, full.names=TRUE), perl=TRUE, value=TRUE)
+        mrmatch <- grep(eval(idexpr), list.dirs(fmri_dir, full.names=TRUE, recursive=FALSE), perl=TRUE, value=TRUE)
       }
 
       if (length(mrmatch) != 1L) {
