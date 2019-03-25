@@ -168,10 +168,12 @@ mbhipp1_1 <- lmer(rt_next ~ (scale(-1/run_trial)  + scale(rt_csv) + scale(rt_vma
                   v_max_b + v_entropy_b + (1|id/run), df)
 screen.lmerTest(mbhipp1_1, .01)
 
-# how do they predict ev?
-ev_hipp<- lmer(rt_next ~ (scale(-1/run_trial)  + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+# how do they predict next RT?
+rt_next_hipp<- lmer(rt_next ~ (rt_vmax + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
                  (1|id/run), df)
-screen.lmerTest(ev_hipp, .01)
+screen.lmerTest(rt_next_hipp, .01)
+
+
 
 
 # simplified model
