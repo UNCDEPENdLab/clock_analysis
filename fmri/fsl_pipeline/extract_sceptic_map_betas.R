@@ -54,6 +54,9 @@ subinfo$dir_found <- file.exists(subinfo$mr_dir)
 feat_lvl2_dirname <- "FEAT_LVL2_runtrend.gfeat" #should populate this to the structure at some point
 models <- sapply(fsl_model_arguments$group_model_variants, function(x) { paste(x, collapse="-") }) #different covariate models for the current run-level model (run_model_index)
 
+#whether to extract from beta series (very slow)
+calculate_beta_series <- TRUE
+
 for (l1 in 1:n_l1_copes) {
   l1_contrast_name <- l1_cope_names[l1]
   model_output_dir <- file.path(feat_lvl3_outdir, l1_contrast_name)
@@ -197,13 +200,17 @@ for (l1 in 1:n_l1_copes) {
           full_join(design_df, by="feat_input_id") #merge with all covariates
 
         #handle beta series extraction (NB. beta_series_inputs should be in same order as subject_inputs based on use of sub above)
-        beta_series_df <- get_beta_series(beta_series_inputs, roimask, n_bs=50)
+        if (calculate_beta_series) {          
+          beta_series_df <- get_beta_series(beta_series_inputs, roimask, n_bs=50)
 
-        #for identification, add cluster information to beta series from ROI data.frame
-        beta_series_df <- beta_series_df %>% left_join(roi_df, by=c("feat_input_id", "cluster_number")) %>%
-          select(feat_input_id, run, trial, cluster_number, everything())
+          #for identification, add cluster information to beta series from ROI data.frame
+          beta_series_df <- beta_series_df %>% left_join(roi_df, by=c("feat_input_id", "cluster_number")) %>%
+            select(feat_input_id, run, trial, cluster_number, everything())
 
-        #beta_series_df %>% group_by(feat_input_id) %>% summarize(mean(bs_value), mean(cope_value))
+          #beta_series_df %>% group_by(feat_input_id) %>% summarize(mean(bs_value), mean(cope_value))
+        } else {
+          beta_series_df <- data.frame()
+        }
         
         coords <- lapply(maskvals, function(v) {
           mi <- which(roimask==v, arr.ind=TRUE)
@@ -241,12 +248,15 @@ for (l1 in 1:n_l1_copes) {
   #organize models intelligently
   all_metadata <- all_metadata %>% arrange(model, l1_contrast, l2_contrast, l3_contrast)
   all_rois <- all_rois %>% arrange(model, l1_contrast, l2_contrast, l3_contrast, cluster_number, feat_input_id)
-  all_beta_series <- all_beta_series %>% arrange(model, l1_contrast, l2_contrast, l3_contrast, cluster_number, feat_input_id, run, trial)
 
   readr::write_csv(x=all_metadata, file.path(model_output_dir, paste0(l1_contrast_name, "_cluster_metadata.csv")))
   readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_roi_betas.csv")))
-  readr::write_csv(x=all_beta_series, file.path(model_output_dir, paste0(l1_contrast_name, "_roi_beta_series.csv.gz")))
 
+  if (calculate_beta_series) {
+    all_beta_series <- all_beta_series %>% arrange(model, l1_contrast, l2_contrast, l3_contrast, cluster_number, feat_input_id, run, trial)
+    readr::write_csv(x=all_beta_series, file.path(model_output_dir, paste0(l1_contrast_name, "_roi_beta_series.csv.gz")))
+  }
+  
   #not uniquely useful at present (CSVs have it all)
   #save(all_metadata, all_rois, dmat, file=file.path(model_output_dir, "sceptic_clusters.RData"))
 
