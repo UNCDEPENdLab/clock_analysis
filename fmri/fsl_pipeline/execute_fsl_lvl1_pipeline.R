@@ -30,7 +30,7 @@ fsl_model_arguments$workdir <- NULL
 
 #overuse of ... in subsidiary calls to model_clock_fmri_lvl1 will eventually blow up at the build_design_matrix step... need a better solution to make effective use of the ... argument
 #this is my hack for now
-lvl1_args <- fsl_model_arguments[c("trial_statistics", "fmri_dir", "idexpr",
+lvl1_args <- fsl_model_arguments[c("trial_statistics", "id_col", "subject_covariates",
   "drop_volumes", "ncpus", "expectdir", "expectfile",
   "sceptic_run_signals", "outdir", "usepreconvolve", "spikeregressors", "model_suffix",
   "execute_feat", "tr")]

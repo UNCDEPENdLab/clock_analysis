@@ -55,14 +55,14 @@ trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/cl
 
 
 subject_df <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/mmy3_demographics.tsv", header=TRUE) %>%
-  rename(ID=lunaid, Age=age, Female=female, ScanDate=scandate) %>%
-  mutate(mr_dir = paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", ID, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
+  rename(id=lunaid, Age=age, Female=female, ScanDate=scandate) %>%
+  mutate(mr_dir = paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", id, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
     I_Age = -1000*1/Age,
     I_Age_c = I_Age - mean(I_Age, na.rm=TRUE),
     Age_c = Age - mean(Age, na.rm=TRUE),
     Q_Age = Age_c^2,
     Q_Age_c = Q_Age - mean(Q_Age, na.rm=TRUE)
-    )
+  )
 
 #from 2017:
 ##results from Mean SCEPTIC regressor correlation.pdf indicate that regressors for vchosen, ventropy_decay_matlab, dauc, and pemax are
@@ -75,6 +75,7 @@ fsl_model_arguments <- list(
   analysis_name="MMClock_aroma_preconvolve_fse_groupfixed",
   trial_statistics = trial_df,
   subject_covariates = subject_df,
+  id_col = "id",
   fmri_dir = "/gpfs/group/mnh5174/default/MMClock/MR_Proc",
   expectdir = "mni_5mm_aroma", #subfolder name for processed data
   expectfile = "nfaswuktm_clock[0-9]_5.nii.gz", #expected file name for processed clock data
@@ -83,35 +84,34 @@ fsl_model_arguments <- list(
   drop_volumes=2, #to handle steady state concerns
   tr=1.0, #seconds
   spikeregressors=FALSE, #don't include spike regressors in nuisance variables since we are using AROMA
-  idexpr=expression(subid), #how to match between the subject ID in trial_statistics and the folder structure on the file system
-  idregex="([0-9]{5})_\\d+", #5 digit ID, followed by irrelevant date. A bit inelegant, but used in setup_feat_lvl2_inputs to infer the subject's ID from the MR folder structure
   sceptic_run_variants=list(
+    c("clock", "feedback_bs")
+#    c("clock_bs", "feedback")
 #    c("clock", "feedback", "v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
 #    c("clock", "feedback", "v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
-    c("clock", "feedback", "v_chosen"), #individual regressors
-    c("clock", "feedback", "v_entropy"), #clock-aligned
+#    c("clock", "feedback", "v_chosen"), #individual regressors
+#    c("clock", "feedback", "v_entropy"), #clock-aligned
 #    c("clock", "feedback", "v_entropy_feedback"), #feedback-aligned
 #    c("clock", "feedback", "v_entropy_func"),
-    c("clock", "feedback", "d_auc"), #feedback-aligned
+#    c("clock", "feedback", "d_auc"), #feedback-aligned
 #    c("clock", "feedback", "d_auc_clock"), #clock-aligned
-    c("clock", "feedback", "pe_max"),
+#    c("clock", "feedback", "pe_max"),
 #    c("clock", "feedback", "v_entropy_no5"),
 #    c("clock", "feedback", "v_auc"),
 #    c("clock", "feedback", "d_auc_sqrt"),
-    c("clock", "feedback", "rt_swing"),
+#    c("clock", "feedback", "rt_swing"),
 #    c("clock", "feedback", "rt_swing_sqrt"),
 #    c("clock", "feedback", "v_max"),
 #    c("clock", "feedback", "mean_kld"),
 #    c("clock", "feedback", "intrinsic_discrepancy"),
 #    c("clock", "feedback", "mean_kld_feedback"),
 #    c("clock", "feedback", "intrinsic_discrepancy_feedback"),
-    c("clock", "feedback", "rt_vmax_change"),
-    c("clock", "feedback", "v_entropy_change"),
-    c("clock", "feedback", "v_entropy_change_pos"),
-    c("clock", "feedback", "v_entropy_change_neg")
+#    c("clock", "feedback", "rt_vmax_change"),
+#    c("clock", "feedback", "v_entropy_change"),
+#    c("clock", "feedback", "v_entropy_change_pos"),
+#    c("clock", "feedback", "v_entropy_change_neg")
 #    c("clock", "feedback", "rew_om"),
-#    c("clock", "feedback", "pe_max", "rew_om"),
-#    c("clock_bs", "feedback")
+#    c("clock", "feedback", "pe_max", "rew_om")
   ),
   group_model_variants=list(
     c("Intercept"),

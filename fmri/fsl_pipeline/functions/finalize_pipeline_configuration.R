@@ -31,8 +31,10 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
     if (!any(c("clock", "clock_bs") %in% v)) {
       stop("No clock event is in the model: ", paste(v, collapse=","))
     }
-  }
-  
+    if (!any(c("feedback", "feedback_bs") %in% v)) {
+      stop("No feedback event is in the model: ", paste(v, collapse=","))
+    }
+  }  
   
   return(fsl_model_arguments)
 }
