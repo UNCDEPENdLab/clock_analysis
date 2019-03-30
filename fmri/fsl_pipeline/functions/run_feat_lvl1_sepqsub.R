@@ -38,7 +38,7 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
   #look in the subfolder for each subject for fsf files
   fsfFiles <- do.call(c, lapply(subject_covariates$mr_dir, function(s) {
     system(paste0("find ", file.path(s, expectdir), " -mindepth 2 -iname \"FEAT_LVL1_*.fsf\" -ipath \"*/", model_match, "/*\" -type f"), intern=TRUE)
-  })
+  }))
 
   #figure out which fsf files have already been run
   dirExpect <- gsub("\\.fsf$", ".feat", fsfFiles, perl=TRUE)

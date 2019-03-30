@@ -71,7 +71,15 @@ atlas_imgs <- lapply(atlas_files, readNIfTI, reorient=FALSE)
 # Here, we need to go back to original inputs prior to even lvl2 analysis
 
 #use this for 1st-level results
-l1_inputs <- feat_l2_inputs_df$feat_run
+l1_inputs <- feat_l2_inputs_df$feat_dir
+
+l1_niftis <- sapply(l1_inputs, function(x) {
+  fsf <- readLines(file.path(x, "design.fsf"))
+  nifti <- grep("^set feat_files\\(1\\)", fsf, perl=TRUE, value=TRUE)
+  stopifnot(length(nifti)==1L)
+  nifti <- paste0(sub("set feat_files\\(1\\) \"([^\"]+)\"", "\\1", nifti, perl=TRUE), ".nii.gz")
+  return(nifti)
+})
 
 ##rework using subinfo structure as the authoritative guide (rather than repeated searches)
 copedf <- c()
@@ -79,18 +87,18 @@ for (s in 1:nrow(subinfo)) {
   for (cope in 1:n_l1_copes) {
     expectdir <- file.path(subinfo[s,"mr_dir"], fsl_model_arguments$expectdir, feat_run_outdir, feat_lvl2_dirname, paste0("cope", cope, ".feat"))
     if (dir.exists(expectdir)) {
-      copedf <- rbind(copedf, data.frame(ID=subinfo[s,"ID"], model=feat_run_outdir, cope=cope, fsldir=expectdir, stringsAsFactors=FALSE))
+      copedf <- rbind(copedf, data.frame(id=subinfo[s,"id"], model=feat_run_outdir, cope=cope, fsldir=expectdir, stringsAsFactors=FALSE))
     } else {
       message("could not find expected directory: ", expectdir)
     }
   }
 }
 
-mdf <- merge(subinfo, copedf, by="ID", all.y=TRUE)
+mdf <- merge(subinfo, copedf, by="id", all.y=TRUE)
 
 #remove bad ids
-mdf <- mdf %>% filter(!ID %in% fsl_model_arguments$badids)
-mdf <- arrange(mdf, ID, model, cope)
+mdf <- mdf %>% filter(!id %in% fsl_model_arguments$badids)
+mdf <- arrange(mdf, id, model, cope)
 
 #this differs from l3 approach where we use the inputs to FLAME
 
@@ -116,10 +124,6 @@ for (l1 in 1:n_l1_copes) {
   n_l2_contrasts <- max(l2_contrast_nums)
   l2_contrast_names <- l2_contrast_names[order(l2_contrast_nums)] #order l2 contrast names in ascending order to match l2 loop below
 
-  #to get L1 betas (per run), we need to extract the inputs to the L2 analysis. These are embedded in the L2 FSF file
-  #for () {
-  #}
-  
   #hard coding location of beta series analysis for now
   beta_series_inputs <- sub(paste0("^(", fsl_model_arguments$fmri_dir, "/", fsl_model_arguments$idregex, "/", fsl_model_arguments$expectdir,
     ")/.*"), "\\1/sceptic-clock_bs-feedback-preconvolve_fse_groupfixed", subject_inputs)
@@ -137,7 +141,7 @@ for (l1 in 1:n_l1_copes) {
     
     #generate concatenated cope file image of l2 images (one per subject)
     copeconcat <- array(0, dim=c(imgdims, length(copefiles)))
-    #copefiles <- copefiles[file.exists(copefiles)] #don't suggest enabling this in general because it can lead to a mismatch with ID
+    #copefiles <- copefiles[file.exists(copefiles)] #don't suggest enabling this in general because it can lead to a mismatch with id
     for (i in 1:length(copefiles)) { copeconcat[,,,i] <- readNIfTI(copefiles[i], reorient=FALSE)@.Data }
     
     atlas_df <- list()
@@ -155,13 +159,14 @@ for (l1 in 1:n_l1_copes) {
       
       #reshape into data.frame with beta, numeric numid, and vnum
       beta_df <- reshape2::melt(beta_mat, varnames=c("numid", "vnum"), value.name="beta")
-      beta_df <- beta_df %>% inner_join(a_coordinates, by="vnum") %>% select(-i, -j, -k) %>% inner_join(l1_subinfo %>% select(numid, ID, fsldir), by="numid")
+      beta_df <- beta_df %>% inner_join(a_coordinates, by="vnum") %>% select(-i, -j, -k) %>% inner_join(l1_subinfo %>% select(numid, id, fsldir), by="numid")
       
       atlas_df[[ai]] <- beta_df
     }
 
     atlas_df <- do.call(rbind, atlas_df) %>% mutate(l1_contrast=l1_contrast_name, l2_contrast=l2_contrast_name)       
-    
+
+    #NOT IMPLEMENTED YET
     #handle beta series extraction (NB. beta_series_inputs should be in same order as subject_inputs based on use of sub above)
     if (calculate_beta_series) {          
       beta_series_df <- get_beta_series(beta_series_inputs, roimask, n_bs=50)

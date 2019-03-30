@@ -52,8 +52,9 @@ feat_lvl2_dirname <- "FEAT_LVL2_runtrend.gfeat" #should populate this to the str
 models <- sapply(fsl_model_arguments$group_model_variants, function(x) { paste(x, collapse="-") }) #different covariate models for the current run-level model (run_model_index)
 
 #whether to extract from beta series (very slow)
-calculate_beta_series <- FALSE
+calculate_beta_series <- TRUE
 calculate_l1_betas <- TRUE
+beta_series_suffix <- "_feedback_bs" #or "clock_bs"
 
 for (l1 in 1:n_l1_copes) {
   l1_contrast_name <- l1_cope_names[l1]
@@ -124,8 +125,11 @@ for (l1 in 1:n_l1_copes) {
     }
     
     #hard coding location of beta series analysis for now
-    beta_series_inputs <- sub(paste0("^(", fsl_model_arguments$fmri_dir, "/", fsl_model_arguments$idregex, "/", fsl_model_arguments$expectdir,
-      ")/.*"), "\\1/sceptic-clock_bs-feedback-preconvolve_fse_groupfixed", subject_inputs)
+    #beta_series_inputs <- sub(paste0("^(", fsl_model_arguments$fmri_dir, "/", fsl_model_arguments$idregex, "/", fsl_model_arguments$expectdir,
+    #  ")/.*"), "\\1/sceptic-clock_bs-feedback-preconvolve_fse_groupfixed", subject_inputs)
+
+    beta_series_inputs <- sub(paste0("^(", fsl_model_arguments$fmri_dir, "/[^/]+/", fsl_model_arguments$expectdir,
+      ")/.*"), "\\1/sceptic-clock-feedback_bs-preconvolve_fse_groupfixed", subject_inputs, perl=TRUE)
     
     #loop over l2 contrasts
     #l2_loop_outputs <- foreach(l2=iter(1:n_l2_contrasts), .packages=c("oro.nifti", "dplyr")) %do% {
@@ -282,11 +286,11 @@ for (l1 in 1:n_l1_copes) {
   readr::write_csv(x=all_metadata, file.path(model_output_dir, paste0(l1_contrast_name, "_cluster_metadata.csv")))
   readr::write_csv(x=all_subj_betas, file.path(model_output_dir, paste0(l1_contrast_name, "_subj_betas.csv")))
 
-  if (calculate_l1_betas) { readr::write_csv(x=all_l1betas, file.path(model_output_dir, paste0(l1_contrast_name, "_run_betas.csv"))) }
+  if (calculate_l1_betas) { readr::write_csv(x=all_l1betas, file.path(model_output_dir, paste0(l1_contrast_name, "_run_betas.csv.gz"))) }
 
   if (calculate_beta_series) {
     all_beta_series <- all_beta_series %>% arrange(model, l1_contrast, l2_contrast, l3_contrast, cluster_number, feat_input_id, run, trial)
-    readr::write_csv(x=all_beta_series, file.path(model_output_dir, paste0(l1_contrast_name, "_roi_beta_series.csv.gz")))
+    readr::write_csv(x=all_beta_series, file.path(model_output_dir, paste0(l1_contrast_name, "_roi_beta_series", beta_series_suffix, ".csv.gz")))
   }
   
   #not uniquely useful at present (CSVs have it all)
