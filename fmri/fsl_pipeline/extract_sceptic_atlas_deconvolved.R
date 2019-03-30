@@ -76,7 +76,8 @@ for (ai in 1:length(atlas_files)) {
   a_indices <- which(aimg != 0, arr.ind=TRUE)
   a_coordinates <- cbind(a_indices, t(apply(a_indices, 1, function(r) { translateCoordinate(i=r, nim=aimg, verbose=FALSE) })))
   a_coordinates <- as.data.frame(a_coordinates) %>% setNames(c("i", "j", "k", "x", "y", "z")) %>%
-    mutate(vnum=1:n(), atlas_value=aimg[a_indices], atlas_name=basename(atlas_files[ai])) %>% select(vnum, atlas_value, everything())
+    mutate(vnum=1:n(), atlas_value=aimg[a_indices], atlas_name=basename(atlas_files[ai])) %>%
+    mutate_at(vars(x,y,z), round, 2) %>% select(vnum, atlas_value, everything())
 
   #loop over niftis
   for (si in 1:length(l1_niftis)) {
@@ -99,13 +100,13 @@ for (ai in 1:length(atlas_files)) {
     
     deconv_df <- deconv_melt %>% left_join(a_coordinates, by="vnum") %>%
       mutate(nifti=sub("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", "", l1_niftis[si], fixed=TRUE)) %>%
-      cbind(feat_l2_inputs_df %>% select(subid, run_num, contingency, emotion, drop_volumes) %>% dplyr::slice(l1)) %>% #add metadata
+      cbind(feat_l2_inputs_df %>% select(subid, run_num, contingency, emotion, drop_volumes) %>% dplyr::slice(si)) %>% #add metadata
       mutate(time=time+drop_volumes) %>% select(-drop_volumes, -nifti) %>% #dropping nifti for now to save on file size
       select(subid, run_num, contingency, emotion, time, atlas_name, atlas_value, vnum, x, y, z, decon) #omitting i,j,k for now
 
     orig_df <- to_deconvolve_melt %>% left_join(a_coordinates, by="vnum") %>%
       mutate(nifti=sub("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", "", l1_niftis[si], fixed=TRUE)) %>%
-      cbind(feat_l2_inputs_df %>% select(subid, run_num, contingency, emotion, drop_volumes) %>% dplyr::slice(l1)) %>% #add metadata
+      cbind(feat_l2_inputs_df %>% select(subid, run_num, contingency, emotion, drop_volumes) %>% dplyr::slice(si)) %>% #add metadata
       mutate(time=time+drop_volumes) %>% select(-drop_volumes, -nifti) %>% #dropping nifti for now to save on file size
       select(subid, run_num, contingency, emotion, time, atlas_name, atlas_value, vnum, x, y, z, BOLD_z)
 
