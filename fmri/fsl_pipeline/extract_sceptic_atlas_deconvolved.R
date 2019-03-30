@@ -71,7 +71,7 @@ kernel <- spm_hrf(TR)$hrf #canonical SPM difference of gammas
 
 #loop over atlas files
 for (ai in 1:length(atlas_files)) {
-
+  cat("Working on atlas: ", atlas_files[ai], "\n")
   aimg <- atlas_imgs[[ai]]
   a_indices <- which(aimg != 0, arr.ind=TRUE)
   a_coordinates <- cbind(a_indices, t(apply(a_indices, 1, function(r) { translateCoordinate(i=r, nim=aimg, verbose=FALSE) })))
@@ -80,6 +80,7 @@ for (ai in 1:length(atlas_files)) {
 
   #loop over niftis
   for (si in 1:length(l1_niftis)) {
+    cat("  Deconvolving subject: ", l1_niftis[si], "\n")
     dump_out <- tempfile()
     runAFNICommand(paste0("3dmaskdump -mask ", atlas_files[ai], " -o ", dump_out, " ", l1_niftis[si]))
     ts_out <- data.table::fread(dump_out) #read time series
