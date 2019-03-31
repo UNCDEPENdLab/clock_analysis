@@ -70,8 +70,11 @@ ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = h_HippAntL_resp, color = rewFunc)
 dev.off()
 
 # how does Hipp scale with PEs?
-pdf("ph_vs_pe.pdf", height = 10, width = 10)
-ggplot(dfc,aes(pe_max_lag,peb_f2_p_hipp, color = rewFunc)) + geom_smooth(method = 'gam') + facet_grid(~rewFunc)
+p2 <- ggplot(dfc,aes(pe_max_lag,peb_f2_p_hipp, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+p1 <- ggplot(dfc,aes(pe_max_lag,peb_f1_cort_str, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+
+pdf("peb_vs_pe.pdf", height = 10, width = 20)
+ggarrange(p1,p2,ncol = 2,nrow = 1)
 dev.off()
 
 
