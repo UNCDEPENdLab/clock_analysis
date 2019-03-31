@@ -51,6 +51,25 @@ pdf("sanity_check_aph.pdf", height = 10, width = 20)
 ggarrange(ah,ph,nrow = 2)
 dev.off()
 
+# individual time courses for hippo bs, censored
+pdf("ph_ind_timecourse_by_condition.pdf", height = 20, width = 20)
+ggplot(df[abs(df$peb_f2_p_hipp)<1,],aes(run_trial,peb_f2_p_hipp, color = rewFunc)) + geom_smooth() + facet_wrap(~id)
+dev.off()
+
+pt <- ggplot(df[abs(df$peb_f2_p_hipp)<2,],aes(run_trial,peb_f2_p_hipp/rt_csv, color = rewFunc)) + geom_smooth()
+at <- ggplot(df[abs(df$h_ant_hipp_b_f)<2,],aes(run_trial,h_ant_hipp_b_f/rt_csv, color = rewFunc)) + geom_smooth()
+pdf("h_timecourse_by_condition.pdf", height = 6, width = 12)
+ggarrange(at,pt, ncol = 2, nrow = 1)
+dev.off()
+
+
+pdf("ah_ind_timecourse_by_condition.pdf", height = 20, width = 20)
+ggplot(df,aes(run_trial,h_ant_hipp_b_f, color = rewFunc)) + geom_smooth() + facet_wrap(~id)
+dev.off()
+
+
+
+
 pdf("rts_signals_aph.pdf", height = 20, width = 20)
 ggarrange(rts, swings, h, pe, ah,ph,nrow = 6)
 dev.off()
@@ -111,6 +130,16 @@ am <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_v
 pm <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_vmax,rt_csv, color = peb_f2_p_hipp>0)) + geom_smooth(method = 'gam') 
 pdf("ant_post_rt_vmax.pdf", width = 16, height = 10)
 ggpubr::ggarrange(am,pm, ncol = 2)
+dev.off()
+
+# RT convolution artifact on BS
+pdf("rt_hipp.pdf", width = 16, height = 10)
+ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_csv, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
+dev.off()
+
+# what about next RT?
+pdf("rtnext_hipp_ind.pdf", width = 20, height = 20)
+ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_next, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'loess') + facet_wrap(~id)
 dev.off()
 
 

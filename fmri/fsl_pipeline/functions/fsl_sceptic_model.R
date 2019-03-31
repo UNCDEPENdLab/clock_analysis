@@ -87,6 +87,13 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     signals[["feedback"]] <- list(event="feedback", normalization="none", value=1)
   }
 
+  if ("feedback_bs" %in% sceptic_signals) {
+    #beta series variant of feedback onset
+    #NB. Using RT convolution with a normalization of "none" yields a peculiar beta distribution where
+    #longer responses have smaller betas because the convolved signal goes higher (scaling problem)
+    signals[["feedback_bs"]] <- list(event="feedback", normalization="evtmax_1", value=1, beta_series=TRUE)
+  }
+
   if ("rt_swing" %in% sceptic_signals) {
     signals[["rt_swing"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, rt_swing) %>% rename(value=rt_swing))

@@ -14,6 +14,7 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
   if (is.null(fsl_model_arguments$pipeline_home)) { fsl_model_arguments$pipeline_home <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline" }
   if (is.null(fsl_model_arguments$group_output_dir)) { fsl_model_arguments$group_output_dir <- file.path(dirname(fsl_model_arguments$fmri_dir), "group_analyses", fsl_model_arguments$analysis_name) }
   if (is.null(fsl_model_arguments$center_l3_predictors)) { fsl_model_arguments$center_l3_predictors <- TRUE }
+  if (is.null(fsl_model_arguments$badids)) { fsl_model_arguments$badids <- c() }
   if (is.null(fsl_model_arguments$l1_cope_names)) {
     fsl_model_arguments$l1_cope_names <- lapply(fsl_model_arguments$sceptic_run_variants, function(x) {
       signal_copes <- x
@@ -30,8 +31,10 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
     if (!any(c("clock", "clock_bs") %in% v)) {
       stop("No clock event is in the model: ", paste(v, collapse=","))
     }
-  }
-  
+    if (!any(c("feedback", "feedback_bs") %in% v)) {
+      stop("No feedback event is in the model: ", paste(v, collapse=","))
+    }
+  }  
   
   return(fsl_model_arguments)
 }
