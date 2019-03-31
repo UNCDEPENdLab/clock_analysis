@@ -67,18 +67,18 @@ mfh1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_a
 screen.lmerTest(mfh1)
 
 # remove the clusters
-mfh2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f + peb_f2_p_hipp)^3 + 
+mfh2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^3 + 
                (1|id/run), df)
 screen.lmerTest(mfh2)
 
 # simple model by contingency
-mfh3 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + rewFuncIEVsum + h_ant_hipp_b_f + peb_f2_p_hipp)^3 + 
+mfh3 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + rewFuncIEVsum + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^3 + 
                (1|id/run), df)
 screen.lmerTest(mfh3)
 
 # ## "model-free" RT swings analyses
 
-wh1 <- lmer(rt_swing ~ (scale(-1/run_trial) + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+wh1 <- lmer(rt_swing ~ (scale(-1/run_trial) + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^2 + 
               (1|id/run), df)
 screen.lmerTest(wh1)
 summary(wh1)

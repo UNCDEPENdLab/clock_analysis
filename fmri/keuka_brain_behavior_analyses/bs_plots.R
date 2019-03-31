@@ -6,7 +6,7 @@ library(lme4)
 library(lmerTest)
 library(ggpubr)
 library(grid)
-source('~/code/Rhelpers/')
+# source('~/code/Rhelpers/')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 # load('trial_df_and_vhd_bs.Rdata')
 load('clusters_and_beta_series.Rdata')
@@ -39,7 +39,7 @@ pdf("sanity_check_ph.pdf", height = 10, width = 10)
 ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 dev.off()
 
-ph <- ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad"), formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
+ph <- ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 ah <- ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 rts <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_csv, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 swings <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_swing, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
@@ -56,12 +56,12 @@ pdf("ph_ind_timecourse_by_condition.pdf", height = 20, width = 20)
 ggplot(df[abs(df$peb_f2_p_hipp)<1,],aes(run_trial,peb_f2_p_hipp, color = rewFunc)) + geom_smooth() + facet_wrap(~id)
 dev.off()
 
-pt <- ggplot(df[abs(df$peb_f2_p_hipp)<2,],aes(run_trial,peb_f2_p_hipp/rt_csv, color = rewFunc)) + geom_smooth()
-at <- ggplot(df[abs(df$h_ant_hipp_b_f)<2,],aes(run_trial,h_ant_hipp_b_f/rt_csv, color = rewFunc)) + geom_smooth()
+pt <- ggplot(df[abs(df$peb_f2_p_hipp)<2,],aes(run_trial,peb_f2_p_hipp/rt_csv, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad"))
+at <- ggplot(df[abs(df$h_ant_hipp_b_f)<2,],aes(run_trial,h_ant_hipp_b_f/rt_csv, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad"))
 pdf("h_timecourse_by_condition.pdf", height = 6, width = 12)
 ggarrange(at,pt, ncol = 2, nrow = 1)
 dev.off()
-
+# a tremor in feedback BS for DEV -- could be collinearity with previous feedback
 
 pdf("ah_ind_timecourse_by_condition.pdf", height = 20, width = 20)
 ggplot(df,aes(run_trial,h_ant_hipp_b_f, color = rewFunc)) + geom_smooth() + facet_wrap(~id)
@@ -89,31 +89,32 @@ ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = h_HippAntL_resp, color = rewFunc)
 dev.off()
 
 # how does Hipp scale with PEs?
-p2 <- ggplot(dfc,aes(pe_max_lag,peb_f2_p_hipp, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
-p1 <- ggplot(dfc,aes(pe_max_lag,peb_f1_cort_str, color = rewFunc)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+p2 <- ggplot(dfc,aes(pe_max,peb_f2_p_hipp, color = rewFunc, lty = pe_f2_hipp_resp)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
+p1 <- ggplot(dfc,aes(pe_max,peb_f1_cort_str, color = rewFunc, lty = pe_f1_cort_str_resp)) + geom_smooth(method = 'loess') + facet_grid(~rewFunc)
 
+# puzzling lack of vizible correlation
 pdf("peb_vs_pe.pdf", height = 10, width = 20)
 ggarrange(p1,p2,ncol = 2,nrow = 1)
 dev.off()
 
 
-# plot the between-regions interaction on RTs
+ # plot the between-regions interaction on RTs
 pdf("ant_by_post_on_rt.pdf", width = 10, height = 10)
-ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_lag, rt_csv, lty = h_ant_hipp_b_f>0, color = peb_f2_p_hipp>0)) + 
+ggplot(df[!is.na(df$h_ant_hipp_b_f_lag) & !is.na(df$peb_f2_p_hipp_lag),], aes(rt_lag, rt_csv, lty = h_ant_hipp_b_f_lag>0, color = peb_f2_p_hipp_lag>0)) + 
   # geom_smooth(method = 'gam', formula = y ~ s(x, bs = "tp")) + facet_grid(~rewFunc)
   geom_smooth(method = 'loess') + facet_grid(~rewFunc)
 
 dev.off()
 
 pdf("ant_by_post_rt_timecourse.pdf", width = 10, height = 10)
-ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(run_trial, rt_csv, lty = h_ant_hipp_b_f>0, color = peb_f2_p_hipp>0)) + 
+ggplot(df[!is.na(df$h_ant_hipp_b_f_lag) & !is.na(df$peb_f2_p_hipp_lag),], aes(run_trial, rt_csv, lty = h_ant_hipp_b_f_lag>0, color = peb_f2_p_hipp_lag>0)) + 
   # geom_smooth(method = 'gam', formula = y ~ s(x, bs = "tp")) + facet_grid(~rewFunc)
   geom_smooth(method = 'loess') + facet_grid(~rewFunc)
 dev.off()
 
-# looks like anterior decreases and posterior increases RT swings
-as <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(h_ant_hipp_b_f, rt_swing)) + geom_smooth(method = 'gam') 
-ps <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_swing)) + geom_smooth(method = 'gam') 
+# with clock-aligned, looked like anterior decreases and posterior increases RT swings, but no longer the case with feedback-aligned
+as <- ggplot(df[!is.na(df$h_ant_hipp_b_f_lag) & !is.na(df$peb_f2_p_hipp_lag),], aes(h_ant_hipp_b_f_lag, rt_swing)) + geom_smooth(method = 'gam') 
+ps <- ggplot(df[!is.na(df$h_ant_hipp_b_f_lag) & !is.na(df$peb_f2_p_hipp_lag),], aes(peb_f2_p_hipp_lag, rt_swing)) + geom_smooth(method = 'gam') 
 pdf("ant_post_rt_swing.pdf", width = 16, height = 10)
 ggpubr::ggarrange(as,ps, ncol = 2)
 dev.off()
@@ -125,26 +126,32 @@ pdf("ant_post_rtswings_subjects.pdf", width = 16, height = 10)
 ggpubr::ggarrange(asi,psi, ncol = 2)
 dev.off()
 
-# subtle, but anterior causes convergence and posterior, exploration
-am <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_vmax,rt_csv, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'gam') 
-pm <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_vmax,rt_csv, color = peb_f2_p_hipp>0)) + geom_smooth(method = 'gam') 
+# with clock-aligned, anterior caused convergence and posterior, exploration
+# feedback aligned -- both seem to cause convergence
+
+am <- ggplot(df[!is.na(df$h_ant_hipp_b_f_lag) & !is.na(df$peb_f2_p_hipp_lag),], aes(rt_vmax,rt_csv, color = h_ant_hipp_b_f_lag>0)) + geom_smooth(method = 'gam') 
+pm <- ggplot(df[!is.na(df$h_ant_hipp_b_f_lag) & !is.na(df$peb_f2_p_hipp_lag),], aes(rt_vmax,rt_csv, color = peb_f2_p_hipp_lag>0)) + geom_smooth(method = 'gam') 
 pdf("ant_post_rt_vmax.pdf", width = 16, height = 10)
 ggpubr::ggarrange(am,pm, ncol = 2)
 dev.off()
 
 # RT convolution artifact on BS
 pdf("rt_hipp.pdf", width = 16, height = 10)
-ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_csv, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
+ggplot(df[!is.na(df$h_ant_hipp_b_f_lag) & !is.na(df$peb_f2_p_hipp_lag),], aes(peb_f2_p_hipp_lag, rt_csv, color = h_ant_hipp_b_f_lag>0)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
 dev.off()
 
-# what about next RT?
-pdf("rtnext_hipp_ind.pdf", width = 20, height = 20)
-ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_next, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'loess') + facet_wrap(~id)
-dev.off()
+# # what about next RT?
+# pdf("rtnext_hipp_ind.pdf", width = 20, height = 20)
+# ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_next, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'loess') + facet_wrap(~id)
+# dev.off()
+
+# pdf("rtnext_hipp.pdf", width = 6, height = 4)
+# ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_next, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'loess') 
+# dev.off()
 
 
 # further investigation of RT convolution effect on beta series
-rt_bs <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(rt_csv, peb_f2_p_hipp)) + geom_smooth() + facet_wrap(~rewFunc)
+rt_bs <- ggplot(df[!is.na(df$h_ant_hipp_b_f_lag) & !is.na(df$peb_f2_p_hipp_lag),], aes(rt_csv, peb_f2_p_hipp_lag)) + geom_smooth() + facet_wrap(~rewFunc)
 pdf("post_rt.pdf", width = 16, height = 10)
 rt_bs
 dev.off()
@@ -175,7 +182,7 @@ dev.off()
 ggplot(dfc[dfc$run>1,],aes(run_trial,hb_f1_DAN_vlPFC, color = rewFunc, lty = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)
 ggplot(dfc[dfc$run>1,],aes(run_trial,hb_f2_neg_paralimb, color = rewFunc, lty = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)
 
-ggplot(dfc[dfc$run>1,],aes(trial,hb_f1_DAN_vlPFC, lty = performance)) + geom_smooth(method = "loess") 
+ggplot(dfc[dfc$run>1,],aes(run_trial,hb_f1_DAN_vlPFC, lty = performance)) + geom_smooth(method = "loess") 
 
 
 h <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_entropy, color = decay)) + geom_smooth() + facet_wrap(~rewFunc) + scale_x_continuous(breaks = c(1,50))
