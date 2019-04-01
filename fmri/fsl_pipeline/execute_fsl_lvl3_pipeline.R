@@ -20,10 +20,9 @@ library(dependlab)
 
 #verify that mr_dir is present as expected
 subinfo <- fsl_model_arguments$subject_covariates
-id_col <- fsl_model_arguments$id_col
 feat_run_outdir <- fsl_model_arguments$outdir[run_model_index] #the name of the subfolder for the current run-level model
 feat_lvl3_outdir <- file.path(fsl_model_arguments$group_output_dir, feat_run_outdir) #output directory for this run-level model
-n_l1_copes <- fsl_model_arguments$n_l1_copes[run_model_index] #number of l1 copes determines number of FEAT LVL3 analyses to run (1 per LVL1 cope)
+ncopes <- fsl_model_arguments$n_l1_copes[run_model_index] #number of l1 copes determines number of FEAT LVL3 analyses to run (1 per LVL1 cope)
 l1_cope_names <- fsl_model_arguments$l1_cope_names[[run_model_index]] #names of l1 copes (used for folder naming)
 
 subinfo$dir_found <- file.exists(subinfo$mr_dir)
@@ -47,23 +46,27 @@ models <- fsl_model_arguments$group_model_variants #different covariate models f
 ##rework using subinfo structure as the authoritative guide (rather than repeated searches)
 copedf <- c()
 for (s in 1:nrow(subinfo)) {
-  for (cope in 1:n_l1_copes) {
+  for (cope in 1:ncopes) {
     expectdir <- file.path(subinfo[s,"mr_dir"], fsl_model_arguments$expectdir, feat_run_outdir, feat_lvl2_dirname, paste0("cope", cope, ".feat"))
     if (dir.exists(expectdir)) {
-      copedf <- rbind(copedf, data.frame(id=subinfo[s,id_col], model=feat_run_outdir, cope=cope, fsldir=expectdir))
+      copedf <- rbind(copedf, data.frame(ID=subinfo[s,"ID"], model=feat_run_outdir, cope=cope, fsldir=expectdir))
     } else {
       message("could not find expected directory: ", expectdir)
     }
   }
 }
 
-names(copedf)[1] <- id_col #for matching
+mdf <- merge(subinfo, copedf, by="ID", all.y=TRUE)
+badids <- c(11335, #low IQ, ADHD Hx, loss of consciousness
+            11332, #should be excluded, but scan was terminated early due to repeated movement
+            11282, #RTs at the floor for essentially all runs. Not appropriate
+            11246, #huge movement and RTs at floor
+            #10637, #large and many movements in later runs (need to revisit to confirm) ### OCT2018: 6 of 8 runs pass our algorithmic thresholds for motion
+            10662  #I think there are reconstruction problems here -- need to revisit
+            ) 
 
-mdf <- merge(subinfo, copedf, by=id_col, all.y=TRUE)
-
-#remove bad ids
-mdf <- mdf %>% filter(!id %in% fsl_model_arguments$badids)
-mdf <- arrange(mdf, id, model, cope) #should really use !!id_col here?
+mdf <- mdf %>% filter(!ID %in% badids)
+mdf <- arrange(mdf, ID, model, cope)
 
 ##fsl constructs models by cope
 bycope <- lapply(split(mdf, mdf$cope), droplevels)
@@ -121,7 +124,7 @@ for (cope in 1:length(bycope)) {
     if (!file.exists(dmat_file <- sub(".fsf", "_design.txt", out_fsf, fixed=TRUE)) || rerun) {
       #write the design matrix to file for matching with extracted betas later
       model_df$feat_input_id <- 1:nrow(model_df) #for matching with extracted betas
-      model_df <- model_df %>% select(-dir_found, -mr_dir) %>% select(id, feat_input_id, model, cope, fsldir, everything())
+      model_df <- model_df %>% select(-dir_found, -mr_dir) %>% select(ID, feat_input_id, model, cope, fsldir, everything())
       write.table(model_df, file=dmat_file, row.names=FALSE)
     }
     

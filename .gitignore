@@ -17,5 +17,3 @@ td_model/
 
 *.Rout
 coxme/clock_coxme.R
-*.pdf
-*.Rdata
