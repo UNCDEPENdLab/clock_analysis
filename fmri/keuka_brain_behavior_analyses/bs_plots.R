@@ -39,7 +39,7 @@ pdf("sanity_check_ph.pdf", height = 10, width = 10)
 ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 dev.off()
 
-ph <- ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad"), formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
+ph <- ggplot(dfc,aes(run_trial,peb_f2_p_hipp, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 ah <- ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 rts <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_csv, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 swings <- ggplot(dfc[dfc$run>1,],aes(run_trial, rt_swing, lty = performance, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
@@ -56,8 +56,8 @@ pdf("ph_ind_timecourse_by_condition.pdf", height = 20, width = 20)
 ggplot(df[abs(df$peb_f2_p_hipp)<1,],aes(run_trial,peb_f2_p_hipp, color = rewFunc)) + geom_smooth() + facet_wrap(~id)
 dev.off()
 
-pt <- ggplot(df[abs(df$peb_f2_p_hipp)<2,],aes(run_trial,peb_f2_p_hipp/rt_csv, color = rewFunc)) + geom_smooth()
-at <- ggplot(df[abs(df$h_ant_hipp_b_f)<2,],aes(run_trial,h_ant_hipp_b_f/rt_csv, color = rewFunc)) + geom_smooth()
+pt <- ggplot(df[abs(df$peb_f2_p_hipp)<2,],aes(run_trial,peb_f2_p_hipp, color = rewFunc)) + geom_smooth()
+at <- ggplot(df[abs(df$h_ant_hipp_b_f)<2,],aes(run_trial,h_ant_hipp_b_f, color = rewFunc)) + geom_smooth()
 pdf("h_timecourse_by_condition.pdf", height = 6, width = 12)
 ggarrange(at,pt, ncol = 2, nrow = 1)
 dev.off()
@@ -168,51 +168,51 @@ pe <-  ggplot(dfc[dfc$run>1,],aes(run_trial, pe_max, color = performance)) + geo
 pdf("hipp_bs_beh_timecourse_by_condition_gamma.pdf", width = 12, height = 10)
 ggpubr::ggarrange(rts, swings, h, ah,ph, pe, ncol = 3, nrow = 2)
 dev.off()
-
-ggplot(dfc[dfc$run>1,],aes(run_trial,hb_f1_DAN_vlPFC, color = rewFunc, lty = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)
-ggplot(dfc[dfc$run>1,],aes(run_trial,hb_f2_neg_paralimb, color = rewFunc, lty = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)
-
-ggplot(dfc[dfc$run>1,],aes(trial,hb_f1_DAN_vlPFC, lty = performance)) + geom_smooth(method = "loess") 
-
-
-h <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_entropy, color = decay)) + geom_smooth() + facet_wrap(~rewFunc) + scale_x_continuous(breaks = c(1,50))
-hneg <-  ggplot(dfc[dfc$run>1,],aes(run_trial, -v_entropy, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50)) + guides(color = F)
-v <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_max, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
-vneg <-  ggplot(dfc[dfc$run>1,],aes(run_trial, -v_max, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
-d <-  ggplot(dfc[dfc$run>1,],aes(run_trial, d_auc, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
-
-h1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, hb_f1_DAN_vlPFC, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
-h2 <- ggplot(dfc[dfc$run>1,],aes(run_trial, hb_f2_neg_paralimb, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
-v1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, vb_f1_lo_DAN, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
-v2 <- ggplot(dfc[dfc$run>1,],aes(run_trial, vb_f2_hi_vmPFC_cOFC, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
-d1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, db_f1_rIFG_rSMA, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
-d4 <- ggplot(dfc[dfc$run>1,],aes(run_trial, db_f4_ACC_ins, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
-pdf("bs_timecourse_by_condition_gamma.pdf", width = 12, height = 10)
-ggpubr::ggarrange(h,vneg,h1,v,hneg,h2,d,h, d1,d4, ncol = 3, nrow = 3)
-dev.off()
-
-# not entirely convinced that we need to rescale within-subject, but let's move on with analyses
-
-h <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_entropy, color = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc) + scale_x_continuous(breaks = c(1,50))
-hneg <-  ggplot(dfc[dfc$run>1,],aes(run_trial, -v_entropy, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
-v <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_max, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
-vneg <-  ggplot(dfc[dfc$run>1,],aes(run_trial, -v_max, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
-d <-  ggplot(dfc[dfc$run>1,],aes(run_trial, d_auc, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
-
-h1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, hb_f1_DAN_vlPFC, color = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
-h2 <- ggplot(dfc[dfc$run>1,],aes(run_trial, hb_f2_neg_paralimb, color = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
-v1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, vb_f1_lo_DAN, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
-v2 <- ggplot(dfc[dfc$run>1,],aes(run_trial, vb_f2_hi_vmPFC_cOFC, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
-d1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, db_f1_rIFG_rSMA, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
-d4 <- ggplot(dfc[dfc$run>1,],aes(run_trial, db_f4_ACC_ins, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
-pdf("bs_timecourse_by_condition_performance.pdf", width = 12, height = 10)
-ggarrange(h,vneg,h1,v1,v,hneg,h2,v2,d,h, d1,d4, ncol = 4, nrow = 3)
-dev.off()
-
-pdf("h_bs_timecourse_by_condition_performance.pdf", width = 12, height = 10)
-ggarrange(h,h1,h2, ncol = 2, nrow = 2)
-dev.off()
-
+# 
+# ggplot(dfc[dfc$run>1,],aes(run_trial,hb_f1_DAN_vlPFC, color = rewFunc, lty = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)
+# ggplot(dfc[dfc$run>1,],aes(run_trial,hb_f2_neg_paralimb, color = rewFunc, lty = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)
+# 
+# ggplot(dfc[dfc$run>1,],aes(trial,hb_f1_DAN_vlPFC, lty = performance)) + geom_smooth(method = "loess") 
+# 
+# 
+# h <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_entropy, color = decay)) + geom_smooth() + facet_wrap(~rewFunc) + scale_x_continuous(breaks = c(1,50))
+# hneg <-  ggplot(dfc[dfc$run>1,],aes(run_trial, -v_entropy, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50)) + guides(color = F)
+# v <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_max, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
+# vneg <-  ggplot(dfc[dfc$run>1,],aes(run_trial, -v_max, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
+# d <-  ggplot(dfc[dfc$run>1,],aes(run_trial, d_auc, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
+# 
+# h1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, hb_f1_DAN_vlPFC, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
+# h2 <- ggplot(dfc[dfc$run>1,],aes(run_trial, hb_f2_neg_paralimb, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
+# v1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, vb_f1_lo_DAN, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
+# v2 <- ggplot(dfc[dfc$run>1,],aes(run_trial, vb_f2_hi_vmPFC_cOFC, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
+# d1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, db_f1_rIFG_rSMA, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
+# d4 <- ggplot(dfc[dfc$run>1,],aes(run_trial, db_f4_ACC_ins, color = decay)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))+ guides(color = F)
+# pdf("bs_timecourse_by_condition_gamma.pdf", width = 12, height = 10)
+# ggpubr::ggarrange(h,vneg,h1,v,hneg,h2,d,h, d1,d4, ncol = 3, nrow = 3)
+# dev.off()
+# 
+# # not entirely convinced that we need to rescale within-subject, but let's move on with analyses
+# 
+# h <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_entropy, color = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc) + scale_x_continuous(breaks = c(1,50))
+# hneg <-  ggplot(dfc[dfc$run>1,],aes(run_trial, -v_entropy, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
+# v <-  ggplot(dfc[dfc$run>1,],aes(run_trial, v_max, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
+# vneg <-  ggplot(dfc[dfc$run>1,],aes(run_trial, -v_max, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
+# d <-  ggplot(dfc[dfc$run>1,],aes(run_trial, d_auc, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
+# 
+# h1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, hb_f1_DAN_vlPFC, color = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
+# h2 <- ggplot(dfc[dfc$run>1,],aes(run_trial, hb_f2_neg_paralimb, color = performance)) + geom_smooth(method = "loess") + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
+# v1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, vb_f1_lo_DAN, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
+# v2 <- ggplot(dfc[dfc$run>1,],aes(run_trial, vb_f2_hi_vmPFC_cOFC, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
+# d1 <- ggplot(dfc[dfc$run>1,],aes(run_trial, db_f1_rIFG_rSMA, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
+# d4 <- ggplot(dfc[dfc$run>1,],aes(run_trial, db_f4_ACC_ins, color = performance)) + geom_smooth() + facet_wrap(~rewFunc)+ scale_x_continuous(breaks = c(1,50))
+# pdf("bs_timecourse_by_condition_performance.pdf", width = 12, height = 10)
+# ggarrange(h,vneg,h1,v1,v,hneg,h2,v2,d,h, d1,d4, ncol = 4, nrow = 3)
+# dev.off()
+# 
+# pdf("h_bs_timecourse_by_condition_performance.pdf", width = 12, height = 10)
+# ggarrange(h,h1,h2, ncol = 2, nrow = 2)
+# dev.off()
+# 
 
 
 # pdf("all_bs_timecourse_by_condition.pdf", width = 20, height = 20)

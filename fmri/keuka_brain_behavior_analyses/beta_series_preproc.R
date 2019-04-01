@@ -16,11 +16,11 @@ remove_outliers <- function(x, na.rm = TRUE, ...) {
 scale_within <- T
 
 # get cluster meta-data, first for H
-setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/beta_series_dec2018/')
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/updated_beta_series/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/')
 metaH <- read_csv("v_entropy_cluster_metadata.csv")
 metaH$label <- substr(metaH$label,22,100)
 meta_overall <- metaH[metaH$l2_contrast == 'overall' & metaH$l3_contrast == 'Intercept' & metaH$model == 'Intercept-Age',]
-hbs <- read_csv("v_entropy_roi_beta_series.csv")
+hbs <- read_csv("v_entropy_roi_beta_series.csv.gz")
 # filter out clusters <150 voxels
 hb <- hbs[hbs$l2_contrast == 'overall' & hbs$l3_contrast == 'Intercept' & hbs$model == 'Intercept-Age',1:6] %>% filter(cluster_number<10)
 
@@ -57,7 +57,7 @@ bs_cor <- corr.test(just_bs,method = 'pearson')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 pdf("h_bs_wi_corr.pdf", width=12, height=12)
 corrplot(bs_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -78,11 +78,11 @@ hb_wide$hb_f2_neg_paralimb <- hfscores[,2]
 
 ######## Vmax
 # use v_max as theoretically interesting and unbiased by choice
-setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/beta_series_dec2018/')
-metaV <- read_csv('v_max_cluster_metadata.csv')
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/updated_beta_series/sceptic-clock-feedback-v_chosen-preconvolve_fse_groupfixed/v_chosen/')
+metaV <- read_csv('v_chosen_cluster_metadata.csv')
 metaV$label <- substr(metaV$label,22,100)
 metaV_overall <- metaV[metaV$l2_contrast == 'overall' & metaV$l3_contrast == 'Intercept' & metaV$model == 'Intercept-Age',]
-vbs <- read_csv("v_max_roi_beta_series.csv")
+vbs <- read_csv("v_chosen_roi_beta_series.csv.gz")
 # filter out clusters <150 voxels
 vb <- vbs[vbs$l2_contrast == 'overall' & vbs$l3_contrast == 'Intercept' & vbs$model == 'Intercept-Age',1:6] %>% filter(cluster_number<15)
 
@@ -111,7 +111,7 @@ vb_wide <- spread(vb[,c("feat_input_id", "run", "trial", "bs_value", "labeled_cl
 # with group-fixed parameters we don't seem to need the winsorization step!!!
 # h_wide <- h_wide %>% mutate_if(is.double, winsor,trim = .075)
 
-just_bsv <- vb_wide[,3:ncol(vb_wide)]
+just_bsv <- vb_wide[,4:ncol(vb_wide)]
 # winsorize to deal with beta ouliers
 
 # non-parametric correlations to deal with outliers
@@ -119,7 +119,7 @@ bs_cor <- corr.test(just_bsv,method = 'pearson')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 pdf("v_bs_censored_corr.pdf", width=12, height=12)
 corrplot(bs_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -138,26 +138,31 @@ dev.off()
 # 
 
 # remove trial
-just_bsv <- just_bsv[,2:ncol(just_bsv)]
+bsv_cor <- cor(just_bsv,method = 'pearson',use = "complete.obs")
 
-# more factors than the betas, but the structure is similar
+# check factor structure
+mvbs <- nfactors(bsv_cor, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
+
 # may refine later
-vbs.fa = psych::fa(just_bsv, nfactors=5)
+vbs.fa = psych::fa(just_bsv, nfactors=2)
 vfscores <- factor.scores(just_bsv, vbs.fa)$scores
-vb_wide$vb_f1_lo_DAN <- vfscores[,1]
+vb_wide$vb_f1_lo_DAN_CO <- vfscores[,1]
 vb_wide$vb_f2_hi_vmPFC_cOFC <- vfscores[,2]
-vb_wide$vb_f5_lo_ACC <- vfscores[,5]
-vb_wide$vb_f4_lo_cerebell_crus <- vfscores[,4]
-vb_wide$vb_f3_hi_blITG <- vfscores[,3]
+
+# vb_wide$vb_f1_lo_DAN <- vfscores[,1]
+# vb_wide$vb_f2_hi_vmPFC_cOFC <- vfscores[,2]
+# vb_wide$vb_f5_lo_ACC <- vfscores[,5]
+# vb_wide$vb_f4_lo_cerebell_crus <- vfscores[,4]
+# vb_wide$vb_f3_hi_blITG <- vfscores[,3]
 
 
 ######### 
 # DECAY
-setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/beta_series_dec2018/')
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/updated_beta_series/sceptic-clock-feedback-d_auc-preconvolve_fse_groupfixed/d_auc/')
 metaD <- read_csv('d_auc_cluster_metadata.csv')
 metaD$label <- substr(metaD$label,22,100)
 metaD_overall <- metaD[metaD$l2_contrast == 'overall' & metaD$l3_contrast == 'Intercept' & metaD$model == 'Intercept-Age',]
-dbs <- read_csv("d_auc_roi_beta_series.csv")
+dbs <- read_csv("d_auc_roi_beta_series.csv.gz")
 # filter out clusters <150 voxels
 db <- dbs[dbs$l2_contrast == 'overall' & dbs$l3_contrast == 'Intercept' & dbs$model == 'Intercept-Age',1:6] %>% filter(cluster_number<15)
 
@@ -191,7 +196,7 @@ bs_cor <- corr.test(just_bsd,method = 'pearson')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 pdf("d_bs_corr.pdf", width=12, height=12)
 corrplot(bs_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -204,6 +209,7 @@ just_bsd <- just_bsd[,2:ncol(just_bsd)]
 
 # clear 4-factor solution
 # very nice that the same factors are recovered, esp f3 and f4!
+
 dbs.fa = psych::fa(just_bsd, nfactors=4)
 dfscores <- factor.scores(just_bsd, dbs.fa)$scores
 db_wide$db_f1_rIFG_rSMA <- dfscores[,1]
@@ -219,7 +225,7 @@ dvh_b_wide <- inner_join(vh_b_wide,db_wide, by = c("feat_input_id", "run", "tria
 dvh <-  dvh_b_wide[,grepl("b_f", names(dvh_b_wide))]
 dvh_cor <- corr.test(dvh,method = 'pearson', adjust = 'none')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 pdf("dvh_b_corr_fixed_wi.pdf", width=20, height=20)
 corrplot(dvh_cor$r, cl.lim=c(-.1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -231,7 +237,7 @@ dev.off()
 dvh_b_wide$run_trial <- dvh_b_wide$trial
 
 # factor analysis of factors!
-dvh.fa = psych::fa(dvh, nfactors=1)
+# dvh.fa = psych::fa(dvh, nfactors=1)
 # without rescaling, only a single-factor solution works
 
 # this was instructive
@@ -253,7 +259,7 @@ dvh_bs_factors_wide <- dvh_b_wide[,c(names(dvh), "feat_input_id", "run", "run_tr
 # add ids
 
 ############# Add new beta series, starting with PE
-setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/beta_series_dec2018/')
+setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/updated_beta_series/sceptic-clock-feedback-pe_max-preconvolve_fse_groupfixed/pe_max/')
 
 metaPE <- read_csv("PE_max_cluster_metadata.csv")
 metaPE$label <- substr(metaPE$label,22,100)
@@ -295,7 +301,7 @@ bs_cor <- corr.test(just_bs,method = 'pearson')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 pdf("pe_bs_wi_corr.pdf", width=12, height=12)
 corrplot(bs_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -310,6 +316,7 @@ just_bs <- just_bs[,2:ncol(just_bs)]
 # may refine later, let's prototype
 mpebs <- nfactors(bs_cor$r, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
 # seems to suggest a 3-factor solution, but the cortico-striatal factors then split right-left; went with 2 factors
+# regardless, hippocampi fall on a single, distinct factor
 pebs.fa = psych::fa(just_bs, nfactors=2)
 pefscores <- factor.scores(x = just_bs, pebs.fa)$scores
 peb_wide$peb_f1_cort_str <- pefscores[,1]
@@ -327,7 +334,7 @@ dvhpe_b_wide$h_ant_hipp_b_f <- dvhpe_b_wide$`9 Left Hippocampus`
 dvhpe <-  dvhpe_b_wide[,grepl("b_f", names(dvhpe_b_wide))]
 dvhpe_cor <- corr.test(dvhpe,method = 'pearson', adjust = 'none')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 pdf("dvhpe_b_corr_fixed_wi.pdf", width=20, height=20)
 corrplot(dvhpe_cor$r, cl.lim=c(0,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -336,6 +343,7 @@ corrplot(dvhpe_cor$r, cl.lim=c(0,1),
          p.mat = dvhpe_cor$p, sig.level=0.05, insig = "blank")
 dev.off()
 
+# old design file works for new beta series
 map_df  <- as.tibble(read.csv("~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy-Intercept_design.txt", sep=""))
 
 beta_fscores <- inner_join(dvhpe_b_wide,map_df[,c(1:2,4:15)])
@@ -363,7 +371,7 @@ bdf <- inner_join(beta_fscores,params)
 params_beta <- bdf[,c(names(dvh), "total_earnings", "LL", "alpha", "gamma", "beta")]
 param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 pdf("dvh_bs_param_corr_fixed.pdf", width=12, height=12)
 corrplot(param_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -371,7 +379,6 @@ corrplot(param_cor$r, cl.lim=c(-1,1),
          addCoef.col="black", addCoefasPercent = FALSE,
          p.mat = param_cor$p, sig.level=0.05, insig = "blank")
 dev.off()
-# they don't correlate
 
 # merge into trial-level data
 bdf <- bdf[,c(names(beta_fscores), "LL", "alpha", "gamma", "beta")]
@@ -382,7 +389,7 @@ df <- inner_join(trial_df,bdf)
 dvh_rt <- df[,c(names(dvh), "rt_csv")]
 rt_cor <- corr.test(dvh_rt,method = 'pearson', adjust = 'none')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 pdf("dvh_bs_rt_corr.pdf", width=12, height=12)
 corrplot(rt_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -423,7 +430,10 @@ df <- df %>% group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
                                          rt_change = rt_csv - rt_lag,
                                          pe_max_lag = lag(pe_max), 
                                          abs_pe_max_lag = abs(pe_max_lag), 
-                                         rt_vmax_change = rt_vmax - rt_vmax_lag
+                                         rt_vmax_change = rt_vmax - rt_vmax_lag,
+                                         rt_vmax_change_lead = lead(rt_vmax) - rt_vmax,
+                                         omission = score_csv==0,
+                                         rt_lead = lead(rt_csv)
 )
 
 
@@ -439,6 +449,7 @@ df$decay <- NA
 df$decay[df$gamma>0] <- 'high'
 df$decay[df$gamma<0] <- 'low'
 
-# dichotomize BS for plotting
+# dichotomize BS for plotting -- later
 
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 save(file = 'trial_df_and_vhd_bs.Rdata', df)
