@@ -1,6 +1,3 @@
-# formerly 'entropy_cluster_pca.R'
-# preprocesses cluster betas
-
 library(dplyr)
 library(tidyverse)
 library(psych)
@@ -34,7 +31,7 @@ clust_cor <- cor(just_rois,method = 'pearson')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("h_cluster_corr_fixed.pdf", width=12, height=12)
 corrplot(clust_cor, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -65,7 +62,7 @@ vmeta_overall$labeled_cluster <- paste(vmeta_overall$cluster_number,vmeta_overal
 
 v_labeled <- inner_join(v,vrois_list)
 v_labeled$labeled_cluster <- paste(v_labeled$cluster_number,v_labeled$label)
-v_labeled <- dplyr::select(v_labeled, c(1,3,5))
+v_labeled <- select(v_labeled,c(1,3,5))
 
 
 
@@ -101,7 +98,7 @@ v_wide$v_f2_paralimb <- vfscores[,2]
 
 vclust_cor <- corr.test(v_wide %>% select_if(is.double),method = 'pearson', adjust = 'none')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("v_cluster_corr_fixed.pdf", width=12, height=12)
 corrplot(vclust_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -152,7 +149,7 @@ dclust_cor <- cor(djust_rois,method = 'pearson')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("d_cluster_corr_fixed.pdf", width=12, height=12)
 corrplot(dclust_cor, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -201,7 +198,7 @@ ggplot(krois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cl
 
 k_labeled <- inner_join(k,krois_list)
 k_labeled$labeled_cluster <- paste(k_labeled$cluster_number,k_labeled$label)
-k_labeled <- dplyr::select(k_labeled,c(1,3,5))
+k_labeled <- select(k_labeled,c(1,3,5))
 
 k_wide <- spread(k_labeled,labeled_cluster,cope_value)
 
@@ -216,7 +213,7 @@ kclust_cor <- corr.test(kjust_rois,method = 'pearson', adjust = 'none')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("k_cluster_corr_fixed.pdf", width=12, height=12)
 corrplot(kclust_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -256,7 +253,7 @@ ggplot(kfrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_c
 
 kf_labeled <- inner_join(kf,kfrois_list)
 kf_labeled$labeled_cluster <- paste(kf_labeled$cluster_number,kf_labeled$label)
-kf_labeled <- dplyr::select(kf_labeled,c(1,3,5))
+kf_labeled <- select(kf_labeled,c(1,3,5))
 
 kf_wide <- spread(kf_labeled,labeled_cluster,cope_value)
 
@@ -271,7 +268,7 @@ kfclust_cor <- corr.test(kfjust_rois,method = 'pearson', adjust = 'none')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("kf_cluster_corr_fixed.pdf", width=12, height=12)
 corrplot(kfclust_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -313,8 +310,8 @@ ggplot(perois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_c
 
 pe_labeled <- inner_join(pe,perois_list)
 pe_labeled$labeled_cluster <- paste(pe_labeled$cluster_number,pe_labeled$label)
-pe_num <- dplyr::select(pe_labeled,c(1,2,3))
-pe_labeled <- dplyr::select(pe_labeled,c(1,3,5))
+pe_num <- select(pe_labeled,c(1,2,3))
+pe_labeled <- select(pe_labeled,c(1,3,5))
 
 pe_wide <- spread(pe_labeled,labeled_cluster,cope_value)
 pe_wide_num <- spread(pe_num,cluster_number,cope_value)
@@ -333,7 +330,7 @@ peclust_cor <- corr.test(pejust_rois,method = 'pearson', adjust = 'none')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-# setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+# setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 # pdf("pe_cluster_corr_fixed.pdf", width=12, height=12)
 # corrplot(peclust_cor$r, cl.lim=c(-1,1),
 #          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -403,7 +400,7 @@ ggplot(dhrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_c
 
 dh_labeled <- inner_join(dh,dhrois_list)
 dh_labeled$labeled_cluster <- paste(dh_labeled$cluster_number,dh_labeled$label)
-dh_labeled <- dplyr::select(dh_labeled,c(1,3,5))
+dh_labeled <- select(dh_labeled,c(1,3,5))
 
 dh_wide <- spread(dh_labeled,labeled_cluster,cope_value)
 
@@ -418,7 +415,7 @@ dhclust_cor <- corr.test(dhjust_rois,method = 'pearson', adjust = 'none')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("dh_cluster_corr_fixed.pdf", width=12, height=12)
 corrplot(dhclust_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -454,7 +451,7 @@ ggplot(dhrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_c
 
 dh_labeled <- inner_join(dh,dhrois_list)
 dh_labeled$labeled_cluster <- paste(dh_labeled$cluster_number,dh_labeled$label)
-dh_labeled <- dplyr::select(dh_labeled,c(1,3,5))
+dh_labeled <- select(dh_labeled,c(1,3,5))
 
 dh_wide <- spread(dh_labeled,labeled_cluster,cope_value)
 
@@ -469,7 +466,7 @@ dhclust_cor <- corr.test(dhjust_rois,method = 'pearson', adjust = 'none')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("dh_neg_cluster_corr_fixed.pdf", width=12, height=12)
 corrplot(dhclust_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -506,7 +503,7 @@ ggplot(dhprois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_
 
 dhp_labeled <- inner_join(dhp,dhprois_list)
 dhp_labeled$labeled_cluster <- paste(dhp_labeled$cluster_number,dhp_labeled$label)
-dhp_labeled <- dplyr::select(dhp_labeled,c(1,3,5))
+dhp_labeled <- select(dhp_labeled,c(1,3,5))
 
 dhp_wide <- spread(dhp_labeled,labeled_cluster,cope_value)
 
@@ -521,7 +518,7 @@ dhpclust_cor <- corr.test(dhpjust_rois,method = 'pearson', adjust = 'none')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("dhp_cluster_corr_fixed.pdf", width=12, height=12)
 corrplot(dhpclust_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -565,8 +562,6 @@ trial_df <- trial_df %>%
                                        rt_lag = lag(rt_csv) ,
                                        rt_swing_lag = lag(rt_swing),
                                        omission_lag = lag(score_csv==0),
-                                       omission = score_csv==0,
-                                       rt_lead = lead(rt_csv),
                                        rt_vmax_lag = lag(rt_vmax),
                                        run_trial=1:50) %>% ungroup() #compute rt_swing within run and subject
 
@@ -595,7 +590,7 @@ params_beta <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_par
                          "total_earnings", "LL", "alpha", "gamma", "beta")]
 param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("dvhkfpedh_beta_param_corr_fixed.pdf", width=12, height=12)
 corrplot(param_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -654,7 +649,7 @@ bdf <- sub_df[,c("v_f1_neg_cog","v_f2_paralimb","h_f1_fp", "h_f2_neg_paralimb",
                  "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]
 b_cor <- corr.test(bdf,method = 'pearson', adjust = 'none')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("between_subject_v_h_kf_pe_beh_corr_fixed.pdf", width=12, height=12)
 corrplot(b_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -699,6 +694,6 @@ df$last_outcome[!df$omission_lag] <- 'Reward'
 # Okay, some behavioral relevance of KLD
 # ggplot(df, aes(run_trial, v_entropy_wi, color = k_f1_all_pos_resp)) + geom_smooth(method = "loess")
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses')
+
 save(file = 'trial_df_and_vhdkfpe_clusters.Rdata', df)
 

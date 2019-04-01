@@ -1,7 +1,3 @@
-# model-free and model-based analyses using cluster betas
-# includes plots
-# formerly 'beta_cluster_behavioral_analyses_cleaned.R'
-
 library(dplyr)
 library(tidyverse)
 library(psych)
