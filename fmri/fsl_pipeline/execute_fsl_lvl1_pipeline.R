@@ -1,5 +1,9 @@
 #load the specified RData object and call the LVL fitting function requested
 
+#For testing
+#Sys.setenv(fsl_pipeline_file="/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/MMClock_aroma_preconvolve_fse_groupfixed.RData")
+#Sys.setenv(run_model_index=1)
+
 to_run <- Sys.getenv("fsl_pipeline_file")
 run_model_index <- as.numeric(Sys.getenv("run_model_index")) #which variant to execute
 if (nchar(to_run) == 0L) { stop("Cannot locate environment variable fsl_pipeline_file") }
@@ -26,7 +30,7 @@ fsl_model_arguments$workdir <- NULL
 
 #overuse of ... in subsidiary calls to model_clock_fmri_lvl1 will eventually blow up at the build_design_matrix step... need a better solution to make effective use of the ... argument
 #this is my hack for now
-lvl1_args <- fsl_model_arguments[c("trial_statistics", "fmri_dir", "idexpr",
+lvl1_args <- fsl_model_arguments[c("trial_statistics", "id_col", "subject_covariates",
   "drop_volumes", "ncpus", "expectdir", "expectfile",
   "sceptic_run_signals", "outdir", "usepreconvolve", "spikeregressors", "model_suffix",
   "execute_feat", "tr")]
