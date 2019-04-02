@@ -61,7 +61,7 @@ bs_cor <- corr.test(just_bs,method = 'pearson')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 pdf("h_bs_wi_corr.pdf", width=12, height=12)
 corrplot(bs_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -128,7 +128,7 @@ bs_cor <- corr.test(just_bsv,method = 'pearson')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 pdf("v_bs_censored_corr.pdf", width=12, height=12)
 corrplot(bs_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -306,7 +306,7 @@ bs_cor <- corr.test(just_bs,method = 'pearson')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
 pdf("pe_bs_wi_corr.pdf", width=12, height=12)
 corrplot(bs_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -341,7 +341,7 @@ vhpe_b_wide$h_ant_hipp_b_f <- vhpe_b_wide$`9 Left Hippocampus`
 
 # dvhpe <-  dvhpe_b_wide[,grepl("b_f", names(dvhpe_b_wide))]
 vhpe <-  vhpe_b_wide[,grepl("b_f", names(vhpe_b_wide))]
-
+vhpe_b_wide <- vhpe_b_wide[,!names(vhpe_b_wide)=='trial']
 # dvhpe_cor <- corr.test(dvhpe,method = 'pearson', adjust = 'none')
 # 
 # setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
@@ -369,9 +369,13 @@ trial_df <- trial_df %>%
                                        omission_lag = lag(score_csv==0),
                                        rt_vmax_lag = lag(rt_vmax),
                                        v_entropy_wi = scale(v_entropy),
-                                       run_trial=1:50) %>% ungroup() #compute rt_swing within run and subject
+                                       v_entropy_wi_lag = lag(v_entropy_wi),
+                                       run_trial = trial - 50 * (run-1)) %>% ungroup()
+                                       # run_trial=1:50) 
+                                       #compute rt_swing within run and subject
 # remove trial variable to avoid confusion
-trial_df <- trial_df[,c(1:4,6:41)]
+
+trial_df <- trial_df[,!names(trial_df)=='trial']
 # performance
 sum_df <- trial_df %>% group_by(id) %>% dplyr::summarize(total_earnings = sum(score_csv)) %>% arrange(total_earnings)
 beta_fscores$id <- beta_fscores$ID
@@ -466,6 +470,6 @@ df$decay[df$gamma>0] <- 'high'
 df$decay[df$gamma<0] <- 'low'
 
 # dichotomize BS for plotting
-
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 save(file = 'trial_df_and_vhd_bs.Rdata', df)
 

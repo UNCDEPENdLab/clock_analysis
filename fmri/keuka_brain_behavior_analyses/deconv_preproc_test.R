@@ -7,7 +7,7 @@ library(lme4)
 setwd('~/Box Sync/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/')
 d <- read_csv("10637_run4_long_axis_l_2.3mm.nii.gz_deconvolved.csv")
 pdf('decon_sample.pdf', width = 20, height = 10)
-ggplot(d,aes(time, decon, color = axis_value>.5)) + geom_smooth()
+ggplot(d,aes(time, decon, color = atlas_value>.5)) + geom_smooth()
 dev.off()
 # get trial_level data
 trial_df <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")

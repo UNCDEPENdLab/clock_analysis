@@ -129,24 +129,24 @@ mbhipp1a <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_l
                   scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f_lag + 
                   scale(rt_vmax_lag):v_max_wi_lag:h_ant_hipp_b_f_lag + 
                   scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f_lag +  
-                  v_max_b + v_entropy_b +  (1|id/run), df)
+                  (1|id/run), df)
 screen.lmerTest(mbhipp1a)
 
-# large positive interaction
-mb_ah_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * h_ant_hipp_b_f_lag + 
+# 
+mb_ah_rtvmax <- lmer(rt_csv ~ scale(rt_vmax) * h_ant_hipp_b_f_lag + 
                    (1|id/run), df)
 screen.lmerTest(mb_ah_rtvmax)
-# do we see it with the high-value network?  No!
-mb_v2_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * vb_f2_hi_vmPFC_cOFC + 
-                       (1|id/run), df)
-screen.lmerTest(mb_v2_rtvmax)
+# # do we see it with the high-value network?  No!
+# mb_v2_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * vb_f2_hi_vmPFC_cOFC + 
+#                        (1|id/run), df)
+# screen.lmerTest(mb_v2_rtvmax)
 
 # no substantial interaction
-mb_ph_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * peb_f2_p_hipp_lag + 
+mb_ph_rtvmax <- lmer(rt_csv ~ scale(rt_vmax) * peb_f2_p_hipp_lag + 
                        (1|id/run), df)
 screen.lmerTest(mb_ph_rtvmax)
 
-mbhipp1p <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change + peb_f2_p_hipp_lag)^2 + 
+mbhipp1p <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi_lag +rt_vmax_change_lag + peb_f2_p_hipp_lag)^2 + 
                   scale(rt_lag):omission_lag:peb_f2_p_hipp_lag +
                   scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp_lag +
                   scale(rt_vmax_lag):v_max_wi_lag:peb_f2_p_hipp_lag +
@@ -394,35 +394,41 @@ summary(b10a <- lmer(peb_f2_p_hipp ~ v_entropy_wi + omission_lag + scale(rt_csv)
 screen.lmerTest(b10a)
 
 # positive control: robust but mostly unsigned PE signals in f1/cortico-thalamo-striatal network
-b10b <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + pe_max +
-             + (1|id/run), df)
+b10b <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + pe_max_lag +
+             + (1|run), df)
 screen.lmerTest(b10b)
 b10b1 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + abs(pe_max_lag) +
-               + (1|id/run), df)
+               + (1|run), df)
 screen.lmerTest(b10b1)
 b10b2 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + omission_lag +
-                + (1|id/run), df)
+                + (1|run), df)
 screen.lmerTest(b10b2)
 # adding pe_max_lag to reward/omission improves AIC by 9 points
 b10b3 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + omission_lag + pe_max_lag +
-                + (1|id/run), df)
+                + (1|run), df)
 screen.lmerTest(b10b3)
 
 anova(b10b,b10b1,b10b2,b10b3)
 
 # interestingly, even though the PE signal in PH is weaker than in the f1 network, it is signed rather than unsigned.
-b10c <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_csv) + pe_max_lag +
-               + (1|id/run), df)
+b10c <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_lag) + pe_max_lag +
+               + (1|id) + (1|run), dfc)
 screen.lmerTest(b10c)
-b10c1 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_csv) + abs(pe_max_lag) +
-               + (1|id/run), df)
+b10c1 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_lag) + abs(pe_max_lag) +
+               + (1|id) + (1|run), dfc)
 screen.lmerTest(b10c1)
 # also, it responds to rewards vs. omissions, and PE does not explain additional variance
-b10c2 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_csv) + omission_lag +
-                + (1|id/run), df)
+b10c2 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_lag) + omission_lag +
+                + (1|run), dfc)
+screen.lmerTest(b10c2)
+
+b10c2a <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_lag) + I(score_csv==0) +
+                + (1|run), dfc)
+screen.lmerTest(b10c2a)
+
 # adding PE to reward/omission does not improve the model -- PH responds to valence more so than to PE
-b10c3 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_csv) + omission_lag + pe_max_lag +
-                + (1|id/run), df)
+b10c3 <- lmer(peb_f2_p_hipp ~ scale(-1/run_trial) + scale(rt_lag) + omission_lag + pe_max_lag +
+                + (1|run), dfc)
 summary(b10c3)
 screen.lmerTest(b10c2)
 anova(b10c1,b10c,b10c2,b10c3)

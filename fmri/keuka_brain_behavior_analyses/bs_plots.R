@@ -88,9 +88,11 @@ pdf("ah_bs_by_h_resp.pdf", height = 10, width = 10)
 ggplot(dfc,aes(run_trial,h_ant_hipp_b_f, lty = h_HippAntL_resp, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ s(x, bs = "ad")) + facet_grid(~rewFunc)
 dev.off()
 
+pe_lag <- ggplot(dfc,aes(pe_max_lag,peb_f2_p_hipp, color = rewFunc)) + geom_smooth(method = 'gam')
+pe <- ggplot(dfc,aes(pe_max,peb_f2_p_hipp, color = rewFunc)) + geom_smooth(method = 'gam')
 # how does Hipp scale with PEs?
-pdf("ph_vs_pe.pdf", height = 10, width = 10)
-ggplot(dfc,aes(pe_max_lag,peb_f2_p_hipp, color = rewFunc)) + geom_smooth(method = 'gam') + facet_grid(~rewFunc)
+pdf("ph_vs_pe_lag.pdf", height = 5, width = 10)
+ggpubr::ggarrange(pe,pe_lag, ncol = 2)
 dev.off()
 
 
@@ -131,7 +133,7 @@ dev.off()
 
 # RT convolution artifact on BS
 pdf("rt_hipp.pdf", width = 16, height = 10)
-ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_csv, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
+ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_lag, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
 dev.off()
 
 # what about next RT?
