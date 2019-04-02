@@ -132,14 +132,41 @@ ggpubr::ggarrange(am,pm, ncol = 2)
 dev.off()
 
 # RT convolution artifact on BS
-pdf("rt_hipp.pdf", width = 16, height = 10)
-ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_lag, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
+alag <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(h_ant_hipp_b_f, rt_lag)) + geom_smooth(method = 'loess') 
+plag <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_lag)) + geom_smooth(method = 'loess')
+pdf("rt_lag_hipp.pdf", width = 16, height = 10)
+ggarrange(a,p)
 dev.off()
 
-# what about next RT?
-pdf("rtnext_hipp_ind.pdf", width = 20, height = 20)
-ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_next, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'loess') + facet_wrap(~id)
+a <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(h_ant_hipp_b_f, rt_csv)) + geom_smooth(method = 'loess') 
+p <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_csv)) + geom_smooth(method = 'loess')
+pdf("rt_rt_lag_hipp.pdf", width = 16, height = 10)
+ggarrange(a,p,alag,plag)
 dev.off()
+anext <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(h_ant_hipp_b_f, lead(rt_csv))) + geom_smooth(method = 'loess') 
+pnext <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, lead(rt_csv))) + geom_smooth(method = 'loess')
+
+# they should not scale with next RT as much, at least not as an artifact
+pdf("rt_next_hipp.pdf", width = 10, height = 10)
+ggarrange(a,p,alag,plag,anext,pnext, ncol = 2, nrow = 3)
+dev.off()
+
+# what about PE effects?  Only a single, relevant PE should be encoded in the beta series
+alag <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(pe_max_lag, h_ant_hipp_b_f)) + geom_smooth(method = 'loess') 
+plag <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(pe_max_lag, peb_f2_p_hipp)) + geom_smooth(method = 'loess')
+a <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(pe_max, h_ant_hipp_b_f)) + geom_smooth(method = 'loess') 
+p <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(pe_max, peb_f2_p_hipp)) + geom_smooth(method = 'loess')
+anext <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(lead(pe_max), h_ant_hipp_b_f)) + geom_smooth(method = 'loess') 
+pnext <- ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(lead(pe_max), peb_f2_p_hipp)) + geom_smooth(method = 'loess')
+pdf("pe_lag_next_hipp.pdf", width = 10, height = 10)
+ggarrange(a,p,alag,plag,anext,pnext, ncol = 2, nrow = 3)
+dev.off()
+
+
+# # what about next RT?
+# pdf("rtnext_hipp_ind.pdf", width = 20, height = 20)
+# ggplot(df[!is.na(df$h_ant_hipp_b_f) & !is.na(df$peb_f2_p_hipp),], aes(peb_f2_p_hipp, rt_next, color = h_ant_hipp_b_f>0)) + geom_smooth(method = 'loess') + facet_wrap(~id)
+# dev.off()
 
 
 # further investigation of RT convolution effect on beta series

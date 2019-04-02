@@ -448,6 +448,8 @@ df <- df %>% group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
                                          v_entropy_b = mean(na.omit(v_entropy)),
                                          rt_change = rt_csv - rt_lag,
                                          pe_max_lag = lag(pe_max), 
+                                         pe_max_lag2 = lag(pe_max_lag),
+                                         pe_max_lag3 = lag(pe_max_lag2),
                                          abs_pe_max_lag = abs(pe_max_lag), 
                                          rt_vmax_change = rt_vmax - rt_vmax_lag,
                                          # lag  bs

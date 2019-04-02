@@ -67,7 +67,7 @@ dfc <- na.omit(df[df$rt_swing>0,])
 # screen.lmerTest(mfh1)
 
 # remove the clusters
-mfh2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^3 + 
+mfh2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f + peb_f2_p_hipp)^3 + 
                (1|id/run), df)
 screen.lmerTest(mfh2)
 
@@ -386,7 +386,7 @@ anova(w0, w0dan)
 # screen.lmerTest(b8)
 
 # AH much more sensitive to entropy
-summary(b9a <- lmer(h_ant_hipp_b_f ~ v_entropy_wi + omission_lag + scale(rt_csv) + (1|run), df))
+summary(b9a <- lmer(h_ant_hipp_b_f ~ v_entropy_wi_lag + omission_lag + scale(rt_lag) + (1|run), df))
 screen.lmerTest(b9a)
 
 # PH slightly more sensitive to reward/omission and INsensitive to entropy
@@ -397,6 +397,16 @@ screen.lmerTest(b10a)
 b10b <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + pe_max_lag +
              + (1|run), df)
 screen.lmerTest(b10b)
+
+b10b_lag2 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + pe_max + pe_max_lag + pe_max_lag2 +
+               + (1|run), df)
+screen.lmerTest(b10b_lag2)
+
+b10b_lag3 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + pe_max + pe_max_lag + pe_max_lag2 + pe_max_lag3 + 
+                    + (1|run), df)
+screen.lmerTest(b10b_lag3)
+
+
 b10b1 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + abs(pe_max_lag) +
                + (1|run), df)
 screen.lmerTest(b10b1)
