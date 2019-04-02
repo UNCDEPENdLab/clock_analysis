@@ -169,7 +169,7 @@ mbhipp1_1 <- lmer(rt_next ~ (scale(-1/run_trial)  + scale(rt_csv) + scale(rt_vma
 screen.lmerTest(mbhipp1_1, .01)
 
 # how do they predict next RT?
-rt_next_hipp<- lmer(rt_next ~ (rt_vmax + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+rt_next_hipp<- lmer(rt_csv ~ (rt_vmax + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
                  (1|id/run), df)
 screen.lmerTest(rt_next_hipp, .01)
 
@@ -207,11 +207,11 @@ screen.lmerTest(mbhipp2, .05)
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots/')
 
 pdf("lose_shift.pdf", width = 12, height = 10)
-ggplot(df[!is.na(df$peb_f2_p_hipp) & !is.na(df$rt_vmax_lag) ,], aes(rt_lag, rt_csv, color = omission_lag, lty = rt_vmax_lag>20)) + geom_smooth(method = 'glm') #+ facet_wrap(~rewFunc)
+ggplot(df[!is.na(df$peb_f2_p_hipp_lag) & !is.na(df$rt_vmax_lag) ,], aes(rt_lag, rt_csv, color = omission_lag, lty = rt_vmax_lag>20)) + geom_smooth(method = 'glm') #+ facet_wrap(~rewFunc)
 dev.off()
 
 pdf("p_hipp_lose_shift.pdf", width = 12, height = 10)
-ggplot(df[!is.na(df$peb_f2_p_hipp) & !is.na(df$rt_vmax_lag) ,], aes(rt_lag, rt_csv, color = peb_f2_p_hipp>0, lty = rt_vmax_lag>20)) + geom_smooth(method = 'glm') + facet_wrap(~omission_lag)
+ggplot(df[!is.na(df$peb_f2_p_hipp_lag) & !is.na(df$rt_vmax_lag) ,], aes(rt_lag, rt_csv, color = peb_f2_p_hipp_lag>0, lty = rt_vmax_lag>20)) + geom_smooth(method = 'glm') + facet_wrap(~omission_lag)
 dev.off()
 
 # first, does DAN improve prediction of RTs and EXPLAIN effects of v_entropy_wi?
@@ -394,7 +394,7 @@ summary(b10a <- lmer(peb_f2_p_hipp ~ v_entropy_wi + omission_lag + scale(rt_csv)
 screen.lmerTest(b10a)
 
 # positive control: robust but mostly unsigned PE signals in f1/cortico-thalamo-striatal network
-b10b <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + pe_max_lag +
+b10b <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + pe_max +
              + (1|id/run), df)
 screen.lmerTest(b10b)
 b10b1 <- lmer(peb_f1_cort_str ~ scale(-1/run_trial) + scale(rt_csv) + abs(pe_max_lag) +
