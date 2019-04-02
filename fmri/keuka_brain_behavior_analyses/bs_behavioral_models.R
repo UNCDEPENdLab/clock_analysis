@@ -67,18 +67,18 @@ mfh1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_a
 screen.lmerTest(mfh1)
 
 # remove the clusters
-mfh2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^3 + 
+mfh2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f + peb_f2_p_hipp)^3 + 
                (1|id/run), df)
 screen.lmerTest(mfh2)
 
 # simple model by contingency
-mfh3 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + rewFuncIEVsum + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^3 + 
+mfh3 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + rewFuncIEVsum + h_ant_hipp_b_f + peb_f2_p_hipp)^3 + 
                (1|id/run), df)
 screen.lmerTest(mfh3)
 
 # ## "model-free" RT swings analyses
 
-wh1 <- lmer(rt_swing ~ (scale(-1/run_trial) + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^2 + 
+wh1 <- lmer(rt_swing ~ (scale(-1/run_trial) + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
               (1|id/run), df)
 screen.lmerTest(wh1)
 summary(wh1)
@@ -183,13 +183,19 @@ screen.lmerTest(mbhipp1simp, .01)
 
 
  
-# add the clusters: they generally don't moderate the effects of BS
-mbhipp2 <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f + peb_f2_p_hipp + h_HippAntL + pe_f2_hipp)^3 + 
-                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f*h_HippAntL + scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp*pe_f2_hipp +
-                  scale(rt_vmax_lag)*v_max_wi_lag*h_ant_hipp_b_f*h_HippAntL + scale(rt_vmax_lag)*v_max_wi_lag*peb_f2_p_hipp*pe_f2_hipp +
-                  scale(-1/run_trial)*scale(rt_vmax_lag)*h_ant_hipp_b_f*h_HippAntL +  scale(-1/run_trial)*scale(rt_vmax_lag)*peb_f2_p_hipp*pe_f2_hipp +
-                  v_max_b + v_entropy_b + (run|id/run), df)
-screen.lmerTest(mbhipp2, .01)
+# both anterior and posterior
+mbhipp2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f_lag)^2 + 
+                  scale(rt_lag):omission_lag:h_ant_hipp_b_f_lag +
+                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f_lag + 
+                  scale(rt_vmax_lag):v_max_wi_lag:h_ant_hipp_b_f_lag + 
+                  scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f_lag +  
+                  (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change + peb_f2_p_hipp_lag)^2 + 
+                  scale(rt_lag):omission_lag:peb_f2_p_hipp_lag +
+                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp_lag +
+                  scale(rt_vmax_lag):v_max_wi_lag:peb_f2_p_hipp_lag +
+                  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp_lag +
+                  v_max_b + v_entropy_b +  (1|id/run), df)
+screen.lmerTest(mbhipp2, .05)
 # 
 
 # 
