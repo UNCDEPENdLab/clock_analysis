@@ -56,29 +56,29 @@ dfc <- na.omit(df[df$rt_swing>0,])
 
 ####### NEW
 # follow cluster beta analyses
-mfh <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f + h_HippAntL)^3 + 
-              (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + peb_f2_p_hipp + pe_f2_hipp)^3 + 
-               (1|id/run), df)
-screen.lmerTest(mfh)
-
-# add region interactions
-mfh1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f + h_HippAntL+ peb_f2_p_hipp + pe_f2_hipp)^3 + 
-              (1|id/run), df)
-screen.lmerTest(mfh1)
+# mfh <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f + h_HippAntL)^3 + 
+#               (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + peb_f2_p_hipp + pe_f2_hipp)^3 + 
+#                (1|id/run), df)
+# screen.lmerTest(mfh)
+# 
+# # add region interactions
+# mfh1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f + h_HippAntL+ peb_f2_p_hipp + pe_f2_hipp)^3 + 
+#               (1|id/run), df)
+# screen.lmerTest(mfh1)
 
 # remove the clusters
-mfh2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f + peb_f2_p_hipp)^3 + 
+mfh2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^3 + 
                (1|id/run), df)
 screen.lmerTest(mfh2)
 
 # simple model by contingency
-mfh3 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + rewFuncIEVsum + h_ant_hipp_b_f + peb_f2_p_hipp)^3 + 
+mfh3 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + rewFuncIEVsum + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^3 + 
                (1|id/run), df)
 screen.lmerTest(mfh3)
 
 # ## "model-free" RT swings analyses
 
-wh1 <- lmer(rt_swing ~ (scale(-1/run_trial) + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+wh1 <- lmer(rt_swing ~ (scale(-1/run_trial) + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^2 + 
               (1|id/run), df)
 screen.lmerTest(wh1)
 summary(wh1)
@@ -124,16 +124,16 @@ summary(wh1)
 # model-based
 
 ###### NEW, hippocampal, following cluster betas
-mbhipp1a <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f)^2 + 
-                  scale(rt_lag):omission_lag:h_ant_hipp_b_f +
-                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f + 
-                  scale(rt_vmax_lag):v_max_wi_lag:h_ant_hipp_b_f + 
-                  scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f +  
+mbhipp1a <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_ant_hipp_b_f_lag)^2 + 
+                  scale(rt_lag):omission_lag:h_ant_hipp_b_f_lag +
+                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f_lag + 
+                  scale(rt_vmax_lag):v_max_wi_lag:h_ant_hipp_b_f_lag + 
+                  scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f_lag +  
                   v_max_b + v_entropy_b +  (1|id/run), df)
 screen.lmerTest(mbhipp1a)
 
 # large positive interaction
-mb_ah_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * h_ant_hipp_b_f + 
+mb_ah_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * h_ant_hipp_b_f_lag + 
                    (1|id/run), df)
 screen.lmerTest(mb_ah_rtvmax)
 # do we see it with the high-value network?  No!
@@ -142,29 +142,29 @@ mb_v2_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * vb_f2_hi_vmPFC_cOFC +
 screen.lmerTest(mb_v2_rtvmax)
 
 # no substantial interaction
-mb_ph_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * peb_f2_p_hipp + 
+mb_ph_rtvmax <- lmer(rt_csv ~ scale(rt_vmax_lag) * peb_f2_p_hipp_lag + 
                        (1|id/run), df)
 screen.lmerTest(mb_ph_rtvmax)
 
-mbhipp1p <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change + peb_f2_p_hipp)^2 + 
-                  scale(rt_lag):omission_lag:peb_f2_p_hipp +
-                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp +
-                  scale(rt_vmax_lag):v_max_wi_lag:peb_f2_p_hipp +
-                  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp +
+mbhipp1p <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change + peb_f2_p_hipp_lag)^2 + 
+                  scale(rt_lag):omission_lag:peb_f2_p_hipp_lag +
+                  scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp_lag +
+                  scale(rt_vmax_lag):v_max_wi_lag:peb_f2_p_hipp_lag +
+                  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp_lag +
                   v_max_b + v_entropy_b +  (1|id/run), df)
 screen.lmerTest(mbhipp1p)
 
 
-mbhipp1 <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
-                scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f + scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp +
-                 scale(rt_vmax_lag):v_max_wi_lag:h_ant_hipp_b_f + scale(rt_vmax_lag):v_max_wi_lag:peb_f2_p_hipp +
-                 scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f +  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp +
+mbhipp1 <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^2 + 
+                scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*h_ant_hipp_b_f_lag + scale(rt_lag)*omission_lag*scale(rt_vmax_lag)*peb_f2_p_hipp_lag +
+                 scale(rt_vmax_lag):v_max_wi_lag:h_ant_hipp_b_f_lag + scale(rt_vmax_lag):v_max_wi_lag:peb_f2_p_hipp_lag +
+                 scale(-1/run_trial):scale(rt_vmax_lag):h_ant_hipp_b_f_lag +  scale(-1/run_trial):scale(rt_vmax_lag):peb_f2_p_hipp_lag +
                  v_max_b + v_entropy_b + (1|id/run), df)
 screen.lmerTest(mbhipp1, .01)
 
 
 # this slowing to AH*PH is kinda shocking.  Is it also seen on the next trial?  Not at all -- must be the result of convolution
-mbhipp1_1 <- lmer(rt_next ~ (scale(-1/run_trial)  + scale(rt_csv) + scale(rt_vmax) + v_max_wi + v_entropy_wi + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+mbhipp1_1 <- lmer(rt_next ~ (scale(-1/run_trial)  + scale(rt_csv) + scale(rt_vmax) + v_max_wi + v_entropy_wi + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^2 + 
                   v_max_b + v_entropy_b + (1|id/run), df)
 screen.lmerTest(mbhipp1_1, .01)
 
@@ -177,7 +177,7 @@ screen.lmerTest(rt_next_hipp, .01)
 
 
 # simplified model
-mbhipp1simp <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change + h_ant_hipp_b_f + peb_f2_p_hipp)^2 + 
+mbhipp1simp <- lmer(rt_csv ~ (scale(-1/run_trial)  + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change + h_ant_hipp_b_f_lag + peb_f2_p_hipp_lag)^2 + 
                   v_max_b + v_entropy_b + (1|id/run), df)
 screen.lmerTest(mbhipp1simp, .01)
 
