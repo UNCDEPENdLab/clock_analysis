@@ -42,6 +42,11 @@ setup_feat_lvl2_inputs <- function(fsl_model_arguments, run_model_index) {
     nvol <- nvol + fsl_model_arguments$drop_volumes  #in FD indexing, this is the end point of the vector
   }))
 
+  if (any(is.na(feat_runs$trunc_lengths))) {
+    cat("Cannot read volumes from L1 design.fsf\nFiles affected:\n")
+    print(feat_runs %>% filter(is.na(trunc_lengths)))
+  }
+  
   cat("Excluding runs exceeding 10% frames with FD >= 0.9mm OR any movement > 5mm\n")
   #read each FD file, index it based on modeled fMRI data, then return FD statistics
   motexclude <- plyr::ldply(1:nrow(feat_runs), function(i) {

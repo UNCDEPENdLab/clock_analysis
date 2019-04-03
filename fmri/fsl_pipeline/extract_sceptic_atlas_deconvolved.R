@@ -81,6 +81,14 @@ for (ai in 1:length(atlas_files)) {
 
   #loop over niftis
   for (si in 1:length(l1_niftis)) {
+    this_subj <- feat_l2_inputs_df %>% select(subid, run_num, contingency, emotion, drop_volumes) %>% dplyr::slice(si)
+    out_name <- file.path(out_dir, with(this_subj[1,,drop=F], paste0(subid, "_run", run_num, "_", basename(atlas_files[ai]), "_deconvolved.csv.gz")))
+
+    if (file.exists(out_name)) {
+      message("Deconvolved file already exists: ", out_name)
+      next
+    }
+    
     cat("  Deconvolving subject: ", l1_niftis[si], "\n")
     dump_out <- tempfile()
     runAFNICommand(paste0("3dmaskdump -mask ", atlas_files[ai], " -o ", dump_out, " ", l1_niftis[si]))
@@ -92,19 +100,37 @@ for (ai in 1:length(atlas_files)) {
     #to_deconvolve is a voxels x time matrix
     to_deconvolve <- as.matrix(ts_out[, -1:-3]) #remove ijk
     to_deconvolve <- t(apply(to_deconvolve, 1, scale)) #need to unit normalize for algorithm not to choke on near-constant 100-normed data
-    deconv_mat <- t(parApply(cl=cl, X=to_deconvolve, 1, deconvolve_nlreg, kernel=kernel, nev_lr=nev_lr, epsilon=epsilon)) #transpose to maintain voxels x time
+
+    deconv_mat <- foreach(vox_ts=iter(to_deconvolve, by="row"), .combine="rbind") %dopar% {
+      reg <- tryCatch(deconvolve_nlreg(as.vector(vox_ts), kernel=kernel, nev_lr=nev_lr, epsilon=epsilon),
+        error=function(e) { cat("Problem deconvolving: ", l1_niftis[si], "\n", file="deconvolve_errors", append=TRUE); return(rep(NA, length(vox_ts))) })
+      return(reg)
+    }
+    
+    #deconv_mat <- t(parApply(cl=cl, X=to_deconvolve, MARGIN=1, FUN=function(vox_ts) { #transpose to maintain voxels x time
+    #  deconvolve_nlreg(vox_ts, kernel=kernel, nev_lr=nev_lr, epsilon=epsilon)
+    #  #res <- tryCatch(deconvolve_nlreg(vox_ts, kernel=kernel, nev_lr=nev_lr, epsilon=epsilon),
+    #  #  error=function(e) { browser(); return(rep(NA, length(ts))) }) #return NA in event of failure
+    #  #return(res)
+    #}))
+
+    ## deconv_mat <- t(apply(X=to_deconvolve, 1, FUN=function(ts) { #transpose to maintain voxels x time
+    ##   browser()
+    ##   tryCatch(deconvolve_nlreg(ts, kernel=kernel, nev_lr=nev_lr, epsilon=epsilon),
+    ##     error=function(e) { print(e); return(rep(NA, length(ts))) }) #return NA in event of failure
+    ## }))
 
     #melt this for combination
     deconv_melt <- reshape2::melt(deconv_mat, value.name="decon", varnames=c("vnum", "time"))
     to_deconvolve_melt <- reshape2::melt(to_deconvolve, value.name="BOLD_z", varnames=c("vnum", "time"))
     
-    deconv_df <- deconv_melt %>% left_join(a_coordinates, by="vnum") %>%
+    deconv_df <- deconv_melt %>% mutate(vnum=as.numeric(vnum)) %>% left_join(a_coordinates, by="vnum") %>%
       mutate(nifti=sub("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", "", l1_niftis[si], fixed=TRUE)) %>%
       cbind(feat_l2_inputs_df %>% select(subid, run_num, contingency, emotion, drop_volumes) %>% dplyr::slice(si)) %>% #add metadata
       mutate(time=time+drop_volumes) %>% select(-drop_volumes, -nifti) %>% #dropping nifti for now to save on file size
       select(subid, run_num, contingency, emotion, time, atlas_name, atlas_value, vnum, x, y, z, decon) #omitting i,j,k for now
 
-    orig_df <- to_deconvolve_melt %>% left_join(a_coordinates, by="vnum") %>%
+    orig_df <- to_deconvolve_melt %>% mutate(vnum=as.numeric(vnum)) %>% left_join(a_coordinates, by="vnum") %>%
       mutate(nifti=sub("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", "", l1_niftis[si], fixed=TRUE)) %>%
       cbind(feat_l2_inputs_df %>% select(subid, run_num, contingency, emotion, drop_volumes) %>% dplyr::slice(si)) %>% #add metadata
       mutate(time=time+drop_volumes) %>% select(-drop_volumes, -nifti) %>% #dropping nifti for now to save on file size

@@ -39,6 +39,8 @@ feat_run_outdir <- fsl_model_arguments$outdir[run_model_index] #the name of the 
 feat_lvl3_outdir <- file.path(fsl_model_arguments$group_output_dir, feat_run_outdir) #output directory for this run-level model
 n_l1_copes <- fsl_model_arguments$n_l1_copes[run_model_index] #number of l1 copes determines number of FEAT LVL3 analyses to run (1 per LVL1 cope)
 l1_cope_names <- fsl_model_arguments$l1_cope_names[[run_model_index]] #names of l1 copes (used for folder naming)
+zthresh_covariates <- fsl_model_arguments$zthresh_covariates
+if (is.null(zthresh_covariates)) { zthresh_covariates <- 2.81 } #p=.005
 zthresh <- fsl_model_arguments$zthresh #3.09
 clustsize <- fsl_model_arguments$clustsize #34
 
@@ -52,7 +54,7 @@ feat_lvl2_dirname <- "FEAT_LVL2_runtrend.gfeat" #should populate this to the str
 models <- sapply(fsl_model_arguments$group_model_variants, function(x) { paste(x, collapse="-") }) #different covariate models for the current run-level model (run_model_index)
 
 #whether to extract from beta series (very slow)
-calculate_beta_series <- TRUE
+calculate_beta_series <- FALSE
 calculate_l1_betas <- TRUE
 beta_series_suffix <- "_feedback_bs" #or "clock_bs"
 
@@ -158,8 +160,9 @@ for (l1 in 1:n_l1_copes) {
         #generate cluster mask
         clust_1d <- paste0(tempfile(), "_tmpclust.1D")
         clust_brik <- paste0(tempfile(), "_tmpclust")
+        this_z <- ifelse(l3_contrast_name=="Intercept", zthresh, zthresh_covariates)
         runAFNICommand(paste0("3dclust -overwrite -1Dformat -nosum -1dindex 0 -1tindex 0",
-          " -1thresh ", zthresh, " -dxyz=1 -savemask ", clust_brik, " 1.01 ", clustsize, " ", groupmap), 
+          " -1thresh ", this_z, " -dxyz=1 -savemask ", clust_brik, " 1.01 ", clustsize, " ", groupmap), 
           stdout=clust_1d)
 
         #get coordinates and names of regions
@@ -195,7 +198,7 @@ for (l1 in 1:n_l1_copes) {
         coords_i <- as.numeric(sub("^\\s*(-*\\d+) mm \\[(?:L|R)\\],\\s+(-*\\d+) mm \\[(?:A|P)\\],\\s+(-*\\d+) mm.*", "\\3", coords, perl=TRUE))
         
         cluster_metadata <- data.frame(model=this_model, l1_contrast=l1_contrast_name, l2_contrast=l2_contrast_name, l3_contrast=l3_contrast_name,
-          cluster_number=1:length(coords_l), cluster_size=vsizes, cluster_threshold=clustsize, z_threshold=zthresh,
+          cluster_number=1:length(coords_l), cluster_size=vsizes, cluster_threshold=clustsize, z_threshold=this_z,
           x=coords_l, y=coords_p, z=coords_i, label=bestguess, stringsAsFactors=FALSE)
         
         roimask <- readAFNI(paste0(clust_brik, "+tlrc.HEAD"), vol=1)

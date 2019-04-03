@@ -85,31 +85,31 @@ fsl_model_arguments <- list(
   tr=1.0, #seconds
   spikeregressors=FALSE, #don't include spike regressors in nuisance variables since we are using AROMA
   sceptic_run_variants=list(
-    c("clock", "feedback_bs")
+#    c("clock", "feedback_bs")
 #    c("clock_bs", "feedback")
 #    c("clock", "feedback", "v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
 #    c("clock", "feedback", "v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
-#    c("clock", "feedback", "v_chosen"), #individual regressors
-#    c("clock", "feedback", "v_entropy"), #clock-aligned
+    c("clock", "feedback", "v_chosen"), #individual regressors
+    c("clock", "feedback", "v_entropy"), #clock-aligned
 #    c("clock", "feedback", "v_entropy_feedback"), #feedback-aligned
 #    c("clock", "feedback", "v_entropy_func"),
-#    c("clock", "feedback", "d_auc"), #feedback-aligned
+    c("clock", "feedback", "d_auc"), #feedback-aligned
 #    c("clock", "feedback", "d_auc_clock"), #clock-aligned
-#    c("clock", "feedback", "pe_max"),
+    c("clock", "feedback", "pe_max"),
 #    c("clock", "feedback", "v_entropy_no5"),
 #    c("clock", "feedback", "v_auc"),
 #    c("clock", "feedback", "d_auc_sqrt"),
-#    c("clock", "feedback", "rt_swing"),
+    c("clock", "feedback", "rt_swing"),
 #    c("clock", "feedback", "rt_swing_sqrt"),
 #    c("clock", "feedback", "v_max"),
 #    c("clock", "feedback", "mean_kld"),
 #    c("clock", "feedback", "intrinsic_discrepancy"),
 #    c("clock", "feedback", "mean_kld_feedback"),
 #    c("clock", "feedback", "intrinsic_discrepancy_feedback"),
-#    c("clock", "feedback", "rt_vmax_change"),
-#    c("clock", "feedback", "v_entropy_change"),
-#    c("clock", "feedback", "v_entropy_change_pos"),
-#    c("clock", "feedback", "v_entropy_change_neg")
+    c("clock", "feedback", "rt_vmax_change"),
+    c("clock", "feedback", "v_entropy_change"),
+    c("clock", "feedback", "v_entropy_change_pos"),
+    c("clock", "feedback", "v_entropy_change_neg")
 #    c("clock", "feedback", "rew_om"),
 #    c("clock", "feedback", "pe_max", "rew_om")
   ),

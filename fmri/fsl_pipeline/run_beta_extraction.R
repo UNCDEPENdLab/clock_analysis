@@ -1,7 +1,8 @@
 library(dependlab)
 
 #load("/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/MMClock_aroma_preconvolve_fse.RData") #current arguments
-load("/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/MMClock_aroma_preconvolve_fse_groupfixed.RData") #current arguments
+#load("/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/MMClock_aroma_preconvolve_fse_groupfixed.RData") #current arguments
+load("/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/SPECC_aroma_preconvolve_fse_groupfixed.RData") #current arguments
 
 for (run_model_index in 1:length(fsl_model_arguments$outdir)) {
 

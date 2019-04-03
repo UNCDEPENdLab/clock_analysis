@@ -61,7 +61,10 @@ subject_df <- read_csv("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/SPE
     I_Age_c = I_Age - mean(I_Age, na.rm=TRUE),
     Age_c = Age - mean(Age, na.rm=TRUE),
     Q_Age = Age_c^2,
-    Q_Age_c = Q_Age - mean(Q_Age, na.rm=TRUE)
+    Q_Age_c = Q_Age - mean(Q_Age, na.rm=TRUE),
+    BPD_c = BPD - mean(BPD, na.rm=TRUE),
+    BPD_Age = BPD_c * Age_c,
+    BPD_IAge = BPD_c * I_Age_c
     )
 
 #from 2017:
@@ -88,6 +91,7 @@ fsl_model_arguments <- list(
     c("clock", "feedback", "v_chosen"), #individual regressors
     c("clock", "feedback", "v_entropy"), #clock-aligned
     c("clock", "feedback", "d_auc"), #feedback-aligned
+    c("clock", "feedback", "v_chosen", "v_entropy", "pe_max", "d_auc"), #feedback-aligned
     c("clock", "feedback", "rt_swing"), #rt swing map
     c("clock", "feedback", "rt_vmax_change"),
     c("clock", "feedback", "v_entropy_change"),
@@ -114,7 +118,9 @@ fsl_model_arguments <- list(
   group_model_variants=list(
     c("Intercept"),
     c("Intercept", "Age"),
-    c("Intercept", "Age", "BPD")
+    c("Intercept", "Age", "BPD"),
+    c("Intercept", "Age_c", "BPD_c", "BPD_Age"),
+    c("Intercept", "I_Age_c", "BPD_c", "BPD_IAge")
 #    c("Intercept", "Age", "Female"),
 #    c("Intercept", "I_Age"),
 #    c("Intercept", "I_Age", "Female")

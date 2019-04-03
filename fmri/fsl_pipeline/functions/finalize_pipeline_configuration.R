@@ -35,6 +35,11 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
       stop("No feedback event is in the model: ", paste(v, collapse=","))
     }
   }  
+
+  #remove bad ids before running anything further
+  if (!is.null(fsl_model_arguments$badids) && length(fsl_model_arguments$badids) > 0L) {
+    fsl_model_arguments$subject_covariates <- fsl_model_arguments$subject_covariates %>% filter(!id %in% fsl_model_arguments$badids) #remove bad ids
+  }
   
   return(fsl_model_arguments)
 }
