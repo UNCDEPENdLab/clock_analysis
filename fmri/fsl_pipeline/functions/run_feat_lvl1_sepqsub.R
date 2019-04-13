@@ -27,16 +27,18 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
 
   #load(to_run)
 
-  target <- fsl_model_arguments$fmri_dir
+  subject_covariates <- fsl_model_arguments$subject_covariates
+  expectdir <- fsl_model_arguments$expectdir
   model_match <- fsl_model_arguments$outdir[run_model_index]
   workdir <- fsl_model_arguments$workdir[run_model_index]
-  stopifnot(file.exists(target))
 
   cpusperjob <- 8 #number of cpus per qsub
   runsperproc <- 3 #number of feat calls per processor
 
-  fsfFiles <- system(paste0("find ", target, " -mindepth 3 -iname \"FEAT_LVL1_*.fsf\" -ipath \"*/", model_match, "/*\" -type f"), intern=TRUE)
-  # list.files(path=getwd(), pattern="FEAT_LVL1_.*\\.fsf", recursive=TRUE, full.names=TRUE)
+  #look in the subfolder for each subject for fsf files
+  fsfFiles <- do.call(c, lapply(subject_covariates$mr_dir, function(s) {
+    system(paste0("find ", file.path(s, expectdir), " -mindepth 2 -iname \"FEAT_LVL1_*.fsf\" -ipath \"*/", model_match, "/*\" -type f"), intern=TRUE)
+  }))
 
   #figure out which fsf files have already been run
   dirExpect <- gsub("\\.fsf$", ".feat", fsfFiles, perl=TRUE)

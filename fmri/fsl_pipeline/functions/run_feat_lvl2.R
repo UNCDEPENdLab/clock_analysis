@@ -1,6 +1,6 @@
 ## mm <- model.matrix(designmat)
 ## write.table(mm, file="fsl_LVL3_emo_design.txt", row.names=FALSE, col.names=FALSE, quote=FALSE)
-## cat(feat_l2_inputs_df$feat_run, sep="\n", file="feat_runlist.txt")
+## cat(feat_l2_inputs_df$feat_dir, sep="\n", file="feat_dirlist.txt")
 ## print(dimnames(mm)[2]) #column names (for FSL)
 
 ## library(lsmeans)
@@ -90,14 +90,14 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
         paste0("set fmri(copeinput.", n, ") 1"), "")      
     }
 
-    ##thisTemplate <- gsub(".OUTPUTDIR.", file.path(dirname(subdf$feat_run[1L]), "FEAT_LVL2"), thisTemplate, fixed=TRUE)
-    thisTemplate <- gsub(".OUTPUTDIR.", file.path(dirname(subdf$feat_run[1L]), "FEAT_LVL2_runtrend"), thisTemplate, fixed=TRUE)
+    ##thisTemplate <- gsub(".OUTPUTDIR.", file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2"), thisTemplate, fixed=TRUE)
+    thisTemplate <- gsub(".OUTPUTDIR.", file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2_runtrend"), thisTemplate, fixed=TRUE)
 
     thisTemplate <- gsub(".NINPUTS.", n_runs, thisTemplate, fixed=TRUE)
 
     #add .feat directories to analyze
     for (i in 1:nrow(subdf)) { 
-      thisTemplate <- gsub(paste0(".INPUT", i, "."), subdf$feat_run[i], thisTemplate, fixed=TRUE)
+      thisTemplate <- gsub(paste0(".INPUT", i, "."), subdf$feat_dir[i], thisTemplate, fixed=TRUE)
     }
 
     #write the values for the EVs (run conditions)
@@ -129,8 +129,8 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
     #add contrast information
     thisTemplate <- c(thisTemplate, contrast_syntax)
 
-    featOutDir <- file.path(dirname(subdf$feat_run[1L]), "FEAT_LVL2_runtrend.gfeat")
-    featFile <- file.path(dirname(subdf$feat_run[1L]), "FEAT_LVL2_runtrend.fsf")
+    featOutDir <- file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2_runtrend.gfeat")
+    featFile <- file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2_runtrend.fsf")
     if (file.exists(featOutDir) && force==FALSE) { return(NULL) } #skip re-creation of FSF and do not run below unless force==TRUE 
     cat(thisTemplate, file=featFile, sep="\n")      
     

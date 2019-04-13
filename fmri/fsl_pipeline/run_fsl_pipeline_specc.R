@@ -16,15 +16,11 @@ source(file.path(scripts_dir, "functions", "finalize_pipeline_configuration.R"))
 #Jun2017: further ICAs on the MMClock data suggest a short steady-state problem. Drop 2 volumes for good measure.
 
 ###
-# SCEPTIC MMClock Y3
-
-#trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_mfx_trial_statistics.csv.gz")
-#trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_mfx_trial_statistics.csv.gz")
-
+# SCEPTIC SPECC
 
 #factorized, selective maintenance, equal basis-generalization width
 #trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz") %>%
-trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_selective_psequate_fixedparams_ffx_trial_statistics.csv.gz") %>%
+trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/specc_specc_decay_factorize_selective_psequate_fixedparams_ffx_trial_statistics.csv.gz") %>%
   mutate(
     trial_rel=case_when(
     trial >= 1 & trial <= 50 ~ trial,
@@ -54,15 +50,22 @@ trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/cl
   ungroup()
 
 
-subject_df <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/mmy3_demographics.tsv", header=TRUE) %>%
-  rename(id=lunaid, Age=age, Female=female, ScanDate=scandate) %>%
-  mutate(mr_dir = paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", id, "_", format((as.Date(ScanDate, format="%Y-%m-%d")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
+subject_df <- read_csv("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/SPECC_Participant_Info.csv") %>%
+  rowwise() %>% mutate(mr_dir=ifelse(LunaMRI==1, #determine expected location depending on which study had the scan
+    paste0("/gpfs/group/mnh5174/default/MMClock/MR_Proc/", Luna_ID, "_", format((as.Date(ScanDate, format="%m/%d/%y")), "%Y%m%d")), #convert to Date, then reformat YYYYMMDD
+    paste0("/gpfs/group/mnh5174/default/SPECC/MR_Proc/", tolower(SPECC_ID), "_", tolower(format((as.Date(ScanDate, format="%m/%d/%y")), "%d%b%Y"))))) %>%
+  ungroup() %>%
+  rename(id=NUM_ID, Age=AgeAtScan, Female=Female) %>%
+  mutate(
     I_Age = -1000*1/Age,
     I_Age_c = I_Age - mean(I_Age, na.rm=TRUE),
     Age_c = Age - mean(Age, na.rm=TRUE),
     Q_Age = Age_c^2,
-    Q_Age_c = Q_Age - mean(Q_Age, na.rm=TRUE)
-  )
+    Q_Age_c = Q_Age - mean(Q_Age, na.rm=TRUE),
+    BPD_c = BPD - mean(BPD, na.rm=TRUE),
+    BPD_Age = BPD_c * Age_c,
+    BPD_IAge = BPD_c * I_Age_c
+    )
 
 #from 2017:
 ##results from Mean SCEPTIC regressor correlation.pdf indicate that regressors for vchosen, ventropy_decay_matlab, dauc, and pemax are
@@ -71,12 +74,11 @@ subject_df <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/m
 
 #Setup the global configuration for the full FSL pipeline
 fsl_model_arguments <- list(
-  #analysis_name="MMClock_aroma_preconvolve_fse",
-  analysis_name="MMClock_aroma_preconvolve_fse_groupfixed",
+  analysis_name="SPECC_aroma_preconvolve_fse_groupfixed",
   trial_statistics = trial_df,
   subject_covariates = subject_df,
   id_col = "id",
-  fmri_dir = "/gpfs/group/mnh5174/default/MMClock/MR_Proc",
+  fmri_dir = "/gpfs/group/mnh5174/default/SPECC/MR_Proc",
   expectdir = "mni_5mm_aroma", #subfolder name for processed data
   expectfile = "nfaswuktm_clock[0-9]_5.nii.gz", #expected file name for processed clock data
   usepreconvolve=TRUE,
@@ -85,52 +87,53 @@ fsl_model_arguments <- list(
   tr=1.0, #seconds
   spikeregressors=FALSE, #don't include spike regressors in nuisance variables since we are using AROMA
   sceptic_run_variants=list(
-#    c("clock", "feedback_bs")
-#    c("clock_bs", "feedback")
-#    c("clock", "feedback", "v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
-#    c("clock", "feedback", "v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
+    c("clock", "feedback", "pe_max"),
     c("clock", "feedback", "v_chosen"), #individual regressors
     c("clock", "feedback", "v_entropy"), #clock-aligned
+    c("clock", "feedback", "d_auc"), #feedback-aligned
+    c("clock", "feedback", "v_chosen", "v_entropy", "pe_max", "d_auc"), #feedback-aligned
+    c("clock", "feedback", "rt_swing"), #rt swing map
+    c("clock", "feedback", "rt_vmax_change"),
+    c("clock", "feedback", "v_entropy_change"),
+    c("clock", "feedback", "v_entropy_change_pos"),
+    c("clock", "feedback", "v_entropy_change_neg")
+#    c("clock", "feedback", "v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
+#    c("clock", "feedback", "v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
 #    c("clock", "feedback", "v_entropy_feedback"), #feedback-aligned
 #    c("clock", "feedback", "v_entropy_func"),
-    c("clock", "feedback", "d_auc"), #feedback-aligned
 #    c("clock", "feedback", "d_auc_clock"), #clock-aligned
-    c("clock", "feedback", "pe_max"),
 #    c("clock", "feedback", "v_entropy_no5"),
 #    c("clock", "feedback", "v_auc"),
 #    c("clock", "feedback", "d_auc_sqrt"),
-    c("clock", "feedback", "rt_swing"),
 #    c("clock", "feedback", "rt_swing_sqrt"),
 #    c("clock", "feedback", "v_max"),
 #    c("clock", "feedback", "mean_kld"),
 #    c("clock", "feedback", "intrinsic_discrepancy"),
 #    c("clock", "feedback", "mean_kld_feedback"),
 #    c("clock", "feedback", "intrinsic_discrepancy_feedback"),
-    c("clock", "feedback", "rt_vmax_change"),
-    c("clock", "feedback", "v_entropy_change"),
-    c("clock", "feedback", "v_entropy_change_pos"),
-    c("clock", "feedback", "v_entropy_change_neg")
 #    c("clock", "feedback", "rew_om"),
-#    c("clock", "feedback", "pe_max", "rew_om")
+#    c("clock", "feedback", "pe_max", "rew_om"),
+#    c("clock_bs", "feedback")
   ),
   group_model_variants=list(
     c("Intercept"),
-    c("Intercept", "Age")
+    c("Intercept", "Age"),
+    c("Intercept", "Age", "BPD"),
+    c("Intercept", "Age_c", "BPD_c", "BPD_Age"),
+    c("Intercept", "I_Age_c", "BPD_c", "BPD_IAge")
 #    c("Intercept", "Age", "Female"),
 #    c("Intercept", "I_Age"),
 #    c("Intercept", "I_Age", "Female")
   ),    
   execute_feat=FALSE, #passed through to fsl_sceptic_model to create fsf, but not run the model
-  #model_suffix="_fse", #factorized, selective, equal generalization width
   model_suffix="_fse_groupfixed", #factorized, selective, equal generalization width
   root_workdir="/gpfs/scratch/mnh5174/run_fsl_pipeline_qsub_tmp",
   n_cluster_beta_cpus=8, #should be number of l2 contrasts, or lower
-  badids = c(11335, #low IQ, ADHD Hx, loss of consciousness
-    11332, #should be excluded, but scan was terminated early due to repeated movement
-    11282, #RTs at the floor for essentially all runs. Not appropriate
-    11246, #huge movement and RTs at floor
-    #10637, #large and many movements in later runs (need to revisit to confirm) ### OCT2018: 6 of 8 runs pass our algorithmic thresholds for motion
-    10662  #I think there are reconstruction problems here -- need to revisit
+  badids = c(
+    83,  #I think there are reconstruction problems here -- need to revisit
+    23,  #Lied about age (older than stated)
+    34,  #Bailed on scan due to claustrophobic reaction
+    142  #Low RIST score
   )
 )
 
@@ -141,6 +144,3 @@ save(fsl_model_arguments, file=paste0("configuration_files/", fsl_model_argument
 
 #this pushes the full analysis pipeline in parallel, where parallelism is across sceptic_run_variants
 push_pipeline(fsl_model_arguments, ncpus=fsl_model_arguments$pipeline_cpus)
-
-
-## Other pipelines go here

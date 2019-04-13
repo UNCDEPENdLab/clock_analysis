@@ -1,6 +1,8 @@
 ## This script sets up the .fsf files to combine runs within subject using an
 ## FSL Feat Level 2 analysis -- that is, fixed effects combinations of runs.
 
+#load("/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/SPECC_aroma_preconvolve_fse_groupfixed.RData")
+
 #load the master configuration file
 to_run <- Sys.getenv("fsl_pipeline_file")
 
