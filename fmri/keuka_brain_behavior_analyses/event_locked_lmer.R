@@ -13,9 +13,20 @@ trial_df <- trial_df %>%
                 rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
                 clock_onset_prev=dplyr::lag(clock_onset, 1, by="run"),
                 rt_lag = lag(rt_csv) ,
+                reward = score_csv>0,
                 omission_lag = lag(score_csv==0),
                 rt_vmax_lag = lag(rt_vmax),
                 v_entropy_wi = scale(v_entropy),
+                rt_change = rt_csv - rt_lag,
+                swing_above_median = abs(rt_change) > median(abs(na.omit(rt_change))),
+                pe_max_lag = lag(pe_max), 
+                pe_max_lag2 = lag(pe_max_lag),
+                pe_max_lag3 = lag(pe_max_lag2),
+                abs_pe_max_lag = abs(pe_max_lag), 
+                rt_vmax_change = rt_vmax - rt_vmax_lag,
+                feedback_onset_prev = lag(feedback_onset),
+                v_max_above_median = v_max > median(na.omit(v_max)),
+                first10  = run_trial<11,
                 run_trial=case_when(
                   trial >= 1 & trial <= 50 ~ trial,
                   trial >= 51 & trial <= 100 ~ trial - 50, #dplyr/rlang has gotten awfully picky about data types!!
@@ -27,7 +38,7 @@ trial_df <- trial_df %>%
                   trial >= 351 & trial <= 400 ~ trial - 350,
                   TRUE ~ NA_real_)) %>% ungroup() %>%
   dplyr::mutate(rt_csv=rt_csv/1000, rt_vmax=rt_vmax/10) %>% 
-  mutate(rt_vmax_cum=clock_onset + rt_vmax)
+  mutate(rt_vmax_cum=clock_onset + rt_vmax, rt_vmax_cum_lag = lag(rt_vmax_cum))
 
 
 
@@ -36,26 +47,195 @@ l <- read_csv("long_axis_l_2.3mm_clock_onset_decon_locked.csv.gz") %>% mutate(si
 r <- read_csv("long_axis_r_2.3mm_clock_onset_decon_locked.csv.gz") %>% mutate(side = 'r')
 clock <- rbind(l,r)
 
-clock_sum <- clock %>% group_by(id, run, evt_time, axis_bin,side) %>% summarise(mdecon_interp = mean(decon_interp))
+# clock_sum <- clock %>% group_by(id, run, evt_time, axis_bin,side) %>% summarise(mdecon_interp = mean(decon_interp))
 
-pdf('clock_locked_means.pdf', width = 14, height = 8)
-#ggplot(clock_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
-ggplot(clock_sum, aes(factor(evt_time), mdecon_interp, color = axis_bin)) + 
-  stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
-dev.off()
+# pdf('clock_locked_means.pdf', width = 14, height = 8)
+# #ggplot(clock_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
+# ggplot(clock_sum, aes(factor(evt_time), mdecon_interp, color = axis_bin)) + 
+#   stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+# dev.off()
 
-clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, swing_above_median, first10) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(clock)
 #hist(clock_comb$iti_ideal)
 
 clock_sum <- clock_comb %>% filter(iti_ideal < 3) %>% group_by(id, run, evt_time, axis_bin,side) %>% summarise(mdecon_interp = mean(decon_interp))
+clock_sum_first10 <- clock_comb %>% filter(iti_ideal < 3) %>% group_by(id, run, evt_time, axis_bin,side, first10) %>% summarise(mdecon_interp = mean(decon_interp))
 
 pdf('clock_locked_means_filter_lt_3s_iti.pdf', width = 14, height = 8)
 #ggplot(clock_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
-ggplot(clock_sum, aes(factor(evt_time), mdecon_interp, color = axis_bin)) + 
+cl <- ggplot(clock_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + 
+  # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+  stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
+dev.off()
+
+# load feedback
+l <- read_csv("long_axis_l_2.3mm_feedback_onset_decon_locked.csv.gz") %>% mutate(side = 'l')
+r <- read_csv("long_axis_r_2.3mm_feedback_onset_decon_locked.csv.gz") %>% mutate(side = 'r')
+fb <- rbind(l,r)
+
+fb_sum <- fb %>% group_by(id, run, evt_time, axis_bin,side) %>% summarise(mdecon_interp = mean(decon_interp))
+
+# pdf('fb_locked_means.pdf', width = 14, height = 8)
+# #ggplot(fb_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
+# ggplot(fb_sum, aes(factor(evt_time), mdecon_interp, color = axis_bin)) + 
+#   stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+# dev.off()
+
+fb_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, reward, first10) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+  group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
+  inner_join(fb)
+#hist(fb_comb$iti_ideal)
+
+fb_sum <- fb_comb %>% filter(iti_ideal < 3) %>% group_by(id, run, evt_time, axis_bin,side) %>% summarise(mdecon_interp = mean(decon_interp))
+fb_sum_first10 <- fb_comb %>% filter(iti_ideal < 3) %>% group_by(id, run, evt_time, axis_bin,side, first10) %>% summarise(mdecon_interp = mean(decon_interp))
+
+pdf('fb_locked_means_filter_lt_3s_iti.pdf', width = 14, height = 8)
+#ggplot(fb_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
+feed <- ggplot(fb_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + 
+  # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+  stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
+
+dev.off()
+
+# load RT(vmax)
+l <- read_csv("long_axis_l_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'l')
+r <- read_csv("long_axis_r_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'r')
+rtvmax <- rbind(l,r)
+
+rtvmax_sum <- rtvmax %>% group_by(id, run, evt_time, axis_bin,side) %>% summarise(mdecon_interp = mean(decon_interp))
+
+pdf('rtvmax_locked_means.pdf', width = 14, height = 8)
+#ggplot(rtvmax_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
+ggplot(rtvmax_sum, aes(factor(evt_time), mdecon_interp, color = axis_bin)) + 
   stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
 dev.off()
+
+rtvmax_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, rt_vmax_cum, rt_vmax_cum_lag, v_max_above_median, first10) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+  group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
+  inner_join(rtvmax)
+#hist(rtvmax_comb$iti_ideal)
+
+rtvmax_sum <- rtvmax_comb %>% filter(iti_ideal < 3) %>% group_by(id, run, evt_time, axis_bin,side) %>% summarise(mdecon_interp = mean(decon_interp))
+rtvmax_sum_vmax <- rtvmax_comb %>% filter(iti_ideal < 3) %>% group_by(id, run, evt_time, axis_bin,side, v_max_above_median) %>% summarise(mdecon_interp = mean(decon_interp))
+rtvmax_sum_vmax <- rtvmax_comb %>% filter(iti_ideal < 3) %>% group_by(id, run, evt_time, axis_bin,side, v_max_above_median, first10) %>% summarise(mdecon_interp = mean(decon_interp))
+
+pdf('rtvmax_locked_means_filter_lt_3s_iti.pdf', width = 14, height = 8)
+#ggplot(rtvmax_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
+# ggplot(rtvmax_sum, aes(factor(evt_time), mdecon_interp, color = axis_bin)) + 
+rtv <- ggplot(rtvmax_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + 
+    # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+  stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
+  
+dev.off()
+
+pdf('events_locked_means_filter_lt_3s_iti.pdf', width = 8, height = 16)
+ggarrange(cl,feed,rtv,labels = c("clock", "feedback", "RT_Vmax"), ncol = 1, nrow = 3)
+dev.off()
+# they look surprisingly similar across events
+# examine modulation by RT swing for clock, reward for feedback, Vmax for RTvmax
+clock_sum_swing <- clock_comb %>% filter(iti_ideal < 3 & !is.na(swing_above_median)) %>% group_by(id, run, evt_time, axis_bin,side, swing_above_median) %>% summarise(mdecon_interp = mean(decon_interp))
+clock_sum_swing_early <- clock_comb %>% filter(iti_ideal < 3 & !is.na(swing_above_median)) %>% group_by(id, run, evt_time, axis_bin,side, swing_above_median, first10) %>% summarise(mdecon_interp = mean(decon_interp))
+
+# rt swing for clock-aligned
+pdf('clock_locked_by_rtswing_filter_3s_iti.pdf', width = 14, height = 8)
+#ggplot(clock_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
+ggplot(clock_sum_swing, aes(evt_time, mdecon_interp, color = axis_bin, lty = swing_above_median)) + 
+  # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+  stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
+dev.off()
+
+pdf('clock_locked_early_by_rtswing_filter_3s_iti.pdf', width = 14, height = 8)
+#ggplot(clock_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
+ggplot(clock_sum_swing_early, aes(evt_time, mdecon_interp, color = axis_bin, lty = swing_above_median)) + 
+  # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+  stat_summary(fun.y=mean, geom="line") + facet_grid(first10~side)
+dev.off()
+
+plot_by_summary <- function(alignment, trial_split=NULL, facet_by=NULL, filter_expr=NULL) {
+  if (alignment == "clock") {
+    df <- clock_comb
+  } else if (alignment == "feedback") {
+    df <- fb_comb
+  } else if (alignment == "rtvmax") {
+    df <- rtvmax_comb
+  } else { stop("what is: ", alignment) }
+  
+  gg <- enquo(trial_split)
+  df <- df %>% filter(!is.na(!!gg))
+  
+  if (!is.null(filter_expr)) {
+    fe <- enquo(filter_expr)
+    df <- df %>% filter(!!fe)
+  }
+  
+  if (!is.null(facet_by)) {
+    fb <- enquo(facet_by)
+  }
+    
+  df_sum <- df %>% mutate(evt_time=evt_time+1) %>% group_by(id, run, evt_time, axis_bin, side, !!gg, !!fb) %>%
+    summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()
+
+  g <- ggplot(df_sum, aes(x=evt_time, y=mdecon_interp, color = axis_bin, lty = !!gg)) +
+    stat_summary(fun.y=mean, geom="line")
+  
+  if (!is.null(facet_by)) {
+    g <- g + facet_grid(side ~ vars(facet_by)
+  } else {
+    g <- g + facet_wrap(~side)
+  }
+  
+  return(g)
+}
+
+xx <- plot_by_summary("clock", trial_split=swing_above_median, facet_by=NULL, filter_expr=NULL)
+
+
+#reward for feedback-aligned
+fb_sum_rew <- fb_comb %>% filter(iti_ideal < 3) %>% group_by(id, run, evt_time, axis_bin,side, reward) %>% summarise(mdecon_interp = mean(decon_interp))
+fb_sum_rew_early <- fb_comb %>% filter(iti_ideal < 3) %>% group_by(id, run, evt_time, axis_bin,side, reward, first10) %>% summarise(mdecon_interp = mean(decon_interp))
+
+pdf('fb_locked_by_reward_filter_lt_3s_iti.pdf', width = 10, height = 8)
+#ggplot(fb_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
+ggplot(fb_sum_rew, aes(evt_time, mdecon_interp, color = axis_bin, lty = reward)) + 
+  # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+  stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
+dev.off()
+
+pdf('fb_locked_early_by_reward_filter_lt_3s_iti.pdf', width = 10, height = 8)
+#ggplot(fb_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
+ggplot(fb_sum_rew_early, aes(evt_time, mdecon_interp, color = axis_bin, lty = reward)) + 
+  # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+  stat_summary(fun.y=mean, geom="line") + facet_wrap(first10~side)
+dev.off()
+
+# v_max for rt_vmax
+pdf('rtvmax_by_vmax_locked_means_filter_lt_3s_iti.pdf', width = 14, height = 8)
+#ggplot(rtvmax_sum, aes(evt_time, mdecon_interp, color = axis_bin)) + stat_smooth(method = 'gam') + facet_wrap(~side)
+# ggplot(rtvmax_sum, aes(factor(evt_time), mdecon_interp, color = axis_bin)) + 
+ggplot(rtvmax_sum_vmax, aes(evt_time, mdecon_interp, color = axis_bin, lty = v_max_above_median)) + 
+  # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+  stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
+
+dev.off()
+
+# combine plots for event type modulation by trial type
+swing <- ggplot(clock_sum_swing, aes(evt_time, mdecon_interp, color = axis_bin, lty = swing_above_median)) + 
+  # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+  stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
+rew <- ggplot(fb_sum_rew, aes(evt_time, mdecon_interp, color = axis_bin, lty = reward)) + 
+  # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+  stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
+vmax <- ggplot(rtvmax_sum_vmax, aes(evt_time, mdecon_interp, color = axis_bin, lty = v_max_above_median)) + 
+  # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
+  stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
+pdf('modulated_events_locked_means_filter_lt_3s_iti.pdf', width = 16, height = 8)
+ggarrange(swing,rew,vmax,labels = c("clock", "feedback", "RT_Vmax"), ncol = 3, nrow = 1)
+dev.off()
+
+'####### 
+#models
 
 #temporal dependency of decon estimates
 clock_comb <- clock_comb %>% group_by(id, run, run_trial) %>% 
