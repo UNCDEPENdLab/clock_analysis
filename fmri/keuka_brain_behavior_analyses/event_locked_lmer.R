@@ -221,20 +221,20 @@ ggplot(rtvmax_sum_vmax, aes(evt_time, mdecon_interp, color = axis_bin, lty = v_m
 dev.off()
 
 # combine plots for event type modulation by trial type
-swing <- ggplot(clock_sum_swing, aes(evt_time, mdecon_interp, color = axis_bin, lty = swing_above_median)) + 
+swing <- ggplot(clock_sum_swing, aes(evt_time+1, mdecon_interp, color = axis_bin, lty = swing_above_median)) + 
   # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
   stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
-rew <- ggplot(fb_sum_rew, aes(evt_time, mdecon_interp, color = axis_bin, lty = reward)) + 
+rew <- ggplot(fb_sum_rew, aes(evt_time+1, mdecon_interp, color = axis_bin, lty = reward)) + 
   # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
   stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
-vmax <- ggplot(rtvmax_sum_vmax, aes(evt_time, mdecon_interp, color = axis_bin, lty = v_max_above_median)) + 
+vmax <- ggplot(rtvmax_sum_vmax, aes(evt_time+1, mdecon_interp, color = axis_bin, lty = v_max_above_median)) + 
   # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4)) + facet_wrap(~side)
   stat_summary(fun.y=mean, geom="line") + facet_wrap(~side)
 pdf('modulated_events_locked_means_filter_lt_3s_iti.pdf', width = 16, height = 8)
 ggarrange(swing,rew,vmax,labels = c("clock", "feedback", "RT_Vmax"), ncol = 3, nrow = 1)
 dev.off()
 
-'####### 
+####### 
 #models
 
 #temporal dependency of decon estimates
