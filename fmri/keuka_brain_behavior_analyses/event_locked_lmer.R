@@ -18,6 +18,10 @@ trial_df <- trial_df %>%
                 omission_lag = lag(score_csv==0),
                 rt_vmax_lag = lag(rt_vmax),
                 v_entropy_wi = scale(v_entropy),
+                entropy = case_when(
+                  v_entropy_wi > mean(v_entropy_wi) ~ "high",
+                  v_entropy_wi < mean(v_entropy_wi) ~ "low",
+                  TRUE ~ NA_character_),
                 rt_change = rt_csv - rt_lag,
                 rt_above_1s = rt_csv > 1000,
                 swing_above_median = abs(rt_change) > median(abs(na.omit(rt_change))),
@@ -65,15 +69,15 @@ rtvmax <- rbind(l,r)
 
 
 clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, 
-                                  swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                                  swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(clock)
 fb_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, 
-                               reward,reward_lag, first10, rt_above_1s, rt_bin, rt_csv) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                               reward,reward_lag, first10, rt_above_1s, rt_bin, rt_csv, entropy) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(fb)
 rtvmax_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, rt_vmax_cum, rt_vmax_cum_lag, 
-                                   v_max_above_median, first10, rt_bin, rt_csv) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                                   v_max_above_median, first10, rt_bin, rt_csv, entropy) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(rtvmax)
 
@@ -98,24 +102,24 @@ plot_by_summary <- function(alignment, trial_split=NULL, facet_by, filter_expr=N
     df <- df %>% filter_(filter_expr)
   }
   
-  if (!missing(facet_by)) {
-    fb <- enquo(facet_by)
-    df_sum <- df %>% mutate(evt_time=evt_time+1) %>% group_by(id, run, evt_time, axis_bin, side, !!gg, !!fb) %>%
-      summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()
-  } else {
+  # if (!missing(facet_by)) {
+  #   fb <- enquo(facet_by)
+  #   df_sum <- df %>% mutate(evt_time=evt_time+1) %>% group_by(id, run, evt_time, axis_bin, side, !!gg, !!fb) %>%
+  #     summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()
+  # } else {
     df_sum <- df %>% mutate(evt_time=evt_time+1) %>% group_by(id, run, evt_time, axis_bin, side, !!gg) %>% #, !!fb) %>%
       summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()
-  }
+  # }
   
   g <- ggplot(df_sum, aes(x=evt_time, y=mdecon_interp, color = axis_bin, lty = !!gg)) +
     stat_summary(fun.y=mean, geom="line")
   
-  browser()
-  if (!missing(facet_by)) {
-    g <- g + facet_grid(side ~ vars(facet_by))
-  } else {
-    g <- g + facet_wrap(~side)
-  }
+  # browser()
+  # if (!missing(facet_by)) {
+  #   g <- g + facet_grid(side ~ vars(facet_by))
+  # } else {
+    g <- g + facet_wrap(~side) + scale_colour_viridis_d() + theme_bw()
+  # }
   
   return(g)
 }
@@ -126,11 +130,29 @@ xx <- plot_by_summary("clock", trial_split=swing_above_median, facet_by=NULL, fi
 xxx <- plot_by_summary("feedback", trial_split=reward_lag, facet_by=NULL, filter_expr=NULL)
 #plot_by_summary("clock", trial_split=rt_above_1s, facet_by=NULL, filter_expr="iti_prev>1")
 
-c1 <- plot_by_summary("clock", trial_split=rt_bin, facet_by=first10, filter_expr = NULL)
-f1 <- plot_by_summary("feedback", trial_split=rt_bin, facet_by=NULL)
 
-pdf("clock_and_feedback_by_rt_bin.pdf", width = 14, height = 8)
-ggarrange(c1,f1, labels = c("clock", "feedback"))
+c1 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'rt_csv<1')
+c2 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'rt_csv>1 & rt_csv<=2')
+c3 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'rt_csv>2 & rt_csv<=3')
+c4 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'rt_csv>3')
+
+# pdf("clock_by_swing_rt_bin.pdf", width = 20, height = 8)
+# ggarrange(c1,c2,c3,c4, ncol = 4)
+# dev.off()
+
+f1 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv<1')
+f2 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>1 & rt_csv<=2')
+f3 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>2 & rt_csv<=3')
+f4 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>3')
+
+fe1 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv<1')
+fe2 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>1 & rt_csv<=2')
+fe3 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>2 & rt_csv<=3')
+fe4 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>3')
+
+
+pdf("clock_by_swing_and_feedback_by_reward_and_entropy_by_rt_bin.pdf", width = 26, height = 21)
+ggarrange(c1,c2,c3,c4,f1,f2,f3,f4,fe1,fe2,fe3,fe4,ncol = 4, nrow = 3, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
 dev.off()
 
 
@@ -301,15 +323,28 @@ clock_comb <- clock_comb %>% group_by(id, run, run_trial) %>%
   mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
 
 
-hist(clock_comb$telapsed)
-mm <- lmer(decon_interp ~ decon_prev*iti_ideal_z + (1 | id/run), clock_comb %>% filter(side=="l" & evt_time > 0))
-summary(mm)
+fb_comb <- fb_comb %>% group_by(id, run, run_trial) %>% 
+  mutate(decon_prev = dplyr::lag(decon_interp, 1, by="run_trial"), 
+         telapsed=feedback_onset - feedback_onset_prev) %>%
+  ungroup() %>%
+  mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
 
-mm2 <- lmer(decon_interp ~ decon_prev*iti_ideal_z*evt_time + (1 | id/run), clock_comb %>% filter(side=="l" & evt_time > 0))
-summary(mm2)
+
+hist(clock_comb$telapsed)
+hist(fb_comb$telapsed)
+
+ mm <- lmer(decon_interp ~ decon_prev*iti_prev + (1 | id/run), clock_comb %>% filter(side=="r" & evt_time > 0))
+ summary(mm)
+# 
+# mm2 <- lmer(decon_interp ~ decon_prev*iti_ideal_z*evt_time + (1 | id/run), clock_comb %>% filter(side=="l" & evt_time > 0))
+# summary(mm2)
 
 mm2 <- lmer(decon_interp ~ decon_prev*telapsed*evt_time + (1 | id/run), clock_comb %>% filter(side=="l" & evt_time > 0))
 summary(mm2)
+
+# modulation by PE
+m1 <- lmer(decon_interp ~ decon_prev + reward * axis_bin + entropy * axis_bin + (1 | id/run), fb_comb )
+summary(m1)
 
 clock_comb %>% filter()
 
@@ -320,6 +355,12 @@ clock_hack <- clock_comb %>%
 
 clock_hack$bin_center <- rowMeans(clock_hack[, c("bin_low", "bin_high")])
 
+fb_hack <- fb_comb %>%
+  mutate(bin_low = as.numeric(sub("[^\\d]+([\\d+\\.]+),.*", "\\1", axis_bin, perl=TRUE)),
+         bin_high =as.numeric(sub("[^\\d]+[\\d+\\.]+,([\\d+\\.]+)\\]", "\\1", axis_bin, perl=TRUE)))
+
+fb_hack$bin_center <- rowMeans(fb_hack[, c("bin_low", "bin_high")])
+
 # recode_vec <- bin_centers
 # names(bin_centers) <- bin_levels
 # 
@@ -327,6 +368,10 @@ clock_hack$bin_center <- rowMeans(clock_hack[, c("bin_low", "bin_high")])
 # 
 # clock_comb <- clock_comb %>% mutate(axis_cont=recode(axis_bin, !!!bin_centers))
 
+# simple entropy model
+m1e <- lmer(decon_interp ~ decon_prev + entropy * bin_center * evt_time + (1 | id/run) + (1 | side), fb_hack)
+summary(m1e)
+car::Anova(m1e)
 
 mm2 <- lmer(decon_interp ~ decon_prev*telapsed*evt_time + (1 | id/run), clock_comb %>% filter(side=="l" & evt_time > 0))
 summary(mm2)
@@ -339,9 +384,6 @@ head(clock_comb)
 
 library(sjPlot)
 plot_model(mm, type="pred", terms=c("decon_prev", "iti_ideal_z"))
-
-mm2 <- lmer(decon_interp ~ scale(decon_prev)*scale(iti_ideal) + (1 | id/run), clock_comb %>% filter(side=="l" & iti_ideal > 1))
-summary(mm2)
 
 clock_comb <- clock_comb %>% group_by(id, run, run_trial) %>% 
   mutate(decon_prev = dplyr::lag(decon_interp, 1, by="run_trial")) %>% ungroup()
