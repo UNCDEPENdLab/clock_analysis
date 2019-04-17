@@ -5,66 +5,6 @@ library(parallel)
 library(doParallel)
 setwd(file.path(getMainDir(), "clock_analysis", "fmri", "hippo_voxelwise"))
 
-trial_df <- read_csv(file.path(getMainDir(), "clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
-trial_df <- trial_df %>%
-  group_by(id, run) %>%  
-  dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))), #compute rt_swing within run and subject
-                rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
-                rt_lag = lag(rt_csv) ,
-                omission_lag = lag(score_csv==0),
-                rt_vmax_lag = lag(rt_vmax),
-                v_entropy_wi = scale(v_entropy),
-                run_trial=case_when(
-                  trial >= 1 & trial <= 50 ~ trial,
-                  trial >= 51 & trial <= 100 ~ trial - 50, #dplyr/rlang has gotten awfully picky about data types!!
-                  trial >= 101 & trial <= 150 ~ trial - 100,
-                  trial >= 151 & trial <= 200 ~ trial - 150,
-                  trial >= 201 & trial <= 250 ~ trial - 200,
-                  trial >= 251 & trial <= 300 ~ trial - 250,
-                  trial >= 301 & trial <= 350 ~ trial - 300,
-                  trial >= 351 & trial <= 400 ~ trial - 350,
-                  TRUE ~ NA_real_)) %>% ungroup() %>%
-  dplyr::mutate(rt_csv=rt_csv/1000, rt_vmax=rt_vmax/10) %>% 
-      mutate(rt_vmax_cum=clock_onset + rt_vmax)
-    
-
-atlas_dirs <- c("~/Box/SCEPTIC_fMRI/long_axis_l_2.3mm",
-                "~/Box/SCEPTIC_fMRI/long_axis_r_2.3mm")
-
-cl <- makeCluster(4)
-registerDoParallel(cl)
-on.exit(stopCluster(cl))
-
-events <- c("clock_onset", "feedback_onset", "rt_vmax_cum")
-nbins <- 20 #splits along axis
-for (a in atlas_dirs) {
-  aname <- basename(a)
-  
-  mask <- oro.nifti::readNIfTI(file.path(getMainDir(), "clock_analysis/fmri/hippo_voxelwise", aname), reorient=FALSE)
-  mi <- which(mask > 0, arr.ind = TRUE)
-  
-  bin_cuts <- seq(min(mask[mi]) - 1e-5, max(mask[mi]) + 1e-5, length.out=nbins+1)
-  
-  afiles <- list.files(file.path(a, "deconvolved"), full.names = TRUE)
-  
-  for (e in events) {
-    elist <- foreach(fname=iter(afiles), .packages = c("dplyr", "readr")) %dopar% {
-      d <- read_csv(fname) %>% mutate(axis_bin=cut(atlas_value, bin_cuts)) %>%
-        select(-atlas_name, -x, -y, -z)
-      dsplit <- split(d, d$axis_bin)
-      
-      subj_lock <- event_lock_decon(dsplit, trial_df, event = e)
-      return(subj_lock)
-    }
-    
-    all_e <- bind_rows(elist)
-    all_e$atlas <- aname
-    write_csv(all_e, path=paste0(aname, "_", e, "_decon_locked.csv.gz"))
-  }
-}
-
-#Times in the deconvolved files should reflect the +2 seconds for the dropped volumes
-#So, this should align with the rt_csv columns appropriately.
 
 #function to get interpolated event locked data
 event_lock_decon <- function(d_by_bin, trial_df, event="feedback_onset", time_before=-3, time_after=3) {
@@ -111,6 +51,87 @@ event_lock_decon <- function(d_by_bin, trial_df, event="feedback_onset", time_be
   return(results)
 }
 
+
+trial_df <- read_csv(file.path(getMainDir(), "clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
+trial_df <- trial_df %>%
+  group_by(id, run) %>%  
+  dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))), #compute rt_swing within run and subject
+                rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
+                rt_lag = lag(rt_csv) ,
+                omission_lag = lag(score_csv==0),
+                rt_vmax_lag = lag(rt_vmax),
+                v_entropy_wi = scale(v_entropy),
+                run_trial=case_when(
+                  trial >= 1 & trial <= 50 ~ trial,
+                  trial >= 51 & trial <= 100 ~ trial - 50, #dplyr/rlang has gotten awfully picky about data types!!
+                  trial >= 101 & trial <= 150 ~ trial - 100,
+                  trial >= 151 & trial <= 200 ~ trial - 150,
+                  trial >= 201 & trial <= 250 ~ trial - 200,
+                  trial >= 251 & trial <= 300 ~ trial - 250,
+                  trial >= 301 & trial <= 350 ~ trial - 300,
+                  trial >= 351 & trial <= 400 ~ trial - 350,
+                  TRUE ~ NA_real_)) %>% ungroup() %>%
+  dplyr::mutate(rt_csv=rt_csv/1000, rt_vmax=rt_vmax/10) %>% 
+      mutate(rt_vmax_cum=clock_onset + rt_vmax)
+    
+
+base_dir <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise"
+
+atlas_dirs <- list.dirs(file.path(base_dir, "deconvolved_timeseries"), recursive=FALSE)
+#atlas_dirs <- c(file.path(base_dir, "deconvolved_timeseries", "long_axis_l_2.3mm"),
+#                file.path(base_dir, "deconvolved_timeseries", "long_axis_r_2.3mm"))
+
+cl <- makeCluster(20)
+registerDoParallel(cl)
+on.exit(stopCluster(cl))
+
+events <- c("clock_onset", "feedback_onset", "rt_vmax_cum", "clock_long")
+nbins <- 12 #splits along axis
+for (a in atlas_dirs) {
+  aname <- basename(a)
+  
+  mask <- oro.nifti::readNIfTI(file.path(getMainDir(), "clock_analysis/fmri/hippo_voxelwise", aname), reorient=FALSE)
+  mi <- which(mask > 0, arr.ind = TRUE)
+  
+  if (length(unique(mask[mi])) == 1L) {
+    bin_cuts <- seq(min(mask[mi]) - 1e-5, max(mask[mi]) + 1e-5, length.out=2) #for masks without continuous gradient
+  } else {
+    bin_cuts <- seq(min(mask[mi]) - 1e-5, max(mask[mi]) + 1e-5, length.out=nbins+1)
+  }
+  
+  afiles <- list.files(file.path(a, "deconvolved"), full.names = TRUE)
+
+  for (e in events) {
+    if (e == "clock_long") {
+      evt_col <- "clock_onset"
+      time_before=-1
+      time_after=6
+    } else {
+      evt_col <- e
+      time_before=-3
+      time_after=3
+    }
+    
+    elist <- foreach(fname=iter(afiles), .packages = c("dplyr", "readr")) %dopar% {
+      d <- read_csv(fname) %>% mutate(axis_bin=cut(atlas_value, bin_cuts)) %>%
+        select(-atlas_name, -x, -y, -z)
+      dsplit <- split(d, d$axis_bin)
+
+      if (all(is.na(d$decon))) { browser() }
+
+      subj_lock <- tryCatch(event_lock_decon(dsplit, trial_df, event = evt_col, time_before=time_before, time_after=time_after),
+        error=function(err) { cat("problems with event locking ", fname, " for event: ", e, "\n  ", err, "\n", file="evtlockerrors.txt", append=TRUE); return(NULL) })
+      return(subj_lock)
+    }
+    
+    all_e <- bind_rows(elist)
+    all_e$atlas <- aname
+    write_csv(all_e, path=paste0(aname, "_", e, "_decon_locked.csv.gz"))
+  }
+}
+
+#Times in the deconvolved files should reflect the +2 seconds for the dropped volumes
+#So, this should align with the rt_csv columns appropriately.
 
 
 # 
