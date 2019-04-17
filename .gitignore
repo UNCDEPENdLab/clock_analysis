@@ -19,3 +19,6 @@ td_model/
 coxme/clock_coxme.R
 *.pdf
 fmri/keuka_brain_behavior_analyses/clusters_and_beta_series.Rdata
+
+#Mac stuff
+.DS_Store
