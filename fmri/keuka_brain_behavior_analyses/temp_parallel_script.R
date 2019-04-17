@@ -1,3 +1,4 @@
+# CAUTION: shadow script for running slow models in parallel R session
 library(dplyr)
 library(tidyverse)
 library(psych)
@@ -92,6 +93,12 @@ rtvmax_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, rt_
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(rtvmax)
 
+# 20% of clock- and 32% of feedback-aligned timepoints are from the next trial: censor
+clock_comb$decon_interp[clock_comb$evt_time+1 > clock_comb$rt_csv + clock_comb$iti_ideal] <- NA
+fb_comb$decon_interp[fb_comb$evt_time+1 > clock_comb$iti_ideal] <- NA
+
+
+# numeric axis slice positions
 clock_comb <- clock_comb %>%
   mutate(bin_low = as.numeric(sub("[^\\d]+([\\d+\\.]+),.*", "\\1", axis_bin, perl=TRUE)),
          bin_high =as.numeric(sub("[^\\d]+[\\d+\\.]+,([\\d+\\.]+)\\]", "\\1", axis_bin, perl=TRUE)))
@@ -104,23 +111,74 @@ fb_comb <- fb_comb %>%
 
 fb_comb$bin_center <- rowMeans(fb_comb[, c("bin_low", "bin_high")])
 
-clock_comb <- clock_comb %>% group_by(id, run, run_trial) %>% 
-  mutate(decon_prev = dplyr::lag(decon_interp, 1, by="run_trial"), 
-         telapsed=clock_onset - clock_onset_prev) %>%
-  ungroup() %>%
-  mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
+# lags
+# # dplyr just freezes on this one, omit for now
+# clock_comb <- clock_comb %>% group_by(id, run, run_trial, side, axis_bin, evt_time) %>% 
+#   mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial), 
+#          telapsed=clock_onset - clock_onset_prev
+#          ) %>%
+#   ungroup() %>%
+#   mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
+# 
+# 
+# fb_comb <- fb_comb %>% group_by(id, run, run_trial, axis_bin, side, evt_time) %>% 
+#   mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial), 
+#          telapsed=feedback_onset - feedback_onset_prev) %>%
+#   ungroup() %>%
+#   mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
+
+# # I wonder whether we should subtract the previous trial's signal to isolate unique variation
+# clock_comb$decon_change <- clock_comb$decon_interp - clock_comb$decon_prev
+# fb_comb$decon_change <- fb_comb$decon_interp - fb_comb$decon_prev
 
 
-fb_comb <- fb_comb %>% group_by(id, run, run_trial) %>% 
-  mutate(decon_prev = dplyr::lag(decon_interp, 1, by="run_trial"), 
-         telapsed=feedback_onset - feedback_onset_prev) %>%
-  ungroup() %>%
-  mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
+#####################################
+# Michael's proper plotting function
+plot_by_summary <- function(alignment, trial_split=NULL, facet_by, filter_expr=NULL) {
+  if (alignment == "clock") {
+    df <- clock_comb
+  } else if (alignment == "feedback") {
+    df <- fb_comb
+  } else if (alignment == "rtvmax") {
+    df <- rtvmax_comb
+  } else { stop("what is: ", alignment) }
+  
+  gg <- enquo(trial_split)
+  df <- df %>% filter(!is.na(!!gg))
+  
+  if (!is.null(filter_expr)) {
+    #fe <- enquo(filter_expr)
+    #df <- df %>% filter(!!fe)
+    df <- df %>% filter_(filter_expr)
+  }
+  
+  # if (!missing(facet_by)) {
+  #   fb <- enquo(facet_by)
+  #   df_sum <- df %>% mutate(evt_time=evt_time+1) %>% group_by(id, run, evt_time, axis_bin, side, !!gg, !!fb) %>%
+  #     summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()
+  # } else {
+  df_sum <- df %>% mutate(evt_time=evt_time+1) %>% group_by(id, run, evt_time, axis_bin, side, !!gg) %>% #, !!fb) %>%
+    summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()
+  # }
+  
+  g <- ggplot(df_sum, aes(x=evt_time, y=mdecon_interp, color = axis_bin, lty = !!gg)) +
+    stat_summary(fun.y=mean, geom="line")
+  
+  # browser()
+  # if (!missing(facet_by)) {
+  #   g <- g + facet_grid(side ~ vars(facet_by))
+  # } else {
+  g <- g + facet_wrap(~side) + scale_colour_viridis_d(option = "C") + theme_dark() + geom_vline(xintercept = 0, linetype = 'dotted')
+  # }
+  
+  return(g)
+}
+
 ################
 ma1 <- lmer(scale(decon_interp) ~ scale(decon_prev)*scale(bin_center) + side + (1|id/run), clock_comb)
 summary(ma1)
 # cut out superimposed trials -- same results with <10% of the data
 ma1_7 <- lmer(scale(decon_interp) ~ scale(decon_prev)*scale(bin_center) + side + (1|id/run), clock_comb %>% filter(iti_prev>7))
 summary(ma1_7)
-
+ 
 

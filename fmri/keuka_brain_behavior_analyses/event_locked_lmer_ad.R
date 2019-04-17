@@ -92,6 +92,12 @@ rtvmax_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, rt_
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(rtvmax)
 
+# 20% of clock- and 32% of feedback-aligned timepoints are from the next trial: censor
+clock_comb$decon_interp[clock_comb$evt_time+1 > clock_comb$rt_csv + clock_comb$iti_ideal] <- NA
+fb_comb$decon_interp[fb_comb$evt_time+1 > clock_comb$iti_ideal] <- NA
+
+
+# numeric axis slice positions
 clock_comb <- clock_comb %>%
   mutate(bin_low = as.numeric(sub("[^\\d]+([\\d+\\.]+),.*", "\\1", axis_bin, perl=TRUE)),
          bin_high =as.numeric(sub("[^\\d]+[\\d+\\.]+,([\\d+\\.]+)\\]", "\\1", axis_bin, perl=TRUE)))
@@ -104,18 +110,44 @@ fb_comb <- fb_comb %>%
 
 fb_comb$bin_center <- rowMeans(fb_comb[, c("bin_low", "bin_high")])
 
-clock_comb <- clock_comb %>% group_by(id, run, run_trial) %>% 
-  mutate(decon_prev = dplyr::lag(decon_interp, 1, by="run_trial"), 
-         telapsed=clock_onset - clock_onset_prev) %>%
+# lags
+# # dplyr just freezes on this one, omit for now
+clock_comb <- clock_comb %>% group_by(id, run, side, axis_bin, evt_time) %>%
+  mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
+         telapsed=clock_onset - clock_onset_prev
+         ) %>%
   ungroup() %>%
   mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
 
 
-fb_comb <- fb_comb %>% group_by(id, run, run_trial) %>% 
-  mutate(decon_prev = dplyr::lag(decon_interp, 1, by="run_trial"), 
+fb_comb <- fb_comb %>% group_by(id, run, axis_bin, side, evt_time) %>%
+  mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
          telapsed=feedback_onset - feedback_onset_prev) %>%
   ungroup() %>%
   mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
+
+# # I wonder whether we should subtract the previous trial's signal to isolate unique variation
+clock_comb$decon_change <- clock_comb$decon_interp - clock_comb$decon_prev
+fb_comb$decon_change <- fb_comb$decon_interp - fb_comb$decon_prev
+
+# lagged AH and PH mean signal by evt_time -- spot-checked these, correct
+clock_comb <- clock_comb %>% group_by(id, run, run_trial, side, evt_time) %>%
+  mutate(ah_mean = mean(decon_interp[bin_center>.2 & bin_center<.8]),
+         ph_mean = mean(decon_interp[bin_center<.2])) %>%
+ungroup()
+clock_comb <- clock_comb %>% group_by(id, run, run_trial, side, bin_center) %>%
+  mutate(ah_mean_lag = dplyr::lag(ah_mean, order_by = evt_time),
+         ph_mean_lag = dplyr::lag(ph_mean, order_by = evt_time)) %>%
+  ungroup()
+
+
+fb_comb <- fb_comb %>% group_by(id, run, run_trial, evt_time, side) %>%
+  mutate(ah_mean = mean(decon_interp[bin_center>.2 & bin_center<.8]),
+         ph_mean = mean(decon_interp[bin_center<.2]), 
+         ah_mean_lag = dplyr::lag(ah_mean, order_by = evt_time),
+         ph_mean_lag = dplyr::lag(ph_mean, order_by = evt_time)) %>%
+  ungroup()
+View(clock_comb)
 
 #####################################
 # Michael's proper plotting function
@@ -143,7 +175,8 @@ plot_by_summary <- function(alignment, trial_split=NULL, facet_by, filter_expr=N
   #     summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()
   # } else {
   df_sum <- df %>% mutate(evt_time=evt_time+1) %>% group_by(id, run, evt_time, axis_bin, side, !!gg) %>% #, !!fb) %>%
-    summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()
+    # summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()
+    summarise(mdecon_interp = mean(abs(decon_change))) %>% ungroup() # version with abs signal change
   # }
   
   g <- ggplot(df_sum, aes(x=evt_time, y=mdecon_interp, color = axis_bin, lty = !!gg)) +
@@ -159,7 +192,9 @@ plot_by_summary <- function(alignment, trial_split=NULL, facet_by, filter_expr=N
   return(g)
 }
 
-#######################
+##########################
+# preliminaries stop here
+##########################
 # Plots made with function
 xx <- plot_by_summary("clock", trial_split=swing_above_median, facet_by=NULL, filter_expr=NULL)
 xxx <- plot_by_summary("feedback", trial_split=reward_lag, facet_by=NULL, filter_expr=NULL)
@@ -329,9 +364,12 @@ pdf("clock_by_unlearnable_rewFunc_by_rt_bin_rew_only.pdf", width = 16, height = 
 ggarrange(ucc1,ucc2,ucc3,ucc4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
 dev.off()
 
-# I wonder whether we should subtract the previous trial's signal to isolate unique variation
-
-
+# greater autocorrelation in anteror -- SIC: run abs change version
+ar1 <- plot_by_summary("clock", trial_split = reward, filter_expr = 'bin_center <.80')
+ar1 <- ar1 + ylab('Absolute signal change from last trial')
+pdf("clock_abs_signal_change_by_bin_center.pdf", height = 8, width = 10)
+ar1
+dev.off()
 
 
 ####### 
@@ -343,7 +381,7 @@ dev.off()
 hist(clock_comb$telapsed)
 hist(fb_comb$telapsed)
 
-mm <- lmer(decon_interp ~ decon_prev*iti_prev + (1 | id/run), clock_comb %>% filter(side=="r" & evt_time > 0))
+mm <- lmer(decon_interp ~ decon_prev*iti_prev + (1 | id/run), clock_comb %>% filter(evt_time == 1))
 summary(mm)
 # 
 # mm2 <- lmer(decon_interp ~ decon_prev*iti_ideal_z*evt_time + (1 | id/run), clock_comb %>% filter(side=="l" & evt_time > 0))
@@ -357,7 +395,7 @@ summary(mm2)
 #which(is.na(clock_comb$axis_bin))
 
 
-m1 <- lmer(decon_interp ~ scale(decon_prev) + reward * scale(bin_center) * evt_time + (1 | id/run) + (1 | side), fb_hack)
+m1 <- lmer(decon_interp ~ scale(decon_prev) * reward * scale(bin_center) * evt_time + (1 | id/run) + (1 | side), fb_comb)
 summary(m1)
 
 
@@ -401,10 +439,10 @@ summary(mc3)
 car::Anova(mc3)
 
 # is anterior signal more auto-correlated?
-ma1 <- lmer(decon_interp ~ scale(decon_prev)*scale(bin_center) + side + (1|id/run), clock_comb)
+ma1 <- lmer(decon_interp ~ scale(decon_prev)*scale(bin_center) + side + (1|id/run) + (1 | side), clock_comb)
 
 # is there a lag posterior -> anterior?
-ml1 <- 
+ml1 <- lmer(decon_interp ~ scale(ah_mean_lag)*scale(bin_center) + (1|id/run) + (1|side), clock_comb %>% filter(iti_prev > 7))
 
 g <- ggpredict(mc2, terms = c("evt_time_f", "rewFunc", "bin_center [.1,.3,.5,.7]", "rt_csv [1,2,3]"))
 g <- plot(g, facet = F, dodge = .4)
@@ -413,7 +451,7 @@ g + scale_color_viridis_d(option = "plasma") + theme_dark()
 
 
 # how does pre-response activity predict rt swings?
-ms1 <- lmer(decon_interp ~ decon_prev*bin_center + swing_above_median*bin_center + side + (1 | id/run), clock_comb %>% filter(iti_prev > 7 & evt_time < 0))
+ms1 <- lmer(decon_interp ~ decon_prev*bin_center + swing_above_median*bin_center + (1 | id/run) + (1 | side), clock_comb %>% filter(iti_prev > 7 & evt_time < 0))
 summary(ms1)
 vif.lme(ms1)
 g <- ggpredict(ms1, terms=c("swing_above_median", "bin_center", "side"), pretty = FALSE)
