@@ -105,7 +105,7 @@ fb_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedbac
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(fb)
 rtvmax_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
-                                   swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                                   swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, rt_vmax) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(rtvmax)
 v1_clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
@@ -140,6 +140,10 @@ clock_comb <- clock_comb %>% mutate(online = evt_time > 0 & evt_time <= rt_csv+1
 clock_comb$online <- as.factor(clock_comb$online)
 fb_comb <- fb_comb %>% mutate(online = evt_time > -rt_csv & evt_time < 1)
 fb_comb$online <- as.factor(fb_comb$online)
+# from clock onset (-rtvmax) until feedback (rt_csv-rt_vmax)
+rtvmax_comb <- rtvmax_comb %>% mutate(online = evt_time > -rt_vmax & evt_time < (rt_csv-rt_vmax))
+rtvmax_comb$online <- as.factor(rtvmax_comb$online)
+
 # numeric axis slice positions
 clock_comb <- clock_comb %>%
   mutate(bin_low = as.numeric(sub("[^\\d]+([\\d+\\.]+),.*", "\\1", axis_bin, perl=TRUE)),
@@ -255,7 +259,7 @@ plot_by_summary <- function(alignment, trial_split=NULL, facet_by, filter_expr=N
   #   df_sum <- df %>% mutate(evt_time=evt_time) %>% group_by(id, run, evt_time, axis_bin, side, !!gg, !!fb) %>%
   #     summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()
   # } else {
-  if (alignment == "clock" | alignment == "feedback" | alignment == "rt_vmax") {
+  if (alignment == "clock" | alignment == "feedback" | alignment == "rtvmax") {
       if (change) {
         df_sum <- df %>% group_by(id, run, evt_time, axis_bin, side, !!gg) %>% #, !!fb) %>%
           summarise(mdecon_interp = mean(abs(decon_change))) %>% ungroup() # version with abs signal change
@@ -310,10 +314,24 @@ plot_by_summary <- function(alignment, trial_split=NULL, facet_by, filter_expr=N
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots/')
 
 # change from previous trial; do longer ITIs wash out the PH?
-ch <- plot_by_summary("feedback", trial_split = entropy, filter_expr = 'iti_prev>5 & iti_ideal>3 & evt_time<5', change = TRUE)
-pdf("feedback_by_entropy_temporal_correlation_across_long_axis.pdf", width = 10, height = 8)
+ch <- plot_by_summary("feedback", trial_split = reward_lag, filter_expr = 'online=="TRUE"', change = FALSE)
+pdf("feedback_by_reward_lag_online_across_long_axis.pdf", width = 10, height = 8)
 ch
 dev.off()
+
+# can we plot online vs offline?
+ch <- plot_by_summary("clock", trial_split = entropy_lag, filter_expr = 'online=="TRUE"', change = FALSE)
+pdf("clock_online_only_by_entropy_across_long_axis.pdf", width = 10, height = 8)
+ch
+dev.off()
+
+# ramping?
+r <- plot_by_summary("rtvmax", trial_split = entropy, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>3', change = FALSE)
+pdf("rtvmax_online_by_entropy_across_long_axis.pdf", width = 10, height = 8)
+r
+dev.off()
+
+
 # HIPP vs m1 vs v1
 h1 <- plot_by_summary("feedback", trial_split = rewFunc, filter_expr = 'iti_prev > 4 & evt_time < 6 & rt_csv<1')
 h2 <- plot_by_summary("feedback", trial_split = rewFunc, filter_expr = 'iti_prev > 4 & evt_time < 6 & rt_csv>1 & rt_csv<=2')
@@ -577,8 +595,9 @@ vif.lme(fm2)
 # g <- ggpredict(fm2, terms = c("entropy", "bin_center [-2,0,2]"))
 g <- ggpredict(fm2, terms = c("online", "bin_center_z [-2,0,2]"))
 g <- plot(g, facet = F, dodge = .2)
+pdf("ah_vs_ph_online_lmer.pdf", width = 6, height = 6)
 g + scale_color_viridis_d(option = "plasma") + theme_dark()
-
+dev.off()
 
 # recode_vec <- bin_centers
 # names(bin_centers) <- bin_levels
