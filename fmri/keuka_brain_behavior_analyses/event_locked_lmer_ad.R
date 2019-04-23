@@ -9,8 +9,9 @@ library(cowplot)
 # library(sjmisc)
 library(ggeffects)
 
-#####################
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
+#####################
+
 
 setwd('~/Box Sync/SCEPTIC_fMRI/deconvolved_evt_locked/')
 l <- read_csv("long_axis_l_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
@@ -135,14 +136,18 @@ v1_clock_comb$decon_interp[v1_clock_comb$evt_time > v1_clock_comb$iti_ideal] <- 
 m1L_feedback_comb$decon_interp[m1L_feedback_comb$evt_time > m1L_feedback_comb$iti_ideal] <- NA
 v1_feedback_comb$decon_interp[v1_feedback_comb$evt_time > v1_feedback_comb$iti_ideal] <- NA
 
-# code on- and offline periods
-clock_comb <- clock_comb %>% mutate(online = evt_time > 0 & evt_time <= rt_csv+1 )
+# code on- and offline periods and evt_time^2 for plotting models
+clock_comb <- clock_comb %>% mutate(online = evt_time > -1 & evt_time <= rt_csv )
 clock_comb$online <- as.factor(clock_comb$online)
+
+# try more stringent feedback online window
 fb_comb <- fb_comb %>% mutate(online = evt_time > -rt_csv & evt_time < 1)
 fb_comb$online <- as.factor(fb_comb$online)
+fb_comb$evt_time_sq <- fb_comb$evt_time^2
 # from clock onset (-rtvmax) until feedback (rt_csv-rt_vmax)
 rtvmax_comb <- rtvmax_comb %>% mutate(online = evt_time > -rt_vmax & evt_time < (rt_csv-rt_vmax))
 rtvmax_comb$online <- as.factor(rtvmax_comb$online)
+rtvmax_comb$evt_time_sq <- rtvmax_comb$evt_time^2
 
 # numeric axis slice positions
 clock_comb <- clock_comb %>%
@@ -158,6 +163,14 @@ fb_comb <- fb_comb %>%
 
 fb_comb$bin_center <- rowMeans(fb_comb[, c("bin_low", "bin_high")])
 fb_comb$bin_center_z <- scale(fb_comb$bin_center)
+
+rtvmax_comb <- rtvmax_comb %>%
+  mutate(bin_low = as.numeric(sub("[^\\d]+([\\d+\\.]+),.*", "\\1", axis_bin, perl=TRUE)),
+         bin_high =as.numeric(sub("[^\\d]+[\\d+\\.]+,([\\d+\\.]+)\\]", "\\1", axis_bin, perl=TRUE)))
+
+rtvmax_comb$bin_center <- rowMeans(rtvmax_comb[, c("bin_low", "bin_high")])
+rtvmax_comb$bin_center_z <- scale(rtvmax_comb$bin_center)
+
 # lags -- these take very long
 
 clock_comb <- clock_comb %>% group_by(id, run, side, axis_bin, evt_time) %>%
@@ -173,6 +186,13 @@ fb_comb <- fb_comb %>% group_by(id, run, axis_bin, side, evt_time) %>%
          telapsed=feedback_onset - feedback_onset_prev) %>%
   ungroup() %>%
   mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
+
+rtvmax_comb <- rtvmax_comb %>% group_by(id, run, axis_bin, side, evt_time) %>%
+  mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
+         telapsed=clock_onset - clock_onset_prev) %>%
+  ungroup() %>%
+  mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
+
 
 v1_clock_comb <- v1_clock_comb %>% group_by(id, run, axis_bin, side, evt_time) %>%
   mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
@@ -225,8 +245,8 @@ fb_comb <- fb_comb %>% group_by(id, run, run_trial, evt_time, side) %>%
   ungroup()
 # View(clock_comb)
 
+# Michael's plotting function
 #####################################
-# Michael's proper plotting function
 plot_by_summary <- function(alignment, trial_split=NULL, facet_by, filter_expr=NULL, change = FALSE) {
   if (alignment == "clock") {
     df <- clock_comb
@@ -307,32 +327,115 @@ plot_by_summary <- function(alignment, trial_split=NULL, facet_by, filter_expr=N
 
 
 ##########################
-# preliminaries stop here
+# PLOTS
 ##########################
 # Plots made with function
 
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots/')
 
-# change from previous trial; do longer ITIs wash out the PH?
-ch <- plot_by_summary("feedback", trial_split = reward_lag, filter_expr = 'online=="TRUE"', change = FALSE)
-pdf("feedback_by_reward_lag_online_across_long_axis.pdf", width = 10, height = 8)
+# offline activity post-feedback
+ch <- plot_by_summary("feedback", trial_split = reward, filter_expr = "iti_ideal>7 & evt_time>=0", change = FALSE)
+pdf("feedback_by_reward_across_long_axis.pdf", width = 10, height = 8)
 ch
 dev.off()
 
-# can we plot online vs offline?
-ch <- plot_by_summary("clock", trial_split = entropy_lag, filter_expr = 'online=="TRUE"', change = FALSE)
-pdf("clock_online_only_by_entropy_across_long_axis.pdf", width = 10, height = 8)
+# online activity during clock
+ch <- plot_by_summary("clock", trial_split = rewFunc, filter_expr = 'online=="TRUE"', change = FALSE)
+pdf("clock_online_only_by_rewFunc_across_long_axis.pdf", width = 10, height = 8)
 ch
 dev.off()
 
-# ramping?
-r <- plot_by_summary("rtvmax", trial_split = entropy, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>3', change = FALSE)
-pdf("rtvmax_online_by_entropy_across_long_axis.pdf", width = 10, height = 8)
-r
+
+# ramping
+##############
+# check if ramping is robust to previous/current ITIs
+# r <- plot_by_summary("rtvmax", trial_split = reward_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>3', change = FALSE)
+r0 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE"', change = FALSE)
+r1 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>1', change = FALSE)
+r2 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2', change = FALSE)
+r3 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>3', change = FALSE)
+r4 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>4', change = FALSE)
+r5 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>5', change = FALSE)
+pdf("rtvmax_online_by_entropy_lag_by_iti_prev_0_5s.pdf", width = 24, height = 16)
+ggarrange(r0,r1,r2,r3,r4,r5, nrow = 3, ncol = 2, labels = c("all", "iti_prev>1s", "iti_prev>2s", "iti_prev>3s", "iti_prev>4s", "iti_prev>5s"), font.label = list(color = "red"))
+dev.off()
+# I don't think this current ITI should matter, but let's check -- YES, but iti_ideal>2s looks best
+r20 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2', change = FALSE)
+r22 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2', change = FALSE)
+r24 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>4', change = FALSE)
+pdf("rtvmax_online_by_entropy_lag_by_iti_ideal_0_4s.pdf", width = 24, height = 6)
+ggarrange(r20,r22,r24, nrow = 1, ncol = 3, labels = c("iti_prev>2", "iti_prev>2 & iti > 2s", "iti_prev>2 & iti > 4s"), font.label = list(color = "red"))
+dev.off()
+
+# is ramping seen across the RT range? Great -- we see it with the longest RTs!!!  Should definitely take >1s...
+r22_0 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv <1', change = FALSE)
+r22_1 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & rt_csv<2', change = FALSE)
+r22_2 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >2 & rt_csv<3', change = FALSE)
+r22_3 <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >3 & rt_csv<4', change = FALSE)
+pdf("rtvmax_online_by_entropy_lag_by_rt.pdf", width = 18, height = 16)
+ggarrange(r22_0,r22_1,r22_2,r22_3, nrow = 2, ncol = 2, labels = c("RT < 1s", "1s > RT > 2s", "2s > RT > 3s", "3s > RT > 4s"), font.label = list(color = "red"))
+dev.off()
+
+# does it vary by contingency? Excellent: looks best in learnable, but effect of 
+ri <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & rewFunc=="IEV"', change = FALSE)
+rd <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & rewFunc=="DEV"', change = FALSE)
+rc <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & rewFunc=="CEV"', change = FALSE)
+rr <- plot_by_summary("rtvmax", trial_split = entropy_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & rewFunc=="CEVR"', change = FALSE)
+pdf("rtvmax_online_by_entropy_lag_by_rewFunc.pdf", width = 18, height = 12)
+ggarrange(rd, ri, rc,rr, nrow = 2, ncol = 2, labels = c("DEV", "IEV", "CEV", "CEVR"), font.label = list(color = "red"))
+dev.off()
+
+# is it the same with reward/omission?  Good: no, it is not.  But look at how CEVR is strangely reversed!
+ri <- plot_by_summary("rtvmax", trial_split = reward_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & rewFunc=="IEV"', change = FALSE)
+rd <- plot_by_summary("rtvmax", trial_split = reward_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & rewFunc=="DEV"', change = FALSE)
+rc <- plot_by_summary("rtvmax", trial_split = reward_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & rewFunc=="CEV"', change = FALSE)
+rr <- plot_by_summary("rtvmax", trial_split = reward_lag, filter_expr = 'online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & rewFunc=="CEVR"', change = FALSE)
+pdf("rtvmax_online_by_reward_lag_by_rewFunc.pdf", width = 18, height = 12)
+ggarrange(rd, ri, rc,rr, nrow = 2, ncol = 2, labels = c("DEV", "IEV", "CEV", "CEVR"), font.label = list(color = "red"))
 dev.off()
 
 
 # HIPP vs m1 vs v1
+######################
+
+#clock, online
+
+h1 <- plot_by_summary("clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv<1')
+h2 <- plot_by_summary("clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>1 & rt_csv<=2')
+h3 <- plot_by_summary("clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>2 & rt_csv<=3')
+h4 <- plot_by_summary("clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>3 & rt_csv<=4')
+# h1 <- h1 + geom_vline(xintercept = 0:1)
+# h2 <- h2 + geom_vline(xintercept = 1:2)
+# h3 <- h3 + geom_vline(xintercept = 2:3)
+# h4 <- h4 + geom_vline(xintercept = 3:4) 
+h <- ggarrange(h1, h2, h3, h4 ,ncol = 2, nrow = 2, labels = c("HIPP <1", "HIPP 1-2", "HIPP 2-3", "HIPP 3-4"), font.label = list(color = "red"))
+
+m1 <- plot_by_summary("m1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv<1')
+m2 <- plot_by_summary("m1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>1 & rt_csv<=2')
+m3 <- plot_by_summary("m1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>2 & rt_csv<=3')
+m4 <- plot_by_summary("m1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>3')
+# m1 <- m1 + geom_vline(xintercept = 0:1)
+# m2 <- m2 + geom_vline(xintercept = 1:2)
+# m3 <- m3 + geom_vline(xintercept = 2:3)
+# m4 <- m4 + geom_vline(xintercept = 3:4) 
+m <- ggarrange(m1, m2, m3, m4, ncol = 2, nrow = 2, labels = c("Left m1 <1", "Left m1 1-2", "Left m1 2-3", "Left m1 3-4"), font.label = list(color = "red"))
+
+v1 <- plot_by_summary("v1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv<1')
+v2 <- plot_by_summary("v1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>1 & rt_csv<=2')
+v3 <- plot_by_summary("v1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>2 & rt_csv<=3')
+v4 <- plot_by_summary("v1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>3')
+# v1 <- v1 + geom_vline(xintercept = 0:1)
+# v2 <- v2 + geom_vline(xintercept = 1:2)
+# v3 <- v3 + geom_vline(xintercept = 2:3)
+# v4 <- v4 + geom_vline(xintercept = 3:4) 
+v <- ggarrange(v1, v2, v3, v4, ncol = 2, nrow = 2, labels = c("V1 <1", "V1 1-2", "V1 2-3", "V1 3-4"), font.label = list(color = "red"))
+
+pdf("clock_hipp_online_with_m1_v1_by_rt_rewFunc.pdf", width = 16, height = 16)
+ggarrange(h,v,m, ncol = 1, nrow = 3)
+dev.off()
+
+
+# feedback
 h1 <- plot_by_summary("feedback", trial_split = rewFunc, filter_expr = 'iti_prev > 4 & evt_time < 6 & rt_csv<1')
 h2 <- plot_by_summary("feedback", trial_split = rewFunc, filter_expr = 'iti_prev > 4 & evt_time < 6 & rt_csv>1 & rt_csv<=2')
 h3 <- plot_by_summary("feedback", trial_split = rewFunc, filter_expr = 'iti_prev > 4 & evt_time < 6 & rt_csv>2 & rt_csv<=3')
@@ -377,89 +480,89 @@ c4 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'rt
 # ggarrange(c1,c2,c3,c4, ncol = 4)
 # dev.off()
 
-f1 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv<1')
-f2 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>1 & rt_csv<=2')
-f3 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>2 & rt_csv<=3')
-f4 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>3')
-
-fe1 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv<1')
-fe2 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>1 & rt_csv<=2')
-fe3 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>2 & rt_csv<=3')
-fe4 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>3')
-
-
-pdf("clock_by_swing_and_feedback_by_reward_and_entropy_by_rt_bin.pdf", width = 26, height = 21)
-ggarrange(c1,c2,c3,c4,f1,f2,f3,f4,fe1,fe2,fe3,fe4,ncol = 4, nrow = 3, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-dev.off()
-
-# effect of past reward, filtering short iti trials
-cl1 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>7 & reward == TRUE') 
-cl1 <- cl1 + geom_vline(xintercept = 0:1)
-cl2 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-cl2 <- cl2 + geom_vline(xintercept = 1:2)
-cl3 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-cl3 <- cl3 + geom_vline(xintercept = 2:3)
-cl4 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-cl4 <- cl4 + geom_vline(xintercept = 3:4) 
-pdf("clock_by_lagged_reward_by_rt_bin.pdf", width = 16, height = 10)
-# ggarrange(cl1,cl2,cl3,cl4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-plot_grid(cl1,cl2,cl3,cl4,ncol = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
-dev.off()
-
-ce1 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>7 & reward == TRUE') 
-ce1 <- ce1 + geom_vline(xintercept = 0:1)
-ce2 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-ce2 <- ce2 + geom_vline(xintercept = 1:2)
-ce3 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-ce3 <- ce3 + geom_vline(xintercept = 2:3)
-ce4 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-ce4 <- ce4 + geom_vline(xintercept = 3:4) 
-pdf("clock_by_lagged_entropy_by_rt_bin)_rew_only.pdf", width = 16, height = 10)
-# ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-plot_grid(ce1,ce2,ce3,ce4,ncol = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
-dev.off()
-
-cs1 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>4 & iti_prev>8 & reward == TRUE') 
-cs1 <- cs1 + geom_vline(xintercept = 0:1)
-cs2 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
-cs2 <- cs2 + geom_vline(xintercept = 1:2)
-cs3 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
-cs3 <- cs3 + geom_vline(xintercept = 2:3)
-cs4 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
-cs4 <- cs4 + geom_vline(xintercept = 3:4) 
-pdf("clock_by_rt_swing_by_rt_bin)_rew_only.pdf", width = 16, height = 10)
-# ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-ggarrange(cs1,cs2,cs3,cs4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
-dev.off()
-
-# by contingency -- learnable, rewarded only
-cc1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"' ) 
-cc1 <- cc1 + geom_vline(xintercept = 0:1)
-cc2 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
-cc2 <- cc2 + geom_vline(xintercept = 1:2)
-cc3 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
-cc3 <- cc3 + geom_vline(xintercept = 2:3)
-cc4 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
-cc4 <- cc4 + geom_vline(xintercept = 3:4) 
-pdf("clock_by_learnable_rewFunc_by_rt_bin_rew_only.pdf", width = 16, height = 12)
-# ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-ggarrange(cc1,cc2,cc3,cc4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
-dev.off()
-
-# omission only
-occ1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"' ) 
-occ1 <- occ1 + geom_vline(xintercept = 0:1)
-occ2 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
-occ2 <- occ2 + geom_vline(xintercept = 1:2)
-occ3 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
-occ3 <- occ3 + geom_vline(xintercept = 2:3)
-occ4 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
-occ4 <- occ4 + geom_vline(xintercept = 3:4) 
-pdf("clock_by_learnable_rewFunc_by_rt_bin_omission_only.pdf", width = 16, height = 12)
-# ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-ggarrange(occ1,occ2,occ3,occ4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
-dev.off()
-
+# f1 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv<1')
+# f2 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>1 & rt_csv<=2')
+# f3 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>2 & rt_csv<=3')
+# f4 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>3')
+# 
+# fe1 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv<1')
+# fe2 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>1 & rt_csv<=2')
+# fe3 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>2 & rt_csv<=3')
+# fe4 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>3')
+# 
+# 
+# pdf("clock_by_swing_and_feedback_by_reward_and_entropy_by_rt_bin.pdf", width = 26, height = 21)
+# ggarrange(c1,c2,c3,c4,f1,f2,f3,f4,fe1,fe2,fe3,fe4,ncol = 4, nrow = 3, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+# dev.off()
+# 
+# # effect of past reward, filtering short iti trials
+# cl1 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>7 & reward == TRUE') 
+# cl1 <- cl1 + geom_vline(xintercept = 0:1)
+# cl2 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+# cl2 <- cl2 + geom_vline(xintercept = 1:2)
+# cl3 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+# cl3 <- cl3 + geom_vline(xintercept = 2:3)
+# cl4 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+# cl4 <- cl4 + geom_vline(xintercept = 3:4) 
+# pdf("clock_by_lagged_reward_by_rt_bin.pdf", width = 16, height = 10)
+# # ggarrange(cl1,cl2,cl3,cl4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+# plot_grid(cl1,cl2,cl3,cl4,ncol = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
+# dev.off()
+# 
+# ce1 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>7 & reward == TRUE') 
+# ce1 <- ce1 + geom_vline(xintercept = 0:1)
+# ce2 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+# ce2 <- ce2 + geom_vline(xintercept = 1:2)
+# ce3 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+# ce3 <- ce3 + geom_vline(xintercept = 2:3)
+# ce4 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+# ce4 <- ce4 + geom_vline(xintercept = 3:4) 
+# pdf("clock_by_lagged_entropy_by_rt_bin)_rew_only.pdf", width = 16, height = 10)
+# # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+# plot_grid(ce1,ce2,ce3,ce4,ncol = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
+# dev.off()
+# 
+# cs1 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>4 & iti_prev>8 & reward == TRUE') 
+# cs1 <- cs1 + geom_vline(xintercept = 0:1)
+# cs2 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
+# cs2 <- cs2 + geom_vline(xintercept = 1:2)
+# cs3 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
+# cs3 <- cs3 + geom_vline(xintercept = 2:3)
+# cs4 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
+# cs4 <- cs4 + geom_vline(xintercept = 3:4) 
+# pdf("clock_by_rt_swing_by_rt_bin)_rew_only.pdf", width = 16, height = 10)
+# # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+# ggarrange(cs1,cs2,cs3,cs4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
+# dev.off()
+# 
+# # by contingency -- learnable, rewarded only
+# cc1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"' ) 
+# cc1 <- cc1 + geom_vline(xintercept = 0:1)
+# cc2 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
+# cc2 <- cc2 + geom_vline(xintercept = 1:2)
+# cc3 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
+# cc3 <- cc3 + geom_vline(xintercept = 2:3)
+# cc4 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
+# cc4 <- cc4 + geom_vline(xintercept = 3:4) 
+# pdf("clock_by_learnable_rewFunc_by_rt_bin_rew_only.pdf", width = 16, height = 12)
+# # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+# ggarrange(cc1,cc2,cc3,cc4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
+# dev.off()
+# 
+# # omission only
+# occ1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"' ) 
+# occ1 <- occ1 + geom_vline(xintercept = 0:1)
+# occ2 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
+# occ2 <- occ2 + geom_vline(xintercept = 1:2)
+# occ3 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
+# occ3 <- occ3 + geom_vline(xintercept = 2:3)
+# occ4 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
+# occ4 <- occ4 + geom_vline(xintercept = 3:4) 
+# pdf("clock_by_learnable_rewFunc_by_rt_bin_omission_only.pdf", width = 16, height = 12)
+# # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+# ggarrange(occ1,occ2,occ3,occ4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
+# dev.off()
+# 
 # # these effects should be stronger on late trials, check
 # # by contingency -- learnable, rewarded only; not enough long preceding ITIs, reduced to >4
 # lcc1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>5 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV" & first10 == FALSE' ) 
@@ -598,6 +701,36 @@ g <- plot(g, facet = F, dodge = .2)
 pdf("ah_vs_ph_online_lmer.pdf", width = 6, height = 6)
 g + scale_color_viridis_d(option = "plasma") + theme_dark()
 dev.off()
+
+# test for ramps in AH in rtvmax-aligned data: quadratic term
+
+rm1 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z + decon_prev_z + entropy_lag + reward_lag + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR")))
+summary(rm1)
+vif.lme(rm1)
+
+# add entropy modulation
+rm2 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z*entropy_lag + decon_prev_z + reward_lag + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR")))
+summary(rm2)
+vif.lme(rm2)
+car::Anova(rm2)
+anova(rm1,rm2)
+
+# plot out the ramp and entropy modulation
+g <- ggpredict(rm2, terms = c("evt_time_sq [0,1,2,3,4]", "bin_center_z [-2,-1, 0, 1,2]", "entropy_lag"))
+g <- plot(g, facet = F, dodge = .2)
+g + scale_color_viridis_d(option = "plasma") + theme_dark()
+
+# check that it's specific to entropy and not last reward
+# it is, but PH is also more active after omissions and AH, after rewards
+rm3 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z*reward_lag + decon_prev_z + entropy_lag + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR")))
+summary(rm3)
+vif.lme(rm3)
+car::Anova(rm3)
+g <- ggpredict(rm3, terms = c("bin_center_z [-2,-1, 0, 1,2]", "reward_lag"))
+g <- plot(g, facet = F, dodge = .2)
+g + scale_color_viridis_d(option = "plasma") + theme_dark()
+
+anova(rm1,rm2, rm3)
 
 # recode_vec <- bin_centers
 # names(bin_centers) <- bin_levels
