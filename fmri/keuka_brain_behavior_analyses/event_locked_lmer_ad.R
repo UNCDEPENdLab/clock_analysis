@@ -101,21 +101,25 @@ trial_df <- read_csv(file.path("~/code/clock_analysis/fmri/data/mmclock_fmri_dec
                 first10  = run_trial<11) %>% ungroup() %>%
   dplyr::mutate(rt_csv=rt_csv/1000, rt_lag = rt_lag/1000, rt_vmax=rt_vmax/10, rt_vmax_lag = rt_vmax_lag/10) %>% # careful not to do this multiple times
   mutate(rt_vmax_cum=clock_onset + rt_vmax, rt_vmax_cum_lag = lag(rt_vmax_cum))
-
+trial_df <- trial_df %>% group_by(id) %>% mutate(total_earnings = sum(score_csv)) %>% ungroup()
 trial_df$rewFunc <- as.factor(trial_df$rewFunc)
 levels(trial_df$rewFunc) <- c("DEV", "IEV", "CEV", "CEVR")
 
+# add parameters
+params <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")
+
+trial_df <- inner_join(trial_df, params, by = "id")
 
 clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
-                                  swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                                  swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, gamma, total_earnings) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(clock)
 fb_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
-                               swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                               swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, gamma, total_earnings) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(fb)
 rtvmax_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
-                                   swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, rt_vmax) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                                   swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, rt_vmax, gamma, total_earnings) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(rtvmax)
 v1_clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
@@ -263,6 +267,10 @@ fb_comb <- fb_comb %>% group_by(id, run, run_trial, evt_time, side) %>%
          ph_mean_lag = dplyr::lag(ph_mean, order_by = evt_time)) %>%
   ungroup()
 # View(clock_comb)
+# summarize for VAR models
+fb_var <- fb_comb %>% group_by(id, run, run_trial, evt_time, side, online, entropy, reward, reward_lag, abs_pe_f) %>% 
+  summarise(AH = mean(ah_mean), PH = mean(ph_mean)) %>% ungroup()
+View(fb_var)
 
 # Michael's plotting function
 
@@ -711,9 +719,10 @@ ar1
 dev.off()
 
 
+# LMER
 ####### 
-#models
-
+#LMER models
+#########
 
 vif.lme <- function (fit) {
   ## adapted from rms::vif
@@ -782,6 +791,13 @@ pdf("ramps_in_AH.pdf", width = 6, height = 6)
 g + scale_color_viridis_d(option = "plasma") + theme_dark()
 dev.off()
 
+# nesting within trial
+rm2t <- lmer(decon_interp ~ evt_time*bin_center_z*entropy_lag + evt_time_sq*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + (1 | id/run/run_trial) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR")))
+summary(rm2t)
+vif.lme(rm2)
+car::Anova(rm2, '3')
+
+
 # test the same with time as factor
 rm2f <- lmer(decon_interp ~ evt_time_f*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR") ))
 summary(rm2f)
@@ -825,6 +841,9 @@ g <- plot(g, facet = F, dodge = .4)
 pdf("offline_abs_pe_AH_PH.pdf", width = 6, height = 6)
 g + scale_color_viridis_d(option = "plasma") + theme_dark()
 dev.off()
+anova(om1, om2)
+
+# moderation by gamma?
 
 om3 <- lmer(decon_interp ~ evt_time_f*bin_center_z*abs_pe_f*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
 summary(om3)
@@ -839,6 +858,33 @@ dev.off()
 # Do shorter ITIs disrupt processing?  No, they just seem to fall asleep during ITIs
 itim1 <- lmer(scale(rt_csv) ~ scale(rt_lag)*scale(rt_vmax)*scale(iti_prev) + (1 | id/run), trial_df )
 summary(itim1)
+
+#############
+## VAR of PH -> AH
+##############
+library(mlVAR)
+# reduce to bivariate AH PH
+# dayvar = run_trial
+# beepvar = evt_time
+# mlVAR(fb_var, c("AH", "PH"), id, lags = 1, dayvar, beepvar,
+#       estimator = c("default", "lmer", "lm","Mplus"),
+#       contemporaneous = c("default", "correlated",
+#                           "orthogonal", "fixed", "unique"), temporal =
+#         c("default", "correlated", "orthogonal", "fixed",
+#           "unique"), nCores = 1, verbose = TRUE, compareToLags,
+#       scale = TRUE, scaleWithin = FALSE, AR = FALSE,
+#       MplusSave = TRUE, MplusName = "mlVAR", iterations = "(2000)",
+#       chains = nCores, signs, orthogonal
+# )
+
+v0 <- mlVAR(fb_var, vars = c("AH", "PH"), idvar = "id", lags = 1, dayvar = "run_trial", beepvar = "evt_time",
+            estimator = "lmer",
+            contemporaneous = "correlated", temporal = "fixed",
+            nCores = 8, verbose = TRUE, compareToLags = 2,
+            scale = TRUE, scaleWithin = FALSE, AR = FALSE,
+            iterations = "(2000)",
+            chains = nCores
+)
 
 # PH and online exploration
 
