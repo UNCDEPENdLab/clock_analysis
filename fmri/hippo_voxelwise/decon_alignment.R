@@ -22,14 +22,20 @@ event_lock_decon <- function(d_by_bin, trial_df, event="feedback_onset", time_be
       #add time on either side of interpolation grid to have preceding time points that inform linear interp
       to_interpolate <- bin_data %>% filter(time_map > time_before - 1.5 & time_map < time_after + 1.5) %>% 
         select(time_map, decon, vnum) %>% group_by(time_map) %>%
-        summarize(vox_sd=sd(decon), decon=mean(decon))
+        summarize(vox_sd=sd(decon, na.rm=TRUE), decon=mean(decon, na.rm=TRUE))
       
       #for checking heterogeneity
       #ggplot(to_interpolate, aes(x=time_map, y=decon, color=factor(vnum))) + geom_line()
 
+      #rare, but if we have no data at tail end of run, we may not be able to interpolate
+      if (nrow(to_interpolate) < 2) {
+        cat("For subject:", subj_df$id[1], ", insufficient interpolation data for run:", subj_df$run[1], ", trial:", t, "\n", file="evtlockerrors.txt", append=TRUE)
+        next
+      }
+      
       #put everything onto same time grid
-      interp <- approx(x=to_interpolate$time_map, y=to_interpolate$decon, xout=seq(time_before, time_after, by=1))
-      interp <- interp %>% as.data.frame() %>% setNames(c("evt_time", "decon_interp")) 
+      interp <- approx(x=to_interpolate$time_map, y=to_interpolate$decon, xout=seq(time_before, time_after, by=1)) %>%
+        as.data.frame() %>% setNames(c("evt_time", "decon_interp"))
       interp_sd <- approx(x=to_interpolate$time_map, y=to_interpolate$vox_sd, xout=seq(time_before, time_after, by=1)) %>%
         as.data.frame() %>% setNames(c("evt_time", "sd_interp"))
       
@@ -81,15 +87,16 @@ atlas_dirs <- list.dirs(file.path(base_dir, "deconvolved_timeseries"), recursive
 #atlas_dirs <- c(file.path(base_dir, "deconvolved_timeseries", "long_axis_l_2.3mm"),
 #                file.path(base_dir, "deconvolved_timeseries", "long_axis_r_2.3mm"))
 
-cl <- makeCluster(20)
+cl <- makeCluster(30)
 registerDoParallel(cl)
 on.exit(stopCluster(cl))
 
-events <- c("clock_onset", "feedback_onset", "rt_vmax_cum", "clock_long")
+events <- c("clock_onset", "feedback_onset", "rt_vmax_cum", "clock_long", "feedback_long")
 nbins <- 12 #splits along axis
+
 for (a in atlas_dirs) {
   aname <- basename(a)
-  
+
   mask <- oro.nifti::readNIfTI(file.path(getMainDir(), "clock_analysis/fmri/hippo_voxelwise", aname), reorient=FALSE)
   mi <- which(mask > 0, arr.ind = TRUE)
   
@@ -105,13 +112,23 @@ for (a in atlas_dirs) {
     if (e == "clock_long") {
       evt_col <- "clock_onset"
       time_before=-1
-      time_after=6
+      time_after=10
+    } else if (e == "feedback_long") {
+      evt_col <- "feedback_onset"
+      time_before=-1
+      time_after=10
     } else {
       evt_col <- e
       time_before=-3
       time_after=3
     }
-    
+
+    out_name <- paste0(aname, "_", e, "_decon_locked.csv.gz")
+    if (file.exists(out_name)) {
+      message("Output file already exists: ", out_name)
+      next
+    }
+
     elist <- foreach(fname=iter(afiles), .packages = c("dplyr", "readr")) %dopar% {
       d <- read_csv(fname) %>% mutate(axis_bin=cut(atlas_value, bin_cuts)) %>%
         select(-atlas_name, -x, -y, -z)
@@ -120,13 +137,13 @@ for (a in atlas_dirs) {
       if (all(is.na(d$decon))) { browser() }
 
       subj_lock <- tryCatch(event_lock_decon(dsplit, trial_df, event = evt_col, time_before=time_before, time_after=time_after),
-        error=function(err) { cat("problems with event locking ", fname, " for event: ", e, "\n  ", err, "\n", file="evtlockerrors.txt", append=TRUE); return(NULL) })
+        error=function(err) { cat("Problems with event locking ", fname, " for event: ", e, "\n  ", as.character(err), "\n\n", file="evtlockerrors.txt", append=TRUE); return(NULL) })
       return(subj_lock)
     }
     
     all_e <- bind_rows(elist)
     all_e$atlas <- aname
-    write_csv(all_e, path=paste0(aname, "_", e, "_decon_locked.csv.gz"))
+    write_csv(all_e, path=out_name)
   }
 }
 
