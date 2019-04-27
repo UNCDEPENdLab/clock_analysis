@@ -272,6 +272,18 @@ fb_var <- fb_comb %>% group_by(id, run, run_trial, evt_time, side, online, entro
   summarise(AH = mean(ah_mean), PH = mean(ph_mean)) %>% ungroup()
 View(fb_var)
 
+myspread <- function(df, key, value) {
+  # quote key
+  keyq <- rlang::enquo(key)
+  # break value vector into quotes
+  valueq <- rlang::enquo(value)
+  s <- rlang::quos(!!valueq)
+  df %>% gather(variable, value, !!!s) %>%
+    unite(temp, !!keyq, variable) %>%
+    spread(temp, value)
+}
+fb_comb <- fb_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
+fb_wide <- fb_comb %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
 # Michael's plotting function
 
 #####################################
@@ -877,15 +889,28 @@ library(mlVAR)
 #       chains = nCores, signs, orthogonal
 # )
 
-v0 <- mlVAR(fb_var, vars = c("AH", "PH"), idvar = "id", lags = 1, dayvar = "run_trial", beepvar = "evt_time",
+cor <- corr.test(fb_wide[,45:68], use = "complete")
+
+v0 <- mlVAR(fb_var, vars = c("AH", "PH"), idvar = "id", lags = 3, dayvar = "run_trial", beepvar = "evt_time",
             estimator = "lmer",
             contemporaneous = "correlated", temporal = "fixed",
-            nCores = 8, verbose = TRUE, compareToLags = 2,
+            nCores = 4, verbose = TRUE, compareToLags = 2,
             scale = TRUE, scaleWithin = FALSE, AR = FALSE,
             iterations = "(2000)",
             chains = nCores
 )
 
+v1 <- mlVAR(fb_wide, vars = bins, idvar = "id", lags = 3, dayvar = "run_trial", beepvar = "evt_time",
+            estimator = "lmer",
+            contemporaneous = "correlated", temporal = "fixed",
+            nCores = 4, verbose = TRUE, compareToLags = 2,
+            scale = TRUE, scaleWithin = FALSE, AR = FALSE,
+            iterations = "(2000)",
+            chains = nCores
+)
+v0$output
+layout(t(1:2))
+plot(v0, "temporal", title = "True temporal relationships", layout = "circle")
 # PH and online exploration
 
 # recode_vec <- bin_centers
