@@ -1,4 +1,4 @@
-TITLE: megawide 1
+TITLE: megawide 1 with contemporaneous
 DATA: FILE = "fb_l_superwide.dat";
 VARIABLE:
 NAMES = id trial lh1_t00 lh1_t01 lh1_t02 lh1_t03 lh1_t04 lh1_t05 lh1_t06 lh1_t07
@@ -28,7 +28,6 @@ ANALYSIS: TYPE = TWOLEVEL;
    PROCESSORS=6;
    BITERATIONS=(1000);
    !ALGORITHM=GIBBS(RW);
-   
 MODEL:
 
 %WITHIN%
@@ -166,29 +165,29 @@ fh3trial WITH fh3_t04@0; !no corr between within trial and bw trial factors
 
 
 ! time 00 contemp correlations
-!fh1_t00 WITH fh2_t00;
-!fh1_t00 WITH fh3_t00;
-!fh2_t00 WITH fh3_t00;
+fh1_t00 WITH fh2_t00;
+fh1_t00 WITH fh3_t00;
+fh2_t00 WITH fh3_t00;
 
 ! time 01 contemp correlations
-!fh1_t01 WITH fh2_t01;
-!fh1_t01 WITH fh3_t01;
-!fh2_t01 WITH fh3_t01;
+fh1_t01 WITH fh2_t01;
+fh1_t01 WITH fh3_t01;
+fh2_t01 WITH fh3_t01;
 
 ! time 02 contemp correlations
-!fh1_t02 WITH fh2_t02;
-!fh1_t02 WITH fh3_t02;
-!fh2_t02 WITH fh3_t02;
+fh1_t02 WITH fh2_t02;
+fh1_t02 WITH fh3_t02;
+fh2_t02 WITH fh3_t02;
 
 ! time 03 contemp correlations
-!fh1_t03 WITH fh2_t03;
-!fh1_t03 WITH fh3_t03;
-!fh2_t03 WITH fh3_t03;
+fh1_t03 WITH fh2_t03;
+fh1_t03 WITH fh3_t03;
+fh2_t03 WITH fh3_t03;
 
 ! time 04 contemp correlations
-!fh1_t04 WITH fh2_t04;
-!fh1_t04 WITH fh3_t04;
-!fh2_t04 WITH fh3_t04;
+fh1_t04 WITH fh2_t04;
+fh1_t04 WITH fh3_t04;
+fh2_t04 WITH fh3_t04;
 
 %BETWEEN%
 ! BW subjects correlations
