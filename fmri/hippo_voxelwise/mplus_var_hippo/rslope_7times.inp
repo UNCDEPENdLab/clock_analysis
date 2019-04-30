@@ -1,0 +1,104 @@
+TITLE: rslope
+DATA: FILE = "fb_l_superwide.dat";
+VARIABLE:
+NAMES = id trial lh1_t00 lh1_t01 lh1_t02 lh1_t03 lh1_t04 lh1_t05 lh1_t06 lh1_t07
+     lh1_t08 lh1_t09 lh1_t10 lh10_t00 lh10_t01 lh10_t02 lh10_t03 lh10_t04 lh10_t05
+     lh10_t06 lh10_t07 lh10_t08 lh10_t09 lh10_t10 lh11_t00 lh11_t01 lh11_t02
+     lh11_t03 lh11_t04 lh11_t05 lh11_t06 lh11_t07 lh11_t08 lh11_t09 lh11_t10
+     lh12_t00 lh12_t01 lh12_t02 lh12_t03 lh12_t04 lh12_t05 lh12_t06 lh12_t07
+     lh12_t08 lh12_t09 lh12_t10 lh2_t00 lh2_t01 lh2_t02 lh2_t03 lh2_t04 lh2_t05
+     lh2_t06 lh2_t07 lh2_t08 lh2_t09 lh2_t10 lh3_t00 lh3_t01 lh3_t02 lh3_t03 lh3_t04
+     lh3_t05 lh3_t06 lh3_t07 lh3_t08 lh3_t09 lh3_t10 lh4_t00 lh4_t01 lh4_t02 lh4_t03
+     lh4_t04 lh4_t05 lh4_t06 lh4_t07 lh4_t08 lh4_t09 lh4_t10 lh5_t00 lh5_t01 lh5_t02
+     lh5_t03 lh5_t04 lh5_t05 lh5_t06 lh5_t07 lh5_t08 lh5_t09 lh5_t10 lh6_t00 lh6_t01
+     lh6_t02 lh6_t03 lh6_t04 lh6_t05 lh6_t06 lh6_t07 lh6_t08 lh6_t09 lh6_t10 lh7_t00
+     lh7_t01 lh7_t02 lh7_t03 lh7_t04 lh7_t05 lh7_t06 lh7_t07 lh7_t08 lh7_t09 lh7_t10
+     lh8_t00 lh8_t01 lh8_t02 lh8_t03 lh8_t04 lh8_t05 lh8_t06 lh8_t07 lh8_t08 lh8_t09
+     lh8_t10 lh9_t00 lh9_t01 lh9_t02 lh9_t03 lh9_t04 lh9_t05 lh9_t06 lh9_t07 lh9_t08
+     lh9_t09 lh9_t10; 
+
+MISSING=.;
+CLUSTER = id;
+USEVARIABLES ARE id lh1_t00-lh1_t07
+   lh2_t00-lh2_t07;
+   !lh3_t00-lh3_t07;
+
+WITHIN = lh1_t00-lh1_t07
+   lh2_t00-lh2_t07;
+
+!mplus doesn't allow equalities on random slopes for time series
+!LAGGED = lh1_t00-lh1_t04
+!   lh2_t00-lh2_t04 (1);
+
+ANALYSIS: TYPE = TWOLEVEL RANDOM;
+   ESTIMATOR=BAYES;
+   PROCESSORS=2;
+   BITERATIONS=(1000);
+   !ALGORITHM=GIBBS(RW);
+   
+MODEL:
+
+%WITHIN%
+
+!temporal autoregression
+s1 | lh1_t07 ON lh1_t06;
+s1 | lh1_t06 ON lh1_t05;
+s1 | lh1_t05 ON lh1_t04;
+s1 | lh1_t04 ON lh1_t03;
+s1 | lh1_t03 ON lh1_t02;
+s1 | lh1_t02 ON lh1_t01;
+s1 | lh1_t01 ON lh1_t00;
+
+!cross-path
+s2 | lh1_t07 ON lh2_t06;
+s2 | lh1_t06 ON lh2_t05;
+s2 | lh1_t05 ON lh2_t04;
+s2 | lh1_t04 ON lh2_t03;
+s2 | lh1_t03 ON lh2_t02;
+s2 | lh1_t02 ON lh2_t01;
+s2 | lh1_t01 ON lh2_t00;
+
+!temporal autoregression
+s4 | lh2_t07 ON lh2_t06;
+s4 | lh2_t06 ON lh2_t05;
+s4 | lh2_t05 ON lh2_t04;
+s4 | lh2_t04 ON lh2_t03;
+s4 | lh2_t03 ON lh2_t02;
+s4 | lh2_t02 ON lh2_t01;
+s4 | lh2_t01 ON lh2_t00;
+
+!cross-path
+s3 | lh2_t07 ON lh1_t06;
+s3 | lh2_t06 ON lh1_t05;
+s3 | lh2_t05 ON lh1_t04;
+s3 | lh2_t04 ON lh1_t03;
+s3 | lh2_t03 ON lh1_t02;
+s3 | lh2_t02 ON lh1_t01;
+s3 | lh2_t01 ON lh1_t00;
+
+!prior trial effects
+!s5 | lh1_t04 ON lh1_t04&1;
+!s5 | lh1_t03 ON lh1_t03&1;
+!s5 | lh1_t02 ON lh1_t02&1;
+!s5 | lh1_t01 ON lh1_t01&1;
+!s5 | lh1_t00 ON lh1_t00&1;
+
+!s6 | lh2_t04 ON lh2_t04&1;
+!s6 | lh2_t03 ON lh2_t03&1;
+!s6 | lh2_t02 ON lh2_t02&1;
+!s6 | lh2_t01 ON lh2_t01&1;
+!s6 | lh2_t00 ON lh2_t00&1;
+
+!lh1_t00-lh1_t04;
+!lh2_t00-lh2_t04;
+
+
+%BETWEEN%
+
+s1 s2 s3 s4 WITH s1 s2 s3 s4;
+
+!lh1_t00-lh1_t04;
+!lh2_t00-lh2_t04;
+
+
+OUTPUT: TECH1 TECH8; ! STANDARDIZED;
