@@ -157,7 +157,7 @@ mat <- matrix(NA, nrow=3, ncol=3)
 for (i in 1:nrow(mat)) {
   for (j in 1:ncol(mat)) {
     #column is 'from', row is 'to'
-    mat[i,j] <- lag1 %>% filter(str_detect(paramHeader, paste0("^FH", i, "_T02.ON")) & str_detect(param, paste0("^FH", j, "_T01"))) %>% pull(est)
+    mat[i,j] <- lag1 %>% filter(str_detect(paramHeader, paste0("^FH", i, "_T01.ON")) & str_detect(param, paste0("^FH", j, "_T00"))) %>% pull(est)
   }
 }
 
