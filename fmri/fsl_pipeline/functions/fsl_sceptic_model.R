@@ -237,7 +237,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   #NB. The tr argument should be passed in as part of ...
   d <- build_design_matrix(events=events, signals=signals, baseline_coef_order=2, write_timing_files = c("convolved"), #, "FSL"),
     center_values=TRUE, plot=FALSE, convolve_wi_run=TRUE, output_directory=timingdir, drop_volumes=drop_volumes,
-    run_volumes=runlengths, runs_to_output=mrrunnums, ...)
+    run_volumes=mrfiles, runs_to_output=mrrunnums, ...)
 
   save(d, subj_data, events, signals, timingdir, runlengths, mrrunnums, file=file.path(fsl_run_output_dir, "designmatrix.RData"))
   
