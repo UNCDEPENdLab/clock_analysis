@@ -8,11 +8,14 @@ library(cowplot)
 # library(sjPlot)
 # library(sjmisc)
 library(ggeffects)
+library(mlVAR)
 
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
+plots = F
+reprocess = T
 
-
+if (reprocess) {
 setwd('~/Box Sync/SCEPTIC_fMRI/deconvolved_evt_locked/')
 l <- read_csv("long_axis_l_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
 r <- read_csv("long_axis_r_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'r')
@@ -285,9 +288,21 @@ myspread <- function(df, key, value) {
 fb_comb <- fb_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
 fb_wide <- fb_comb %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
 names(fb_wide)[5:28] <- paste("hipp", names(fb_wide)[5:28], sep = "_")
+fb_wide_ex <- inner_join(fb_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi")], by = c("id", "run", "run_trial"))
+setwd("~/Box Sync/SCEPTIC_fMRI/var/")
+save(fb_wide, fb_wide_ex, file = "feedback_hipp_wide_ts.Rdata")
 
+clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
+# take only online event times
+clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
+names(clock_wide)[5:28] <- paste("hipp", names(clock_wide)[5:28], sep = "_")
+clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
+setwd("~/Box Sync/SCEPTIC_fMRI/var/")
+save(clock_wide, clock_wide_ex, file = "clock_hipp_wide_ts.Rdata")
+
+
+}
 # Michael's plotting function
-
 #####################################
 plot_by_summary <- function(alignment, trial_split=NULL, facet_by, filter_expr=NULL, change = FALSE) {
   if (alignment == "clock") {
@@ -368,7 +383,8 @@ plot_by_summary <- function(alignment, trial_split=NULL, facet_by, filter_expr=N
   return(g)
 }
 
-
+if (plots) {
+  
 ##########################
 # PLOTS
 ##########################
@@ -732,7 +748,7 @@ pdf("clock_abs_signal_change_by_bin_center.pdf", height = 8, width = 10)
 ar1
 dev.off()
 
-
+}
 # LMER
 ####### 
 #LMER models
@@ -758,6 +774,9 @@ vif.lme <- function (fit) {
 # hist(clock_comb$telapsed)
 # hist(fb_comb$telapsed)
 
+rerun <- F
+
+if (rerun) {
 mm <- lmer(decon_interp ~ decon_prev*iti_prev + (1 | id/run), clock_comb %>% filter(evt_time == 1))
 summary(mm)
 mm2 <- lmer(decon_interp ~ decon_prev*telapsed*evt_time + (1 | id/run), clock_comb %>% filter(side=="l" & evt_time > 0))
@@ -872,7 +891,7 @@ dev.off()
 # Do shorter ITIs disrupt processing?  No, they just seem to fall asleep during ITIs
 itim1 <- lmer(scale(rt_csv) ~ scale(rt_lag)*scale(rt_vmax)*scale(iti_prev) + (1 | id/run), trial_df )
 summary(itim1)
-
+}
 #############
 ## VAR of PH -> AH
 ##############
@@ -891,26 +910,39 @@ library(mlVAR)
 #       chains = nCores, signs, orthogonal
 # )
 
-cor <- corr.test(fb_wide[,45:68], use = "complete")
+# cor <- corr.test(fb_wide[,45:68], use = "complete")
 
-v0 <- mlVAR(fb_var, vars = c("AH", "PH"), idvar = "id", lags = 3, dayvar = "run_trial", beepvar = "evt_time",
+# v0 <- mlVAR(fb_var, vars = c("AH", "PH"), idvar = "id", lags = 3, dayvar = "run_trial", beepvar = "evt_time",
+#             estimator = "lmer",
+#             contemporaneous = "correlated", temporal = "fixed",
+#             nCores = 8, verbose = TRUE, compareToLags = 2,
+#             scale = TRUE, scaleWithin = FALSE, AR = FALSE,
+#             iterations = "(2000)",
+#             chains = nCores
+# )
+
+# just the left HIPP
+load('~/Box Sync/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata')
+# vl1 <- mlVAR(fb_wide, vars = names(fb_wide[grep('_l', names(fb_wide))]), idvar = "id", lags = 1, dayvar = "run_trial", beepvar = "evt_time",
+#             estimator = "lmer",
+#             contemporaneous = "correlated", temporal = "fixed",
+#             nCores = 8, verbose = TRUE, compareToLags = 1,
+#             scale = TRUE, scaleWithin = FALSE, AR = FALSE,
+#             iterations = "(2000)",
+#             chains = nCores
+# )
+# save(vl1,"vl1.Rdata")
+# vl1$output
+
+vr1 <- mlVAR(fb_wide, vars = names(fb_wide[grep('_r', names(fb_wide))]), idvar = "id", lags = 1, dayvar = "run_trial", beepvar = "evt_time",
             estimator = "lmer",
             contemporaneous = "correlated", temporal = "fixed",
-            nCores = 4, verbose = TRUE, compareToLags = 2,
+            nCores = 8, verbose = TRUE, compareToLags = 1,
             scale = TRUE, scaleWithin = FALSE, AR = FALSE,
             iterations = "(2000)",
             chains = nCores
 )
-
-v1 <- mlVAR(fb_wide, vars = names(fb_wide[7:28]), idvar = "id", lags = 1, dayvar = "run_trial", beepvar = "evt_time",
-            estimator = "lmer",
-            contemporaneous = "correlated", temporal = "fixed",
-            nCores = 4, verbose = TRUE, compareToLags = 2,
-            scale = TRUE, scaleWithin = FALSE, AR = FALSE,
-            iterations = "(2000)",
-            chains = nCores
-)
-v1$output
+save(vr1,"vr1.Rdata")
 layout(t(1:2))
 plot(v0, "temporal", title = "True temporal relationships", layout = "circle")
 # PH and online exploration
