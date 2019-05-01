@@ -9,9 +9,21 @@ fb_wide <- fb_wide %>% mutate(block=factor(paste0(id, run))) #%>% dplyr::select(
 #spread evt_time wide
 fb_l <- fb_wide %>% dplyr::select(id, block, run, run_trial, evt_time, ends_with("_l"))
 
-#shorten hippocampus labels to "lh" for left hippocampus (to avoid Mplus 8-character complaints)
-
 names(fb_l) <- sub("hipp_(\\d+)_l", "lh\\1", names(fb_l), perl=TRUE)
+#shorten hippocampus labels to "lh" for left hippocampus (to avoid Mplus 8-character complaints)
+fb_l_lags <- fb_l %>% na.omit() %>% arrange(id, run, run_trial, evt_time) %>%  group_by(id, run, run_trial) %>%
+  mutate_at(vars(starts_with("lh")), list(l=~lag(., order_by=evt_time))) %>% #need unquoted order_by argument
+  ungroup()
+
+
+library(brms)
+#mlvar analysis using Stan/brms
+b1 <- bf(lh1 ~ lh2_l + (1|p|id))
+b2 <- bf(lh2 ~ lh1_l + (1|p|id))
+fit2 <- brm(b1 + b2, data = fb_l_lags, chains = 4, cores = 4, autocor = cor_arma(~run_trial|id, 1))
+
+#fb_l_lags %>% arrange(id, run, run_trial, evt_time) %>% dplyr::select(id, run_trial, evt_time, lh1, lh1_l1, lh2, lh2_l1) %>% head(n=20)
+
 fb_l_wide <- fb_l %>% dplyr::select(-block) %>% filter(evt_time >= 0) %>% 
   arrange(id, run_trial) %>%
   dplyr::group_by(id) %>% dplyr::mutate(trial=(run-1)*50+run_trial) %>% dplyr::select(-run_trial, -run) %>% ungroup() %>%
@@ -168,7 +180,7 @@ mat <- matrix(NA, nrow=3, ncol=3)
 for (i in 1:nrow(mat)) {
   for (j in 1:ncol(mat)) {
     #column is 'from', row is 'to'
-    mat[i,j] <- lag1 %>% filter(str_detect(paramHeader, paste0("^FH", i, "_T02.ON")) & str_detect(param, paste0("^FH", j, "_T01"))) %>% pull(est)
+    mat[i,j] <- lag1 %>% filter(str_detect(paramHeader, paste0("^FH", i, "_T01.ON")) & str_detect(param, paste0("^FH", j, "_T00"))) %>% pull(est)
   }
 }
 
@@ -179,9 +191,14 @@ lag1_graph <- qgraph(mat, layout="spring", edge.labels=TRUE,
 
 #mlvar help!
 # doesn't want to actually write mplus syntax
-# Model <- mlVARsim(nPerson = 50, nNode = 3, nTime = 50, lag=1)
-# fit1 <- mlVAR(Model$Data, vars = Model$vars, idvar = Model$idvar, lags = 1, 
-#               temporal = "orthogonal", estimator="Mplus", verbose=TRUE)
-# 
-# fit1 <- mlVAR:::Mplus_mlVAR(Model$Data, vars = Model$vars, idvar = Model$idvar, lags = 1, 
-#                estimator="Mplus", verbose=TRUE)
+library(mlVAR)
+Model <- mlVARsim(nPerson = 50, nNode = 3, nTime = 50, lag=1)
+
+src_files <- list.files(pattern="*.R", path="/Users/mnh5174/Data_Analysis/mlVAR/R", full.names=TRUE)
+for (s in src_files) { source(s) }
+library(arm)
+fit1 <- mlVAR(Model$Data, vars = Model$vars, idvar = Model$idvar, lags = 1,
+              temporal = "orthogonal", estimator="Mplus", verbose=TRUE)
+
+fit1 <- mlVAR:::Mplus_mlVAR(Model$Data, vars = Model$vars, idvar = Model$idvar, lags = 1,
+               estimator="Mplus", verbose=TRUE)
