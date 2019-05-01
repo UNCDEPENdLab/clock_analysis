@@ -22,9 +22,9 @@ fb_l_wide <- fb_l %>% dplyr::select(-block) %>% filter(evt_time >= 0) %>%
 #generate syntax of everything regressed on everything else... in super-wide format (time within trial as wide)
 #hipp_slices <- 1:12
 #hipp_slices <- 1:3
-hipp_slices <- 1:3
+hipp_slices <- 1:12
 #times <- 1:10
-times <- 0:4
+times <- 0:6
 incl_contemp <- TRUE
 
 m_string <- c()
@@ -88,6 +88,17 @@ for (i in 1:length(hipp_slices)) {
     # )
     
   }   
+}
+m_string <- c(m_string, "")
+
+#follow endogenous ALT approach of estimating mean at T0 freely, then locking intercepts to zero at subsequent times
+m_string <- c(m_string, "! estimate mean at baseline; intercepts at 0 subsequently")
+for (j in times) {
+  if (j == min(times)) {
+    m_string <- c(m_string, paste0("[fh", hipp_slices, "_t", sprintf("%02d", j), "*0];"))
+  } else {
+    m_string <- c(m_string, paste0("[fh", hipp_slices, "_t", sprintf("%02d", j), "@0];"))
+  }
 }
 m_string <- c(m_string, "")
 
