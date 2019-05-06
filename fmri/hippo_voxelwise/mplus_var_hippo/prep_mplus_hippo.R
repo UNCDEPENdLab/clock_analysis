@@ -1,8 +1,10 @@
 library(MplusAutomation)
 library(dplyr)
-load("/Users/mnh5174/Box/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata")
+# load("/Users/mnh5174/Box/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata")
+load("~/Box Sync/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata")
+# setwd(file.path(getMainDir(), "clock_analysis", "fmri", "hippo_voxelwise", "mplus_var_hippo"))
+setwd(file.path("~/code", "clock_analysis", "fmri", "hippo_voxelwise", "mplus_var_hippo"))
 
-setwd(file.path(getMainDir(), "clock_analysis", "fmri", "hippo_voxelwise", "mplus_var_hippo"))
 str(fb_wide)
 fb_wide <- fb_wide %>% mutate(block=factor(paste0(id, run))) #%>% dplyr::select(-evt_time)
 
@@ -20,11 +22,11 @@ fb_l_wide <- fb_l %>% dplyr::select(-block) %>% filter(evt_time >= 0) %>%
   reshape2::dcast(id + trial ~ variable + evt_time, value.var = "value")
 
 #generate syntax of everything regressed on everything else... in super-wide format (time within trial as wide)
-#hipp_slices <- 1:12
+hipp_slices <- 1:12
 #hipp_slices <- 1:3
-hipp_slices <- 1:3
-#times <- 1:10
-times <- 0:4
+# hipp_slices <- 1:3
+times <- 0:10
+# times <- 0:4
 incl_contemp <- TRUE
 
 m_string <- c()
@@ -165,6 +167,8 @@ library(qgraph)
 lag1_graph <- qgraph(mat, layout="spring", edge.labels=TRUE, 
                             nonsig = "show", vsize=5, esize=2, asize=2, edge.label.cex=0.5, filetype="jpeg", filename="lag1_test",
                             fade=FALSE, directed=TRUE, mar=c(8,8,8,8))
+
+qgraph(mat, layout="circle", edge.labels=TRUE)
 
 #mlvar help!
 # doesn't want to actually write mplus syntax

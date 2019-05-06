@@ -1,6 +1,6 @@
 Mplus VERSION 8.2 (Mac)
 MUTHEN & MUTHEN
-04/30/2019  12:23 PM
+04/30/2019   5:16 PM
 
 INPUT INSTRUCTIONS
 
@@ -38,7 +38,7 @@ INPUT INSTRUCTIONS
 
   ANALYSIS: TYPE = TWOLEVEL RANDOM;
      ESTIMATOR=BAYES;
-     PROCESSORS=2;
+     PROCESSORS=10;
      BITERATIONS=(1000);
      !ALGORITHM=GIBBS(RW);
 
@@ -99,6 +99,9 @@ INPUT INSTRUCTIONS
 
 
 
+*** WARNING in ANALYSIS command
+  For ESTIMATOR=BAYES, the actual number of PROCESSORS used is equal to the number
+  of MCMC chains.  One processor will be used for each MCMC chain.
 *** WARNING in MODEL command
   Variable on the left-hand side of an ON statement in a | statement is a
   WITHIN variable.  The intercept for this variable is not random.
@@ -139,7 +142,7 @@ INPUT INSTRUCTIONS
   Data set contains cases with missing on all variables except
   x-variables.  These cases were not included in the analysis.
   Number of cases with missing on all variables except x-variables:  9632
-  10 WARNING(S) FOUND IN THE INPUT INSTRUCTIONS
+  11 WARNING(S) FOUND IN THE INPUT INSTRUCTIONS
 
 
 
@@ -751,9 +754,9 @@ TECHNICAL 8 OUTPUT
      1400             1.047               17
 
 
-     Beginning Time:  12:23:03
-        Ending Time:  12:25:31
-       Elapsed Time:  00:02:28
+     Beginning Time:  17:16:46
+        Ending Time:  17:18:20
+       Elapsed Time:  00:01:34
 
 
 

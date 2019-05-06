@@ -1,0 +1,2781 @@
+%WITHIN%
+! indicator factor definitions
+fh1_t01 BY lh1_t01@1;
+lh1_t01@0; !no resid var
+
+fh1_t02 BY lh1_t02@1;
+lh1_t02@0; !no resid var
+
+fh1_t03 BY lh1_t03@1;
+lh1_t03@0; !no resid var
+
+fh1_t04 BY lh1_t04@1;
+lh1_t04@0; !no resid var
+
+fh1_t05 BY lh1_t05@1;
+lh1_t05@0; !no resid var
+
+fh1_t06 BY lh1_t06@1;
+lh1_t06@0; !no resid var
+
+fh1_t07 BY lh1_t07@1;
+lh1_t07@0; !no resid var
+
+fh1_t08 BY lh1_t08@1;
+lh1_t08@0; !no resid var
+
+fh1_t09 BY lh1_t09@1;
+lh1_t09@0; !no resid var
+
+fh1_t10 BY lh1_t10@1;
+lh1_t10@0; !no resid var
+
+
+fh2_t01 BY lh2_t01@1;
+lh2_t01@0; !no resid var
+
+fh2_t02 BY lh2_t02@1;
+lh2_t02@0; !no resid var
+
+fh2_t03 BY lh2_t03@1;
+lh2_t03@0; !no resid var
+
+fh2_t04 BY lh2_t04@1;
+lh2_t04@0; !no resid var
+
+fh2_t05 BY lh2_t05@1;
+lh2_t05@0; !no resid var
+
+fh2_t06 BY lh2_t06@1;
+lh2_t06@0; !no resid var
+
+fh2_t07 BY lh2_t07@1;
+lh2_t07@0; !no resid var
+
+fh2_t08 BY lh2_t08@1;
+lh2_t08@0; !no resid var
+
+fh2_t09 BY lh2_t09@1;
+lh2_t09@0; !no resid var
+
+fh2_t10 BY lh2_t10@1;
+lh2_t10@0; !no resid var
+
+
+fh3_t01 BY lh3_t01@1;
+lh3_t01@0; !no resid var
+
+fh3_t02 BY lh3_t02@1;
+lh3_t02@0; !no resid var
+
+fh3_t03 BY lh3_t03@1;
+lh3_t03@0; !no resid var
+
+fh3_t04 BY lh3_t04@1;
+lh3_t04@0; !no resid var
+
+fh3_t05 BY lh3_t05@1;
+lh3_t05@0; !no resid var
+
+fh3_t06 BY lh3_t06@1;
+lh3_t06@0; !no resid var
+
+fh3_t07 BY lh3_t07@1;
+lh3_t07@0; !no resid var
+
+fh3_t08 BY lh3_t08@1;
+lh3_t08@0; !no resid var
+
+fh3_t09 BY lh3_t09@1;
+lh3_t09@0; !no resid var
+
+fh3_t10 BY lh3_t10@1;
+lh3_t10@0; !no resid var
+
+
+fh4_t01 BY lh4_t01@1;
+lh4_t01@0; !no resid var
+
+fh4_t02 BY lh4_t02@1;
+lh4_t02@0; !no resid var
+
+fh4_t03 BY lh4_t03@1;
+lh4_t03@0; !no resid var
+
+fh4_t04 BY lh4_t04@1;
+lh4_t04@0; !no resid var
+
+fh4_t05 BY lh4_t05@1;
+lh4_t05@0; !no resid var
+
+fh4_t06 BY lh4_t06@1;
+lh4_t06@0; !no resid var
+
+fh4_t07 BY lh4_t07@1;
+lh4_t07@0; !no resid var
+
+fh4_t08 BY lh4_t08@1;
+lh4_t08@0; !no resid var
+
+fh4_t09 BY lh4_t09@1;
+lh4_t09@0; !no resid var
+
+fh4_t10 BY lh4_t10@1;
+lh4_t10@0; !no resid var
+
+
+fh5_t01 BY lh5_t01@1;
+lh5_t01@0; !no resid var
+
+fh5_t02 BY lh5_t02@1;
+lh5_t02@0; !no resid var
+
+fh5_t03 BY lh5_t03@1;
+lh5_t03@0; !no resid var
+
+fh5_t04 BY lh5_t04@1;
+lh5_t04@0; !no resid var
+
+fh5_t05 BY lh5_t05@1;
+lh5_t05@0; !no resid var
+
+fh5_t06 BY lh5_t06@1;
+lh5_t06@0; !no resid var
+
+fh5_t07 BY lh5_t07@1;
+lh5_t07@0; !no resid var
+
+fh5_t08 BY lh5_t08@1;
+lh5_t08@0; !no resid var
+
+fh5_t09 BY lh5_t09@1;
+lh5_t09@0; !no resid var
+
+fh5_t10 BY lh5_t10@1;
+lh5_t10@0; !no resid var
+
+
+fh6_t01 BY lh6_t01@1;
+lh6_t01@0; !no resid var
+
+fh6_t02 BY lh6_t02@1;
+lh6_t02@0; !no resid var
+
+fh6_t03 BY lh6_t03@1;
+lh6_t03@0; !no resid var
+
+fh6_t04 BY lh6_t04@1;
+lh6_t04@0; !no resid var
+
+fh6_t05 BY lh6_t05@1;
+lh6_t05@0; !no resid var
+
+fh6_t06 BY lh6_t06@1;
+lh6_t06@0; !no resid var
+
+fh6_t07 BY lh6_t07@1;
+lh6_t07@0; !no resid var
+
+fh6_t08 BY lh6_t08@1;
+lh6_t08@0; !no resid var
+
+fh6_t09 BY lh6_t09@1;
+lh6_t09@0; !no resid var
+
+fh6_t10 BY lh6_t10@1;
+lh6_t10@0; !no resid var
+
+
+fh7_t01 BY lh7_t01@1;
+lh7_t01@0; !no resid var
+
+fh7_t02 BY lh7_t02@1;
+lh7_t02@0; !no resid var
+
+fh7_t03 BY lh7_t03@1;
+lh7_t03@0; !no resid var
+
+fh7_t04 BY lh7_t04@1;
+lh7_t04@0; !no resid var
+
+fh7_t05 BY lh7_t05@1;
+lh7_t05@0; !no resid var
+
+fh7_t06 BY lh7_t06@1;
+lh7_t06@0; !no resid var
+
+fh7_t07 BY lh7_t07@1;
+lh7_t07@0; !no resid var
+
+fh7_t08 BY lh7_t08@1;
+lh7_t08@0; !no resid var
+
+fh7_t09 BY lh7_t09@1;
+lh7_t09@0; !no resid var
+
+fh7_t10 BY lh7_t10@1;
+lh7_t10@0; !no resid var
+
+
+fh8_t01 BY lh8_t01@1;
+lh8_t01@0; !no resid var
+
+fh8_t02 BY lh8_t02@1;
+lh8_t02@0; !no resid var
+
+fh8_t03 BY lh8_t03@1;
+lh8_t03@0; !no resid var
+
+fh8_t04 BY lh8_t04@1;
+lh8_t04@0; !no resid var
+
+fh8_t05 BY lh8_t05@1;
+lh8_t05@0; !no resid var
+
+fh8_t06 BY lh8_t06@1;
+lh8_t06@0; !no resid var
+
+fh8_t07 BY lh8_t07@1;
+lh8_t07@0; !no resid var
+
+fh8_t08 BY lh8_t08@1;
+lh8_t08@0; !no resid var
+
+fh8_t09 BY lh8_t09@1;
+lh8_t09@0; !no resid var
+
+fh8_t10 BY lh8_t10@1;
+lh8_t10@0; !no resid var
+
+
+fh9_t01 BY lh9_t01@1;
+lh9_t01@0; !no resid var
+
+fh9_t02 BY lh9_t02@1;
+lh9_t02@0; !no resid var
+
+fh9_t03 BY lh9_t03@1;
+lh9_t03@0; !no resid var
+
+fh9_t04 BY lh9_t04@1;
+lh9_t04@0; !no resid var
+
+fh9_t05 BY lh9_t05@1;
+lh9_t05@0; !no resid var
+
+fh9_t06 BY lh9_t06@1;
+lh9_t06@0; !no resid var
+
+fh9_t07 BY lh9_t07@1;
+lh9_t07@0; !no resid var
+
+fh9_t08 BY lh9_t08@1;
+lh9_t08@0; !no resid var
+
+fh9_t09 BY lh9_t09@1;
+lh9_t09@0; !no resid var
+
+fh9_t10 BY lh9_t10@1;
+lh9_t10@0; !no resid var
+
+
+fh10_t01 BY lh10_t01@1;
+lh10_t01@0; !no resid var
+
+fh10_t02 BY lh10_t02@1;
+lh10_t02@0; !no resid var
+
+fh10_t03 BY lh10_t03@1;
+lh10_t03@0; !no resid var
+
+fh10_t04 BY lh10_t04@1;
+lh10_t04@0; !no resid var
+
+fh10_t05 BY lh10_t05@1;
+lh10_t05@0; !no resid var
+
+fh10_t06 BY lh10_t06@1;
+lh10_t06@0; !no resid var
+
+fh10_t07 BY lh10_t07@1;
+lh10_t07@0; !no resid var
+
+fh10_t08 BY lh10_t08@1;
+lh10_t08@0; !no resid var
+
+fh10_t09 BY lh10_t09@1;
+lh10_t09@0; !no resid var
+
+fh10_t10 BY lh10_t10@1;
+lh10_t10@0; !no resid var
+
+
+fh11_t01 BY lh11_t01@1;
+lh11_t01@0; !no resid var
+
+fh11_t02 BY lh11_t02@1;
+lh11_t02@0; !no resid var
+
+fh11_t03 BY lh11_t03@1;
+lh11_t03@0; !no resid var
+
+fh11_t04 BY lh11_t04@1;
+lh11_t04@0; !no resid var
+
+fh11_t05 BY lh11_t05@1;
+lh11_t05@0; !no resid var
+
+fh11_t06 BY lh11_t06@1;
+lh11_t06@0; !no resid var
+
+fh11_t07 BY lh11_t07@1;
+lh11_t07@0; !no resid var
+
+fh11_t08 BY lh11_t08@1;
+lh11_t08@0; !no resid var
+
+fh11_t09 BY lh11_t09@1;
+lh11_t09@0; !no resid var
+
+fh11_t10 BY lh11_t10@1;
+lh11_t10@0; !no resid var
+
+
+fh12_t01 BY lh12_t01@1;
+lh12_t01@0; !no resid var
+
+fh12_t02 BY lh12_t02@1;
+lh12_t02@0; !no resid var
+
+fh12_t03 BY lh12_t03@1;
+lh12_t03@0; !no resid var
+
+fh12_t04 BY lh12_t04@1;
+lh12_t04@0; !no resid var
+
+fh12_t05 BY lh12_t05@1;
+lh12_t05@0; !no resid var
+
+fh12_t06 BY lh12_t06@1;
+lh12_t06@0; !no resid var
+
+fh12_t07 BY lh12_t07@1;
+lh12_t07@0; !no resid var
+
+fh12_t08 BY lh12_t08@1;
+lh12_t08@0; !no resid var
+
+fh12_t09 BY lh12_t09@1;
+lh12_t09@0; !no resid var
+
+fh12_t10 BY lh12_t10@1;
+lh12_t10@0; !no resid var
+
+
+! between-trial correlation using unit-weighted factor with lag
+fh1trial BY lh1_t01-lh1_t10@1 (&1);
+fh2trial BY lh2_t01-lh2_t10@1 (&1);
+fh3trial BY lh3_t01-lh3_t10@1 (&1);
+fh4trial BY lh4_t01-lh4_t10@1 (&1);
+fh5trial BY lh5_t01-lh5_t10@1 (&1);
+fh6trial BY lh6_t01-lh6_t10@1 (&1);
+fh7trial BY lh7_t01-lh7_t10@1 (&1);
+fh8trial BY lh8_t01-lh8_t10@1 (&1);
+fh9trial BY lh9_t01-lh9_t10@1 (&1);
+fh10trial BY lh10_t01-lh10_t10@1 (&1);
+fh11trial BY lh11_t01-lh11_t10@1 (&1);
+fh12trial BY lh12_t01-lh12_t10@1 (&1);
+
+! setup trial AR
+fh1trial ON fh1trial&1;
+fh2trial ON fh2trial&1;
+fh3trial ON fh3trial&1;
+fh4trial ON fh4trial&1;
+fh5trial ON fh5trial&1;
+fh6trial ON fh6trial&1;
+fh7trial ON fh7trial&1;
+fh8trial ON fh8trial&1;
+fh9trial ON fh9trial&1;
+fh10trial ON fh10trial&1;
+fh11trial ON fh11trial&1;
+fh12trial ON fh12trial&1;
+
+! slice 1 time 02 regressed on time 01
+fh1_t02 ON fh1_t01 (a11);
+fh1_t02 ON fh2_t01 (a12);
+fh1_t02 ON fh3_t01 (a13);
+fh1_t02 ON fh4_t01 (a14);
+fh1_t02 ON fh5_t01 (a15);
+fh1_t02 ON fh6_t01 (a16);
+fh1_t02 ON fh7_t01 (a17);
+fh1_t02 ON fh8_t01 (a18);
+fh1_t02 ON fh9_t01 (a19);
+fh1_t02 ON fh10_t01 (a110);
+fh1_t02 ON fh11_t01 (a111);
+fh1_t02 ON fh12_t01 (a112);
+
+! slice 1 time 03 regressed on time 02
+fh1_t03 ON fh1_t02 (a11);
+fh1_t03 ON fh2_t02 (a12);
+fh1_t03 ON fh3_t02 (a13);
+fh1_t03 ON fh4_t02 (a14);
+fh1_t03 ON fh5_t02 (a15);
+fh1_t03 ON fh6_t02 (a16);
+fh1_t03 ON fh7_t02 (a17);
+fh1_t03 ON fh8_t02 (a18);
+fh1_t03 ON fh9_t02 (a19);
+fh1_t03 ON fh10_t02 (a110);
+fh1_t03 ON fh11_t02 (a111);
+fh1_t03 ON fh12_t02 (a112);
+
+! slice 1 time 04 regressed on time 03
+fh1_t04 ON fh1_t03 (a11);
+fh1_t04 ON fh2_t03 (a12);
+fh1_t04 ON fh3_t03 (a13);
+fh1_t04 ON fh4_t03 (a14);
+fh1_t04 ON fh5_t03 (a15);
+fh1_t04 ON fh6_t03 (a16);
+fh1_t04 ON fh7_t03 (a17);
+fh1_t04 ON fh8_t03 (a18);
+fh1_t04 ON fh9_t03 (a19);
+fh1_t04 ON fh10_t03 (a110);
+fh1_t04 ON fh11_t03 (a111);
+fh1_t04 ON fh12_t03 (a112);
+
+! slice 1 time 05 regressed on time 04
+fh1_t05 ON fh1_t04 (a11);
+fh1_t05 ON fh2_t04 (a12);
+fh1_t05 ON fh3_t04 (a13);
+fh1_t05 ON fh4_t04 (a14);
+fh1_t05 ON fh5_t04 (a15);
+fh1_t05 ON fh6_t04 (a16);
+fh1_t05 ON fh7_t04 (a17);
+fh1_t05 ON fh8_t04 (a18);
+fh1_t05 ON fh9_t04 (a19);
+fh1_t05 ON fh10_t04 (a110);
+fh1_t05 ON fh11_t04 (a111);
+fh1_t05 ON fh12_t04 (a112);
+
+! slice 1 time 06 regressed on time 05
+fh1_t06 ON fh1_t05 (a11);
+fh1_t06 ON fh2_t05 (a12);
+fh1_t06 ON fh3_t05 (a13);
+fh1_t06 ON fh4_t05 (a14);
+fh1_t06 ON fh5_t05 (a15);
+fh1_t06 ON fh6_t05 (a16);
+fh1_t06 ON fh7_t05 (a17);
+fh1_t06 ON fh8_t05 (a18);
+fh1_t06 ON fh9_t05 (a19);
+fh1_t06 ON fh10_t05 (a110);
+fh1_t06 ON fh11_t05 (a111);
+fh1_t06 ON fh12_t05 (a112);
+
+! slice 1 time 07 regressed on time 06
+fh1_t07 ON fh1_t06 (a11);
+fh1_t07 ON fh2_t06 (a12);
+fh1_t07 ON fh3_t06 (a13);
+fh1_t07 ON fh4_t06 (a14);
+fh1_t07 ON fh5_t06 (a15);
+fh1_t07 ON fh6_t06 (a16);
+fh1_t07 ON fh7_t06 (a17);
+fh1_t07 ON fh8_t06 (a18);
+fh1_t07 ON fh9_t06 (a19);
+fh1_t07 ON fh10_t06 (a110);
+fh1_t07 ON fh11_t06 (a111);
+fh1_t07 ON fh12_t06 (a112);
+
+! slice 1 time 08 regressed on time 07
+fh1_t08 ON fh1_t07 (a11);
+fh1_t08 ON fh2_t07 (a12);
+fh1_t08 ON fh3_t07 (a13);
+fh1_t08 ON fh4_t07 (a14);
+fh1_t08 ON fh5_t07 (a15);
+fh1_t08 ON fh6_t07 (a16);
+fh1_t08 ON fh7_t07 (a17);
+fh1_t08 ON fh8_t07 (a18);
+fh1_t08 ON fh9_t07 (a19);
+fh1_t08 ON fh10_t07 (a110);
+fh1_t08 ON fh11_t07 (a111);
+fh1_t08 ON fh12_t07 (a112);
+
+! slice 1 time 09 regressed on time 08
+fh1_t09 ON fh1_t08 (a11);
+fh1_t09 ON fh2_t08 (a12);
+fh1_t09 ON fh3_t08 (a13);
+fh1_t09 ON fh4_t08 (a14);
+fh1_t09 ON fh5_t08 (a15);
+fh1_t09 ON fh6_t08 (a16);
+fh1_t09 ON fh7_t08 (a17);
+fh1_t09 ON fh8_t08 (a18);
+fh1_t09 ON fh9_t08 (a19);
+fh1_t09 ON fh10_t08 (a110);
+fh1_t09 ON fh11_t08 (a111);
+fh1_t09 ON fh12_t08 (a112);
+
+! slice 1 time 10 regressed on time 09
+fh1_t10 ON fh1_t09 (a11);
+fh1_t10 ON fh2_t09 (a12);
+fh1_t10 ON fh3_t09 (a13);
+fh1_t10 ON fh4_t09 (a14);
+fh1_t10 ON fh5_t09 (a15);
+fh1_t10 ON fh6_t09 (a16);
+fh1_t10 ON fh7_t09 (a17);
+fh1_t10 ON fh8_t09 (a18);
+fh1_t10 ON fh9_t09 (a19);
+fh1_t10 ON fh10_t09 (a110);
+fh1_t10 ON fh11_t09 (a111);
+fh1_t10 ON fh12_t09 (a112);
+
+fh1trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+! slice 2 time 02 regressed on time 01
+fh2_t02 ON fh1_t01 (a21);
+fh2_t02 ON fh2_t01 (a22);
+fh2_t02 ON fh3_t01 (a23);
+fh2_t02 ON fh4_t01 (a24);
+fh2_t02 ON fh5_t01 (a25);
+fh2_t02 ON fh6_t01 (a26);
+fh2_t02 ON fh7_t01 (a27);
+fh2_t02 ON fh8_t01 (a28);
+fh2_t02 ON fh9_t01 (a29);
+fh2_t02 ON fh10_t01 (a210);
+fh2_t02 ON fh11_t01 (a211);
+fh2_t02 ON fh12_t01 (a212);
+
+! slice 2 time 03 regressed on time 02
+fh2_t03 ON fh1_t02 (a21);
+fh2_t03 ON fh2_t02 (a22);
+fh2_t03 ON fh3_t02 (a23);
+fh2_t03 ON fh4_t02 (a24);
+fh2_t03 ON fh5_t02 (a25);
+fh2_t03 ON fh6_t02 (a26);
+fh2_t03 ON fh7_t02 (a27);
+fh2_t03 ON fh8_t02 (a28);
+fh2_t03 ON fh9_t02 (a29);
+fh2_t03 ON fh10_t02 (a210);
+fh2_t03 ON fh11_t02 (a211);
+fh2_t03 ON fh12_t02 (a212);
+
+! slice 2 time 04 regressed on time 03
+fh2_t04 ON fh1_t03 (a21);
+fh2_t04 ON fh2_t03 (a22);
+fh2_t04 ON fh3_t03 (a23);
+fh2_t04 ON fh4_t03 (a24);
+fh2_t04 ON fh5_t03 (a25);
+fh2_t04 ON fh6_t03 (a26);
+fh2_t04 ON fh7_t03 (a27);
+fh2_t04 ON fh8_t03 (a28);
+fh2_t04 ON fh9_t03 (a29);
+fh2_t04 ON fh10_t03 (a210);
+fh2_t04 ON fh11_t03 (a211);
+fh2_t04 ON fh12_t03 (a212);
+
+! slice 2 time 05 regressed on time 04
+fh2_t05 ON fh1_t04 (a21);
+fh2_t05 ON fh2_t04 (a22);
+fh2_t05 ON fh3_t04 (a23);
+fh2_t05 ON fh4_t04 (a24);
+fh2_t05 ON fh5_t04 (a25);
+fh2_t05 ON fh6_t04 (a26);
+fh2_t05 ON fh7_t04 (a27);
+fh2_t05 ON fh8_t04 (a28);
+fh2_t05 ON fh9_t04 (a29);
+fh2_t05 ON fh10_t04 (a210);
+fh2_t05 ON fh11_t04 (a211);
+fh2_t05 ON fh12_t04 (a212);
+
+! slice 2 time 06 regressed on time 05
+fh2_t06 ON fh1_t05 (a21);
+fh2_t06 ON fh2_t05 (a22);
+fh2_t06 ON fh3_t05 (a23);
+fh2_t06 ON fh4_t05 (a24);
+fh2_t06 ON fh5_t05 (a25);
+fh2_t06 ON fh6_t05 (a26);
+fh2_t06 ON fh7_t05 (a27);
+fh2_t06 ON fh8_t05 (a28);
+fh2_t06 ON fh9_t05 (a29);
+fh2_t06 ON fh10_t05 (a210);
+fh2_t06 ON fh11_t05 (a211);
+fh2_t06 ON fh12_t05 (a212);
+
+! slice 2 time 07 regressed on time 06
+fh2_t07 ON fh1_t06 (a21);
+fh2_t07 ON fh2_t06 (a22);
+fh2_t07 ON fh3_t06 (a23);
+fh2_t07 ON fh4_t06 (a24);
+fh2_t07 ON fh5_t06 (a25);
+fh2_t07 ON fh6_t06 (a26);
+fh2_t07 ON fh7_t06 (a27);
+fh2_t07 ON fh8_t06 (a28);
+fh2_t07 ON fh9_t06 (a29);
+fh2_t07 ON fh10_t06 (a210);
+fh2_t07 ON fh11_t06 (a211);
+fh2_t07 ON fh12_t06 (a212);
+
+! slice 2 time 08 regressed on time 07
+fh2_t08 ON fh1_t07 (a21);
+fh2_t08 ON fh2_t07 (a22);
+fh2_t08 ON fh3_t07 (a23);
+fh2_t08 ON fh4_t07 (a24);
+fh2_t08 ON fh5_t07 (a25);
+fh2_t08 ON fh6_t07 (a26);
+fh2_t08 ON fh7_t07 (a27);
+fh2_t08 ON fh8_t07 (a28);
+fh2_t08 ON fh9_t07 (a29);
+fh2_t08 ON fh10_t07 (a210);
+fh2_t08 ON fh11_t07 (a211);
+fh2_t08 ON fh12_t07 (a212);
+
+! slice 2 time 09 regressed on time 08
+fh2_t09 ON fh1_t08 (a21);
+fh2_t09 ON fh2_t08 (a22);
+fh2_t09 ON fh3_t08 (a23);
+fh2_t09 ON fh4_t08 (a24);
+fh2_t09 ON fh5_t08 (a25);
+fh2_t09 ON fh6_t08 (a26);
+fh2_t09 ON fh7_t08 (a27);
+fh2_t09 ON fh8_t08 (a28);
+fh2_t09 ON fh9_t08 (a29);
+fh2_t09 ON fh10_t08 (a210);
+fh2_t09 ON fh11_t08 (a211);
+fh2_t09 ON fh12_t08 (a212);
+
+! slice 2 time 10 regressed on time 09
+fh2_t10 ON fh1_t09 (a21);
+fh2_t10 ON fh2_t09 (a22);
+fh2_t10 ON fh3_t09 (a23);
+fh2_t10 ON fh4_t09 (a24);
+fh2_t10 ON fh5_t09 (a25);
+fh2_t10 ON fh6_t09 (a26);
+fh2_t10 ON fh7_t09 (a27);
+fh2_t10 ON fh8_t09 (a28);
+fh2_t10 ON fh9_t09 (a29);
+fh2_t10 ON fh10_t09 (a210);
+fh2_t10 ON fh11_t09 (a211);
+fh2_t10 ON fh12_t09 (a212);
+
+fh2trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+! slice 3 time 02 regressed on time 01
+fh3_t02 ON fh1_t01 (a31);
+fh3_t02 ON fh2_t01 (a32);
+fh3_t02 ON fh3_t01 (a33);
+fh3_t02 ON fh4_t01 (a34);
+fh3_t02 ON fh5_t01 (a35);
+fh3_t02 ON fh6_t01 (a36);
+fh3_t02 ON fh7_t01 (a37);
+fh3_t02 ON fh8_t01 (a38);
+fh3_t02 ON fh9_t01 (a39);
+fh3_t02 ON fh10_t01 (a310);
+fh3_t02 ON fh11_t01 (a311);
+fh3_t02 ON fh12_t01 (a312);
+
+! slice 3 time 03 regressed on time 02
+fh3_t03 ON fh1_t02 (a31);
+fh3_t03 ON fh2_t02 (a32);
+fh3_t03 ON fh3_t02 (a33);
+fh3_t03 ON fh4_t02 (a34);
+fh3_t03 ON fh5_t02 (a35);
+fh3_t03 ON fh6_t02 (a36);
+fh3_t03 ON fh7_t02 (a37);
+fh3_t03 ON fh8_t02 (a38);
+fh3_t03 ON fh9_t02 (a39);
+fh3_t03 ON fh10_t02 (a310);
+fh3_t03 ON fh11_t02 (a311);
+fh3_t03 ON fh12_t02 (a312);
+
+! slice 3 time 04 regressed on time 03
+fh3_t04 ON fh1_t03 (a31);
+fh3_t04 ON fh2_t03 (a32);
+fh3_t04 ON fh3_t03 (a33);
+fh3_t04 ON fh4_t03 (a34);
+fh3_t04 ON fh5_t03 (a35);
+fh3_t04 ON fh6_t03 (a36);
+fh3_t04 ON fh7_t03 (a37);
+fh3_t04 ON fh8_t03 (a38);
+fh3_t04 ON fh9_t03 (a39);
+fh3_t04 ON fh10_t03 (a310);
+fh3_t04 ON fh11_t03 (a311);
+fh3_t04 ON fh12_t03 (a312);
+
+! slice 3 time 05 regressed on time 04
+fh3_t05 ON fh1_t04 (a31);
+fh3_t05 ON fh2_t04 (a32);
+fh3_t05 ON fh3_t04 (a33);
+fh3_t05 ON fh4_t04 (a34);
+fh3_t05 ON fh5_t04 (a35);
+fh3_t05 ON fh6_t04 (a36);
+fh3_t05 ON fh7_t04 (a37);
+fh3_t05 ON fh8_t04 (a38);
+fh3_t05 ON fh9_t04 (a39);
+fh3_t05 ON fh10_t04 (a310);
+fh3_t05 ON fh11_t04 (a311);
+fh3_t05 ON fh12_t04 (a312);
+
+! slice 3 time 06 regressed on time 05
+fh3_t06 ON fh1_t05 (a31);
+fh3_t06 ON fh2_t05 (a32);
+fh3_t06 ON fh3_t05 (a33);
+fh3_t06 ON fh4_t05 (a34);
+fh3_t06 ON fh5_t05 (a35);
+fh3_t06 ON fh6_t05 (a36);
+fh3_t06 ON fh7_t05 (a37);
+fh3_t06 ON fh8_t05 (a38);
+fh3_t06 ON fh9_t05 (a39);
+fh3_t06 ON fh10_t05 (a310);
+fh3_t06 ON fh11_t05 (a311);
+fh3_t06 ON fh12_t05 (a312);
+
+! slice 3 time 07 regressed on time 06
+fh3_t07 ON fh1_t06 (a31);
+fh3_t07 ON fh2_t06 (a32);
+fh3_t07 ON fh3_t06 (a33);
+fh3_t07 ON fh4_t06 (a34);
+fh3_t07 ON fh5_t06 (a35);
+fh3_t07 ON fh6_t06 (a36);
+fh3_t07 ON fh7_t06 (a37);
+fh3_t07 ON fh8_t06 (a38);
+fh3_t07 ON fh9_t06 (a39);
+fh3_t07 ON fh10_t06 (a310);
+fh3_t07 ON fh11_t06 (a311);
+fh3_t07 ON fh12_t06 (a312);
+
+! slice 3 time 08 regressed on time 07
+fh3_t08 ON fh1_t07 (a31);
+fh3_t08 ON fh2_t07 (a32);
+fh3_t08 ON fh3_t07 (a33);
+fh3_t08 ON fh4_t07 (a34);
+fh3_t08 ON fh5_t07 (a35);
+fh3_t08 ON fh6_t07 (a36);
+fh3_t08 ON fh7_t07 (a37);
+fh3_t08 ON fh8_t07 (a38);
+fh3_t08 ON fh9_t07 (a39);
+fh3_t08 ON fh10_t07 (a310);
+fh3_t08 ON fh11_t07 (a311);
+fh3_t08 ON fh12_t07 (a312);
+
+! slice 3 time 09 regressed on time 08
+fh3_t09 ON fh1_t08 (a31);
+fh3_t09 ON fh2_t08 (a32);
+fh3_t09 ON fh3_t08 (a33);
+fh3_t09 ON fh4_t08 (a34);
+fh3_t09 ON fh5_t08 (a35);
+fh3_t09 ON fh6_t08 (a36);
+fh3_t09 ON fh7_t08 (a37);
+fh3_t09 ON fh8_t08 (a38);
+fh3_t09 ON fh9_t08 (a39);
+fh3_t09 ON fh10_t08 (a310);
+fh3_t09 ON fh11_t08 (a311);
+fh3_t09 ON fh12_t08 (a312);
+
+! slice 3 time 10 regressed on time 09
+fh3_t10 ON fh1_t09 (a31);
+fh3_t10 ON fh2_t09 (a32);
+fh3_t10 ON fh3_t09 (a33);
+fh3_t10 ON fh4_t09 (a34);
+fh3_t10 ON fh5_t09 (a35);
+fh3_t10 ON fh6_t09 (a36);
+fh3_t10 ON fh7_t09 (a37);
+fh3_t10 ON fh8_t09 (a38);
+fh3_t10 ON fh9_t09 (a39);
+fh3_t10 ON fh10_t09 (a310);
+fh3_t10 ON fh11_t09 (a311);
+fh3_t10 ON fh12_t09 (a312);
+
+fh3trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh3trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh3trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh3trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh3trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh3trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh3trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh3trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh3trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh3trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh3trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh3trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+! slice 4 time 02 regressed on time 01
+fh4_t02 ON fh1_t01 (a41);
+fh4_t02 ON fh2_t01 (a42);
+fh4_t02 ON fh3_t01 (a43);
+fh4_t02 ON fh4_t01 (a44);
+fh4_t02 ON fh5_t01 (a45);
+fh4_t02 ON fh6_t01 (a46);
+fh4_t02 ON fh7_t01 (a47);
+fh4_t02 ON fh8_t01 (a48);
+fh4_t02 ON fh9_t01 (a49);
+fh4_t02 ON fh10_t01 (a410);
+fh4_t02 ON fh11_t01 (a411);
+fh4_t02 ON fh12_t01 (a412);
+
+! slice 4 time 03 regressed on time 02
+fh4_t03 ON fh1_t02 (a41);
+fh4_t03 ON fh2_t02 (a42);
+fh4_t03 ON fh3_t02 (a43);
+fh4_t03 ON fh4_t02 (a44);
+fh4_t03 ON fh5_t02 (a45);
+fh4_t03 ON fh6_t02 (a46);
+fh4_t03 ON fh7_t02 (a47);
+fh4_t03 ON fh8_t02 (a48);
+fh4_t03 ON fh9_t02 (a49);
+fh4_t03 ON fh10_t02 (a410);
+fh4_t03 ON fh11_t02 (a411);
+fh4_t03 ON fh12_t02 (a412);
+
+! slice 4 time 04 regressed on time 03
+fh4_t04 ON fh1_t03 (a41);
+fh4_t04 ON fh2_t03 (a42);
+fh4_t04 ON fh3_t03 (a43);
+fh4_t04 ON fh4_t03 (a44);
+fh4_t04 ON fh5_t03 (a45);
+fh4_t04 ON fh6_t03 (a46);
+fh4_t04 ON fh7_t03 (a47);
+fh4_t04 ON fh8_t03 (a48);
+fh4_t04 ON fh9_t03 (a49);
+fh4_t04 ON fh10_t03 (a410);
+fh4_t04 ON fh11_t03 (a411);
+fh4_t04 ON fh12_t03 (a412);
+
+! slice 4 time 05 regressed on time 04
+fh4_t05 ON fh1_t04 (a41);
+fh4_t05 ON fh2_t04 (a42);
+fh4_t05 ON fh3_t04 (a43);
+fh4_t05 ON fh4_t04 (a44);
+fh4_t05 ON fh5_t04 (a45);
+fh4_t05 ON fh6_t04 (a46);
+fh4_t05 ON fh7_t04 (a47);
+fh4_t05 ON fh8_t04 (a48);
+fh4_t05 ON fh9_t04 (a49);
+fh4_t05 ON fh10_t04 (a410);
+fh4_t05 ON fh11_t04 (a411);
+fh4_t05 ON fh12_t04 (a412);
+
+! slice 4 time 06 regressed on time 05
+fh4_t06 ON fh1_t05 (a41);
+fh4_t06 ON fh2_t05 (a42);
+fh4_t06 ON fh3_t05 (a43);
+fh4_t06 ON fh4_t05 (a44);
+fh4_t06 ON fh5_t05 (a45);
+fh4_t06 ON fh6_t05 (a46);
+fh4_t06 ON fh7_t05 (a47);
+fh4_t06 ON fh8_t05 (a48);
+fh4_t06 ON fh9_t05 (a49);
+fh4_t06 ON fh10_t05 (a410);
+fh4_t06 ON fh11_t05 (a411);
+fh4_t06 ON fh12_t05 (a412);
+
+! slice 4 time 07 regressed on time 06
+fh4_t07 ON fh1_t06 (a41);
+fh4_t07 ON fh2_t06 (a42);
+fh4_t07 ON fh3_t06 (a43);
+fh4_t07 ON fh4_t06 (a44);
+fh4_t07 ON fh5_t06 (a45);
+fh4_t07 ON fh6_t06 (a46);
+fh4_t07 ON fh7_t06 (a47);
+fh4_t07 ON fh8_t06 (a48);
+fh4_t07 ON fh9_t06 (a49);
+fh4_t07 ON fh10_t06 (a410);
+fh4_t07 ON fh11_t06 (a411);
+fh4_t07 ON fh12_t06 (a412);
+
+! slice 4 time 08 regressed on time 07
+fh4_t08 ON fh1_t07 (a41);
+fh4_t08 ON fh2_t07 (a42);
+fh4_t08 ON fh3_t07 (a43);
+fh4_t08 ON fh4_t07 (a44);
+fh4_t08 ON fh5_t07 (a45);
+fh4_t08 ON fh6_t07 (a46);
+fh4_t08 ON fh7_t07 (a47);
+fh4_t08 ON fh8_t07 (a48);
+fh4_t08 ON fh9_t07 (a49);
+fh4_t08 ON fh10_t07 (a410);
+fh4_t08 ON fh11_t07 (a411);
+fh4_t08 ON fh12_t07 (a412);
+
+! slice 4 time 09 regressed on time 08
+fh4_t09 ON fh1_t08 (a41);
+fh4_t09 ON fh2_t08 (a42);
+fh4_t09 ON fh3_t08 (a43);
+fh4_t09 ON fh4_t08 (a44);
+fh4_t09 ON fh5_t08 (a45);
+fh4_t09 ON fh6_t08 (a46);
+fh4_t09 ON fh7_t08 (a47);
+fh4_t09 ON fh8_t08 (a48);
+fh4_t09 ON fh9_t08 (a49);
+fh4_t09 ON fh10_t08 (a410);
+fh4_t09 ON fh11_t08 (a411);
+fh4_t09 ON fh12_t08 (a412);
+
+! slice 4 time 10 regressed on time 09
+fh4_t10 ON fh1_t09 (a41);
+fh4_t10 ON fh2_t09 (a42);
+fh4_t10 ON fh3_t09 (a43);
+fh4_t10 ON fh4_t09 (a44);
+fh4_t10 ON fh5_t09 (a45);
+fh4_t10 ON fh6_t09 (a46);
+fh4_t10 ON fh7_t09 (a47);
+fh4_t10 ON fh8_t09 (a48);
+fh4_t10 ON fh9_t09 (a49);
+fh4_t10 ON fh10_t09 (a410);
+fh4_t10 ON fh11_t09 (a411);
+fh4_t10 ON fh12_t09 (a412);
+
+fh4trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh4trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh4trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh4trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh4trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh4trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh4trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh4trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh4trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh4trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh4trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh4trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+! slice 5 time 02 regressed on time 01
+fh5_t02 ON fh1_t01 (a51);
+fh5_t02 ON fh2_t01 (a52);
+fh5_t02 ON fh3_t01 (a53);
+fh5_t02 ON fh4_t01 (a54);
+fh5_t02 ON fh5_t01 (a55);
+fh5_t02 ON fh6_t01 (a56);
+fh5_t02 ON fh7_t01 (a57);
+fh5_t02 ON fh8_t01 (a58);
+fh5_t02 ON fh9_t01 (a59);
+fh5_t02 ON fh10_t01 (a510);
+fh5_t02 ON fh11_t01 (a511);
+fh5_t02 ON fh12_t01 (a512);
+
+! slice 5 time 03 regressed on time 02
+fh5_t03 ON fh1_t02 (a51);
+fh5_t03 ON fh2_t02 (a52);
+fh5_t03 ON fh3_t02 (a53);
+fh5_t03 ON fh4_t02 (a54);
+fh5_t03 ON fh5_t02 (a55);
+fh5_t03 ON fh6_t02 (a56);
+fh5_t03 ON fh7_t02 (a57);
+fh5_t03 ON fh8_t02 (a58);
+fh5_t03 ON fh9_t02 (a59);
+fh5_t03 ON fh10_t02 (a510);
+fh5_t03 ON fh11_t02 (a511);
+fh5_t03 ON fh12_t02 (a512);
+
+! slice 5 time 04 regressed on time 03
+fh5_t04 ON fh1_t03 (a51);
+fh5_t04 ON fh2_t03 (a52);
+fh5_t04 ON fh3_t03 (a53);
+fh5_t04 ON fh4_t03 (a54);
+fh5_t04 ON fh5_t03 (a55);
+fh5_t04 ON fh6_t03 (a56);
+fh5_t04 ON fh7_t03 (a57);
+fh5_t04 ON fh8_t03 (a58);
+fh5_t04 ON fh9_t03 (a59);
+fh5_t04 ON fh10_t03 (a510);
+fh5_t04 ON fh11_t03 (a511);
+fh5_t04 ON fh12_t03 (a512);
+
+! slice 5 time 05 regressed on time 04
+fh5_t05 ON fh1_t04 (a51);
+fh5_t05 ON fh2_t04 (a52);
+fh5_t05 ON fh3_t04 (a53);
+fh5_t05 ON fh4_t04 (a54);
+fh5_t05 ON fh5_t04 (a55);
+fh5_t05 ON fh6_t04 (a56);
+fh5_t05 ON fh7_t04 (a57);
+fh5_t05 ON fh8_t04 (a58);
+fh5_t05 ON fh9_t04 (a59);
+fh5_t05 ON fh10_t04 (a510);
+fh5_t05 ON fh11_t04 (a511);
+fh5_t05 ON fh12_t04 (a512);
+
+! slice 5 time 06 regressed on time 05
+fh5_t06 ON fh1_t05 (a51);
+fh5_t06 ON fh2_t05 (a52);
+fh5_t06 ON fh3_t05 (a53);
+fh5_t06 ON fh4_t05 (a54);
+fh5_t06 ON fh5_t05 (a55);
+fh5_t06 ON fh6_t05 (a56);
+fh5_t06 ON fh7_t05 (a57);
+fh5_t06 ON fh8_t05 (a58);
+fh5_t06 ON fh9_t05 (a59);
+fh5_t06 ON fh10_t05 (a510);
+fh5_t06 ON fh11_t05 (a511);
+fh5_t06 ON fh12_t05 (a512);
+
+! slice 5 time 07 regressed on time 06
+fh5_t07 ON fh1_t06 (a51);
+fh5_t07 ON fh2_t06 (a52);
+fh5_t07 ON fh3_t06 (a53);
+fh5_t07 ON fh4_t06 (a54);
+fh5_t07 ON fh5_t06 (a55);
+fh5_t07 ON fh6_t06 (a56);
+fh5_t07 ON fh7_t06 (a57);
+fh5_t07 ON fh8_t06 (a58);
+fh5_t07 ON fh9_t06 (a59);
+fh5_t07 ON fh10_t06 (a510);
+fh5_t07 ON fh11_t06 (a511);
+fh5_t07 ON fh12_t06 (a512);
+
+! slice 5 time 08 regressed on time 07
+fh5_t08 ON fh1_t07 (a51);
+fh5_t08 ON fh2_t07 (a52);
+fh5_t08 ON fh3_t07 (a53);
+fh5_t08 ON fh4_t07 (a54);
+fh5_t08 ON fh5_t07 (a55);
+fh5_t08 ON fh6_t07 (a56);
+fh5_t08 ON fh7_t07 (a57);
+fh5_t08 ON fh8_t07 (a58);
+fh5_t08 ON fh9_t07 (a59);
+fh5_t08 ON fh10_t07 (a510);
+fh5_t08 ON fh11_t07 (a511);
+fh5_t08 ON fh12_t07 (a512);
+
+! slice 5 time 09 regressed on time 08
+fh5_t09 ON fh1_t08 (a51);
+fh5_t09 ON fh2_t08 (a52);
+fh5_t09 ON fh3_t08 (a53);
+fh5_t09 ON fh4_t08 (a54);
+fh5_t09 ON fh5_t08 (a55);
+fh5_t09 ON fh6_t08 (a56);
+fh5_t09 ON fh7_t08 (a57);
+fh5_t09 ON fh8_t08 (a58);
+fh5_t09 ON fh9_t08 (a59);
+fh5_t09 ON fh10_t08 (a510);
+fh5_t09 ON fh11_t08 (a511);
+fh5_t09 ON fh12_t08 (a512);
+
+! slice 5 time 10 regressed on time 09
+fh5_t10 ON fh1_t09 (a51);
+fh5_t10 ON fh2_t09 (a52);
+fh5_t10 ON fh3_t09 (a53);
+fh5_t10 ON fh4_t09 (a54);
+fh5_t10 ON fh5_t09 (a55);
+fh5_t10 ON fh6_t09 (a56);
+fh5_t10 ON fh7_t09 (a57);
+fh5_t10 ON fh8_t09 (a58);
+fh5_t10 ON fh9_t09 (a59);
+fh5_t10 ON fh10_t09 (a510);
+fh5_t10 ON fh11_t09 (a511);
+fh5_t10 ON fh12_t09 (a512);
+
+fh5trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh5trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh5trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh5trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh5trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh5trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh5trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh5trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh5trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh5trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh5trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh5trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+! slice 6 time 02 regressed on time 01
+fh6_t02 ON fh1_t01 (a61);
+fh6_t02 ON fh2_t01 (a62);
+fh6_t02 ON fh3_t01 (a63);
+fh6_t02 ON fh4_t01 (a64);
+fh6_t02 ON fh5_t01 (a65);
+fh6_t02 ON fh6_t01 (a66);
+fh6_t02 ON fh7_t01 (a67);
+fh6_t02 ON fh8_t01 (a68);
+fh6_t02 ON fh9_t01 (a69);
+fh6_t02 ON fh10_t01 (a610);
+fh6_t02 ON fh11_t01 (a611);
+fh6_t02 ON fh12_t01 (a612);
+
+! slice 6 time 03 regressed on time 02
+fh6_t03 ON fh1_t02 (a61);
+fh6_t03 ON fh2_t02 (a62);
+fh6_t03 ON fh3_t02 (a63);
+fh6_t03 ON fh4_t02 (a64);
+fh6_t03 ON fh5_t02 (a65);
+fh6_t03 ON fh6_t02 (a66);
+fh6_t03 ON fh7_t02 (a67);
+fh6_t03 ON fh8_t02 (a68);
+fh6_t03 ON fh9_t02 (a69);
+fh6_t03 ON fh10_t02 (a610);
+fh6_t03 ON fh11_t02 (a611);
+fh6_t03 ON fh12_t02 (a612);
+
+! slice 6 time 04 regressed on time 03
+fh6_t04 ON fh1_t03 (a61);
+fh6_t04 ON fh2_t03 (a62);
+fh6_t04 ON fh3_t03 (a63);
+fh6_t04 ON fh4_t03 (a64);
+fh6_t04 ON fh5_t03 (a65);
+fh6_t04 ON fh6_t03 (a66);
+fh6_t04 ON fh7_t03 (a67);
+fh6_t04 ON fh8_t03 (a68);
+fh6_t04 ON fh9_t03 (a69);
+fh6_t04 ON fh10_t03 (a610);
+fh6_t04 ON fh11_t03 (a611);
+fh6_t04 ON fh12_t03 (a612);
+
+! slice 6 time 05 regressed on time 04
+fh6_t05 ON fh1_t04 (a61);
+fh6_t05 ON fh2_t04 (a62);
+fh6_t05 ON fh3_t04 (a63);
+fh6_t05 ON fh4_t04 (a64);
+fh6_t05 ON fh5_t04 (a65);
+fh6_t05 ON fh6_t04 (a66);
+fh6_t05 ON fh7_t04 (a67);
+fh6_t05 ON fh8_t04 (a68);
+fh6_t05 ON fh9_t04 (a69);
+fh6_t05 ON fh10_t04 (a610);
+fh6_t05 ON fh11_t04 (a611);
+fh6_t05 ON fh12_t04 (a612);
+
+! slice 6 time 06 regressed on time 05
+fh6_t06 ON fh1_t05 (a61);
+fh6_t06 ON fh2_t05 (a62);
+fh6_t06 ON fh3_t05 (a63);
+fh6_t06 ON fh4_t05 (a64);
+fh6_t06 ON fh5_t05 (a65);
+fh6_t06 ON fh6_t05 (a66);
+fh6_t06 ON fh7_t05 (a67);
+fh6_t06 ON fh8_t05 (a68);
+fh6_t06 ON fh9_t05 (a69);
+fh6_t06 ON fh10_t05 (a610);
+fh6_t06 ON fh11_t05 (a611);
+fh6_t06 ON fh12_t05 (a612);
+
+! slice 6 time 07 regressed on time 06
+fh6_t07 ON fh1_t06 (a61);
+fh6_t07 ON fh2_t06 (a62);
+fh6_t07 ON fh3_t06 (a63);
+fh6_t07 ON fh4_t06 (a64);
+fh6_t07 ON fh5_t06 (a65);
+fh6_t07 ON fh6_t06 (a66);
+fh6_t07 ON fh7_t06 (a67);
+fh6_t07 ON fh8_t06 (a68);
+fh6_t07 ON fh9_t06 (a69);
+fh6_t07 ON fh10_t06 (a610);
+fh6_t07 ON fh11_t06 (a611);
+fh6_t07 ON fh12_t06 (a612);
+
+! slice 6 time 08 regressed on time 07
+fh6_t08 ON fh1_t07 (a61);
+fh6_t08 ON fh2_t07 (a62);
+fh6_t08 ON fh3_t07 (a63);
+fh6_t08 ON fh4_t07 (a64);
+fh6_t08 ON fh5_t07 (a65);
+fh6_t08 ON fh6_t07 (a66);
+fh6_t08 ON fh7_t07 (a67);
+fh6_t08 ON fh8_t07 (a68);
+fh6_t08 ON fh9_t07 (a69);
+fh6_t08 ON fh10_t07 (a610);
+fh6_t08 ON fh11_t07 (a611);
+fh6_t08 ON fh12_t07 (a612);
+
+! slice 6 time 09 regressed on time 08
+fh6_t09 ON fh1_t08 (a61);
+fh6_t09 ON fh2_t08 (a62);
+fh6_t09 ON fh3_t08 (a63);
+fh6_t09 ON fh4_t08 (a64);
+fh6_t09 ON fh5_t08 (a65);
+fh6_t09 ON fh6_t08 (a66);
+fh6_t09 ON fh7_t08 (a67);
+fh6_t09 ON fh8_t08 (a68);
+fh6_t09 ON fh9_t08 (a69);
+fh6_t09 ON fh10_t08 (a610);
+fh6_t09 ON fh11_t08 (a611);
+fh6_t09 ON fh12_t08 (a612);
+
+! slice 6 time 10 regressed on time 09
+fh6_t10 ON fh1_t09 (a61);
+fh6_t10 ON fh2_t09 (a62);
+fh6_t10 ON fh3_t09 (a63);
+fh6_t10 ON fh4_t09 (a64);
+fh6_t10 ON fh5_t09 (a65);
+fh6_t10 ON fh6_t09 (a66);
+fh6_t10 ON fh7_t09 (a67);
+fh6_t10 ON fh8_t09 (a68);
+fh6_t10 ON fh9_t09 (a69);
+fh6_t10 ON fh10_t09 (a610);
+fh6_t10 ON fh11_t09 (a611);
+fh6_t10 ON fh12_t09 (a612);
+
+fh6trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh6trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh6trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh6trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh6trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh6trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh6trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh6trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh6trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh6trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh6trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh6trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+! slice 7 time 02 regressed on time 01
+fh7_t02 ON fh1_t01 (a71);
+fh7_t02 ON fh2_t01 (a72);
+fh7_t02 ON fh3_t01 (a73);
+fh7_t02 ON fh4_t01 (a74);
+fh7_t02 ON fh5_t01 (a75);
+fh7_t02 ON fh6_t01 (a76);
+fh7_t02 ON fh7_t01 (a77);
+fh7_t02 ON fh8_t01 (a78);
+fh7_t02 ON fh9_t01 (a79);
+fh7_t02 ON fh10_t01 (a710);
+fh7_t02 ON fh11_t01 (a711);
+fh7_t02 ON fh12_t01 (a712);
+
+! slice 7 time 03 regressed on time 02
+fh7_t03 ON fh1_t02 (a71);
+fh7_t03 ON fh2_t02 (a72);
+fh7_t03 ON fh3_t02 (a73);
+fh7_t03 ON fh4_t02 (a74);
+fh7_t03 ON fh5_t02 (a75);
+fh7_t03 ON fh6_t02 (a76);
+fh7_t03 ON fh7_t02 (a77);
+fh7_t03 ON fh8_t02 (a78);
+fh7_t03 ON fh9_t02 (a79);
+fh7_t03 ON fh10_t02 (a710);
+fh7_t03 ON fh11_t02 (a711);
+fh7_t03 ON fh12_t02 (a712);
+
+! slice 7 time 04 regressed on time 03
+fh7_t04 ON fh1_t03 (a71);
+fh7_t04 ON fh2_t03 (a72);
+fh7_t04 ON fh3_t03 (a73);
+fh7_t04 ON fh4_t03 (a74);
+fh7_t04 ON fh5_t03 (a75);
+fh7_t04 ON fh6_t03 (a76);
+fh7_t04 ON fh7_t03 (a77);
+fh7_t04 ON fh8_t03 (a78);
+fh7_t04 ON fh9_t03 (a79);
+fh7_t04 ON fh10_t03 (a710);
+fh7_t04 ON fh11_t03 (a711);
+fh7_t04 ON fh12_t03 (a712);
+
+! slice 7 time 05 regressed on time 04
+fh7_t05 ON fh1_t04 (a71);
+fh7_t05 ON fh2_t04 (a72);
+fh7_t05 ON fh3_t04 (a73);
+fh7_t05 ON fh4_t04 (a74);
+fh7_t05 ON fh5_t04 (a75);
+fh7_t05 ON fh6_t04 (a76);
+fh7_t05 ON fh7_t04 (a77);
+fh7_t05 ON fh8_t04 (a78);
+fh7_t05 ON fh9_t04 (a79);
+fh7_t05 ON fh10_t04 (a710);
+fh7_t05 ON fh11_t04 (a711);
+fh7_t05 ON fh12_t04 (a712);
+
+! slice 7 time 06 regressed on time 05
+fh7_t06 ON fh1_t05 (a71);
+fh7_t06 ON fh2_t05 (a72);
+fh7_t06 ON fh3_t05 (a73);
+fh7_t06 ON fh4_t05 (a74);
+fh7_t06 ON fh5_t05 (a75);
+fh7_t06 ON fh6_t05 (a76);
+fh7_t06 ON fh7_t05 (a77);
+fh7_t06 ON fh8_t05 (a78);
+fh7_t06 ON fh9_t05 (a79);
+fh7_t06 ON fh10_t05 (a710);
+fh7_t06 ON fh11_t05 (a711);
+fh7_t06 ON fh12_t05 (a712);
+
+! slice 7 time 07 regressed on time 06
+fh7_t07 ON fh1_t06 (a71);
+fh7_t07 ON fh2_t06 (a72);
+fh7_t07 ON fh3_t06 (a73);
+fh7_t07 ON fh4_t06 (a74);
+fh7_t07 ON fh5_t06 (a75);
+fh7_t07 ON fh6_t06 (a76);
+fh7_t07 ON fh7_t06 (a77);
+fh7_t07 ON fh8_t06 (a78);
+fh7_t07 ON fh9_t06 (a79);
+fh7_t07 ON fh10_t06 (a710);
+fh7_t07 ON fh11_t06 (a711);
+fh7_t07 ON fh12_t06 (a712);
+
+! slice 7 time 08 regressed on time 07
+fh7_t08 ON fh1_t07 (a71);
+fh7_t08 ON fh2_t07 (a72);
+fh7_t08 ON fh3_t07 (a73);
+fh7_t08 ON fh4_t07 (a74);
+fh7_t08 ON fh5_t07 (a75);
+fh7_t08 ON fh6_t07 (a76);
+fh7_t08 ON fh7_t07 (a77);
+fh7_t08 ON fh8_t07 (a78);
+fh7_t08 ON fh9_t07 (a79);
+fh7_t08 ON fh10_t07 (a710);
+fh7_t08 ON fh11_t07 (a711);
+fh7_t08 ON fh12_t07 (a712);
+
+! slice 7 time 09 regressed on time 08
+fh7_t09 ON fh1_t08 (a71);
+fh7_t09 ON fh2_t08 (a72);
+fh7_t09 ON fh3_t08 (a73);
+fh7_t09 ON fh4_t08 (a74);
+fh7_t09 ON fh5_t08 (a75);
+fh7_t09 ON fh6_t08 (a76);
+fh7_t09 ON fh7_t08 (a77);
+fh7_t09 ON fh8_t08 (a78);
+fh7_t09 ON fh9_t08 (a79);
+fh7_t09 ON fh10_t08 (a710);
+fh7_t09 ON fh11_t08 (a711);
+fh7_t09 ON fh12_t08 (a712);
+
+! slice 7 time 10 regressed on time 09
+fh7_t10 ON fh1_t09 (a71);
+fh7_t10 ON fh2_t09 (a72);
+fh7_t10 ON fh3_t09 (a73);
+fh7_t10 ON fh4_t09 (a74);
+fh7_t10 ON fh5_t09 (a75);
+fh7_t10 ON fh6_t09 (a76);
+fh7_t10 ON fh7_t09 (a77);
+fh7_t10 ON fh8_t09 (a78);
+fh7_t10 ON fh9_t09 (a79);
+fh7_t10 ON fh10_t09 (a710);
+fh7_t10 ON fh11_t09 (a711);
+fh7_t10 ON fh12_t09 (a712);
+
+fh7trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh7trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh7trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh7trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh7trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh7trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh7trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh7trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh7trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh7trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh7trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh7trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+! slice 8 time 02 regressed on time 01
+fh8_t02 ON fh1_t01 (a81);
+fh8_t02 ON fh2_t01 (a82);
+fh8_t02 ON fh3_t01 (a83);
+fh8_t02 ON fh4_t01 (a84);
+fh8_t02 ON fh5_t01 (a85);
+fh8_t02 ON fh6_t01 (a86);
+fh8_t02 ON fh7_t01 (a87);
+fh8_t02 ON fh8_t01 (a88);
+fh8_t02 ON fh9_t01 (a89);
+fh8_t02 ON fh10_t01 (a810);
+fh8_t02 ON fh11_t01 (a811);
+fh8_t02 ON fh12_t01 (a812);
+
+! slice 8 time 03 regressed on time 02
+fh8_t03 ON fh1_t02 (a81);
+fh8_t03 ON fh2_t02 (a82);
+fh8_t03 ON fh3_t02 (a83);
+fh8_t03 ON fh4_t02 (a84);
+fh8_t03 ON fh5_t02 (a85);
+fh8_t03 ON fh6_t02 (a86);
+fh8_t03 ON fh7_t02 (a87);
+fh8_t03 ON fh8_t02 (a88);
+fh8_t03 ON fh9_t02 (a89);
+fh8_t03 ON fh10_t02 (a810);
+fh8_t03 ON fh11_t02 (a811);
+fh8_t03 ON fh12_t02 (a812);
+
+! slice 8 time 04 regressed on time 03
+fh8_t04 ON fh1_t03 (a81);
+fh8_t04 ON fh2_t03 (a82);
+fh8_t04 ON fh3_t03 (a83);
+fh8_t04 ON fh4_t03 (a84);
+fh8_t04 ON fh5_t03 (a85);
+fh8_t04 ON fh6_t03 (a86);
+fh8_t04 ON fh7_t03 (a87);
+fh8_t04 ON fh8_t03 (a88);
+fh8_t04 ON fh9_t03 (a89);
+fh8_t04 ON fh10_t03 (a810);
+fh8_t04 ON fh11_t03 (a811);
+fh8_t04 ON fh12_t03 (a812);
+
+! slice 8 time 05 regressed on time 04
+fh8_t05 ON fh1_t04 (a81);
+fh8_t05 ON fh2_t04 (a82);
+fh8_t05 ON fh3_t04 (a83);
+fh8_t05 ON fh4_t04 (a84);
+fh8_t05 ON fh5_t04 (a85);
+fh8_t05 ON fh6_t04 (a86);
+fh8_t05 ON fh7_t04 (a87);
+fh8_t05 ON fh8_t04 (a88);
+fh8_t05 ON fh9_t04 (a89);
+fh8_t05 ON fh10_t04 (a810);
+fh8_t05 ON fh11_t04 (a811);
+fh8_t05 ON fh12_t04 (a812);
+
+! slice 8 time 06 regressed on time 05
+fh8_t06 ON fh1_t05 (a81);
+fh8_t06 ON fh2_t05 (a82);
+fh8_t06 ON fh3_t05 (a83);
+fh8_t06 ON fh4_t05 (a84);
+fh8_t06 ON fh5_t05 (a85);
+fh8_t06 ON fh6_t05 (a86);
+fh8_t06 ON fh7_t05 (a87);
+fh8_t06 ON fh8_t05 (a88);
+fh8_t06 ON fh9_t05 (a89);
+fh8_t06 ON fh10_t05 (a810);
+fh8_t06 ON fh11_t05 (a811);
+fh8_t06 ON fh12_t05 (a812);
+
+! slice 8 time 07 regressed on time 06
+fh8_t07 ON fh1_t06 (a81);
+fh8_t07 ON fh2_t06 (a82);
+fh8_t07 ON fh3_t06 (a83);
+fh8_t07 ON fh4_t06 (a84);
+fh8_t07 ON fh5_t06 (a85);
+fh8_t07 ON fh6_t06 (a86);
+fh8_t07 ON fh7_t06 (a87);
+fh8_t07 ON fh8_t06 (a88);
+fh8_t07 ON fh9_t06 (a89);
+fh8_t07 ON fh10_t06 (a810);
+fh8_t07 ON fh11_t06 (a811);
+fh8_t07 ON fh12_t06 (a812);
+
+! slice 8 time 08 regressed on time 07
+fh8_t08 ON fh1_t07 (a81);
+fh8_t08 ON fh2_t07 (a82);
+fh8_t08 ON fh3_t07 (a83);
+fh8_t08 ON fh4_t07 (a84);
+fh8_t08 ON fh5_t07 (a85);
+fh8_t08 ON fh6_t07 (a86);
+fh8_t08 ON fh7_t07 (a87);
+fh8_t08 ON fh8_t07 (a88);
+fh8_t08 ON fh9_t07 (a89);
+fh8_t08 ON fh10_t07 (a810);
+fh8_t08 ON fh11_t07 (a811);
+fh8_t08 ON fh12_t07 (a812);
+
+! slice 8 time 09 regressed on time 08
+fh8_t09 ON fh1_t08 (a81);
+fh8_t09 ON fh2_t08 (a82);
+fh8_t09 ON fh3_t08 (a83);
+fh8_t09 ON fh4_t08 (a84);
+fh8_t09 ON fh5_t08 (a85);
+fh8_t09 ON fh6_t08 (a86);
+fh8_t09 ON fh7_t08 (a87);
+fh8_t09 ON fh8_t08 (a88);
+fh8_t09 ON fh9_t08 (a89);
+fh8_t09 ON fh10_t08 (a810);
+fh8_t09 ON fh11_t08 (a811);
+fh8_t09 ON fh12_t08 (a812);
+
+! slice 8 time 10 regressed on time 09
+fh8_t10 ON fh1_t09 (a81);
+fh8_t10 ON fh2_t09 (a82);
+fh8_t10 ON fh3_t09 (a83);
+fh8_t10 ON fh4_t09 (a84);
+fh8_t10 ON fh5_t09 (a85);
+fh8_t10 ON fh6_t09 (a86);
+fh8_t10 ON fh7_t09 (a87);
+fh8_t10 ON fh8_t09 (a88);
+fh8_t10 ON fh9_t09 (a89);
+fh8_t10 ON fh10_t09 (a810);
+fh8_t10 ON fh11_t09 (a811);
+fh8_t10 ON fh12_t09 (a812);
+
+fh8trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh8trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh8trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh8trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh8trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh8trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh8trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh8trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh8trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh8trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh8trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh8trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+! slice 9 time 02 regressed on time 01
+fh9_t02 ON fh1_t01 (a91);
+fh9_t02 ON fh2_t01 (a92);
+fh9_t02 ON fh3_t01 (a93);
+fh9_t02 ON fh4_t01 (a94);
+fh9_t02 ON fh5_t01 (a95);
+fh9_t02 ON fh6_t01 (a96);
+fh9_t02 ON fh7_t01 (a97);
+fh9_t02 ON fh8_t01 (a98);
+fh9_t02 ON fh9_t01 (a99);
+fh9_t02 ON fh10_t01 (a910);
+fh9_t02 ON fh11_t01 (a911);
+fh9_t02 ON fh12_t01 (a912);
+
+! slice 9 time 03 regressed on time 02
+fh9_t03 ON fh1_t02 (a91);
+fh9_t03 ON fh2_t02 (a92);
+fh9_t03 ON fh3_t02 (a93);
+fh9_t03 ON fh4_t02 (a94);
+fh9_t03 ON fh5_t02 (a95);
+fh9_t03 ON fh6_t02 (a96);
+fh9_t03 ON fh7_t02 (a97);
+fh9_t03 ON fh8_t02 (a98);
+fh9_t03 ON fh9_t02 (a99);
+fh9_t03 ON fh10_t02 (a910);
+fh9_t03 ON fh11_t02 (a911);
+fh9_t03 ON fh12_t02 (a912);
+
+! slice 9 time 04 regressed on time 03
+fh9_t04 ON fh1_t03 (a91);
+fh9_t04 ON fh2_t03 (a92);
+fh9_t04 ON fh3_t03 (a93);
+fh9_t04 ON fh4_t03 (a94);
+fh9_t04 ON fh5_t03 (a95);
+fh9_t04 ON fh6_t03 (a96);
+fh9_t04 ON fh7_t03 (a97);
+fh9_t04 ON fh8_t03 (a98);
+fh9_t04 ON fh9_t03 (a99);
+fh9_t04 ON fh10_t03 (a910);
+fh9_t04 ON fh11_t03 (a911);
+fh9_t04 ON fh12_t03 (a912);
+
+! slice 9 time 05 regressed on time 04
+fh9_t05 ON fh1_t04 (a91);
+fh9_t05 ON fh2_t04 (a92);
+fh9_t05 ON fh3_t04 (a93);
+fh9_t05 ON fh4_t04 (a94);
+fh9_t05 ON fh5_t04 (a95);
+fh9_t05 ON fh6_t04 (a96);
+fh9_t05 ON fh7_t04 (a97);
+fh9_t05 ON fh8_t04 (a98);
+fh9_t05 ON fh9_t04 (a99);
+fh9_t05 ON fh10_t04 (a910);
+fh9_t05 ON fh11_t04 (a911);
+fh9_t05 ON fh12_t04 (a912);
+
+! slice 9 time 06 regressed on time 05
+fh9_t06 ON fh1_t05 (a91);
+fh9_t06 ON fh2_t05 (a92);
+fh9_t06 ON fh3_t05 (a93);
+fh9_t06 ON fh4_t05 (a94);
+fh9_t06 ON fh5_t05 (a95);
+fh9_t06 ON fh6_t05 (a96);
+fh9_t06 ON fh7_t05 (a97);
+fh9_t06 ON fh8_t05 (a98);
+fh9_t06 ON fh9_t05 (a99);
+fh9_t06 ON fh10_t05 (a910);
+fh9_t06 ON fh11_t05 (a911);
+fh9_t06 ON fh12_t05 (a912);
+
+! slice 9 time 07 regressed on time 06
+fh9_t07 ON fh1_t06 (a91);
+fh9_t07 ON fh2_t06 (a92);
+fh9_t07 ON fh3_t06 (a93);
+fh9_t07 ON fh4_t06 (a94);
+fh9_t07 ON fh5_t06 (a95);
+fh9_t07 ON fh6_t06 (a96);
+fh9_t07 ON fh7_t06 (a97);
+fh9_t07 ON fh8_t06 (a98);
+fh9_t07 ON fh9_t06 (a99);
+fh9_t07 ON fh10_t06 (a910);
+fh9_t07 ON fh11_t06 (a911);
+fh9_t07 ON fh12_t06 (a912);
+
+! slice 9 time 08 regressed on time 07
+fh9_t08 ON fh1_t07 (a91);
+fh9_t08 ON fh2_t07 (a92);
+fh9_t08 ON fh3_t07 (a93);
+fh9_t08 ON fh4_t07 (a94);
+fh9_t08 ON fh5_t07 (a95);
+fh9_t08 ON fh6_t07 (a96);
+fh9_t08 ON fh7_t07 (a97);
+fh9_t08 ON fh8_t07 (a98);
+fh9_t08 ON fh9_t07 (a99);
+fh9_t08 ON fh10_t07 (a910);
+fh9_t08 ON fh11_t07 (a911);
+fh9_t08 ON fh12_t07 (a912);
+
+! slice 9 time 09 regressed on time 08
+fh9_t09 ON fh1_t08 (a91);
+fh9_t09 ON fh2_t08 (a92);
+fh9_t09 ON fh3_t08 (a93);
+fh9_t09 ON fh4_t08 (a94);
+fh9_t09 ON fh5_t08 (a95);
+fh9_t09 ON fh6_t08 (a96);
+fh9_t09 ON fh7_t08 (a97);
+fh9_t09 ON fh8_t08 (a98);
+fh9_t09 ON fh9_t08 (a99);
+fh9_t09 ON fh10_t08 (a910);
+fh9_t09 ON fh11_t08 (a911);
+fh9_t09 ON fh12_t08 (a912);
+
+! slice 9 time 10 regressed on time 09
+fh9_t10 ON fh1_t09 (a91);
+fh9_t10 ON fh2_t09 (a92);
+fh9_t10 ON fh3_t09 (a93);
+fh9_t10 ON fh4_t09 (a94);
+fh9_t10 ON fh5_t09 (a95);
+fh9_t10 ON fh6_t09 (a96);
+fh9_t10 ON fh7_t09 (a97);
+fh9_t10 ON fh8_t09 (a98);
+fh9_t10 ON fh9_t09 (a99);
+fh9_t10 ON fh10_t09 (a910);
+fh9_t10 ON fh11_t09 (a911);
+fh9_t10 ON fh12_t09 (a912);
+
+fh9trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh9trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh9trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh9trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh9trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh9trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh9trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh9trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh9trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh9trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh9trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh9trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+! slice 10 time 02 regressed on time 01
+fh10_t02 ON fh1_t01 (a101);
+fh10_t02 ON fh2_t01 (a102);
+fh10_t02 ON fh3_t01 (a103);
+fh10_t02 ON fh4_t01 (a104);
+fh10_t02 ON fh5_t01 (a105);
+fh10_t02 ON fh6_t01 (a106);
+fh10_t02 ON fh7_t01 (a107);
+fh10_t02 ON fh8_t01 (a108);
+fh10_t02 ON fh9_t01 (a109);
+fh10_t02 ON fh10_t01 (a1010);
+fh10_t02 ON fh11_t01 (a1011);
+fh10_t02 ON fh12_t01 (a1012);
+
+! slice 10 time 03 regressed on time 02
+fh10_t03 ON fh1_t02 (a101);
+fh10_t03 ON fh2_t02 (a102);
+fh10_t03 ON fh3_t02 (a103);
+fh10_t03 ON fh4_t02 (a104);
+fh10_t03 ON fh5_t02 (a105);
+fh10_t03 ON fh6_t02 (a106);
+fh10_t03 ON fh7_t02 (a107);
+fh10_t03 ON fh8_t02 (a108);
+fh10_t03 ON fh9_t02 (a109);
+fh10_t03 ON fh10_t02 (a1010);
+fh10_t03 ON fh11_t02 (a1011);
+fh10_t03 ON fh12_t02 (a1012);
+
+! slice 10 time 04 regressed on time 03
+fh10_t04 ON fh1_t03 (a101);
+fh10_t04 ON fh2_t03 (a102);
+fh10_t04 ON fh3_t03 (a103);
+fh10_t04 ON fh4_t03 (a104);
+fh10_t04 ON fh5_t03 (a105);
+fh10_t04 ON fh6_t03 (a106);
+fh10_t04 ON fh7_t03 (a107);
+fh10_t04 ON fh8_t03 (a108);
+fh10_t04 ON fh9_t03 (a109);
+fh10_t04 ON fh10_t03 (a1010);
+fh10_t04 ON fh11_t03 (a1011);
+fh10_t04 ON fh12_t03 (a1012);
+
+! slice 10 time 05 regressed on time 04
+fh10_t05 ON fh1_t04 (a101);
+fh10_t05 ON fh2_t04 (a102);
+fh10_t05 ON fh3_t04 (a103);
+fh10_t05 ON fh4_t04 (a104);
+fh10_t05 ON fh5_t04 (a105);
+fh10_t05 ON fh6_t04 (a106);
+fh10_t05 ON fh7_t04 (a107);
+fh10_t05 ON fh8_t04 (a108);
+fh10_t05 ON fh9_t04 (a109);
+fh10_t05 ON fh10_t04 (a1010);
+fh10_t05 ON fh11_t04 (a1011);
+fh10_t05 ON fh12_t04 (a1012);
+
+! slice 10 time 06 regressed on time 05
+fh10_t06 ON fh1_t05 (a101);
+fh10_t06 ON fh2_t05 (a102);
+fh10_t06 ON fh3_t05 (a103);
+fh10_t06 ON fh4_t05 (a104);
+fh10_t06 ON fh5_t05 (a105);
+fh10_t06 ON fh6_t05 (a106);
+fh10_t06 ON fh7_t05 (a107);
+fh10_t06 ON fh8_t05 (a108);
+fh10_t06 ON fh9_t05 (a109);
+fh10_t06 ON fh10_t05 (a1010);
+fh10_t06 ON fh11_t05 (a1011);
+fh10_t06 ON fh12_t05 (a1012);
+
+! slice 10 time 07 regressed on time 06
+fh10_t07 ON fh1_t06 (a101);
+fh10_t07 ON fh2_t06 (a102);
+fh10_t07 ON fh3_t06 (a103);
+fh10_t07 ON fh4_t06 (a104);
+fh10_t07 ON fh5_t06 (a105);
+fh10_t07 ON fh6_t06 (a106);
+fh10_t07 ON fh7_t06 (a107);
+fh10_t07 ON fh8_t06 (a108);
+fh10_t07 ON fh9_t06 (a109);
+fh10_t07 ON fh10_t06 (a1010);
+fh10_t07 ON fh11_t06 (a1011);
+fh10_t07 ON fh12_t06 (a1012);
+
+! slice 10 time 08 regressed on time 07
+fh10_t08 ON fh1_t07 (a101);
+fh10_t08 ON fh2_t07 (a102);
+fh10_t08 ON fh3_t07 (a103);
+fh10_t08 ON fh4_t07 (a104);
+fh10_t08 ON fh5_t07 (a105);
+fh10_t08 ON fh6_t07 (a106);
+fh10_t08 ON fh7_t07 (a107);
+fh10_t08 ON fh8_t07 (a108);
+fh10_t08 ON fh9_t07 (a109);
+fh10_t08 ON fh10_t07 (a1010);
+fh10_t08 ON fh11_t07 (a1011);
+fh10_t08 ON fh12_t07 (a1012);
+
+! slice 10 time 09 regressed on time 08
+fh10_t09 ON fh1_t08 (a101);
+fh10_t09 ON fh2_t08 (a102);
+fh10_t09 ON fh3_t08 (a103);
+fh10_t09 ON fh4_t08 (a104);
+fh10_t09 ON fh5_t08 (a105);
+fh10_t09 ON fh6_t08 (a106);
+fh10_t09 ON fh7_t08 (a107);
+fh10_t09 ON fh8_t08 (a108);
+fh10_t09 ON fh9_t08 (a109);
+fh10_t09 ON fh10_t08 (a1010);
+fh10_t09 ON fh11_t08 (a1011);
+fh10_t09 ON fh12_t08 (a1012);
+
+! slice 10 time 10 regressed on time 09
+fh10_t10 ON fh1_t09 (a101);
+fh10_t10 ON fh2_t09 (a102);
+fh10_t10 ON fh3_t09 (a103);
+fh10_t10 ON fh4_t09 (a104);
+fh10_t10 ON fh5_t09 (a105);
+fh10_t10 ON fh6_t09 (a106);
+fh10_t10 ON fh7_t09 (a107);
+fh10_t10 ON fh8_t09 (a108);
+fh10_t10 ON fh9_t09 (a109);
+fh10_t10 ON fh10_t09 (a1010);
+fh10_t10 ON fh11_t09 (a1011);
+fh10_t10 ON fh12_t09 (a1012);
+
+fh10trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh10trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh10trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh10trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh10trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh10trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh10trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh10trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh10trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh10trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh10trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh10trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+! slice 11 time 02 regressed on time 01
+fh11_t02 ON fh1_t01 (a111);
+fh11_t02 ON fh2_t01 (a112);
+fh11_t02 ON fh3_t01 (a113);
+fh11_t02 ON fh4_t01 (a114);
+fh11_t02 ON fh5_t01 (a115);
+fh11_t02 ON fh6_t01 (a116);
+fh11_t02 ON fh7_t01 (a117);
+fh11_t02 ON fh8_t01 (a118);
+fh11_t02 ON fh9_t01 (a119);
+fh11_t02 ON fh10_t01 (a1110);
+fh11_t02 ON fh11_t01 (a1111);
+fh11_t02 ON fh12_t01 (a1112);
+
+! slice 11 time 03 regressed on time 02
+fh11_t03 ON fh1_t02 (a111);
+fh11_t03 ON fh2_t02 (a112);
+fh11_t03 ON fh3_t02 (a113);
+fh11_t03 ON fh4_t02 (a114);
+fh11_t03 ON fh5_t02 (a115);
+fh11_t03 ON fh6_t02 (a116);
+fh11_t03 ON fh7_t02 (a117);
+fh11_t03 ON fh8_t02 (a118);
+fh11_t03 ON fh9_t02 (a119);
+fh11_t03 ON fh10_t02 (a1110);
+fh11_t03 ON fh11_t02 (a1111);
+fh11_t03 ON fh12_t02 (a1112);
+
+! slice 11 time 04 regressed on time 03
+fh11_t04 ON fh1_t03 (a111);
+fh11_t04 ON fh2_t03 (a112);
+fh11_t04 ON fh3_t03 (a113);
+fh11_t04 ON fh4_t03 (a114);
+fh11_t04 ON fh5_t03 (a115);
+fh11_t04 ON fh6_t03 (a116);
+fh11_t04 ON fh7_t03 (a117);
+fh11_t04 ON fh8_t03 (a118);
+fh11_t04 ON fh9_t03 (a119);
+fh11_t04 ON fh10_t03 (a1110);
+fh11_t04 ON fh11_t03 (a1111);
+fh11_t04 ON fh12_t03 (a1112);
+
+! slice 11 time 05 regressed on time 04
+fh11_t05 ON fh1_t04 (a111);
+fh11_t05 ON fh2_t04 (a112);
+fh11_t05 ON fh3_t04 (a113);
+fh11_t05 ON fh4_t04 (a114);
+fh11_t05 ON fh5_t04 (a115);
+fh11_t05 ON fh6_t04 (a116);
+fh11_t05 ON fh7_t04 (a117);
+fh11_t05 ON fh8_t04 (a118);
+fh11_t05 ON fh9_t04 (a119);
+fh11_t05 ON fh10_t04 (a1110);
+fh11_t05 ON fh11_t04 (a1111);
+fh11_t05 ON fh12_t04 (a1112);
+
+! slice 11 time 06 regressed on time 05
+fh11_t06 ON fh1_t05 (a111);
+fh11_t06 ON fh2_t05 (a112);
+fh11_t06 ON fh3_t05 (a113);
+fh11_t06 ON fh4_t05 (a114);
+fh11_t06 ON fh5_t05 (a115);
+fh11_t06 ON fh6_t05 (a116);
+fh11_t06 ON fh7_t05 (a117);
+fh11_t06 ON fh8_t05 (a118);
+fh11_t06 ON fh9_t05 (a119);
+fh11_t06 ON fh10_t05 (a1110);
+fh11_t06 ON fh11_t05 (a1111);
+fh11_t06 ON fh12_t05 (a1112);
+
+! slice 11 time 07 regressed on time 06
+fh11_t07 ON fh1_t06 (a111);
+fh11_t07 ON fh2_t06 (a112);
+fh11_t07 ON fh3_t06 (a113);
+fh11_t07 ON fh4_t06 (a114);
+fh11_t07 ON fh5_t06 (a115);
+fh11_t07 ON fh6_t06 (a116);
+fh11_t07 ON fh7_t06 (a117);
+fh11_t07 ON fh8_t06 (a118);
+fh11_t07 ON fh9_t06 (a119);
+fh11_t07 ON fh10_t06 (a1110);
+fh11_t07 ON fh11_t06 (a1111);
+fh11_t07 ON fh12_t06 (a1112);
+
+! slice 11 time 08 regressed on time 07
+fh11_t08 ON fh1_t07 (a111);
+fh11_t08 ON fh2_t07 (a112);
+fh11_t08 ON fh3_t07 (a113);
+fh11_t08 ON fh4_t07 (a114);
+fh11_t08 ON fh5_t07 (a115);
+fh11_t08 ON fh6_t07 (a116);
+fh11_t08 ON fh7_t07 (a117);
+fh11_t08 ON fh8_t07 (a118);
+fh11_t08 ON fh9_t07 (a119);
+fh11_t08 ON fh10_t07 (a1110);
+fh11_t08 ON fh11_t07 (a1111);
+fh11_t08 ON fh12_t07 (a1112);
+
+! slice 11 time 09 regressed on time 08
+fh11_t09 ON fh1_t08 (a111);
+fh11_t09 ON fh2_t08 (a112);
+fh11_t09 ON fh3_t08 (a113);
+fh11_t09 ON fh4_t08 (a114);
+fh11_t09 ON fh5_t08 (a115);
+fh11_t09 ON fh6_t08 (a116);
+fh11_t09 ON fh7_t08 (a117);
+fh11_t09 ON fh8_t08 (a118);
+fh11_t09 ON fh9_t08 (a119);
+fh11_t09 ON fh10_t08 (a1110);
+fh11_t09 ON fh11_t08 (a1111);
+fh11_t09 ON fh12_t08 (a1112);
+
+! slice 11 time 10 regressed on time 09
+fh11_t10 ON fh1_t09 (a111);
+fh11_t10 ON fh2_t09 (a112);
+fh11_t10 ON fh3_t09 (a113);
+fh11_t10 ON fh4_t09 (a114);
+fh11_t10 ON fh5_t09 (a115);
+fh11_t10 ON fh6_t09 (a116);
+fh11_t10 ON fh7_t09 (a117);
+fh11_t10 ON fh8_t09 (a118);
+fh11_t10 ON fh9_t09 (a119);
+fh11_t10 ON fh10_t09 (a1110);
+fh11_t10 ON fh11_t09 (a1111);
+fh11_t10 ON fh12_t09 (a1112);
+
+fh11trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh11trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh11trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh11trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh11trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh11trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh11trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh11trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh11trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh11trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh11trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh11trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+! slice 12 time 02 regressed on time 01
+fh12_t02 ON fh1_t01 (a121);
+fh12_t02 ON fh2_t01 (a122);
+fh12_t02 ON fh3_t01 (a123);
+fh12_t02 ON fh4_t01 (a124);
+fh12_t02 ON fh5_t01 (a125);
+fh12_t02 ON fh6_t01 (a126);
+fh12_t02 ON fh7_t01 (a127);
+fh12_t02 ON fh8_t01 (a128);
+fh12_t02 ON fh9_t01 (a129);
+fh12_t02 ON fh10_t01 (a1210);
+fh12_t02 ON fh11_t01 (a1211);
+fh12_t02 ON fh12_t01 (a1212);
+
+! slice 12 time 03 regressed on time 02
+fh12_t03 ON fh1_t02 (a121);
+fh12_t03 ON fh2_t02 (a122);
+fh12_t03 ON fh3_t02 (a123);
+fh12_t03 ON fh4_t02 (a124);
+fh12_t03 ON fh5_t02 (a125);
+fh12_t03 ON fh6_t02 (a126);
+fh12_t03 ON fh7_t02 (a127);
+fh12_t03 ON fh8_t02 (a128);
+fh12_t03 ON fh9_t02 (a129);
+fh12_t03 ON fh10_t02 (a1210);
+fh12_t03 ON fh11_t02 (a1211);
+fh12_t03 ON fh12_t02 (a1212);
+
+! slice 12 time 04 regressed on time 03
+fh12_t04 ON fh1_t03 (a121);
+fh12_t04 ON fh2_t03 (a122);
+fh12_t04 ON fh3_t03 (a123);
+fh12_t04 ON fh4_t03 (a124);
+fh12_t04 ON fh5_t03 (a125);
+fh12_t04 ON fh6_t03 (a126);
+fh12_t04 ON fh7_t03 (a127);
+fh12_t04 ON fh8_t03 (a128);
+fh12_t04 ON fh9_t03 (a129);
+fh12_t04 ON fh10_t03 (a1210);
+fh12_t04 ON fh11_t03 (a1211);
+fh12_t04 ON fh12_t03 (a1212);
+
+! slice 12 time 05 regressed on time 04
+fh12_t05 ON fh1_t04 (a121);
+fh12_t05 ON fh2_t04 (a122);
+fh12_t05 ON fh3_t04 (a123);
+fh12_t05 ON fh4_t04 (a124);
+fh12_t05 ON fh5_t04 (a125);
+fh12_t05 ON fh6_t04 (a126);
+fh12_t05 ON fh7_t04 (a127);
+fh12_t05 ON fh8_t04 (a128);
+fh12_t05 ON fh9_t04 (a129);
+fh12_t05 ON fh10_t04 (a1210);
+fh12_t05 ON fh11_t04 (a1211);
+fh12_t05 ON fh12_t04 (a1212);
+
+! slice 12 time 06 regressed on time 05
+fh12_t06 ON fh1_t05 (a121);
+fh12_t06 ON fh2_t05 (a122);
+fh12_t06 ON fh3_t05 (a123);
+fh12_t06 ON fh4_t05 (a124);
+fh12_t06 ON fh5_t05 (a125);
+fh12_t06 ON fh6_t05 (a126);
+fh12_t06 ON fh7_t05 (a127);
+fh12_t06 ON fh8_t05 (a128);
+fh12_t06 ON fh9_t05 (a129);
+fh12_t06 ON fh10_t05 (a1210);
+fh12_t06 ON fh11_t05 (a1211);
+fh12_t06 ON fh12_t05 (a1212);
+
+! slice 12 time 07 regressed on time 06
+fh12_t07 ON fh1_t06 (a121);
+fh12_t07 ON fh2_t06 (a122);
+fh12_t07 ON fh3_t06 (a123);
+fh12_t07 ON fh4_t06 (a124);
+fh12_t07 ON fh5_t06 (a125);
+fh12_t07 ON fh6_t06 (a126);
+fh12_t07 ON fh7_t06 (a127);
+fh12_t07 ON fh8_t06 (a128);
+fh12_t07 ON fh9_t06 (a129);
+fh12_t07 ON fh10_t06 (a1210);
+fh12_t07 ON fh11_t06 (a1211);
+fh12_t07 ON fh12_t06 (a1212);
+
+! slice 12 time 08 regressed on time 07
+fh12_t08 ON fh1_t07 (a121);
+fh12_t08 ON fh2_t07 (a122);
+fh12_t08 ON fh3_t07 (a123);
+fh12_t08 ON fh4_t07 (a124);
+fh12_t08 ON fh5_t07 (a125);
+fh12_t08 ON fh6_t07 (a126);
+fh12_t08 ON fh7_t07 (a127);
+fh12_t08 ON fh8_t07 (a128);
+fh12_t08 ON fh9_t07 (a129);
+fh12_t08 ON fh10_t07 (a1210);
+fh12_t08 ON fh11_t07 (a1211);
+fh12_t08 ON fh12_t07 (a1212);
+
+! slice 12 time 09 regressed on time 08
+fh12_t09 ON fh1_t08 (a121);
+fh12_t09 ON fh2_t08 (a122);
+fh12_t09 ON fh3_t08 (a123);
+fh12_t09 ON fh4_t08 (a124);
+fh12_t09 ON fh5_t08 (a125);
+fh12_t09 ON fh6_t08 (a126);
+fh12_t09 ON fh7_t08 (a127);
+fh12_t09 ON fh8_t08 (a128);
+fh12_t09 ON fh9_t08 (a129);
+fh12_t09 ON fh10_t08 (a1210);
+fh12_t09 ON fh11_t08 (a1211);
+fh12_t09 ON fh12_t08 (a1212);
+
+! slice 12 time 10 regressed on time 09
+fh12_t10 ON fh1_t09 (a121);
+fh12_t10 ON fh2_t09 (a122);
+fh12_t10 ON fh3_t09 (a123);
+fh12_t10 ON fh4_t09 (a124);
+fh12_t10 ON fh5_t09 (a125);
+fh12_t10 ON fh6_t09 (a126);
+fh12_t10 ON fh7_t09 (a127);
+fh12_t10 ON fh8_t09 (a128);
+fh12_t10 ON fh9_t09 (a129);
+fh12_t10 ON fh10_t09 (a1210);
+fh12_t10 ON fh11_t09 (a1211);
+fh12_t10 ON fh12_t09 (a1212);
+
+fh12trial WITH fh1_t10@0; !no corr between within trial and bw trial factors
+fh12trial WITH fh2_t10@0; !no corr between within trial and bw trial factors
+fh12trial WITH fh3_t10@0; !no corr between within trial and bw trial factors
+fh12trial WITH fh4_t10@0; !no corr between within trial and bw trial factors
+fh12trial WITH fh5_t10@0; !no corr between within trial and bw trial factors
+fh12trial WITH fh6_t10@0; !no corr between within trial and bw trial factors
+fh12trial WITH fh7_t10@0; !no corr between within trial and bw trial factors
+fh12trial WITH fh8_t10@0; !no corr between within trial and bw trial factors
+fh12trial WITH fh9_t10@0; !no corr between within trial and bw trial factors
+fh12trial WITH fh10_t10@0; !no corr between within trial and bw trial factors
+fh12trial WITH fh11_t10@0; !no corr between within trial and bw trial factors
+fh12trial WITH fh12_t10@0; !no corr between within trial and bw trial factors
+
+
+! time 01 contemp correlations
+fh1_t01 WITH fh2_t01;
+fh1_t01 WITH fh3_t01;
+fh1_t01 WITH fh4_t01;
+fh1_t01 WITH fh5_t01;
+fh1_t01 WITH fh6_t01;
+fh1_t01 WITH fh7_t01;
+fh1_t01 WITH fh8_t01;
+fh1_t01 WITH fh9_t01;
+fh1_t01 WITH fh10_t01;
+fh1_t01 WITH fh11_t01;
+fh1_t01 WITH fh12_t01;
+fh2_t01 WITH fh3_t01;
+fh2_t01 WITH fh4_t01;
+fh2_t01 WITH fh5_t01;
+fh2_t01 WITH fh6_t01;
+fh2_t01 WITH fh7_t01;
+fh2_t01 WITH fh8_t01;
+fh2_t01 WITH fh9_t01;
+fh2_t01 WITH fh10_t01;
+fh2_t01 WITH fh11_t01;
+fh2_t01 WITH fh12_t01;
+fh3_t01 WITH fh4_t01;
+fh3_t01 WITH fh5_t01;
+fh3_t01 WITH fh6_t01;
+fh3_t01 WITH fh7_t01;
+fh3_t01 WITH fh8_t01;
+fh3_t01 WITH fh9_t01;
+fh3_t01 WITH fh10_t01;
+fh3_t01 WITH fh11_t01;
+fh3_t01 WITH fh12_t01;
+fh4_t01 WITH fh5_t01;
+fh4_t01 WITH fh6_t01;
+fh4_t01 WITH fh7_t01;
+fh4_t01 WITH fh8_t01;
+fh4_t01 WITH fh9_t01;
+fh4_t01 WITH fh10_t01;
+fh4_t01 WITH fh11_t01;
+fh4_t01 WITH fh12_t01;
+fh5_t01 WITH fh6_t01;
+fh5_t01 WITH fh7_t01;
+fh5_t01 WITH fh8_t01;
+fh5_t01 WITH fh9_t01;
+fh5_t01 WITH fh10_t01;
+fh5_t01 WITH fh11_t01;
+fh5_t01 WITH fh12_t01;
+fh6_t01 WITH fh7_t01;
+fh6_t01 WITH fh8_t01;
+fh6_t01 WITH fh9_t01;
+fh6_t01 WITH fh10_t01;
+fh6_t01 WITH fh11_t01;
+fh6_t01 WITH fh12_t01;
+fh7_t01 WITH fh8_t01;
+fh7_t01 WITH fh9_t01;
+fh7_t01 WITH fh10_t01;
+fh7_t01 WITH fh11_t01;
+fh7_t01 WITH fh12_t01;
+fh8_t01 WITH fh9_t01;
+fh8_t01 WITH fh10_t01;
+fh8_t01 WITH fh11_t01;
+fh8_t01 WITH fh12_t01;
+fh9_t01 WITH fh10_t01;
+fh9_t01 WITH fh11_t01;
+fh9_t01 WITH fh12_t01;
+fh10_t01 WITH fh11_t01;
+fh10_t01 WITH fh12_t01;
+fh11_t01 WITH fh12_t01;
+
+! time 02 contemp correlations
+fh1_t02 WITH fh2_t02;
+fh1_t02 WITH fh3_t02;
+fh1_t02 WITH fh4_t02;
+fh1_t02 WITH fh5_t02;
+fh1_t02 WITH fh6_t02;
+fh1_t02 WITH fh7_t02;
+fh1_t02 WITH fh8_t02;
+fh1_t02 WITH fh9_t02;
+fh1_t02 WITH fh10_t02;
+fh1_t02 WITH fh11_t02;
+fh1_t02 WITH fh12_t02;
+fh2_t02 WITH fh3_t02;
+fh2_t02 WITH fh4_t02;
+fh2_t02 WITH fh5_t02;
+fh2_t02 WITH fh6_t02;
+fh2_t02 WITH fh7_t02;
+fh2_t02 WITH fh8_t02;
+fh2_t02 WITH fh9_t02;
+fh2_t02 WITH fh10_t02;
+fh2_t02 WITH fh11_t02;
+fh2_t02 WITH fh12_t02;
+fh3_t02 WITH fh4_t02;
+fh3_t02 WITH fh5_t02;
+fh3_t02 WITH fh6_t02;
+fh3_t02 WITH fh7_t02;
+fh3_t02 WITH fh8_t02;
+fh3_t02 WITH fh9_t02;
+fh3_t02 WITH fh10_t02;
+fh3_t02 WITH fh11_t02;
+fh3_t02 WITH fh12_t02;
+fh4_t02 WITH fh5_t02;
+fh4_t02 WITH fh6_t02;
+fh4_t02 WITH fh7_t02;
+fh4_t02 WITH fh8_t02;
+fh4_t02 WITH fh9_t02;
+fh4_t02 WITH fh10_t02;
+fh4_t02 WITH fh11_t02;
+fh4_t02 WITH fh12_t02;
+fh5_t02 WITH fh6_t02;
+fh5_t02 WITH fh7_t02;
+fh5_t02 WITH fh8_t02;
+fh5_t02 WITH fh9_t02;
+fh5_t02 WITH fh10_t02;
+fh5_t02 WITH fh11_t02;
+fh5_t02 WITH fh12_t02;
+fh6_t02 WITH fh7_t02;
+fh6_t02 WITH fh8_t02;
+fh6_t02 WITH fh9_t02;
+fh6_t02 WITH fh10_t02;
+fh6_t02 WITH fh11_t02;
+fh6_t02 WITH fh12_t02;
+fh7_t02 WITH fh8_t02;
+fh7_t02 WITH fh9_t02;
+fh7_t02 WITH fh10_t02;
+fh7_t02 WITH fh11_t02;
+fh7_t02 WITH fh12_t02;
+fh8_t02 WITH fh9_t02;
+fh8_t02 WITH fh10_t02;
+fh8_t02 WITH fh11_t02;
+fh8_t02 WITH fh12_t02;
+fh9_t02 WITH fh10_t02;
+fh9_t02 WITH fh11_t02;
+fh9_t02 WITH fh12_t02;
+fh10_t02 WITH fh11_t02;
+fh10_t02 WITH fh12_t02;
+fh11_t02 WITH fh12_t02;
+
+! time 03 contemp correlations
+fh1_t03 WITH fh2_t03;
+fh1_t03 WITH fh3_t03;
+fh1_t03 WITH fh4_t03;
+fh1_t03 WITH fh5_t03;
+fh1_t03 WITH fh6_t03;
+fh1_t03 WITH fh7_t03;
+fh1_t03 WITH fh8_t03;
+fh1_t03 WITH fh9_t03;
+fh1_t03 WITH fh10_t03;
+fh1_t03 WITH fh11_t03;
+fh1_t03 WITH fh12_t03;
+fh2_t03 WITH fh3_t03;
+fh2_t03 WITH fh4_t03;
+fh2_t03 WITH fh5_t03;
+fh2_t03 WITH fh6_t03;
+fh2_t03 WITH fh7_t03;
+fh2_t03 WITH fh8_t03;
+fh2_t03 WITH fh9_t03;
+fh2_t03 WITH fh10_t03;
+fh2_t03 WITH fh11_t03;
+fh2_t03 WITH fh12_t03;
+fh3_t03 WITH fh4_t03;
+fh3_t03 WITH fh5_t03;
+fh3_t03 WITH fh6_t03;
+fh3_t03 WITH fh7_t03;
+fh3_t03 WITH fh8_t03;
+fh3_t03 WITH fh9_t03;
+fh3_t03 WITH fh10_t03;
+fh3_t03 WITH fh11_t03;
+fh3_t03 WITH fh12_t03;
+fh4_t03 WITH fh5_t03;
+fh4_t03 WITH fh6_t03;
+fh4_t03 WITH fh7_t03;
+fh4_t03 WITH fh8_t03;
+fh4_t03 WITH fh9_t03;
+fh4_t03 WITH fh10_t03;
+fh4_t03 WITH fh11_t03;
+fh4_t03 WITH fh12_t03;
+fh5_t03 WITH fh6_t03;
+fh5_t03 WITH fh7_t03;
+fh5_t03 WITH fh8_t03;
+fh5_t03 WITH fh9_t03;
+fh5_t03 WITH fh10_t03;
+fh5_t03 WITH fh11_t03;
+fh5_t03 WITH fh12_t03;
+fh6_t03 WITH fh7_t03;
+fh6_t03 WITH fh8_t03;
+fh6_t03 WITH fh9_t03;
+fh6_t03 WITH fh10_t03;
+fh6_t03 WITH fh11_t03;
+fh6_t03 WITH fh12_t03;
+fh7_t03 WITH fh8_t03;
+fh7_t03 WITH fh9_t03;
+fh7_t03 WITH fh10_t03;
+fh7_t03 WITH fh11_t03;
+fh7_t03 WITH fh12_t03;
+fh8_t03 WITH fh9_t03;
+fh8_t03 WITH fh10_t03;
+fh8_t03 WITH fh11_t03;
+fh8_t03 WITH fh12_t03;
+fh9_t03 WITH fh10_t03;
+fh9_t03 WITH fh11_t03;
+fh9_t03 WITH fh12_t03;
+fh10_t03 WITH fh11_t03;
+fh10_t03 WITH fh12_t03;
+fh11_t03 WITH fh12_t03;
+
+! time 04 contemp correlations
+fh1_t04 WITH fh2_t04;
+fh1_t04 WITH fh3_t04;
+fh1_t04 WITH fh4_t04;
+fh1_t04 WITH fh5_t04;
+fh1_t04 WITH fh6_t04;
+fh1_t04 WITH fh7_t04;
+fh1_t04 WITH fh8_t04;
+fh1_t04 WITH fh9_t04;
+fh1_t04 WITH fh10_t04;
+fh1_t04 WITH fh11_t04;
+fh1_t04 WITH fh12_t04;
+fh2_t04 WITH fh3_t04;
+fh2_t04 WITH fh4_t04;
+fh2_t04 WITH fh5_t04;
+fh2_t04 WITH fh6_t04;
+fh2_t04 WITH fh7_t04;
+fh2_t04 WITH fh8_t04;
+fh2_t04 WITH fh9_t04;
+fh2_t04 WITH fh10_t04;
+fh2_t04 WITH fh11_t04;
+fh2_t04 WITH fh12_t04;
+fh3_t04 WITH fh4_t04;
+fh3_t04 WITH fh5_t04;
+fh3_t04 WITH fh6_t04;
+fh3_t04 WITH fh7_t04;
+fh3_t04 WITH fh8_t04;
+fh3_t04 WITH fh9_t04;
+fh3_t04 WITH fh10_t04;
+fh3_t04 WITH fh11_t04;
+fh3_t04 WITH fh12_t04;
+fh4_t04 WITH fh5_t04;
+fh4_t04 WITH fh6_t04;
+fh4_t04 WITH fh7_t04;
+fh4_t04 WITH fh8_t04;
+fh4_t04 WITH fh9_t04;
+fh4_t04 WITH fh10_t04;
+fh4_t04 WITH fh11_t04;
+fh4_t04 WITH fh12_t04;
+fh5_t04 WITH fh6_t04;
+fh5_t04 WITH fh7_t04;
+fh5_t04 WITH fh8_t04;
+fh5_t04 WITH fh9_t04;
+fh5_t04 WITH fh10_t04;
+fh5_t04 WITH fh11_t04;
+fh5_t04 WITH fh12_t04;
+fh6_t04 WITH fh7_t04;
+fh6_t04 WITH fh8_t04;
+fh6_t04 WITH fh9_t04;
+fh6_t04 WITH fh10_t04;
+fh6_t04 WITH fh11_t04;
+fh6_t04 WITH fh12_t04;
+fh7_t04 WITH fh8_t04;
+fh7_t04 WITH fh9_t04;
+fh7_t04 WITH fh10_t04;
+fh7_t04 WITH fh11_t04;
+fh7_t04 WITH fh12_t04;
+fh8_t04 WITH fh9_t04;
+fh8_t04 WITH fh10_t04;
+fh8_t04 WITH fh11_t04;
+fh8_t04 WITH fh12_t04;
+fh9_t04 WITH fh10_t04;
+fh9_t04 WITH fh11_t04;
+fh9_t04 WITH fh12_t04;
+fh10_t04 WITH fh11_t04;
+fh10_t04 WITH fh12_t04;
+fh11_t04 WITH fh12_t04;
+
+! time 05 contemp correlations
+fh1_t05 WITH fh2_t05;
+fh1_t05 WITH fh3_t05;
+fh1_t05 WITH fh4_t05;
+fh1_t05 WITH fh5_t05;
+fh1_t05 WITH fh6_t05;
+fh1_t05 WITH fh7_t05;
+fh1_t05 WITH fh8_t05;
+fh1_t05 WITH fh9_t05;
+fh1_t05 WITH fh10_t05;
+fh1_t05 WITH fh11_t05;
+fh1_t05 WITH fh12_t05;
+fh2_t05 WITH fh3_t05;
+fh2_t05 WITH fh4_t05;
+fh2_t05 WITH fh5_t05;
+fh2_t05 WITH fh6_t05;
+fh2_t05 WITH fh7_t05;
+fh2_t05 WITH fh8_t05;
+fh2_t05 WITH fh9_t05;
+fh2_t05 WITH fh10_t05;
+fh2_t05 WITH fh11_t05;
+fh2_t05 WITH fh12_t05;
+fh3_t05 WITH fh4_t05;
+fh3_t05 WITH fh5_t05;
+fh3_t05 WITH fh6_t05;
+fh3_t05 WITH fh7_t05;
+fh3_t05 WITH fh8_t05;
+fh3_t05 WITH fh9_t05;
+fh3_t05 WITH fh10_t05;
+fh3_t05 WITH fh11_t05;
+fh3_t05 WITH fh12_t05;
+fh4_t05 WITH fh5_t05;
+fh4_t05 WITH fh6_t05;
+fh4_t05 WITH fh7_t05;
+fh4_t05 WITH fh8_t05;
+fh4_t05 WITH fh9_t05;
+fh4_t05 WITH fh10_t05;
+fh4_t05 WITH fh11_t05;
+fh4_t05 WITH fh12_t05;
+fh5_t05 WITH fh6_t05;
+fh5_t05 WITH fh7_t05;
+fh5_t05 WITH fh8_t05;
+fh5_t05 WITH fh9_t05;
+fh5_t05 WITH fh10_t05;
+fh5_t05 WITH fh11_t05;
+fh5_t05 WITH fh12_t05;
+fh6_t05 WITH fh7_t05;
+fh6_t05 WITH fh8_t05;
+fh6_t05 WITH fh9_t05;
+fh6_t05 WITH fh10_t05;
+fh6_t05 WITH fh11_t05;
+fh6_t05 WITH fh12_t05;
+fh7_t05 WITH fh8_t05;
+fh7_t05 WITH fh9_t05;
+fh7_t05 WITH fh10_t05;
+fh7_t05 WITH fh11_t05;
+fh7_t05 WITH fh12_t05;
+fh8_t05 WITH fh9_t05;
+fh8_t05 WITH fh10_t05;
+fh8_t05 WITH fh11_t05;
+fh8_t05 WITH fh12_t05;
+fh9_t05 WITH fh10_t05;
+fh9_t05 WITH fh11_t05;
+fh9_t05 WITH fh12_t05;
+fh10_t05 WITH fh11_t05;
+fh10_t05 WITH fh12_t05;
+fh11_t05 WITH fh12_t05;
+
+! time 06 contemp correlations
+fh1_t06 WITH fh2_t06;
+fh1_t06 WITH fh3_t06;
+fh1_t06 WITH fh4_t06;
+fh1_t06 WITH fh5_t06;
+fh1_t06 WITH fh6_t06;
+fh1_t06 WITH fh7_t06;
+fh1_t06 WITH fh8_t06;
+fh1_t06 WITH fh9_t06;
+fh1_t06 WITH fh10_t06;
+fh1_t06 WITH fh11_t06;
+fh1_t06 WITH fh12_t06;
+fh2_t06 WITH fh3_t06;
+fh2_t06 WITH fh4_t06;
+fh2_t06 WITH fh5_t06;
+fh2_t06 WITH fh6_t06;
+fh2_t06 WITH fh7_t06;
+fh2_t06 WITH fh8_t06;
+fh2_t06 WITH fh9_t06;
+fh2_t06 WITH fh10_t06;
+fh2_t06 WITH fh11_t06;
+fh2_t06 WITH fh12_t06;
+fh3_t06 WITH fh4_t06;
+fh3_t06 WITH fh5_t06;
+fh3_t06 WITH fh6_t06;
+fh3_t06 WITH fh7_t06;
+fh3_t06 WITH fh8_t06;
+fh3_t06 WITH fh9_t06;
+fh3_t06 WITH fh10_t06;
+fh3_t06 WITH fh11_t06;
+fh3_t06 WITH fh12_t06;
+fh4_t06 WITH fh5_t06;
+fh4_t06 WITH fh6_t06;
+fh4_t06 WITH fh7_t06;
+fh4_t06 WITH fh8_t06;
+fh4_t06 WITH fh9_t06;
+fh4_t06 WITH fh10_t06;
+fh4_t06 WITH fh11_t06;
+fh4_t06 WITH fh12_t06;
+fh5_t06 WITH fh6_t06;
+fh5_t06 WITH fh7_t06;
+fh5_t06 WITH fh8_t06;
+fh5_t06 WITH fh9_t06;
+fh5_t06 WITH fh10_t06;
+fh5_t06 WITH fh11_t06;
+fh5_t06 WITH fh12_t06;
+fh6_t06 WITH fh7_t06;
+fh6_t06 WITH fh8_t06;
+fh6_t06 WITH fh9_t06;
+fh6_t06 WITH fh10_t06;
+fh6_t06 WITH fh11_t06;
+fh6_t06 WITH fh12_t06;
+fh7_t06 WITH fh8_t06;
+fh7_t06 WITH fh9_t06;
+fh7_t06 WITH fh10_t06;
+fh7_t06 WITH fh11_t06;
+fh7_t06 WITH fh12_t06;
+fh8_t06 WITH fh9_t06;
+fh8_t06 WITH fh10_t06;
+fh8_t06 WITH fh11_t06;
+fh8_t06 WITH fh12_t06;
+fh9_t06 WITH fh10_t06;
+fh9_t06 WITH fh11_t06;
+fh9_t06 WITH fh12_t06;
+fh10_t06 WITH fh11_t06;
+fh10_t06 WITH fh12_t06;
+fh11_t06 WITH fh12_t06;
+
+! time 07 contemp correlations
+fh1_t07 WITH fh2_t07;
+fh1_t07 WITH fh3_t07;
+fh1_t07 WITH fh4_t07;
+fh1_t07 WITH fh5_t07;
+fh1_t07 WITH fh6_t07;
+fh1_t07 WITH fh7_t07;
+fh1_t07 WITH fh8_t07;
+fh1_t07 WITH fh9_t07;
+fh1_t07 WITH fh10_t07;
+fh1_t07 WITH fh11_t07;
+fh1_t07 WITH fh12_t07;
+fh2_t07 WITH fh3_t07;
+fh2_t07 WITH fh4_t07;
+fh2_t07 WITH fh5_t07;
+fh2_t07 WITH fh6_t07;
+fh2_t07 WITH fh7_t07;
+fh2_t07 WITH fh8_t07;
+fh2_t07 WITH fh9_t07;
+fh2_t07 WITH fh10_t07;
+fh2_t07 WITH fh11_t07;
+fh2_t07 WITH fh12_t07;
+fh3_t07 WITH fh4_t07;
+fh3_t07 WITH fh5_t07;
+fh3_t07 WITH fh6_t07;
+fh3_t07 WITH fh7_t07;
+fh3_t07 WITH fh8_t07;
+fh3_t07 WITH fh9_t07;
+fh3_t07 WITH fh10_t07;
+fh3_t07 WITH fh11_t07;
+fh3_t07 WITH fh12_t07;
+fh4_t07 WITH fh5_t07;
+fh4_t07 WITH fh6_t07;
+fh4_t07 WITH fh7_t07;
+fh4_t07 WITH fh8_t07;
+fh4_t07 WITH fh9_t07;
+fh4_t07 WITH fh10_t07;
+fh4_t07 WITH fh11_t07;
+fh4_t07 WITH fh12_t07;
+fh5_t07 WITH fh6_t07;
+fh5_t07 WITH fh7_t07;
+fh5_t07 WITH fh8_t07;
+fh5_t07 WITH fh9_t07;
+fh5_t07 WITH fh10_t07;
+fh5_t07 WITH fh11_t07;
+fh5_t07 WITH fh12_t07;
+fh6_t07 WITH fh7_t07;
+fh6_t07 WITH fh8_t07;
+fh6_t07 WITH fh9_t07;
+fh6_t07 WITH fh10_t07;
+fh6_t07 WITH fh11_t07;
+fh6_t07 WITH fh12_t07;
+fh7_t07 WITH fh8_t07;
+fh7_t07 WITH fh9_t07;
+fh7_t07 WITH fh10_t07;
+fh7_t07 WITH fh11_t07;
+fh7_t07 WITH fh12_t07;
+fh8_t07 WITH fh9_t07;
+fh8_t07 WITH fh10_t07;
+fh8_t07 WITH fh11_t07;
+fh8_t07 WITH fh12_t07;
+fh9_t07 WITH fh10_t07;
+fh9_t07 WITH fh11_t07;
+fh9_t07 WITH fh12_t07;
+fh10_t07 WITH fh11_t07;
+fh10_t07 WITH fh12_t07;
+fh11_t07 WITH fh12_t07;
+
+! time 08 contemp correlations
+fh1_t08 WITH fh2_t08;
+fh1_t08 WITH fh3_t08;
+fh1_t08 WITH fh4_t08;
+fh1_t08 WITH fh5_t08;
+fh1_t08 WITH fh6_t08;
+fh1_t08 WITH fh7_t08;
+fh1_t08 WITH fh8_t08;
+fh1_t08 WITH fh9_t08;
+fh1_t08 WITH fh10_t08;
+fh1_t08 WITH fh11_t08;
+fh1_t08 WITH fh12_t08;
+fh2_t08 WITH fh3_t08;
+fh2_t08 WITH fh4_t08;
+fh2_t08 WITH fh5_t08;
+fh2_t08 WITH fh6_t08;
+fh2_t08 WITH fh7_t08;
+fh2_t08 WITH fh8_t08;
+fh2_t08 WITH fh9_t08;
+fh2_t08 WITH fh10_t08;
+fh2_t08 WITH fh11_t08;
+fh2_t08 WITH fh12_t08;
+fh3_t08 WITH fh4_t08;
+fh3_t08 WITH fh5_t08;
+fh3_t08 WITH fh6_t08;
+fh3_t08 WITH fh7_t08;
+fh3_t08 WITH fh8_t08;
+fh3_t08 WITH fh9_t08;
+fh3_t08 WITH fh10_t08;
+fh3_t08 WITH fh11_t08;
+fh3_t08 WITH fh12_t08;
+fh4_t08 WITH fh5_t08;
+fh4_t08 WITH fh6_t08;
+fh4_t08 WITH fh7_t08;
+fh4_t08 WITH fh8_t08;
+fh4_t08 WITH fh9_t08;
+fh4_t08 WITH fh10_t08;
+fh4_t08 WITH fh11_t08;
+fh4_t08 WITH fh12_t08;
+fh5_t08 WITH fh6_t08;
+fh5_t08 WITH fh7_t08;
+fh5_t08 WITH fh8_t08;
+fh5_t08 WITH fh9_t08;
+fh5_t08 WITH fh10_t08;
+fh5_t08 WITH fh11_t08;
+fh5_t08 WITH fh12_t08;
+fh6_t08 WITH fh7_t08;
+fh6_t08 WITH fh8_t08;
+fh6_t08 WITH fh9_t08;
+fh6_t08 WITH fh10_t08;
+fh6_t08 WITH fh11_t08;
+fh6_t08 WITH fh12_t08;
+fh7_t08 WITH fh8_t08;
+fh7_t08 WITH fh9_t08;
+fh7_t08 WITH fh10_t08;
+fh7_t08 WITH fh11_t08;
+fh7_t08 WITH fh12_t08;
+fh8_t08 WITH fh9_t08;
+fh8_t08 WITH fh10_t08;
+fh8_t08 WITH fh11_t08;
+fh8_t08 WITH fh12_t08;
+fh9_t08 WITH fh10_t08;
+fh9_t08 WITH fh11_t08;
+fh9_t08 WITH fh12_t08;
+fh10_t08 WITH fh11_t08;
+fh10_t08 WITH fh12_t08;
+fh11_t08 WITH fh12_t08;
+
+! time 09 contemp correlations
+fh1_t09 WITH fh2_t09;
+fh1_t09 WITH fh3_t09;
+fh1_t09 WITH fh4_t09;
+fh1_t09 WITH fh5_t09;
+fh1_t09 WITH fh6_t09;
+fh1_t09 WITH fh7_t09;
+fh1_t09 WITH fh8_t09;
+fh1_t09 WITH fh9_t09;
+fh1_t09 WITH fh10_t09;
+fh1_t09 WITH fh11_t09;
+fh1_t09 WITH fh12_t09;
+fh2_t09 WITH fh3_t09;
+fh2_t09 WITH fh4_t09;
+fh2_t09 WITH fh5_t09;
+fh2_t09 WITH fh6_t09;
+fh2_t09 WITH fh7_t09;
+fh2_t09 WITH fh8_t09;
+fh2_t09 WITH fh9_t09;
+fh2_t09 WITH fh10_t09;
+fh2_t09 WITH fh11_t09;
+fh2_t09 WITH fh12_t09;
+fh3_t09 WITH fh4_t09;
+fh3_t09 WITH fh5_t09;
+fh3_t09 WITH fh6_t09;
+fh3_t09 WITH fh7_t09;
+fh3_t09 WITH fh8_t09;
+fh3_t09 WITH fh9_t09;
+fh3_t09 WITH fh10_t09;
+fh3_t09 WITH fh11_t09;
+fh3_t09 WITH fh12_t09;
+fh4_t09 WITH fh5_t09;
+fh4_t09 WITH fh6_t09;
+fh4_t09 WITH fh7_t09;
+fh4_t09 WITH fh8_t09;
+fh4_t09 WITH fh9_t09;
+fh4_t09 WITH fh10_t09;
+fh4_t09 WITH fh11_t09;
+fh4_t09 WITH fh12_t09;
+fh5_t09 WITH fh6_t09;
+fh5_t09 WITH fh7_t09;
+fh5_t09 WITH fh8_t09;
+fh5_t09 WITH fh9_t09;
+fh5_t09 WITH fh10_t09;
+fh5_t09 WITH fh11_t09;
+fh5_t09 WITH fh12_t09;
+fh6_t09 WITH fh7_t09;
+fh6_t09 WITH fh8_t09;
+fh6_t09 WITH fh9_t09;
+fh6_t09 WITH fh10_t09;
+fh6_t09 WITH fh11_t09;
+fh6_t09 WITH fh12_t09;
+fh7_t09 WITH fh8_t09;
+fh7_t09 WITH fh9_t09;
+fh7_t09 WITH fh10_t09;
+fh7_t09 WITH fh11_t09;
+fh7_t09 WITH fh12_t09;
+fh8_t09 WITH fh9_t09;
+fh8_t09 WITH fh10_t09;
+fh8_t09 WITH fh11_t09;
+fh8_t09 WITH fh12_t09;
+fh9_t09 WITH fh10_t09;
+fh9_t09 WITH fh11_t09;
+fh9_t09 WITH fh12_t09;
+fh10_t09 WITH fh11_t09;
+fh10_t09 WITH fh12_t09;
+fh11_t09 WITH fh12_t09;
+
+! time 10 contemp correlations
+fh1_t10 WITH fh2_t10;
+fh1_t10 WITH fh3_t10;
+fh1_t10 WITH fh4_t10;
+fh1_t10 WITH fh5_t10;
+fh1_t10 WITH fh6_t10;
+fh1_t10 WITH fh7_t10;
+fh1_t10 WITH fh8_t10;
+fh1_t10 WITH fh9_t10;
+fh1_t10 WITH fh10_t10;
+fh1_t10 WITH fh11_t10;
+fh1_t10 WITH fh12_t10;
+fh2_t10 WITH fh3_t10;
+fh2_t10 WITH fh4_t10;
+fh2_t10 WITH fh5_t10;
+fh2_t10 WITH fh6_t10;
+fh2_t10 WITH fh7_t10;
+fh2_t10 WITH fh8_t10;
+fh2_t10 WITH fh9_t10;
+fh2_t10 WITH fh10_t10;
+fh2_t10 WITH fh11_t10;
+fh2_t10 WITH fh12_t10;
+fh3_t10 WITH fh4_t10;
+fh3_t10 WITH fh5_t10;
+fh3_t10 WITH fh6_t10;
+fh3_t10 WITH fh7_t10;
+fh3_t10 WITH fh8_t10;
+fh3_t10 WITH fh9_t10;
+fh3_t10 WITH fh10_t10;
+fh3_t10 WITH fh11_t10;
+fh3_t10 WITH fh12_t10;
+fh4_t10 WITH fh5_t10;
+fh4_t10 WITH fh6_t10;
+fh4_t10 WITH fh7_t10;
+fh4_t10 WITH fh8_t10;
+fh4_t10 WITH fh9_t10;
+fh4_t10 WITH fh10_t10;
+fh4_t10 WITH fh11_t10;
+fh4_t10 WITH fh12_t10;
+fh5_t10 WITH fh6_t10;
+fh5_t10 WITH fh7_t10;
+fh5_t10 WITH fh8_t10;
+fh5_t10 WITH fh9_t10;
+fh5_t10 WITH fh10_t10;
+fh5_t10 WITH fh11_t10;
+fh5_t10 WITH fh12_t10;
+fh6_t10 WITH fh7_t10;
+fh6_t10 WITH fh8_t10;
+fh6_t10 WITH fh9_t10;
+fh6_t10 WITH fh10_t10;
+fh6_t10 WITH fh11_t10;
+fh6_t10 WITH fh12_t10;
+fh7_t10 WITH fh8_t10;
+fh7_t10 WITH fh9_t10;
+fh7_t10 WITH fh10_t10;
+fh7_t10 WITH fh11_t10;
+fh7_t10 WITH fh12_t10;
+fh8_t10 WITH fh9_t10;
+fh8_t10 WITH fh10_t10;
+fh8_t10 WITH fh11_t10;
+fh8_t10 WITH fh12_t10;
+fh9_t10 WITH fh10_t10;
+fh9_t10 WITH fh11_t10;
+fh9_t10 WITH fh12_t10;
+fh10_t10 WITH fh11_t10;
+fh10_t10 WITH fh12_t10;
+fh11_t10 WITH fh12_t10;
+
+
+%BETWEEN%
+! BW subjects correlations
+bh1 BY lh1_t01-lh1_t10@1;
+bh2 BY lh2_t01-lh2_t10@1;
+bh3 BY lh3_t01-lh3_t10@1;
+bh4 BY lh4_t01-lh4_t10@1;
+bh5 BY lh5_t01-lh5_t10@1;
+bh6 BY lh6_t01-lh6_t10@1;
+bh7 BY lh7_t01-lh7_t10@1;
+bh8 BY lh8_t01-lh8_t10@1;
+bh9 BY lh9_t01-lh9_t10@1;
+bh10 BY lh10_t01-lh10_t10@1;
+bh11 BY lh11_t01-lh11_t10@1;
+bh12 BY lh12_t01-lh12_t10@1;
+
+! zero means
+[lh1_t01-lh1_t10@0];
+[lh2_t01-lh2_t10@0];
+[lh3_t01-lh3_t10@0];
+[lh4_t01-lh4_t10@0];
+[lh5_t01-lh5_t10@0];
+[lh6_t01-lh6_t10@0];
+[lh7_t01-lh7_t10@0];
+[lh8_t01-lh8_t10@0];
+[lh9_t01-lh9_t10@0];
+[lh10_t01-lh10_t10@0];
+[lh11_t01-lh11_t10@0];
+[lh12_t01-lh12_t10@0];
+
