@@ -13,7 +13,7 @@ runAFNICommand <- function(args, afnidir=NULL, stdout=NULL, stderr=NULL, ...) {
       afnidir <- paste0(normalizePath("~/"), "/afni")
     }
   }
-  
+
   Sys.setenv(AFNIDIR=afnidir) #export to R environment
   afnisetup=paste0("AFNIDIR=", afnidir, "; PATH=${AFNIDIR}:${PATH}; DYLD_FALLBACK_LIBRARY_PATH=${AFNIDIR}; ${AFNIDIR}/")
   afnicmd=paste0(afnisetup, args)
@@ -35,19 +35,19 @@ runFSLCommand <- function(args, fsldir=NULL, stdout=NULL, stderr=NULL) {
     if (file.exists("~/.profile")) {
       bashrc_fsldir <- system("source ~/.profile && echo $FSLDIR", intern=TRUE)
     }
-    
+
     #check for FSLDIR in current environment
     env <- system("env", intern=TRUE)
     if (length(fsldir <- grep("^FSLDIR=", env, value=TRUE)) > 0L) {
       fsldir <- sub("^FSLDIR=", "", fsldir)
     } else if (!identical(bashrc_fsldir, character(0))) {
-      fsldir <- bashrc_fsldir      
+      fsldir <- bashrc_fsldir
     } else {
       warning("FSLDIR not found in environment. Defaulting to /usr/local/fsl.")
       fsldir <- "/usr/local/fsl"
     }
   }
-  
+
   #Sys.setenv(LD_LIBRARY_PATH="/gpfs/group/mnh5174/default/sw/openblas/lib")
   Sys.setenv(FSLDIR=fsldir) #export to R environment
   fslsetup=paste0("FSLDIR=", fsldir, "; PATH=${FSLDIR}/bin:${PATH}; . ${FSLDIR}/etc/fslconf/fsl.sh; LD_LIBRARY_PATH=/gpfs/group/mnh5174/default/sw/openblas/lib ${FSLDIR}/bin/")
@@ -68,13 +68,13 @@ gen_emo_interaction_regressors <- function(examplefile, regressors, emotions=c("
     ##/Volumes/Serena/MMClock/MR_Raw/10997_20140308/MBclock_recon/clock1/nfswudktm_clock1_5_trunc282.nii.gz
     subid <- factor(sub(paste0(fmriDir, "/([0-9]{5})_\\d+/(?:mni_5mm_wavelet|native_nosmooth)/.*$"), "\\1", examplefile, perl=TRUE))
     ##subid <- as.integer(sub(paste0(fmriDir, "/([0-9]{3})[A-z]{2}_.*/mni_5mm_wavelet/.*$"), "\\1", examplefile, perl=TRUE)) #for SPECC
-    
+
     loc <- local({load(file.path(fitDir, paste0(as.character(subid), "_fitinfo.RData"))); environment()})$f #time-clock fit object (load as local var)
     emocon <- data.frame(emotion=loc$run_condition[mrrunnums], contingency=loc$rew_function[mrrunnums]) #vector of emotion and contingency
 
     ##generate interactions for ev, rpe_neg, and rpe_pos with emotion
     csum <- cumsum(runlengths - dropVolumes)
-    
+
     for (reg in regressors) {
         for (emo in emotions) {
             vec <- rep(0, max(csum))
@@ -82,7 +82,7 @@ gen_emo_interaction_regressors <- function(examplefile, regressors, emotions=c("
             for (r in rmatch) {
                 f <- read.table(file.path(timingdir, paste0("run", r, "_", reg, ".1D")))$V1
                 start <- ifelse(r > 1, csum[r-1] + 1, 1)
-                end <- csum[r] #if (r < nrow(emocon)) csum[r] else 
+                end <- csum[r] #if (r < nrow(emocon)) csum[r] else
                 vec[start:end] <- f
             }
             write.table(vec, file=file.path(timingdir, paste0(reg, "_", emo, "_concat.1D")), row.names=FALSE, col.names=FALSE)
@@ -99,17 +99,17 @@ truncateRuns <- function(s, mrfiles, mrrunnums, niftivols, drop_volumes=0) {
   ##note that all of this would need to be reworked if TR were not 1.0 (i.e., 1 second = 1 volume)
 
   require(dplyr)
-  
+
   mrdf <- do.call(rbind, lapply(1:length(mrfiles), function(r) {
     #iti_durations <- s$runs[[ mrrunnums[r] ]]$orig_data_frame$iti_ideal #for clockfit objects
     #last_iti <- s$runs[[ mrrunnums[r] ]]$iti_onset[length(s$runs[[ mrrunnums[r] ]]$iti_onset)]
-    
+
     iti_durations <- s %>% dplyr::filter(run == mrrunnums[r]) %>% pull(iti_ideal) #for outputs from parse_sceptic_outputs (2018+)
     last_iti <- s %>% dplyr::filter(run == mrrunnums[r]) %>% pull(iti_onset) %>% tail(n=1)
 
     last_vol_behavior <- floor(last_iti + iti_durations[length(iti_durations)]) #use floor to select last vol in the iti window
-    first_vol <- drop_volumes #first volume to use for analysis 
-    
+    first_vol <- drop_volumes #first volume to use for analysis
+
     if (last_vol_behavior < niftivols[r]) {
       ##more vols were acquired than presented in paradigm. Thus, truncation may be needed
       ##check framewise displacement and truncate earlier than 12 second ITI if a big movement occurred
@@ -119,40 +119,40 @@ truncateRuns <- function(s, mrfiles, mrrunnums, niftivols, drop_volumes=0) {
         ##no frames flagged in last volumes
         last_vol_analysis <- last_vol_behavior
       } else {
-        ##use either the last volume of the task or the volume before the earliest bad movement 
+        ##use either the last volume of the task or the volume before the earliest bad movement
         last_vol_analysis <- min(last_vol_behavior, (min(badfd) - 1))
       }
-      
+
       #length of truncated file
       truncLength <- last_vol_analysis - first_vol
-      
+
       #generate filename for truncated volume
       if (first_vol > 0) {
-        truncfile <- sub("(^.*/[a-z]+_clock[0-9](?:_5)*)\\.nii\\.gz$", paste0("\\1_drop", drop_volumes, "_trunc", last_vol_analysis, ".nii.gz"), mrfiles[r], perl=TRUE)  
+        truncfile <- sub("(^.*/[a-z]+_clock[0-9](?:_5)*)\\.nii\\.gz$", paste0("\\1_drop", drop_volumes, "_trunc", last_vol_analysis, ".nii.gz"), mrfiles[r], perl=TRUE)
       } else {
         truncfile <- sub("(^.*/[a-z]+_clock[0-9](?:_5)*)\\.nii\\.gz$", paste0("\\1_trunc", last_vol_analysis, ".nii.gz"), mrfiles[r], perl=TRUE)
       }
-      
+
       if (!file.exists(truncfile)) { runFSLCommand(paste("fslroi", mrfiles[r], truncfile, first_vol, truncLength)) } #create truncated volume
       mrfile_to_analyze <- truncfile
     } else {
-      last_vol_analysis <- niftivols[r] 
+      last_vol_analysis <- niftivols[r]
       if (drop_volumes > 0) {
         truncLength <- niftivols[r] - drop_volumes
         truncfile <- sub("(^.*/[a-z]+_clock[0-9](?:_5)*)\\.nii\\.gz$", paste0("\\1_drop", drop_volumes, ".nii.gz"), mrfiles[r], perl=TRUE)
         if (!file.exists(truncfile)) { runFSLCommand(paste("fslroi", mrfiles[r], truncfile, first_vol, truncLength)) } #create truncated volume
         mrfile_to_analyze <- truncfile
       } else {
-        mrfile_to_analyze <- mrfiles[r] #just use original file  
+        mrfile_to_analyze <- mrfiles[r] #just use original file
       }
-      
+
     }
     #cat(paste0(paste(mrfiles[r], niftivols[r], floor(last_iti), truncLength, sep="\t"), "\n"), file="trunclog", append=TRUE)
     return(data.frame(last_vol_analysis, mrfile_to_analyze, stringsAsFactors=FALSE))
   }))
-  
+
   mrdf
-  
+
 }
 
 pca_motion <- function(mrfiles, runlengths, motion_parfile="motion.par", verbose=FALSE,  numpcs=3, drop_volumes=0) {
@@ -165,28 +165,28 @@ pca_motion <- function(mrfiles, runlengths, motion_parfile="motion.par", verbose
         names(motderiv) <- paste0("d.", names(mot)) #add delta to names
         cbind(mot, motderiv)
       })
-  
+
   motion_pcs_runs <- lapply(1:length(motion_runs), function(r) {
         pc <- prcomp(motion_runs[[r]], retx=TRUE)
         cumvar <- cumsum(pc$sdev^2/sum(pc$sdev^2))
         if (verbose) message("first", numpcs, "motion principal components account for: ", round(cumvar[numpcs], 3))
         mregressors <- pc$x[,1:numpcs] #cf Churchill et al. 2012 PLoS ONE
       })
-  
+
   motion_concat <- do.call(rbind, motion_runs)
   pc <- prcomp(motion_concat, retx=TRUE)
   cumvar <- cumsum(pc$sdev^2/sum(pc$sdev^2))
-  
+
   if (verbose) message("first", numpcs, "motion principal components account for: ", round(cumvar[numpcs], 3))
   motion_pcs_concat <- pc$x[,1:numpcs] #cf Churchill et al. 2012 PLoS ONE
-  
+
   if (verbose) {
     cat("correlation of motion parameters:\n\n")
     print(round(cor(motion_concat), 2))
   }
-  
+
   return(list(motion_pcs_runs=motion_pcs_runs, motion_pcs_concat=motion_pcs_concat))
-  
+
 }
 
 generateRunMask <- function(mrfiles, outdir=getwd(), outfile="runmask") {
@@ -195,41 +195,41 @@ generateRunMask <- function(mrfiles, outdir=getwd(), outfile="runmask") {
   for (f in 1:length(mrfiles)) {
     runFSLCommand(paste0("fslmaths ", mrfiles[f], " -Tmin -bin ", outdir, "/tmin", f))#, fsldir="/usr/local/ni_tools/fsl")
   }
-  
+
   ##sum mins together over runs and threshold at number of runs
   runFSLCommand(paste0("fslmaths ", paste(paste0(outdir, "/tmin", 1:length(mrfiles)), collapse=" -add "), " ", outdir, "/tminsum"))#, fsldir="/usr/local/ni_tools/fsl")
   runFSLCommand(paste0("fslmaths ", outdir, "/tminsum -thr ", length(mrfiles), " -bin ", outdir, "/", outfile))#, fsldir="/usr/local/ni_tools/fsl")
-  runFSLCommand(paste0("imrm ", outdir, "/tmin*"))#, fsldir="/usr/local/ni_tools/fsl") #cleanup 
-  
+  runFSLCommand(paste0("imrm ", outdir, "/tmin*"))#, fsldir="/usr/local/ni_tools/fsl") #cleanup
+
 }
 
 visualizeDesignMatrix <- function(d, outfile=NULL, runboundaries=NULL, events=NULL, includeBaseline=TRUE) {
   require(ggplot2)
   require(reshape2)
-  
+
   if (!includeBaseline) {
     d <- d[,!grepl("run[0-9]+base", colnames(d))]
   }
-  
+
   print(round(cor(d), 3))
   d <- as.data.frame(d)
   d$volume <- 1:nrow(d)
   d.m <- melt(d, id.vars="volume")
   g <- ggplot(d.m, aes(x=volume, y=value)) + geom_line(size=1.2) + theme_bw(base_size=15) + facet_grid(variable ~ ., scales="free_y")
-  
+
   colors <- c("black", "blue", "red", "orange") #just a hack for color scheme right now
-  
+
   if (!is.null(runboundaries)) {
     g <- g + geom_vline(xintercept=runboundaries, color=colors[1L])
   }
-  
-  
+
+
   if (!is.null(events)) {
     for (i in 1:length(events)) {
       g <- g + geom_vline(xintercept=events[[i]], color=colors[i+1])
     }
   }
-  
+
   if (!is.null(outfile)) {
     ggsave(filename=outfile, plot=g, width=21, height=9)
   }
@@ -252,14 +252,14 @@ get_cluster_means <- function(roimask, ni4d) {
     nsubbriks <- dim(ni4d)[4]
     nvox <- nrow(mi)
     mi4d <- cbind(pracma::repmat(mi, nsubbriks, 1), rep(1:nsubbriks, each=nvox))
-    
+
     mat <- matrix(ni4d[mi4d], nrow=nvox, ncol=nsubbriks) #need to manually reshape into matrix from vector
     #for each subject, compute huber m-estimator of location/center Winsorizing at 2SD across voxels (similar to voxel mean)
     #clusavg <- apply(mat, 2, function(x) { MASS::huber(x, k=2)$mu })
     clusavg <- apply(mat, 2, mean)
-    
+
     return(clusavg)
-  })          
+  })
 }
 
 #function to extract mean beta series
@@ -270,7 +270,7 @@ get_beta_series <- function(inputs, roimask, n_bs=50) {
   #beta_res <- lapply(1:length(inputs), function(i) {
     run_dirs <- list.files(path=inputs[i], pattern="FEAT_LVL1_run\\d+\\.feat", recursive=FALSE, full.names=TRUE)
     run_betas <- list()
-    
+
     for (r in 1:length(run_dirs)) {
       runnum <- as.numeric(sub(".*/FEAT_LVL1_run(\\d+)\\.feat", "\\1", run_dirs[r], perl=TRUE))
       copes <- file.path(run_dirs[r], "stats", paste0("cope", 1:n_bs, ".nii.gz"))
@@ -280,12 +280,12 @@ get_beta_series <- function(inputs, roimask, n_bs=50) {
         cat("Cannot find all ", length(copes), " beta series copes in: ", run_dirs[r], "\n", file="beta_series_errors.txt", append=TRUE)
         next #don't error for now, just omit
       }
-      
+
       #in testing, it is faster to use readNIfTI to read each cope file individually (7.5s) than to use fslmerge + readNIfTI on the 4d (13s)
       #concat_file <- tempfile()
       #system.time(runFSLCommand(paste("fslmerge -t", concat_file, paste(copes, collapse=" "))))
       #system.time(cout <- readNIfTI(concat_file, reorient=FALSE)@.Data)
-      
+
       cout <- do.call(abind, list(along=4, lapply(copes, function(x) { readNIfTI(x, reorient=FALSE)@.Data })))
       beta_series_cluster_means <- get_cluster_means(roimask, cout)
       beta_melt <- reshape2::melt(beta_series_cluster_means, value.name="bs_value", varnames=c("trial", "cluster_number")) %>%
@@ -295,7 +295,7 @@ get_beta_series <- function(inputs, roimask, n_bs=50) {
     }
 
     return(do.call(rbind, run_betas))
-    
+
   }
 
   return(do.call(rbind, beta_res))

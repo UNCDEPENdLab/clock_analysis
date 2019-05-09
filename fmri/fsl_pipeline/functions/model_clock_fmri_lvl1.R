@@ -10,16 +10,20 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
   stopifnot(is.numeric(ncpus) && ncpus >= 1)
   if (is.null(id_col)) { stop("Need to specify an id column in subject_covariates") }
   if (is.null(subject_covariates)) { stop("Need to specify a subject_covariates data.frame") }
-  
+
   require(foreach) #contains registerDoSEQ
-  
+  if(Sys.getenv("CLSTYLE")=="local"){runlocal=T}else{runlocal=F}
   #setup parallel worker pool, if requested
   if (ncpus > 1) {
     require(doParallel)
-    cl <- makePSOCKcluster(ncpus)
-    registerDoParallel(cl)
-    
-    on.exit(try(stopCluster(cl))) #cleanup pool upon exit of this function
+    if(runlocal){
+      message("Running on a local machine.")
+      cl<-parallel::makeCluster(ncpus,type="FORK",outfile="")
+    } else{
+      cl <- makePSOCKcluster(ncpus)
+      registerDoParallel(cl)
+      on.exit(try(stopCluster(cl))) #cleanup pool upon exit of this function
+    }
   } else {
     registerDoSEQ() #formally register a sequential 'pool' so that dopar is okay
   }
@@ -30,12 +34,12 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
 
   # loop over each subject, identify relevant fMRI data, and setup FSL level 1 files
   #by_subj <- by_subj[4]
-  ll <- foreach(b = iter(by_subj), .inorder=FALSE, .packages=c("dependlab"),
-    .export=c("truncateRuns", "fsl_sceptic_model", "runFSLCommand") ) %dopar% {
-
+  # ll <- foreach(b = iter(by_subj), .inorder=FALSE, .packages=c("dependlab"),
+  #   .export=c("truncateRuns", "fsl_sceptic_model", "runFSLCommand") ) %dopar% {
+  NXU<-parallel::parLapply(cl, by_subj, function(b){
       subid <- b[[id_col]][1] #subject id
       #scandate <- sub("^.*/Basic/\\w+/(\\d+)/.*$", "\\1", b, perl=TRUE)  #not currently accessible
-
+      print(subid)
       mrfiles <- c() #force clear of mr files over subjects to avoid potential persistence from one subject to the next
 
       mrmatch <- subject_covariates$mr_dir[subject_covariates[[id_col]] == subid]
@@ -43,13 +47,13 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
       if (length(mrmatch) != 1L) {
         warning("Unable to find fMRI directory for subid: ", subid)
         return(NULL)
-      }        
-      
+      }
+
       if (! file.exists(file.path(mrmatch, expectdir))) {
         warning("Unable to find preprocessed data ", expectdir, " for subid: ", subid)
         return(NULL)
       }
-      
+
       ## Find processed fMRI run-level data for this subject
       ##mrfiles <- list.files(mrmatch, pattern=expectfile, full.names=TRUE, recursive=TRUE)
       ##cat(paste0("command: find ", mrmatch, " -iname '", expectfile, "' -ipath '*", expectdir, "*' -type f\n"))
@@ -57,7 +61,7 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
       mrfiles <- mrfiles[!grepl("(exclude|bbr_noref|old)", mrfiles, ignore.case=TRUE)] #if exclude is in path/filename, then skip
 
       ##mrrunnums <- as.integer(sub(paste0(".*", expectfile, "$"), "\\1", mrfiles, perl=TRUE))
-      mrrunnums <- as.integer(sub(paste0(".*clock(\\d+)_.*$"), "\\1", mrfiles, perl=TRUE)) #extract run number from file name
+      mrrunnums <- as.integer(as.numeric(sub(paste0(".*", gsub("]","])",gsub("[","([",expectfile,fixed = T)), "$"),"\\1",mrfiles)))
 
       ##NB. If we reorder the mrfiles, then the run numbers diverge unless we sort(mrrunnums). Remove for now for testing
       ##mrfiles <- mrfiles[order(mrrunnums)] #make absolutely sure that runs are ordered ascending
@@ -68,23 +72,27 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
       }
 
       ##read number of volumes from NIfTI header
-      suppressMessages(library(Rniftilib))
-      runlengths <- unname(sapply(mrfiles, function(x) { Rniftilib::nifti.image.read(x, read_data=0)$dim[4L] }))
-      detach("package:Rniftilib", unload=TRUE) #necessary to avoid dim() conflict with oro.nifti
-      
+      #suppressMessages(library(Rniftilib))
+      #runlengths <- unname(sapply(mrfiles, function(x) { Rniftilib::nifti.image.read(x, read_data=0)$dim[4L] }))
+      #detach("package:Rniftilib", unload=TRUE) #necessary to avoid dim() conflict with oro.nifti
+      ##:-( Higher version of R refuse to load Rniftilib anymore...use oro.nifti instead.
+      runlengths <- unname(sapply(mrfiles, function(x) { dim(oro.nifti::nifti_header(x))[4L] }))
+
+
       ## create truncated run files to end analysis 12s after last ITI (or big head movement)
       ## also handle removal of N volumes from the beginning of each run due to steady state magnetization
-      mrdf <- truncateRuns(b, mrfiles, mrrunnums, runlengths, drop_volumes=drop_volumes)
-      mrfiles <- mrdf$mrfile_to_analyze
-      runlengths <- mrdf$last_vol_analysis
-      
+      ###Because explore does NOT have tr = 1, this following needs rework.
+      #mrdf <- truncateRuns(b, mrfiles, mrrunnums, runlengths, drop_volumes=drop_volumes)
+      #mrfiles <- mrdf$mrfile_to_analyze
+      #runlengths <- mrdf$last_vol_analysis
+
       message("About to analyze the following files:")
       print(mrfiles)
 
       if ("d_auc" %in% names(b)) { b$d_auc <- -1*b$d_auc } #invert decay such that higher values indicate greater decay
 
       #Setup FSL SCEPTIC run-level models for each combination of signals
-      tryCatch(fsl_sceptic_model(b, sceptic_run_signals, mrfiles, runlengths, mrrunnums, drop_volumes=drop_volumes, outdir=outdir, ...),
+      tryCatch(fsl_sceptic_model(subj_data=b, sceptic_signals=sceptic_run_signals, mrfiles, runlengths, mrrunnums, drop_volumes=drop_volumes, outdir=outdir, ...),
         error=function(e) {
           cat("Subject: ", b[[id_col]][1], ", run variant: ", paste(sceptic_run_signals, collapse="-"), " failed with mrfiles: \n",
             paste(mrfiles, collapse="\n"), "\n", "error: ", e, "\n\n", file="lvl1_crashlog.txt", append=TRUE)
@@ -92,6 +100,6 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
 
       message("completed processing of subject: ", subid)
       cat("\n\n\n")
-    }
-  
+    })
+  stopCluster(cl)
 }

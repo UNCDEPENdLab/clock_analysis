@@ -13,13 +13,13 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   #   This is used by build_design_matrix to ensure that the convolved regressors line up properly with the fMRI data
   # outdir is the base name of folder for the specified model. The resulting directories are nested inside the data folder for the subject
   # usepreconvolve is a TRUE/FALSE denoting whether to use convolved regressors from build_design_matrix (TRUE) or let FSL handle 3-column format convolution (FALSE)
-  # any additional arguments trapped by ... are passed forward to build_design_matrix  
-  
-  require(Rniftilib)
+  # any additional arguments trapped by ... are passed forward to build_design_matrix
+
+  #require(Rniftilib)
   require(dplyr)
   require(tidyr)
   require(dependlab)
-  
+
   if (is.null(outdir)) {
     outdir=paste0("sceptic-", paste(sceptic_signals, collapse="-")) #define output directory based on combination of signals requested
     if (usepreconvolve) { outdir=paste(outdir, "preconvolve", sep="-") }
@@ -31,7 +31,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   use_new <- TRUE #generate EV and contrast syntax dynamically
   if (use_new) {
     fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_nparam_template.fsf"))
-  } else {    
+  } else {
     if (length(sceptic_signals) == 1L) {
       ##single model-based regressor
       if (usepreconvolve) {
@@ -48,10 +48,10 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     } else if (length(sceptic_signals) == 5L) { #pemax, dauc, vchosen, ventropy, vtime
       if (usepreconvolve) {
         fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl1_clock_sceptic_5param_preconvolve_template.fsf"))
-      } else { stop("not implemented yet") }      
+      } else { stop("not implemented yet") }
     } else { stop("not implemented yet") }
   }
-  
+
   #note: normalizePath will fail to evaluate properly if directory does not exist
   fsl_run_output_dir <- file.path(normalizePath(file.path(dirname(mrfiles[1L]), "..")), outdir)
 
@@ -104,7 +104,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     signals[["rt_swing_sqrt"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, rt_swing_sqrt) %>% rename(value=rt_swing_sqrt))
   }
-  
+
   if ("v_chosen" %in% sceptic_signals) {
     #value of chosen action, aligned with choice
     signals[["v_chosen"]] <- list(event="clock", normalization="evtmax_1",
@@ -116,7 +116,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     signals[["v_auc"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, v_auc) %>% rename(value=v_auc))
   }
-  
+
   if ("v_max" %in% sceptic_signals) {
     #value of best action, aligned with choice
     signals[["v_max"]] <- list(event="clock", normalization="evtmax_1",
@@ -128,20 +128,20 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     signals[["rt_vmax_change"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, rt_vmax_change) %>% rename(value=rt_vmax_change))
   }
-  
+
   if ("v_entropy" %in% sceptic_signals) {
     #entropy of values, computed on normalized basis weights, aligned with choice
     signals[["v_entropy"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, v_entropy) %>% rename(value=v_entropy))
   }
-  
+
   #drop first 5 trials
   if ("v_entropy_no5" %in% sceptic_signals) {
     #entropy of values, computed on normalized basis weights, aligned with choice
     signals[["v_entropy_no5"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, v_entropy_no5) %>% rename(value=v_entropy_no5))
   }
-  
+
   if ("v_entropy_func" %in% sceptic_signals) {
     #entropy of values, computed on discretized evaluated value function, aligned with choice
     signals[["v_entropy_func"]] <- list(event="clock", normalization="evtmax_1",
@@ -165,7 +165,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     signals[["v_entropy_change_neg"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, v_entropy_change_neg) %>% rename(value=v_entropy_change_neg))
   }
-  
+
   if ("pe_max" %in% sceptic_signals) {
     # PE, aligned with outcome
     signals[["pe_max"]] <- list(event="feedback", normalization="evtmax_1",
@@ -176,7 +176,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     signals[["rew_om"]] <- list(event="feedback", normalization="none",
       value=subj_data %>% select(run, trial, rew_om) %>% rename(value=rew_om))
   }
-  
+
   if ("d_auc" %in% sceptic_signals) {
     # decay AUC, aligned with outcome
     signals[["d_auc"]] <- list(event="feedback", normalization="evtmax_1",
@@ -188,7 +188,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     signals[["d_auc_clock"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, d_auc) %>% rename(value=d_auc))
   }
-  
+
   if ("d_auc_sqrt" %in% sceptic_signals) {
     # decay AUC, aligned with outcome
     signals[["d_auc_sqrt"]] <- list(event="feedback", normalization="evtmax_1",
@@ -226,7 +226,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     signals[["mean_kld_feedback"]] <- list(event="feedback", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, mean_kld) %>% rename(value=mean_kld))
   }
-  
+
   #not currently handling vtime
   # else if (thisName == "vtime") {
   #      #vtime is a runs x trials list with a data.frame per trial containing onsets, durations, and values within trial
@@ -237,19 +237,19 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   #NB. The tr argument should be passed in as part of ...
   d <- build_design_matrix(events=events, signals=signals, baseline_coef_order=2, write_timing_files = c("convolved"), #, "FSL"),
     center_values=TRUE, plot=FALSE, convolve_wi_run=TRUE, output_directory=timingdir, drop_volumes=drop_volumes,
-    run_volumes=mrfiles, runs_to_output=mrrunnums, ...)
+    run_volumes=runlengths, runs_to_output=mrrunnums, ...)
 
   save(d, subj_data, events, signals, timingdir, runlengths, mrrunnums, file=file.path(fsl_run_output_dir, "designmatrix.RData"))
-  
+
   allFeatFiles <- list()
-  
+
   #FSL computes first-level models on individual runs
   for (r in 1:length(mrfiles)) {
     stopifnot(file.exists(file.path(dirname(mrfiles[r]), "motion.par"))) #can't find motion parameters
-    
-    runnum <- sub("^.*/clock(\\d+)$", "\\1", dirname(mrfiles[r]), perl=TRUE)
-    nvol <- nifti.image.read(mrfiles[r], read_data=0)$dim[4L]
 
+    runnum <- sub("^.*/clockrev(\\d+)$", "\\1", dirname(mrfiles[r]), perl=TRUE)
+    nvol <- dim(oro.nifti::nifti_header(mrfiles[r]))[4L]
+    message("1x")
     ##just PCA motion on the current run
     ##mregressors <- pca_motion(mrfiles[r], runlengths[r], motion_parfile="motion.par", numpcs=3, drop_volumes=drop_volumes)$motion_pcs_concat
 
@@ -263,7 +263,6 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     ##  censor <- censor[(1+drop_volumes):runlengths[r]]
     ##  mregressors <- cbind(mregressors, censor)
     ##}
-
     mregressors <- NULL #start with NULL
 
     if (spikeregressors) { #incorporate spike regressors if requested (not used in conventional AROMA)
@@ -277,7 +276,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
         mregressors <- censor
       }
     }
-    
+
     ##add CSF and WM regressors (with their derivatives)
     nuisancefile <- file.path(dirname(mrfiles[r]), "nuisance_regressors.txt")
     if (file.exists(nuisancefile)) {
@@ -290,7 +289,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
       if (!is.null(mregressors)) { mregressors <- cbind(mregressors, nuisance) #note that in R 3.3.0, cbind with NULL or c() is no problem...
       } else { mregressors <- nuisance }
     }
-    
+
     motfile <- file.path(fsl_run_output_dir, paste0("run", runnum, "_confounds.txt"))
     write.table(mregressors, file=motfile, col.names=FALSE, row.names=FALSE)
 
@@ -304,7 +303,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     ##.VNAME. is the signal name in a univariate model
     ##.V_TIMES. is the three-column file for the signal
     ##.V_CON. is the contrast name for the signal
-    
+
     thisTemplate <- fsfTemplate
     thisTemplate <- gsub(".OUTPUTDIR.", file.path(fsl_run_output_dir, paste0("FEAT_LVL1_run", runnum)), thisTemplate, fixed=TRUE)
     thisTemplate <- gsub(".NVOL.", nvol, thisTemplate, fixed=TRUE)
@@ -326,7 +325,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
       rownames(cmat) <- sapply(regressors, "[[", "name")
       cmat_syn <- dependlab::generate_fsf_contrast_syntax(cmat)
 
-      thisTemplate <- c(thisTemplate, ev_syn, cmat_syn)      
+      thisTemplate <- c(thisTemplate, ev_syn, cmat_syn)
     } else {
       if (usepreconvolve) {
         thisTemplate <- gsub(".CLOCK_TIMES.", file.path(timingdir, paste0("run", runnum, "_clock.1D")), thisTemplate, fixed=TRUE)
@@ -347,25 +346,26 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
       }
 
     }
-    
+    message("2x")
     featFile <- file.path(fsl_run_output_dir, paste0("FEAT_LVL1_run", runnum, ".fsf"))
-    if (file.exists(featFile) && force==FALSE) { next } #skip re-creation of FSF and do not run below unless force==TRUE 
+    if (file.exists(featFile) && force==FALSE) { next } #skip re-creation of FSF and do not run below unless force==TRUE
     cat(thisTemplate, file=featFile, sep="\n")
-    
+    writeLines(thisTemplate, con = featFile)
     allFeatFiles[[r]] <- featFile
   }
 
   #if execute_feat is TRUE, execute feat on each fsf files at this stage, using an 8-node socket cluster (since we have 8 runs)
   #if execute_feat is FALSE, just create the fsf files but don't execute the analysis
   if (execute_feat == TRUE) {
-    require(parallel)
-    cl_fork <- makeForkCluster(nnodes=8)
+    #require(parallel)
+    #cl_fork <- makeForkCluster(nnodes=2)
     runfeat <- function(fsf) {
       runname <- basename(fsf)
-      runFSLCommand(paste("feat", fsf), stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)), stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)))
+      runFSLCommand(paste("feat", fsf),stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)), stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)),fsldir = "/usr/local/ni_tools/fsl")
     }
-    clusterApply(cl_fork, allFeatFiles, runfeat)
-    stopCluster(cl_fork)
+    #clusterApply(cl_fork, allFeatFiles, runfeat)
+    #stopCluster(cl_fork)
+    NX<-lapply(allFeatFiles, runfeat)
   }
-  
+
 }

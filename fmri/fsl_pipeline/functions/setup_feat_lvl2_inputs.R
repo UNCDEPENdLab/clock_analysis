@@ -9,14 +9,16 @@
 
 setup_feat_lvl2_inputs <- function(fsl_model_arguments, run_model_index) {
   require(plyr)
- 
+
   #define run-level model folder name for analysis
   expectdir <- fsl_model_arguments$expectdir #the subfolder for each subject such as mni_5mm_aroma
   odir <- fsl_model_arguments$outdir[run_model_index] #the expect subfolder name for outputs of this model
   n_l1_copes <- fsl_model_arguments$n_l1_copes[run_model_index]
   subject_covariates <- fsl_model_arguments$subject_covariates
   id_col <- fsl_model_arguments$id_col
-  
+  paraname<-fsl_model_arguments$paraname
+  minimalrun<-fsl_model_arguments$minimalrun
+
   #setup inputs for all LVL2 analyses for the current model
   feat_runs <- do.call(rbind, lapply(1:nrow(subject_covariates), function(s) {
     rr <- system(paste0("find ", file.path(subject_covariates$mr_dir[s], expectdir), " -mindepth 2 -iname \"FEAT_LVL1_run*.feat\" -ipath \"*/", odir, "/*\" -type d"), intern=TRUE)
@@ -24,14 +26,14 @@ setup_feat_lvl2_inputs <- function(fsl_model_arguments, run_model_index) {
     dd <- data.frame(subid=subject_covariates[[id_col]][s], mr_dir=subject_covariates$mr_dir[s], feat_dir=rr, run_num=as.integer(sub(".*FEAT_LVL1_run(\\d+)\\.feat.*", "\\1", rr, perl=TRUE)), stringsAsFactors=FALSE)
     return(dd)
   }))
-  
+
   cat("All runs identified:\n")
   print(feat_runs$feat_dir)
 
   #flag runs with more than 15% volumes with FD 0.9mm or greater
   #find fd.txt files corresponding to each FEAT run
 
-  feat_runs$fd_file <- file.path(feat_runs$mr_dir, expectdir, paste0("clock", feat_runs$run_num), "motion_info", "fd.txt")
+  feat_runs$fd_file <- file.path(feat_runs$mr_dir, expectdir, paste0(paraname, feat_runs$run_num), "motion_info", "fd.txt")
 
   #identify the length of runs used in the analysis, accounting for both initial dropped volumes and truncation at the end
   feat_runs$drop_volumes <- fsl_model_arguments$drop_volumes #replicate initial drops for each .feat directory (used to index FD files)
@@ -46,7 +48,7 @@ setup_feat_lvl2_inputs <- function(fsl_model_arguments, run_model_index) {
     cat("Cannot read volumes from L1 design.fsf\nFiles affected:\n")
     print(feat_runs %>% filter(is.na(trunc_lengths)))
   }
-  
+
   cat("Excluding runs exceeding 10% frames with FD >= 0.9mm OR any movement > 5mm\n")
   #read each FD file, index it based on modeled fMRI data, then return FD statistics
   motexclude <- plyr::ldply(1:nrow(feat_runs), function(i) {
@@ -64,7 +66,7 @@ setup_feat_lvl2_inputs <- function(fsl_model_arguments, run_model_index) {
 
   #drop subject altogether if fewer than 4 analyzeable runs
   feat_runs <- plyr::ddply(feat_runs, .(subid), function(subdf) {
-    if (nrow(subset(subdf, maxMotExclude == 0 & spikeExclude == 0)) < 4) {
+    if (nrow(subset(subdf, maxMotExclude == 0 & spikeExclude == 0)) < minimalrun) {
       subdf$lt4runs <- 1
     } else {
       subdf$lt4runs <- 0
@@ -99,9 +101,9 @@ setup_feat_lvl2_inputs <- function(fsl_model_arguments, run_model_index) {
 
   names(run_conditions) <- c("emotion", "contingency") #rename 'rewFunc' -> 'contingency'
   feat_l2_inputs_df <- cbind(feat_l2_inputs_df, run_conditions)
-  feat_l2_inputs_df$emotion <- relevel(feat_l2_inputs_df$emotion, ref="scram")
+  #feat_l2_inputs_df$emotion <- relevel(feat_l2_inputs_df$emotion, ref="clockface")
   feat_l2_inputs_df$model <- odir
-  feat_l2_inputs_df$n_l1_copes <- n_l1_copes #number of level 1 copes to propagate to analyze/combine at L2 (E.g., clock, feedback, and pe)  
+  feat_l2_inputs_df$n_l1_copes <- n_l1_copes #number of level 1 copes to propagate to analyze/combine at L2 (E.g., clock, feedback, and pe)
   feat_l2_inputs_df <- droplevels(arrange(feat_l2_inputs_df, subid, run_num)) #arrange by subid, run
   #feat_l2_inputs_df[sample(1:nrow(feat_l2_inputs_df), 30), ] #verify match across columns
 

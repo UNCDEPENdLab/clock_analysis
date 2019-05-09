@@ -7,10 +7,10 @@ stopifnot(is.numeric(ncpus) && ncpus >= 1)
 require(parallel)
 require(doParallel)
 require(dependlab) #has qsub_file and wait_for_job
-require(Rniftilib)
+#require(Rniftilib)
 
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "glm_helper_functions.R"))
-source(file.path(fsl_model_arguments$pipeline_home, "functions", "run_feat_lvl1_sepqsub.R")) #executes FSF files in parallel batches
+#source(file.path(fsl_model_arguments$pipeline_home, "functions", "run_feat_lvl1_sepqsub.R")) #executes FSF files in parallel batches
 
 
 run_rscript<-function(R_SCRIPT=NULL,env_variables=list()){
@@ -24,7 +24,7 @@ Sys.setenv(CLSTYLE="local")
 #Let's be honest, without a cluster you won't be able to parallel models
 for (run_model_index in 1:length(fsl_model_arguments$outdir)) {
 
-  run_rscript(R_SCRIPT="execute_fsl_lvl1_pipeline.R",list(
+  run_rscript(R_SCRIPT="execute_fsl_lvl1_pipeline.R",env_variables=list(
                   run_model_index=run_model_index,
                   fsl_pipeline_file=file.path(fsl_model_arguments$pipeline_home, "configuration_files", paste0(fsl_model_arguments$analysis_name, ".RData")))
   )

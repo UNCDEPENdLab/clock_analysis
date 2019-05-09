@@ -9,9 +9,9 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
 
   fsl_model_arguments$n_l1_copes <- sapply(fsl_model_arguments$sceptic_run_variants, function(x) { length(x) }) #compute number of l1 copes for each variant
   fsl_model_arguments$workdir <- file.path(fsl_model_arguments$root_workdir, fsl_model_arguments$outdir) #temp folder for each analysis variant
-  fsl_model_arguments$pipeline_cpus <- length(fsl_model_arguments$sceptic_run_variants) #number of workers to setup at the pipeline level (i.e., over run variants)
-  if (is.null(fsl_model_arguments$l2_cpus)) { fsl_model_arguments$l2_cpus <- 20 } #number of cores to use in Feat LVL2 analyses (fixed effects combination of runs)
-  if (is.null(fsl_model_arguments$pipeline_home)) { fsl_model_arguments$pipeline_home <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline" }
+  fsl_model_arguments$pipeline_cpus <- fsl_model_arguments$ncpus #number of workers to setup at the pipeline level (i.e., over run variants)
+  if (is.null(fsl_model_arguments$l2_cpus)) { fsl_model_arguments$l2_cpus <- fsl_model_arguments$ncpus } #number of cores to use in Feat LVL2 analyses (fixed effects combination of runs)
+  if (is.null(fsl_model_arguments$pipeline_home)) { fsl_model_arguments$pipeline_home <- "/Volumes/bek/explore/clock_analysis/fmri/fsl_pipeline/" }
   if (is.null(fsl_model_arguments$group_output_dir)) { fsl_model_arguments$group_output_dir <- file.path(dirname(fsl_model_arguments$fmri_dir), "group_analyses", fsl_model_arguments$analysis_name) }
   if (is.null(fsl_model_arguments$center_l3_predictors)) { fsl_model_arguments$center_l3_predictors <- TRUE }
   if (is.null(fsl_model_arguments$badids)) { fsl_model_arguments$badids <- c() }
@@ -34,12 +34,12 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
     if (!any(c("feedback", "feedback_bs") %in% v)) {
       stop("No feedback event is in the model: ", paste(v, collapse=","))
     }
-  }  
+  }
 
   #remove bad ids before running anything further
   if (!is.null(fsl_model_arguments$badids) && length(fsl_model_arguments$badids) > 0L) {
     fsl_model_arguments$subject_covariates <- fsl_model_arguments$subject_covariates %>% filter(!id %in% fsl_model_arguments$badids) #remove bad ids
   }
-  
+
   return(fsl_model_arguments)
 }

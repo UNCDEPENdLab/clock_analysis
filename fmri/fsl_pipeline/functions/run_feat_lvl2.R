@@ -5,6 +5,10 @@
 
 ## library(lsmeans)
 
+
+####This is the explore version:
+
+
 ##generate per-subject second-level FE analyses to get contrasts of interest for group analysis
 #saved file does not include relevel for ref of scram (hence copy from above -- redundant)
 
@@ -13,19 +17,19 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
   require(plyr)
   require(parallel)
   require(dependlab)
-  
-  if (is.null(feat_l2_inputs_df$n_l1_copes)) { stop("run_feat_lvl2 requires n_l1_copes column to be present in feat_l2_inputs_df") }    
+
+  if (is.null(feat_l2_inputs_df$n_l1_copes)) { stop("run_feat_lvl2 requires n_l1_copes column to be present in feat_l2_inputs_df") }
   stopifnot(length(unique(feat_l2_inputs_df$n_l1_copes)) == 1)
   ncopes <- feat_l2_inputs_df$n_l1_copes[1] #number of lvl1 copes to combine for this model
-  
+
   d_ply(feat_l2_inputs_df, .(subid, model), function(subdf) {
     subdf <- subdf[order(subdf$run_num),] #verify that we have ascending runs
     subdf$y_dummy <- rnorm(nrow(subdf))
     subdf$run_num <- subdf$run_num - min(subdf$run_num) #have intercept represent activation on earliest modeled run (usually 1).
     n_runs <- nrow(subdf) #used for FSF
-    lm_dummy <- lm(y_dummy ~ emotion + run_num, subdf)
+    lm_dummy <- lm(y_dummy ~  run_num, subdf)
     mm <- model.matrix(lm_dummy)
-    
+
     library(emmeans)
     v <- emmeans(lm_dummy, list(pairwise ~ emotion))
     condmeans <- v[[1]]@linfct #condition means
@@ -35,7 +39,7 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
 
     #get coefficients for grand mean contrast
     #gm_base <- emmeans(lm_dummy, ~ 1) #equally weights emotions even in case of unbalanced design (which applies here)
-    
+
     #lsm <- emmeans(lm_dummy, "emotion")
     #contrast(lsm, method="eff")@linfct #cell versus gm
 
@@ -48,31 +52,31 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
       warning("Missing at least one emotion altogether in combining the LVL1 runs: ", subdf$subid[1])
       return(NULL)
     }
-    
+
     #1 for intercept/reference, proportions for other cells, add mean run value from emmeans computation
     gm_coef <- c(`(Intercept)`=1, props[2:length(props)], run_num=condmeans[1,"run_num"])
     names(gm_coef)[2:3] <- colnames(contrasts)[2:3] #should be safe because contrasts in lm() and table() ordering follow factor levels
 
     #run effect contrast
     run_coef <- as.vector(emtrends(lm_dummy, ~1, v="run_num")@linfct)
-    
+
     #generate overall contrast matrix
     cmat <- round(rbind(condmeans, overall=gm_coef, contrasts, run=run_coef), 5) #the emtrends value tends to be .99999 something; round for clarity
 
     #generate FSF contrast syntax for this setup
     contrast_syntax <- generate_fsf_contrast_syntax(cmat)
-    
+
     #generate and run lvl2 for this subject
     #fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl2_clock_template.fsf"))
 
     #template with run trend modeled
     fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl2_clock_template_runtrend.fsf"))
     #depending on lower-level model (e.g., TC versus value, will have different number of copes to compute
-    
+
     # Template nomenclature:
     # .NINPUTS.   : number of .feat directories to be combined. This populates the fields: npts and multiple
     # .OUTPUTDIR. : the feat output location
-    
+
     thisTemplate <- fsfTemplate #copy general template for adaptation in this subject
 
     #need to determine number of copes (contrasts) at level 1, which depends on the model being fit
@@ -87,7 +91,7 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
     for (n in 1:ncopes) {
       thisTemplate <- c(thisTemplate,
         paste0("# Use lower-level cope ", n, " for higher-level analysis"),
-        paste0("set fmri(copeinput.", n, ") 1"), "")      
+        paste0("set fmri(copeinput.", n, ") 1"), "")
     }
 
     ##thisTemplate <- gsub(".OUTPUTDIR.", file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2"), thisTemplate, fixed=TRUE)
@@ -96,7 +100,7 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
     thisTemplate <- gsub(".NINPUTS.", n_runs, thisTemplate, fixed=TRUE)
 
     #add .feat directories to analyze
-    for (i in 1:nrow(subdf)) { 
+    for (i in 1:nrow(subdf)) {
       thisTemplate <- gsub(paste0(".INPUT", i, "."), subdf$feat_dir[i], thisTemplate, fixed=TRUE)
     }
 
@@ -131,14 +135,14 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
 
     featOutDir <- file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2_runtrend.gfeat")
     featFile <- file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2_runtrend.fsf")
-    if (file.exists(featOutDir) && force==FALSE) { return(NULL) } #skip re-creation of FSF and do not run below unless force==TRUE 
-    cat(thisTemplate, file=featFile, sep="\n")      
-    
+    if (file.exists(featOutDir) && force==FALSE) { return(NULL) } #skip re-creation of FSF and do not run below unless force==TRUE
+    cat(thisTemplate, file=featFile, sep="\n")
+
     allFeatRuns[[featFile]] <<- featFile
   })
 
   print(allFeatRuns)
-  
+
   if (run == TRUE) {
     cl_fork <- makeForkCluster(nnodes=ncpus)
     runfeat <- function(fsf) {
@@ -148,6 +152,6 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
     }
     clusterApply(cl_fork, allFeatRuns, runfeat)
     stopCluster(cl_fork)
-  } 
-  
+  }
+
 }
