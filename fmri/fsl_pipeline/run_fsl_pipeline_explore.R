@@ -114,7 +114,7 @@ fsl_model_arguments <- list(
 #    c("clock", "feedback", "v_entropy_func"),
 #    c("clock", "feedback", "d_auc"), #feedback-aligned
 #    c("clock", "feedback", "d_auc_clock"), #clock-aligned
-#    c("clock", "feedback", "pe_max"),
+    c("clock", "feedback", "pe_max"),
 #    c("clock", "feedback", "v_entropy_no5"),
 #    c("clock", "feedback", "v_auc"),
 #    c("clock", "feedback", "d_auc_sqrt"),
@@ -139,7 +139,7 @@ fsl_model_arguments <- list(
 #    c("Intercept", "I_Age"),
 #    c("Intercept", "I_Age", "Female")
   ),
-  execute_feat=TRUE, #passed through to fsl_sceptic_model to create fsf, but not run the model
+  execute_feat=FALSE, #passed through to fsl_sceptic_model to create fsf, but not run the model
   #model_suffix="_fse", #factorized, selective, equal generalization width
   model_suffix="_fse_groupfixed", #factorized, selective, equal generalization width
   root_workdir="/Volumes/bek/explore/clock_rev/",

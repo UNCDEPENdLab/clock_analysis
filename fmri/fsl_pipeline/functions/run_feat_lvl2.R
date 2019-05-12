@@ -5,10 +5,6 @@
 
 ## library(lsmeans)
 
-
-####This is the explore version:
-
-
 ##generate per-subject second-level FE analyses to get contrasts of interest for group analysis
 #saved file does not include relevel for ref of scram (hence copy from above -- redundant)
 
@@ -23,46 +19,56 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
   ncopes <- feat_l2_inputs_df$n_l1_copes[1] #number of lvl1 copes to combine for this model
 
   d_ply(feat_l2_inputs_df, .(subid, model), function(subdf) {
+    print(unique(subdf$subid))
+    #fsl_2_sys_env(force = T)
+    prepare4secondlvl(ssana.path = unique(dirname(subdf$feat_dir)),featfoldername = "'FEAT_LVL1_run[0-9].feat'")
     subdf <- subdf[order(subdf$run_num),] #verify that we have ascending runs
     subdf$y_dummy <- rnorm(nrow(subdf))
     subdf$run_num <- subdf$run_num - min(subdf$run_num) #have intercept represent activation on earliest modeled run (usually 1).
     n_runs <- nrow(subdf) #used for FSF
-    lm_dummy <- lm(y_dummy ~  run_num, subdf)
+    if(nrow(subdf)>1){
+    lm_dummy <- lm(y_dummy ~ run_num, subdf)
     mm <- model.matrix(lm_dummy)
+    rownames(mm)<-c("(Intercept)","run_num")
+    # library(emmeans)
+    # v <- emmeans(lm_dummy, c("run_num"))
+    # condmeans <- v@linfct #condition means
+    # # rownames(condmeans) <- summary(v[[1]])$emotion
+    # # contrasts <- v[[2]]@linfct #emo diffs (pairwise)
+    # # rownames(contrasts) <- sub(" - ", "_gt_", summary(v[[2]])$contrast, fixed=TRUE)
+    #
+    # #get coefficients for grand mean contrast
+    # #gm_base <- emmeans(lm_dummy, ~ 1) #equally weights emotions even in case of unbalanced design (which applies here)
+    #
+    # #lsm <- emmeans(lm_dummy, "emotion")
+    # #contrast(lsm, method="eff")@linfct #cell versus gm
+    #
+    # # #unbalanced design, so need to set weights based on relative frequency
+    # # props <- prop.table(table(subdf$emotion))
+    # #
+    # # #at present, we can't easily work around subjects that are missing an emotion altogether (11343 only in the MMClock sample)
+    # # #this would require an alternative approach to propagating contrasts to LVL3 since some contrasts would be undefined in LVL2.
+    # # if (any(props < .01)) {
+    # #   warning("Missing at least one emotion altogether in combining the LVL1 runs: ", subdf$subid[1])
+    # #   return(NULL)
+    # # }
+    # #
+    # #1 for intercept/reference, proportions for other cells, add mean run value from emmeans computation
+    # gm_coef <- c(`(Intercept)`=1, run_num=condmeans[1,"run_num"])
+    # names(gm_coef)[2:3] <- colnames(contrasts)[2:3] #should be safe because contrasts in lm() and table() ordering follow factor levels
+    #
+    # #run effect contrast
+    # run_coef <- as.vector(emtrends(lm_dummy, ~1, v="run_num")@linfct)
+    #
+    # #generate overall contrast matrix
+    #cmat <- round(rbind(overall=gm_coef, run=run_coef), 5) #the emtrends value tends to be .99999 something; round for clarity
 
-    library(emmeans)
-    v <- emmeans(lm_dummy, list(pairwise ~ emotion))
-    condmeans <- v[[1]]@linfct #condition means
-    rownames(condmeans) <- summary(v[[1]])$emotion
-    contrasts <- v[[2]]@linfct #emo diffs (pairwise)
-    rownames(contrasts) <- sub(" - ", "_gt_", summary(v[[2]])$contrast, fixed=TRUE)
-
-    #get coefficients for grand mean contrast
-    #gm_base <- emmeans(lm_dummy, ~ 1) #equally weights emotions even in case of unbalanced design (which applies here)
-
-    #lsm <- emmeans(lm_dummy, "emotion")
-    #contrast(lsm, method="eff")@linfct #cell versus gm
-
-    #unbalanced design, so need to set weights based on relative frequency
-    props <- prop.table(table(subdf$emotion))
-
-    #at present, we can't easily work around subjects that are missing an emotion altogether (11343 only in the MMClock sample)
-    #this would require an alternative approach to propagating contrasts to LVL3 since some contrasts would be undefined in LVL2.
-    if (any(props < .01)) {
-      warning("Missing at least one emotion altogether in combining the LVL1 runs: ", subdf$subid[1])
-      return(NULL)
+    } else {
+      mm<-matrix(c(1,0,1,1),nrow = 2,ncol = 2)
+      rownames(mm)<-c("(Intercept)","run_num")
+      colnames(mm)<-c("(Intercept)","run_num")
     }
-
-    #1 for intercept/reference, proportions for other cells, add mean run value from emmeans computation
-    gm_coef <- c(`(Intercept)`=1, props[2:length(props)], run_num=condmeans[1,"run_num"])
-    names(gm_coef)[2:3] <- colnames(contrasts)[2:3] #should be safe because contrasts in lm() and table() ordering follow factor levels
-
-    #run effect contrast
-    run_coef <- as.vector(emtrends(lm_dummy, ~1, v="run_num")@linfct)
-
-    #generate overall contrast matrix
-    cmat <- round(rbind(condmeans, overall=gm_coef, contrasts, run=run_coef), 5) #the emtrends value tends to be .99999 something; round for clarity
-
+    cmat<-mm
     #generate FSF contrast syntax for this setup
     contrast_syntax <- generate_fsf_contrast_syntax(cmat)
 
@@ -70,7 +76,7 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
     #fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl2_clock_template.fsf"))
 
     #template with run trend modeled
-    fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl2_clock_template_runtrend.fsf"))
+    fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl2_exploreclock_template_runtrend.fsf"))
     #depending on lower-level model (e.g., TC versus value, will have different number of copes to compute
 
     # Template nomenclature:

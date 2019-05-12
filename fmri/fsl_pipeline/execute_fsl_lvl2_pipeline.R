@@ -18,6 +18,7 @@ library(tidyverse)
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "run_feat_lvl2.R"))
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "setup_feat_lvl2_inputs.R"))
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "glm_helper_functions.R"))
+devtools::source_url("https://raw.githubusercontent.com/DecisionNeurosciencePsychopathology/fMRI_R/master/R/dnpl_utility.R")
 
 #first, identify the inputs for LVL2 analysis (doesn't really benefit from parallel execution)
 #this creates a data.frame with first-level runs that should be combined.

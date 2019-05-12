@@ -18,7 +18,7 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
     require(doParallel)
     if(runlocal){
       message("Running on a local machine.")
-      cl<-parallel::makeCluster(ncpus,type="FORK",outfile="")
+      cl<-parallel::makeCluster(ncpus,type="FORK",outfile="firstlvl_outlog.txt")
     } else{
       cl <- makePSOCKcluster(ncpus)
       registerDoParallel(cl)
@@ -60,6 +60,14 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
       mrfiles <- system(paste0("find ", mrmatch, " -iname '", expectfile, "' -ipath '*", expectdir, "*' -type f | sort -n"), intern=TRUE)
       mrfiles <- mrfiles[!grepl("(exclude|bbr_noref|old)", mrfiles, ignore.case=TRUE)] #if exclude is in path/filename, then skip
 
+
+      if(length(mrfiles)>0){
+      fsl_run_output_dir <- file.path(normalizePath(file.path(dirname(mrfiles[1L]), "..")), outdir)
+      if (file.exists(fsl_run_output_dir) && force==FALSE) { message(fsl_run_output_dir, " exists. Skipping."); return(NULL) }
+      }else {
+        print("No DATA")
+        return(NULL)
+        }
       ##mrrunnums <- as.integer(sub(paste0(".*", expectfile, "$"), "\\1", mrfiles, perl=TRUE))
       mrrunnums <- as.integer(as.numeric(sub(paste0(".*", gsub("]","])",gsub("[","([",expectfile,fixed = T)), "$"),"\\1",mrfiles)))
 
