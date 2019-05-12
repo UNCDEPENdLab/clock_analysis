@@ -62,13 +62,17 @@ source("/Volumes/bek/explore/scripts/startup.R")
 startup()
 masterdemo<-bsrc.conredcap2(ptcs$masterdemo,online = T,output = T,batch_size = 1000)
 explore_demo<-masterdemo$data[which(masterdemo$data$registration_ptcstat___explore=="1"),]
+
+#Change here:
+groupcontrast<-c("IDE","ATT")
+explore_demo<-explore_demo[which(explore_demo$registration_group %in% groupcontrast),]
+
 subject_df<-data.frame(redcapid=explore_demo$registration_redcapid,
            age=round(as.numeric((as.Date(explore_demo$reg_condate_explore) - as.Date(explore_demo$registration_dob))/365.25),2),
            female=explore_demo$registration_gender=="F",
-           scandate=as.Date(explore_demo$reg_condate_explore),
-           GroupATT=explore_demo$registration_group,
+           scandate=as.Date(explore_demo$reg_condate_explore),GroupATT=explore_demo$registration_group,
            GroupLH=NA)
-
+subject_df$Group<-subject_df$GroupATT
 
 
 subject_df<-subject_df %>%
@@ -132,10 +136,10 @@ fsl_model_arguments <- list(
 #    c("clock", "feedback", "rew_om"),
 #    c("clock", "feedback", "pe_max", "rew_om")
   ),
-  group_model_variants=list(
+  group_model_variants=list(  #If using group, remove intercept!
     c("Intercept"),
     # c("Intercept", "Age"),
-    c("Intercept", "Age", "Group")
+    c("Age", "Group")
 #    c("Intercept", "I_Age"),
 #    c("Intercept", "I_Age", "Female")
   ),

@@ -72,24 +72,28 @@ bycope <- lapply(split(mdf, mdf$cope), droplevels)
 l3template <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl3_sceptic_template.fsf"))
 
 #loop over copes and group models, setting up .fsf files for each combination
-for (cope in 1:length(bycope)) {
+rundf<-do.call(rbind,lapply(1:length(bycope),function(cope){
   if (is.null(bycope[[cope]]$Intercept)) { bycope[[cope]]$Intercept <- 1 } #add the column of ones
 
   copename <- l1_cope_names[cope]
-  
+
   #cope-level subfolder
   #currently organized by run_model_name/l1_cope/l3_model (promotes comparisons of alternative l3 models of a given run-level effect)
   #could reorganize as run_model_name/l3_model/l1_cope (promotes comparisons of maps within an l3 model)
   model_output_dir <- file.path(feat_lvl3_outdir, copename) # paste0("cope", cope))
   dir.create(model_output_dir, showWarnings=FALSE)
-  
-  for (this_model in models) {
+
+  do.call(rbind,lapply(models,function(this_model) {
 
     model_df <- bycope[[cope]]
     fsf_syntax <- l3template #copy shared ingredients
     fsf_syntax <- gsub(".OUTPUTDIR.", file.path(model_output_dir, paste0(copename, "-", paste(this_model, collapse="-"))), fsf_syntax, fixed=TRUE)
-    if (!"Intercept" %in% this_model) { this_model <- c("Intercept", this_model) } #at present, force an intercept column
-    
+
+    classesx<-sapply(this_model,function(m){class(model_df[[m]])})
+    #We have to reorder the groups....it turns out
+    if ("factor" %in% classesx){this_model<-names(c(which(classesx!="factor"),which(classesx=="factor")))}
+    if (!"Intercept" %in% this_model ) { this_model <- c("Intercept", this_model) } #at present, force an intercept column
+
     if (fsl_model_arguments$center_l3_predictors) {
       for (p in this_model) {
         if (p != "Intercept" && is.numeric(model_df[[p]])) {
@@ -103,14 +107,39 @@ for (cope in 1:length(bycope)) {
     fit_lm <- lm(mform, model_df)
     dmat <- model.matrix(fit_lm) #eventually allow interactions and so on??
     model_df$dummy_ <- NULL #clean up
-    
-    #add design matrix
-    fsf_syntax <- c(fsf_syntax, generate_fsf_ev_syntax(inputs=model_df$fsldir, dmat=dmat))
 
-    #generate diagonal contrast matrix, one per EV
-    cmat <- diag(length(this_model))
-    rownames(cmat) <- this_model #just name the contrasts after the EVs themselves
+    if ("factor" %in% classesx){
+      dmat<-dmat[,!colnames(dmat) %in% "Intercept"]
 
+
+      this_model<-this_model[this_model!="Intercept"]
+      glvels<-levels(model_df[[names(which(classesx=="factor"))]])
+
+      dmat<-cbind(dmat[,which(!colnames(dmat) %in% names(which(classesx!="factor")))] ,do.call(cbind,lapply(glvels,function(r){
+        dmat[,which(colnames(dmat) == names(which(classesx!="factor")))] * dmat[,grep(r,colnames(dmat))]
+      }))
+      )
+      colnames(dmat)[colnames(dmat)==""]<-NA
+      colnames(dmat)[is.na(colnames(dmat))]<-paste(glvels,names(which(classesx!="factor")),sep = "")
+      cmat<-matrix(0,ncol = ncol(dmat),nrow = as.numeric(length(this_model)-1 + length(glvels)))
+      colnames(cmat)<-colnames(dmat)
+      rownames(cmat)<-c(names(which(classesx!="factor")),paste(glvels,collapse = " > "),paste(rev(glvels),collapse = " > "))
+      for (xa in 1:nrow(cmat)){
+        rnamex<-rownames(cmat)[xa]
+        if(rnamex %in% names(which(classesx!="factor"))){
+          cmat[xa,which(grepl(rnamex,colnames(cmat)))]<-1
+        } else {
+          gra<-strsplit(rnamex,split = " > ")[[1]]
+          cmat[xa,which(grepl(paste0(gra[1],"$"),colnames(cmat)))]<-1
+          cmat[xa,which(grepl(paste0(gra[2],"$"),colnames(cmat)))]<-(-1)
+        }
+      }
+      fsf_syntax <- c(fsf_syntax, generate_fsf_ev_syntax(inputs=model_df$fsldir, dmat=dmat,group_membership = as.numeric(model_df[[names(which(classesx=="factor"))]])))
+    } else {
+      cmat <- diag(length(this_model))
+      rownames(cmat) <- this_model #just name the contrasts after the EVs themselves
+      fsf_syntax <- c(fsf_syntax, generate_fsf_ev_syntax(inputs=model_df$fsldir, dmat=dmat))
+    }
     fsf_syntax <- c(fsf_syntax, generate_fsf_contrast_syntax(cmat))
 
     #write the FSF to file
@@ -124,12 +153,16 @@ for (cope in 1:length(bycope)) {
       model_df <- model_df %>% select(-dir_found, -mr_dir) %>% select(id, feat_input_id, model, cope, fsldir, everything())
       write.table(model_df, file=dmat_file, row.names=FALSE)
     }
-    
+
     if (!file.exists(sub(".fsf", ".gfeat", out_fsf, fixed=TRUE)) || rerun) {
-      #run the L3 analysis in parallel using qsub
-      qsub_file(script=file.path(fsl_model_arguments$pipeline_home, "qsub_feat_lvl3.bash"), env_variables=c(torun=out_fsf))
-    }
+      runthis<-T
+    } else {runthis<-F}
+    data.frame(path=out_fsf,ifrun=runthis)
+  }))
 
-  }
+}))
 
-}
+rundf<-rundf[rundf$ifrun,]
+print(rundf)
+
+

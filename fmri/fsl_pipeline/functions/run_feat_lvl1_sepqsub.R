@@ -32,8 +32,8 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
   model_match <- fsl_model_arguments$outdir[run_model_index]
   workdir <- fsl_model_arguments$workdir[run_model_index]
 
-  cpusperjob <- 8 #number of cpus per qsub
-  runsperproc <- 3 #number of feat calls per processor
+  cpusperjob <- 4 #number of cpus per qsub
+  runsperproc <- 2 #number of feat calls per processor
 
   #look in the subfolder for each subject for fsf files
   fsfFiles <- do.call(c, lapply(subject_covariates$mr_dir, function(s) {
@@ -67,33 +67,6 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
   cat("About to run the following fsf files in parallel:\n\n")
   cat(torun, sep="\n")
 
-  # Omit emails for LVL1 estimation because it generates *many* emails
-  #  "#PBS -M michael.hallquist@psu.edu",
-  
-  preamble <- c(
-    #"#PBS -A m5m_a_g_sc_default",
-    #paste0("#PBS -l nodes=1:ppn=", cpusperjob),
-    "#PBS -A mnh5174_a_g_hc_default",
-    paste0("#PBS -l nodes=1:ppn=", cpusperjob, ":himem"),
-    paste0("#PBS -l pmem=8gb"),
-    ifelse(wait_for != "", paste0("#PBS -W depend=afterok:", wait_for), ""), #allow job dependency on upstream setup
-    "#PBS -l walltime=14:00:00",
-    "#PBS -j oe",
-    "#PBS -m n",
-    "#PBS -W group_list=mnh5174_collab",
-    "",
-    "",
-    "source /gpfs/group/mnh5174/default/lab_resources/ni_path.bash",
-    "#module load \"fsl/5.0.11\" >/dev/null 2>&1",
-    "module unload fsl", #make sure that the ni_path version of FSL is unloaded
-    "#module load \"openblas/0.2.20\" >/dev/null 2>&1",
-    "#module load \"fsl/6.0.0\" >/dev/null 2>&1",
-    "module load \"fsl/6.0.1\" >/dev/null 2>&1",
-    "",
-    "cd $PBS_O_WORKDIR"
-  )
-
-
   if (!file.exists(workdir)) { dir.create(workdir, recursive=TRUE) }
 
   njobs <- ceiling(length(torun)/(cpusperjob*runsperproc))
@@ -102,20 +75,14 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
   df <- data.frame(fsf=torun, job=rep(1:njobs, each=cpusperjob*runsperproc, length.out=length(torun)), stringsAsFactors=FALSE)
   df <- df[order(df$job),]
 
-  joblist <- rep(NA_character_, njobs)
-  for (j in 1:njobs) {
-    outfile <- paste0(workdir, "/qsub_featsep_", j, "_", basename(tempfile()), ".pbs")
-    cat(preamble, file=outfile, sep="\n")
-    thisrun <- with(df, fsf[job==j])
-    cat(paste("feat", thisrun, "&"), file=outfile, sep="\n", append=TRUE)
-    cat("wait\n\n", file=outfile, append=TRUE)
-    cat(paste0("bash /gpfs/group/mnh5174/default/clock_analysis/fmri/gen_feat_reg_dir.bash ", unique(dirname(thisrun))), sep="\n", file=outfile, append=TRUE)
-    joblist[j] <- qsub_file(outfile) #system(paste0("qsub ", outfile))
+  #We run this locally;
+  require(parallel)
+  cla<-parallel::makeCluster((cpusperjob*runsperproc),type="FORK",outfile="lvl1_seqsub_out.txt")
+  runfeat <- function(fsf) {
+    runname <- basename(fsf)
+    runFSLCommand(paste("feat", fsf),stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)), stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)),fsldir = "/usr/local/ni_tools/fsl")
   }
+  NX<-clusterApply(cl_fork, allFeatFiles, runfeat)
+  stopCluster(cla)
 
-  #write the list of separate feat qsub jobs that are now queued (so that LVL2 can wait on these)
-  #should also return this to the caller as a function?
-  writeLines(joblist, con=file.path(workdir, "sepqsub_lvl1_jobs.txt"))
-
-  return(joblist)
 }
