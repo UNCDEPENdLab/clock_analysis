@@ -16,12 +16,14 @@ export G=/gpfs/group/mnh5174/default
 
 module use $G/sw/modules
 
-module load r/3.5.0
+#module load r/3.5.0
 #module load fsl/5.0.11
 #module load afni/18.1.15
-module load openblas/0.2.20
-module load fsl/6.0.0
-module load afni/18.3.15
+#module load openblas/0.2.20
+
+module load r/3.6.0
+module load fsl/6.0.1
+module load afni/19.0.26
 
 ni_tools="$G/lab_resources"
 

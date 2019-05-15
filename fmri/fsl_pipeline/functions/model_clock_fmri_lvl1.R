@@ -4,8 +4,7 @@
 model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covariates=NULL, drop_volumes=6, ncpus=1,
                                   expectdir="mni_5mm_aroma", expectfile = "nfaswuktm_clock[0-9]_5.nii.gz",
                                   sceptic_run_signals=c("v_chosen", "v_entropy", "d_auc", "pe_max"), #which signals to model jointly in LVL1
-                                  outdir=NULL,
-                                  ...) {
+                                  outdir=NULL, glm_software="fsl", ...) {
 
   stopifnot(is.numeric(ncpus) && ncpus >= 1)
   if (is.null(id_col)) { stop("Need to specify an id column in subject_covariates") }
@@ -31,7 +30,7 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
   # loop over each subject, identify relevant fMRI data, and setup FSL level 1 files
   #by_subj <- by_subj[4]
   ll <- foreach(b = iter(by_subj), .inorder=FALSE, .packages=c("dependlab"),
-    .export=c("truncateRuns", "fsl_sceptic_model", "runFSLCommand") ) %dopar% {
+    .export=c("truncateRuns", "fsl_sceptic_model", "spm_sceptic_model", "runFSLCommand", "populate_sceptic_signals") ) %dopar% {
 
       subid <- b[[id_col]][1] #subject id
       #scandate <- sub("^.*/Basic/\\w+/(\\d+)/.*$", "\\1", b, perl=TRUE)  #not currently accessible
@@ -83,12 +82,22 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
 
       if ("d_auc" %in% names(b)) { b$d_auc <- -1*b$d_auc } #invert decay such that higher values indicate greater decay
 
-      #Setup FSL SCEPTIC run-level models for each combination of signals
-      tryCatch(fsl_sceptic_model(b, sceptic_run_signals, mrfiles, runlengths, mrrunnums, drop_volumes=drop_volumes, outdir=outdir, ...),
-        error=function(e) {
-          cat("Subject: ", b[[id_col]][1], ", run variant: ", paste(sceptic_run_signals, collapse="-"), " failed with mrfiles: \n",
-            paste(mrfiles, collapse="\n"), "\n", "error: ", e, "\n\n", file="lvl1_crashlog.txt", append=TRUE)
-        })
+      if (glm_software == "fsl") {
+        #Setup FSL SCEPTIC run-level models for each combination of signals
+        tryCatch(fsl_sceptic_model(b, sceptic_run_signals, mrfiles, runlengths, mrrunnums, drop_volumes=drop_volumes, outdir=outdir, ...),
+          error=function(e) {
+            cat("Subject: ", b[[id_col]][1], ", run variant: ", paste(sceptic_run_signals, collapse="-"), " failed with mrfiles: \n",
+              paste(mrfiles, collapse="\n"), "\n", "error: ", as.character(e), "\n\n", file="lvl1_crashlog.txt", append=TRUE)
+          })
+      } else if (glm_software == "spm") {
+        #Setup FSL SCEPTIC run-level models for each combination of signals
+        tryCatch(spm_sceptic_model(b, sceptic_run_signals, mrfiles, runlengths, mrrunnums, drop_volumes=drop_volumes, outdir=outdir, ...),
+          error=function(e) {
+            cat("Subject: ", b[[id_col]][1], ", run variant: ", paste(sceptic_run_signals, collapse="-"), " failed with mrfiles: \n",
+              paste(mrfiles, collapse="\n"), "\n", "error: ", as.character(e), "\n\n", file="lvl1_crashlog.txt", append=TRUE)
+          })
+
+      }
 
       message("completed processing of subject: ", subid)
       cat("\n\n\n")
