@@ -300,3 +300,168 @@ get_beta_series <- function(inputs, roimask, n_bs=50) {
 
   return(do.call(rbind, beta_res))
 }
+
+
+populate_sceptic_signals <- function(sceptic_signals, subj_data) {
+  require(dplyr)
+  
+  signals <- list()
+  if ("clock_bs" %in% sceptic_signals) {
+    #beta series variant of clock onset
+    #NB. Using RT convolution with a normalization of "none" yields a peculiar beta distribution where
+    #longer responses have smaller betas because the convolved signal goes higher (scaling problem)
+    signals[["clock_bs"]] <- list(event="clock", normalization="evtmax_1", value=1, beta_series=TRUE)
+  }
+
+  if ("clock" %in% sceptic_signals) {
+    #clock event task regressor
+    signals[["clock"]] <- list(event="clock", normalization="none", value=1)
+  }
+
+  if ("feedback" %in% sceptic_signals) {
+    #feedback event task regressor
+    signals[["feedback"]] <- list(event="feedback", normalization="none", value=1)
+  }
+
+  if ("feedback_bs" %in% sceptic_signals) {
+    #beta series variant of feedback onset
+    #NB. Using RT convolution with a normalization of "none" yields a peculiar beta distribution where
+    #longer responses have smaller betas because the convolved signal goes higher (scaling problem)
+    signals[["feedback_bs"]] <- list(event="feedback", normalization="evtmax_1", value=1, beta_series=TRUE)
+  }
+
+  if ("rt_swing" %in% sceptic_signals) {
+    signals[["rt_swing"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, rt_swing) %>% rename(value=rt_swing))
+  }
+
+  #sqrt transform of rt swing
+  if ("rt_swing_sqrt" %in% sceptic_signals) {
+    signals[["rt_swing_sqrt"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, rt_swing_sqrt) %>% rename(value=rt_swing_sqrt))
+  }
+  
+  if ("v_chosen" %in% sceptic_signals) {
+    #value of chosen action, aligned with choice
+    signals[["v_chosen"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_chosen) %>% rename(value=v_chosen))
+  }
+
+  if ("v_auc" %in% sceptic_signals) {
+    #value of chosen action, aligned with choice
+    signals[["v_auc"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_auc) %>% rename(value=v_auc))
+  }
+  
+  if ("v_max" %in% sceptic_signals) {
+    #value of best action, aligned with choice
+    signals[["v_max"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_max) %>% rename(value=v_max))
+  }
+
+  if ("rt_vmax_change" %in% sceptic_signals) {
+    #absolute value of change in best RT (vmax)
+    signals[["rt_vmax_change"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, rt_vmax_change) %>% rename(value=rt_vmax_change))
+  }
+  
+  if ("v_entropy" %in% sceptic_signals) {
+    #entropy of values, computed on normalized basis weights, aligned with choice
+    signals[["v_entropy"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy) %>% rename(value=v_entropy))
+  }
+  
+  #drop first 5 trials
+  if ("v_entropy_no5" %in% sceptic_signals) {
+    #entropy of values, computed on normalized basis weights, aligned with choice
+    signals[["v_entropy_no5"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy_no5) %>% rename(value=v_entropy_no5))
+  }
+  
+  if ("v_entropy_func" %in% sceptic_signals) {
+    #entropy of values, computed on discretized evaluated value function, aligned with choice
+    signals[["v_entropy_func"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy_func) %>% rename(value=v_entropy_func))
+  }
+
+  if ("v_entropy_change" %in% sceptic_signals) {
+    #directed change in entropy on trial t (current) versus t-1
+    signals[["v_entropy_change"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy_change) %>% rename(value=v_entropy_change))
+  }
+
+  if ("v_entropy_change_pos" %in% sceptic_signals) {
+    #only the positive change in entropy
+    signals[["v_entropy_change_pos"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy_change_pos) %>% rename(value=v_entropy_change_pos))
+  }
+
+  if ("v_entropy_change_neg" %in% sceptic_signals) {
+    #only the negative change in entropy
+    signals[["v_entropy_change_neg"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy_change_neg) %>% rename(value=v_entropy_change_neg))
+  }
+  
+  if ("pe_max" %in% sceptic_signals) {
+    # PE, aligned with outcome
+    signals[["pe_max"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, pe_max) %>% rename(value=pe_max))
+  }
+
+  if ("rew_om" %in% sceptic_signals) {
+    signals[["rew_om"]] <- list(event="feedback", normalization="none",
+      value=subj_data %>% select(run, trial, rew_om) %>% rename(value=rew_om))
+  }
+  
+  if ("d_auc" %in% sceptic_signals) {
+    # decay AUC, aligned with outcome
+    signals[["d_auc"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, d_auc) %>% rename(value=d_auc))
+  }
+
+  if ("d_auc_clock" %in% sceptic_signals) {
+    # decay AUC, aligned with choice
+    signals[["d_auc_clock"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, d_auc) %>% rename(value=d_auc))
+  }
+  
+  if ("d_auc_sqrt" %in% sceptic_signals) {
+    # decay AUC, aligned with outcome
+    signals[["d_auc_sqrt"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, d_auc_sqrt) %>% rename(value=d_auc_sqrt))
+  }
+
+  #align entropy at feedback, not clock
+  if ("v_entropy_feedback" %in% sceptic_signals) {
+    #entropy of values, computed on normalized basis weights, aligned with choice
+    signals[["v_entropy_feedback"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy) %>% rename(value=v_entropy))
+  }
+
+  #K-L distance measures
+  if ("intrinsic_discrepancy" %in% sceptic_signals) {
+    #intrinsic discrepancy measure of transition in value vector (basis weights) on t-1 vs. t
+    signals[["intrinsic_discrepancy"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, intrinsic_discrepancy) %>% rename(value=intrinsic_discrepancy))
+  }
+
+  if ("intrinsic_discrepancy_feedback" %in% sceptic_signals) {
+    #feedback-aligned intrinsic discrepancy measure of transition in value vector (basis weights) on t-1 vs. t
+    signals[["intrinsic_discrepancy_feedback"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, intrinsic_discrepancy) %>% rename(value=intrinsic_discrepancy))
+  }
+
+  if ("mean_kld" %in% sceptic_signals) {
+    #intrinsic discrepancy measure of transition in value vector (basis weights) on t-1 vs. t
+    signals[["mean_kld"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, mean_kld) %>% rename(value=mean_kld))
+  }
+
+  if ("mean_kld_feedback" %in% sceptic_signals) {
+    #feedback-aligned intrinsic discrepancy measure of transition in value vector (basis weights) on t-1 vs. t
+    signals[["mean_kld_feedback"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, mean_kld) %>% rename(value=mean_kld))
+  }
+
+  return(signals)
+}

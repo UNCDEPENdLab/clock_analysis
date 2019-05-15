@@ -25,7 +25,8 @@ finalize_pipeline_configuration <- function(fsl_model_arguments) {
 
   if (is.null(fsl_model_arguments$zthresh)) { fsl_model_arguments$zthresh <- 3.09 }  #1-tailed p=.001 for z stat
   if (is.null(fsl_model_arguments$clustsize)) { fsl_model_arguments$clustsize <- 34 } #based on 3dClustSim using ACFs for first-level FEAT runs
-
+  if (is.null(fsl_model_arguments$glm_software)) { fsl_model_arguments$glm_software <- "fsl" } #default to FSL FEAT
+  
   #ensure that the user has specified some sort of clock event in the model
   for (v in fsl_model_arguments$sceptic_run_variants) {
     if (!any(c("clock", "clock_bs") %in% v)) {

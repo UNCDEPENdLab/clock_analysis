@@ -17,8 +17,8 @@ library(foreach)
 
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "model_clock_fmri_lvl1.R"))
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "fsl_sceptic_model.R"))
+source(file.path(fsl_model_arguments$pipeline_home, "functions", "spm_sceptic_model.R"))
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "glm_helper_functions.R"))
-
 
 #specify the run model for the current batch, based on run_model_index (see run_fsl_pipeline.R)
 fsl_model_arguments$sceptic_run_signals <- fsl_model_arguments$sceptic_run_variants[[run_model_index]]
@@ -32,8 +32,8 @@ fsl_model_arguments$workdir <- NULL
 #this is my hack for now
 lvl1_args <- fsl_model_arguments[c("trial_statistics", "id_col", "subject_covariates",
   "drop_volumes", "ncpus", "expectdir", "expectfile",
-  "sceptic_run_signals", "outdir", "usepreconvolve", "spikeregressors", "model_suffix",
-  "execute_feat", "tr")]
+  "sceptic_run_signals", "outdir", "usepreconvolve", "model_suffix",
+  "tr", "glm_software")] #, "spikeregressors", "execute_feat",
 
 #use the list of arguments loaded from the configuration file to call the subject x run FEAT setup function
 do.call(model_clock_fmri_lvl1, lvl1_args)
