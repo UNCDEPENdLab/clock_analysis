@@ -1,29 +1,19 @@
 library(MplusAutomation)
 library(dplyr)
-load("/Users/mnh5174/Box/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata")
+# load("/Users/mnh5174/Box/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata")
+load("~/Box Sync/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata")
+# setwd(file.path(getMainDir(), "clock_analysis", "fmri", "hippo_voxelwise", "mplus_var_hippo"))
+setwd(file.path("~/code", "clock_analysis", "fmri", "hippo_voxelwise", "mplus_var_hippo"))
 
-setwd(file.path(getMainDir(), "clock_analysis", "fmri", "hippo_voxelwise", "mplus_var_hippo"))
 str(fb_wide)
 fb_wide <- fb_wide %>% mutate(block=factor(paste0(id, run))) #%>% dplyr::select(-evt_time)
 
 #spread evt_time wide
 fb_l <- fb_wide %>% dplyr::select(id, block, run, run_trial, evt_time, ends_with("_l"))
 
-names(fb_l) <- sub("hipp_(\\d+)_l", "lh\\1", names(fb_l), perl=TRUE)
 #shorten hippocampus labels to "lh" for left hippocampus (to avoid Mplus 8-character complaints)
-fb_l_lags <- fb_l %>% na.omit() %>% arrange(id, run, run_trial, evt_time) %>%  group_by(id, run, run_trial) %>%
-  mutate_at(vars(starts_with("lh")), list(l=~lag(., order_by=evt_time))) %>% #need unquoted order_by argument
-  ungroup()
 
-
-library(brms)
-#mlvar analysis using Stan/brms
-b1 <- bf(lh1 ~ lh2_l + (1|p|id))
-b2 <- bf(lh2 ~ lh1_l + (1|p|id))
-fit2 <- brm(b1 + b2, data = fb_l_lags, chains = 4, cores = 4, autocor = cor_arma(~run_trial|id, 1))
-
-#fb_l_lags %>% arrange(id, run, run_trial, evt_time) %>% dplyr::select(id, run_trial, evt_time, lh1, lh1_l1, lh2, lh2_l1) %>% head(n=20)
-
+names(fb_l) <- sub("hipp_(\\d+)_l", "lh\\1", names(fb_l), perl=TRUE)
 fb_l_wide <- fb_l %>% dplyr::select(-block) %>% filter(evt_time >= 0) %>% 
   arrange(id, run_trial) %>%
   dplyr::group_by(id) %>% dplyr::mutate(trial=(run-1)*50+run_trial) %>% dplyr::select(-run_trial, -run) %>% ungroup() %>%
@@ -32,11 +22,11 @@ fb_l_wide <- fb_l %>% dplyr::select(-block) %>% filter(evt_time >= 0) %>%
   reshape2::dcast(id + trial ~ variable + evt_time, value.var = "value")
 
 #generate syntax of everything regressed on everything else... in super-wide format (time within trial as wide)
-#hipp_slices <- 1:12
-#hipp_slices <- 1:3
 hipp_slices <- 1:12
-#times <- 1:10
-times <- 0:6
+#hipp_slices <- 1:3
+# hipp_slices <- 1:3
+times <- 0:10
+# times <- 0:4
 incl_contemp <- TRUE
 
 m_string <- c()
@@ -100,17 +90,6 @@ for (i in 1:length(hipp_slices)) {
     # )
     
   }   
-}
-m_string <- c(m_string, "")
-
-#follow endogenous ALT approach of estimating mean at T0 freely, then locking intercepts to zero at subsequent times
-m_string <- c(m_string, "! estimate mean at baseline; intercepts at 0 subsequently")
-for (j in times) {
-  if (j == min(times)) {
-    m_string <- c(m_string, paste0("[fh", hipp_slices, "_t", sprintf("%02d", j), "*0];"))
-  } else {
-    m_string <- c(m_string, paste0("[fh", hipp_slices, "_t", sprintf("%02d", j), "@0];"))
-  }
 }
 m_string <- c(m_string, "")
 
@@ -189,16 +168,13 @@ lag1_graph <- qgraph(mat, layout="spring", edge.labels=TRUE,
                             nonsig = "show", vsize=5, esize=2, asize=2, edge.label.cex=0.5, filetype="jpeg", filename="lag1_test",
                             fade=FALSE, directed=TRUE, mar=c(8,8,8,8))
 
+qgraph(mat, layout="circle", edge.labels=TRUE)
+
 #mlvar help!
 # doesn't want to actually write mplus syntax
-library(mlVAR)
-Model <- mlVARsim(nPerson = 50, nNode = 3, nTime = 50, lag=1)
-
-src_files <- list.files(pattern="*.R", path="/Users/mnh5174/Data_Analysis/mlVAR/R", full.names=TRUE)
-for (s in src_files) { source(s) }
-library(arm)
-fit1 <- mlVAR(Model$Data, vars = Model$vars, idvar = Model$idvar, lags = 1,
-              temporal = "orthogonal", estimator="Mplus", verbose=TRUE)
-
-fit1 <- mlVAR:::Mplus_mlVAR(Model$Data, vars = Model$vars, idvar = Model$idvar, lags = 1,
-               estimator="Mplus", verbose=TRUE)
+# Model <- mlVARsim(nPerson = 50, nNode = 3, nTime = 50, lag=1)
+# fit1 <- mlVAR(Model$Data, vars = Model$vars, idvar = Model$idvar, lags = 1, 
+#               temporal = "orthogonal", estimator="Mplus", verbose=TRUE)
+# 
+# fit1 <- mlVAR:::Mplus_mlVAR(Model$Data, vars = Model$vars, idvar = Model$idvar, lags = 1, 
+#                estimator="Mplus", verbose=TRUE)
