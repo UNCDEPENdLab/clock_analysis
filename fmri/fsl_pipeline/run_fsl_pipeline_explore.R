@@ -1,16 +1,22 @@
 #the goal of this script is to run an entire fmri analysis for SCEPTIC data, including levels 1-3 in FSL
-
+require("devtools")
+devtools::install_github("PennStateDEPENdLab/dependlab",force=F)
+devtools::install_github("DecisionNeurosciencePsychopathology/fMRI_R",force = T)
+library("fslpipe")
 library(dependlab)
 library(foreach)
 library(parallel)
 library(doParallel)
-library(plyr)
+library(dplyr)
 library(tidyverse)
 
 scripts_dir <- "/Volumes/bek/explore/clock_analysis/fmri/fsl_pipeline/"
 box_dir<-"~/Box"
 setwd(scripts_dir)
 
+fsldir<-"/usr/local/ni_tools/fsl"
+Sys.setenv(FSLDIR=fsldir)
+system(paste0("FSLDIR=",fsldir))
 source(file.path(scripts_dir, "functions", "push_pipeline.R"))
 source(file.path(scripts_dir, "functions", "finalize_pipeline_configuration.R"))
 #Jun2017: further ICAs on the MMClock data suggest a short steady-state problem. Drop 2 volumes for good measure.
@@ -57,22 +63,23 @@ trial_df <- vba_output %>%
     rt_swing = abs( c(NA, diff(rt_csv)))/1000,
     rt_swing_sqrt=sqrt(rt_swing)) %>%
   ungroup()
-
+trial_df$id[which(as.numeric(trial_df$id)> 880000)]<-as.numeric(trial_df$id[which(as.numeric(trial_df$id)> 880000)])-450000
 source("/Volumes/bek/explore/scripts/startup.R")
 startup()
 masterdemo<-bsrc.conredcap2(ptcs$masterdemo,online = T,output = T,batch_size = 1000)
 explore_demo<-masterdemo$data[which(masterdemo$data$registration_ptcstat___explore=="1"),]
 
+
 #Change here:
-groupcontrast<-c("IDE","ATT")
-explore_demo<-explore_demo[which(explore_demo$registration_group %in% groupcontrast),]
+#groupcontrast<-c("IDE","ATT")
+#explore_demo<-explore_demo[which(explore_demo$registration_group %in% groupcontrast),]
 
 subject_df<-data.frame(redcapid=explore_demo$registration_redcapid,
            age=round(as.numeric((as.Date(explore_demo$reg_condate_explore) - as.Date(explore_demo$registration_dob))/365.25),2),
            female=explore_demo$registration_gender=="F",
            scandate=as.Date(explore_demo$reg_condate_explore),GroupATT=explore_demo$registration_group,
            GroupLH=NA)
-subject_df$Group<-subject_df$GroupATT
+subject_df$Group<-factor(subject_df$GroupATT,levels = c("HC","DEP","IDE","ATT"))
 
 
 subject_df<-subject_df %>%
@@ -103,7 +110,8 @@ fsl_model_arguments <- list(
   expectdir = "clockRev_proc", #subfolder name for processed data
   expectfile = "nfswudktm_clockrev[0-9]_7.nii.gz", #expected file name for processed clock data
   usepreconvolve=TRUE,
-  ncpus=6,
+  ncpus=as.numeric(readline("how many cores: ")),
+  minimalrun=1,
   drop_volumes=0, #to handle steady state concerns
   tr=0.6, #seconds
   spikeregressors=FALSE, #don't include spike regressors in nuisance variables since we are using AROMA
@@ -130,14 +138,14 @@ fsl_model_arguments <- list(
 #    c("clock", "feedback", "mean_kld_feedback"),
 #    c("clock", "feedback", "intrinsic_discrepancy_feedback"),
 #    c("clock", "feedback", "rt_vmax_change"),
-    c("clock", "feedback", "v_entropy_change")
-#    c("clock", "feedback", "v_entropy_change_pos"),
+    c("clock", "feedback", "v_entropy_change"),
+    c("clock", "feedback", "v_entropy_change_pos")
 #    c("clock", "feedback", "v_entropy_change_neg")
 #    c("clock", "feedback", "rew_om"),
 #    c("clock", "feedback", "pe_max", "rew_om")
   ),
-  group_model_variants=list(  #If using group, remove intercept!
-    c("Intercept"),
+  group_model_variants=list(  #If using group, do NOT put intercept! it will add automatically
+    #c("Intercept"),
     # c("Intercept", "Age"),
     c("Age", "Group")
 #    c("Intercept", "I_Age"),
@@ -148,16 +156,16 @@ fsl_model_arguments <- list(
   model_suffix="_fse_groupfixed", #factorized, selective, equal generalization width
   root_workdir="/Volumes/bek/explore/clock_rev/",
   n_cluster_beta_cpus=8, #should be number of l2 contrasts, or lower
-  badids = c("") #exclude ppl here
+  badids = c("216028", "220678","221212","221262") #exclude ppl here
 )
 
 #validate and populate any other pipeline details before execution
 fsl_model_arguments <- finalize_pipeline_configuration(fsl_model_arguments)
 
 save(fsl_model_arguments, file=paste0("configuration_files/", fsl_model_arguments$analysis_name, ".RData"))
-
+stop()
 #this pushes the full analysis pipeline in parallel, where parallelism is across sceptic_run_variants
-push_pipeline(fsl_model_arguments, ncpus=fsl_model_arguments$pipeline_cpus)
+push_pipeline_local(fsl_model_arguments, ncpus=fsl_model_arguments$pipeline_cpus)
 
 
 ## Other pipelines go here

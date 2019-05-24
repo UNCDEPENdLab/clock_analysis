@@ -1,6 +1,6 @@
 #note: this is a small adapation from the original fslSCEPTICModel to avoid use of the clockfit objects and to move to the
 #simpler build_design_matrix approach and the use of the trial_statistics csv files from vba_fmri
-fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, mrrunnums, execute_feat=FALSE, force=FALSE,
+fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, mrrunnums, execute_feat=FALSE, forcererun=FALSE,
                               drop_volumes=0, outdir=NULL, usepreconvolve=FALSE, spikeregressors=FALSE, model_suffix="", ...) {
 
   # subj_data is the trial-level data for one subject, as produced by parse_sceptic_outputs
@@ -55,7 +55,7 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   #note: normalizePath will fail to evaluate properly if directory does not exist
   fsl_run_output_dir <- file.path(normalizePath(file.path(dirname(mrfiles[1L]), "..")), outdir)
 
-  if (file.exists(fsl_run_output_dir) && force==FALSE) { message(fsl_run_output_dir, " exists. Skipping."); return(0) }
+  if (file.exists(fsl_run_output_dir) && forcererun==FALSE) { message(fsl_run_output_dir, " exists. Skipping."); return(0) }
   cat("fsl_run_output_dir create: ", fsl_run_output_dir, "\n")
   dir.create(fsl_run_output_dir, showWarnings=FALSE) #one directory up from a given clock run
   timingdir <- file.path(fsl_run_output_dir, "run_timing_sceptic")
@@ -348,8 +348,8 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
     }
     message("2x")
     featFile <- file.path(fsl_run_output_dir, paste0("FEAT_LVL1_run", runnum, ".fsf"))
-    if (file.exists(featFile) && force==FALSE) { next } #skip re-creation of FSF and do not run below unless force==TRUE
-    cat(thisTemplate, file=featFile, sep="\n")
+    if (file.exists(featFile) && forcererun==FALSE) { next } #skip re-creation of FSF and do not run below unless forcererun==TRUE
+    #cat(thisTemplate, file=featFile, sep="\n")
     writeLines(thisTemplate, con = featFile)
     allFeatFiles[[r]] <- featFile
   }

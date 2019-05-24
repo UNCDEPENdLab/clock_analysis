@@ -41,18 +41,21 @@ setwd(feat_lvl3_outdir)
 #2 = feedback_onset
 #3 = regressor of interest (in single-param models)
 
-feat_lvl2_dirname <- "FEAT_LVL2_runtrend.gfeat" #should populate this to the structure at some point
+feat_lvl2_dirname <- "FEAT_LVL2.gfeat" #should populate this to the structure at some point
 models <- fsl_model_arguments$group_model_variants #different covariate models for the current run-level model (run_model_index)
 
 ##rework using subinfo structure as the authoritative guide (rather than repeated searches)
 copedf <- c()
+nodatadf<-c()
 for (s in 1:nrow(subinfo)) {
   for (cope in 1:n_l1_copes) {
     expectdir <- file.path(subinfo[s,"mr_dir"], fsl_model_arguments$expectdir, feat_run_outdir, feat_lvl2_dirname, paste0("cope", cope, ".feat"))
     if (dir.exists(expectdir)) {
-      copedf <- rbind(copedf, data.frame(id=subinfo[s,id_col], model=feat_run_outdir, cope=cope, fsldir=expectdir))
+      #print("yes")
+      copedf <- rbind(copedf, data.frame(id=subinfo[s,id_col], model=feat_run_outdir, cope=cope, fsldir=expectdir,stringsAsFactors = F))
     } else {
       message("could not find expected directory: ", expectdir)
+      nodatadf <- rbind(nodatadf, data.frame(id=subinfo[s,id_col], model=feat_run_outdir, cope=cope, fsldir=expectdir,stringsAsFactors = F))
     }
   }
 }
@@ -69,7 +72,7 @@ mdf <- arrange(mdf, id, model, cope) #should really use !!id_col here?
 bycope <- lapply(split(mdf, mdf$cope), droplevels)
 
 #loop over group-level models, setup the design matrix and spawn a FSL Level 3 job
-l3template <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl3_sceptic_template.fsf"))
+l3template <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl3_explore_template.fsf"))
 
 #loop over copes and group models, setting up .fsf files for each combination
 rundf<-do.call(rbind,lapply(1:length(bycope),function(cope){
@@ -87,7 +90,6 @@ rundf<-do.call(rbind,lapply(1:length(bycope),function(cope){
 
     model_df <- bycope[[cope]]
     fsf_syntax <- l3template #copy shared ingredients
-    fsf_syntax <- gsub(".OUTPUTDIR.", file.path(model_output_dir, paste0(copename, "-", paste(this_model, collapse="-"))), fsf_syntax, fixed=TRUE)
 
     classesx<-sapply(this_model,function(m){class(model_df[[m]])})
     #We have to reorder the groups....it turns out
@@ -104,65 +106,143 @@ rundf<-do.call(rbind,lapply(1:length(bycope),function(cope){
 
     model_df$dummy_ <- rnorm(nrow(model_df))
     mform <- as.formula(paste("dummy_ ~ -1 + ", paste(this_model, collapse=" + ")))
-    fit_lm <- lm(mform, model_df)
-    dmat <- model.matrix(fit_lm) #eventually allow interactions and so on??
-    model_df$dummy_ <- NULL #clean up
+
 
     if ("factor" %in% classesx){
-      dmat<-dmat[,!colnames(dmat) %in% "Intercept"]
-
-
+      model_df_og<-model_df
       this_model<-this_model[this_model!="Intercept"]
-      glvels<-levels(model_df[[names(which(classesx=="factor"))]])
+      factorvariname<-names(which(classesx=="factor"))
+      nonfactorvariname<-names(which(classesx!="factor"))
+      nonfactorvariname<-c(nonfactorvariname,"Intercept")
+      if(length(factorvariname)>1){stop("Currently more than one group variable is not supported!")}
+      glvels_og<-levels(model_df_og[[names(which(classesx=="factor"))]])
+      pairsdf<-expand.grid(glvels_og,glvels_og,stringsAsFactors = F)
+      pairsdf<-pairsdf[pairsdf$Var1!=pairsdf$Var2,]
+      indx <- !duplicated(t(apply(pairsdf, 1, sort))) # finds non - duplicates in sorted rows
+      pairsdf<-rev(pairsdf[indx, ])
+      do.call(rbind,lapply(1:nrow(pairsdf),function(srx){
+        groupdf<-pairsdf[srx,]
 
-      dmat<-cbind(dmat[,which(!colnames(dmat) %in% names(which(classesx!="factor")))] ,do.call(cbind,lapply(glvels,function(r){
-        dmat[,which(colnames(dmat) == names(which(classesx!="factor")))] * dmat[,grep(r,colnames(dmat))]
-      }))
-      )
-      colnames(dmat)[colnames(dmat)==""]<-NA
-      colnames(dmat)[is.na(colnames(dmat))]<-paste(glvels,names(which(classesx!="factor")),sep = "")
-      cmat<-matrix(0,ncol = ncol(dmat),nrow = as.numeric(length(this_model)-1 + length(glvels)))
-      colnames(cmat)<-colnames(dmat)
-      rownames(cmat)<-c(names(which(classesx!="factor")),paste(glvels,collapse = " > "),paste(rev(glvels),collapse = " > "))
-      for (xa in 1:nrow(cmat)){
-        rnamex<-rownames(cmat)[xa]
-        if(rnamex %in% names(which(classesx!="factor"))){
-          cmat[xa,which(grepl(rnamex,colnames(cmat)))]<-1
-        } else {
-          gra<-strsplit(rnamex,split = " > ")[[1]]
-          cmat[xa,which(grepl(paste0(gra[1],"$"),colnames(cmat)))]<-1
-          cmat[xa,which(grepl(paste0(gra[2],"$"),colnames(cmat)))]<-(-1)
+        model_df<-droplevels(model_df_og[which(model_df_og[[factorvariname]] %in% unlist(groupdf,use.names = F)),])
+        glvels<-levels(model_df[[factorvariname]])
+        fit_lm <- lm(mform, model_df)
+        dmat <- model.matrix(fit_lm) #eventually allow interactions and so on??
+        model_df$dummy_ <- NULL #clean up
+        dmat<-dmat[,!colnames(dmat) %in% "Intercept"]
+
+          sr<-groupdf
+          ngrp<-length(sr)
+          cmat<-matrix(nrow = 1,ncol = ngrp,data = 0)
+          cmat[,match(sr[2],glvels)]<-1
+          cmat[,match(sr[1],glvels)]<- -1
+          cmat_name<-paste(rev(sr),collapse = ">")
+        #cmat<-do.call(rbind,lapply(cmat_ls,function(r){r$cmat}))
+
+
+
+        #add the other subjectwise co-variates
+        horicmat<-matrix(0,nrow = length(nonfactorvariname),ncol = ncol(cmat))
+        cmat<-rbind(cmat,horicmat)
+        rownames(cmat)<-c(cmat_name,nonfactorvariname)
+        vericmat<-matrix(0,ncol = length(nonfactorvariname[nonfactorvariname!="Intercept"]),nrow = nrow(cmat))
+        cmat<-cbind(cmat,vericmat)
+        colnames(cmat)<-c(paste0(factorvariname,glvels),nonfactorvariname[nonfactorvariname!="Intercept"])
+
+
+        for (rnamex in nonfactorvariname){
+          xa<-match(rnamex,rownames(cmat))
+          if (rnamex=="Intercept") {
+            refdfx<-as.data.frame(table(model_df[[names(which(classesx=="factor"))]]))
+            for(rg in 1L:nrow(refdfx)){
+              cmat[xa,which(grepl(paste0(refdfx$Var1[rg],"$"),colnames(cmat)))]<-round(refdfx$Freq[rg] / sum(refdfx$Freq),2)
+            }
+          } else {
+            gra<-strsplit(rnamex,split = " > ")[[1]]
+            cmat[xa,which(grepl(paste0(gra[1],"$"),colnames(cmat)))]<-1
+            cmat[xa,which(grepl(paste0(gra[2],"$"),colnames(cmat)))]<-(-1)
+          }
         }
-      }
-      fsf_syntax <- c(fsf_syntax, generate_fsf_ev_syntax(inputs=model_df$fsldir, dmat=dmat,group_membership = as.numeric(model_df[[names(which(classesx=="factor"))]])))
+        cmat<-cmat[,match(colnames(dmat),colnames(cmat))]
+
+        fsf_syntax <- c(fsf_syntax, generate_fsf_contrast_syntax(cmat))
+        fsf_syntax <- c(fsf_syntax, generate_fsf_ev_syntax(inputs=model_df$fsldir, dmat=dmat))
+        fsf_syntax <- gsub(".OUTPUTDIR.", file.path(model_output_dir, paste0(copename, "-", paste(c(this_model,paste(unlist(groupdf,use.names = F),collapse = "and")), collapse="-"))), fsf_syntax, fixed=TRUE)
+
+        #write the FSF to file
+        out_fsf <- file.path(model_output_dir, paste0(copename, "-", paste(c(this_model,paste(unlist(groupdf,use.names = F),collapse = "and")), collapse="-"), ".fsf"))
+
+        writeLines(fsf_syntax, con=out_fsf)
+        write.table(table(model_df[[factorvariname]]),file=sub(".fsf", "_subj_cout.txt", out_fsf, fixed=TRUE),row.names=FALSE)
+        dmat_file <- sub(".fsf", "_design.txt", out_fsf, fixed=TRUE)
+        #write the design matrix to file for matching with extracted betas later
+        model_df$feat_input_id <- 1:nrow(model_df) #for matching with extracted betas
+        model_df <- model_df %>% select(-dir_found, -mr_dir) %>% select(id, feat_input_id, model, cope, fsldir, everything())
+        write.table(model_df, file=dmat_file, row.names=FALSE)
+        if (!file.exists(sub(".fsf", ".gfeat", out_fsf, fixed=TRUE)) || rerun) {
+          runthis<-T
+        } else {runthis<-F}
+        data.frame(path=out_fsf,ifrun=runthis,cope=copename,stringsAsFactors = F)
+      })
+      )
+   #This chunk of codes allows interaction between continous and factor regressors
+      # dmat<-cbind(dmat[,which(!colnames(dmat) %in% names(which(classesx!="factor")))] ,do.call(cbind,lapply(glvels,function(r){
+      #   dmat[,which(colnames(dmat) == names(which(classesx!="factor")))] * dmat[,grep(r,colnames(dmat))]
+      # }))
+      # )
+      #colnames(dmat)[colnames(dmat)==""]<-NA
+      #colnames(dmat)[is.na(colnames(dmat))]<-paste(glvels,names(which(classesx!="factor")),sep = "")
+
+      #Dealing with factors:
+
+
+
+      #This one allows group with their own variance intercept
+      #fsf_syntax <- c(fsf_syntax, generate_fsf_ev_syntax(inputs=model_df$fsldir, dmat=dmat,group_membership = as.numeric(model_df[[names(which(classesx=="factor"))]])))
     } else {
+      fit_lm <- lm(mform, model_df)
+      dmat <- model.matrix(fit_lm) #eventually allow interactions and so on??
+      model_df$dummy_ <- NULL #clean up
       cmat <- diag(length(this_model))
       rownames(cmat) <- this_model #just name the contrasts after the EVs themselves
+      fsf_syntax <- gsub(".OUTPUTDIR.", file.path(model_output_dir, paste0(copename, "-", paste(this_model, collapse="-"))), fsf_syntax, fixed=TRUE)
+      fsf_syntax <- c(fsf_syntax, generate_fsf_contrast_syntax(cmat))
       fsf_syntax <- c(fsf_syntax, generate_fsf_ev_syntax(inputs=model_df$fsldir, dmat=dmat))
-    }
-    fsf_syntax <- c(fsf_syntax, generate_fsf_contrast_syntax(cmat))
+      #write the FSF to file
+      out_fsf <- file.path(model_output_dir, paste0(copename, "-", paste(this_model, collapse="-"), ".fsf"))
 
-    #write the FSF to file
-    out_fsf <- file.path(model_output_dir, paste0(copename, "-", paste(this_model, collapse="-"), ".fsf"))
-
-    if (!file.exists(out_fsf) || rerun) { writeLines(fsf_syntax, con=out_fsf) }
-
-    if (!file.exists(dmat_file <- sub(".fsf", "_design.txt", out_fsf, fixed=TRUE)) || rerun) {
+      writeLines(fsf_syntax, con=out_fsf)
+      write.table(table(model_df[[factorvariname]]),file=sub(".fsf", "_subj_cout.txt", out_fsf, fixed=TRUE),row.names=FALSE)
+      dmat_file <- sub(".fsf", "_design.txt", out_fsf, fixed=TRUE)
       #write the design matrix to file for matching with extracted betas later
       model_df$feat_input_id <- 1:nrow(model_df) #for matching with extracted betas
       model_df <- model_df %>% select(-dir_found, -mr_dir) %>% select(id, feat_input_id, model, cope, fsldir, everything())
       write.table(model_df, file=dmat_file, row.names=FALSE)
+
+
+      if (!file.exists(sub(".fsf", ".gfeat", out_fsf, fixed=TRUE)) || rerun) {
+        runthis<-T
+      } else {runthis<-F}
+      data.frame(path=out_fsf,ifrun=runthis,cope=copename,stringsAsFactors = F)
     }
 
-    if (!file.exists(sub(".fsf", ".gfeat", out_fsf, fixed=TRUE)) || rerun) {
-      runthis<-T
-    } else {runthis<-F}
-    data.frame(path=out_fsf,ifrun=runthis)
+
+
+
+
   }))
 
 }))
 
-rundf<-rundf[rundf$ifrun,]
+rundf[rundf$ifrun,]
 print(rundf)
 
-
+rundf<-rundf[which(rundf$cope==unique(rundf$cope)[3]),]
+require(parallel)
+cla<- makeForkCluster(fsl_model_arguments$ncpus,verbose=TRUE)
+cat("Start Now")
+runfeat <- function(fsf) {
+  runname <- basename(fsf)
+  runFSLCommand(args = paste("feat", fsf),stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)), stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)))
+}
+NX<-parallel::clusterApply(cla, rundf$path[which(rundf$ifrun)], runfeat)
+parallel::stopCluster(cla)

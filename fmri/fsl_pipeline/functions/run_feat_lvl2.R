@@ -21,15 +21,15 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
   d_ply(feat_l2_inputs_df, .(subid, model), function(subdf) {
     print(unique(subdf$subid))
     #fsl_2_sys_env(force = T)
-    prepare4secondlvl(ssana.path = unique(dirname(subdf$feat_dir)),featfoldername = "'FEAT_LVL1_run[0-9].feat'")
+    fslpipe::prepare4secondlvl(ssana.path = unique(dirname(subdf$feat_dir)),featfoldername = "'FEAT_LVL1_run[0-9].feat'")
     subdf <- subdf[order(subdf$run_num),] #verify that we have ascending runs
     subdf$y_dummy <- rnorm(nrow(subdf))
     subdf$run_num <- subdf$run_num - min(subdf$run_num) #have intercept represent activation on earliest modeled run (usually 1).
     n_runs <- nrow(subdf) #used for FSF
-    if(nrow(subdf)>1){
-    lm_dummy <- lm(y_dummy ~ run_num, subdf)
+
+    lm_dummy <- lm(y_dummy ~ 1, subdf)
     mm <- model.matrix(lm_dummy)
-    rownames(mm)<-c("(Intercept)","run_num")
+    #rownames(mm)<-c("Intercept","run_num")
     # library(emmeans)
     # v <- emmeans(lm_dummy, c("run_num"))
     # condmeans <- v@linfct #condition means
@@ -63,12 +63,14 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
     # #generate overall contrast matrix
     #cmat <- round(rbind(overall=gm_coef, run=run_coef), 5) #the emtrends value tends to be .99999 something; round for clarity
 
-    } else {
-      mm<-matrix(c(1,0,1,1),nrow = 2,ncol = 2)
-      rownames(mm)<-c("(Intercept)","run_num")
-      colnames(mm)<-c("(Intercept)","run_num")
-    }
-    cmat<-mm
+#
+#       mm<-matrix(c(1,0,0,1),nrow = 2,ncol = 2)
+#       rownames(mm)<-c("(Intercept)","run_num")
+#       colnames(mm)<-c("(Intercept)","run_num")
+
+    cmat<-matrix(c(1),nrow = 1,ncol = 1)
+    rownames(cmat)<-c("Intercept")
+    colnames(cmat)<-c("Intercept")
     #generate FSF contrast syntax for this setup
     contrast_syntax <- generate_fsf_contrast_syntax(cmat)
 
@@ -76,7 +78,7 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
     #fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl2_clock_template.fsf"))
 
     #template with run trend modeled
-    fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl2_exploreclock_template_runtrend.fsf"))
+    fsfTemplate <- readLines(file.path(getMainDir(), "clock_analysis", "fmri", "fsf_templates", "feat_lvl2_exploreclock_template.fsf"))
     #depending on lower-level model (e.g., TC versus value, will have different number of copes to compute
 
     # Template nomenclature:
@@ -101,7 +103,7 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
     }
 
     ##thisTemplate <- gsub(".OUTPUTDIR.", file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2"), thisTemplate, fixed=TRUE)
-    thisTemplate <- gsub(".OUTPUTDIR.", file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2_runtrend"), thisTemplate, fixed=TRUE)
+    thisTemplate <- gsub(".OUTPUTDIR.", file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2"), thisTemplate, fixed=TRUE)
 
     thisTemplate <- gsub(".NINPUTS.", n_runs, thisTemplate, fixed=TRUE)
 
@@ -139,8 +141,8 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
     #add contrast information
     thisTemplate <- c(thisTemplate, contrast_syntax)
 
-    featOutDir <- file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2_runtrend.gfeat")
-    featFile <- file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2_runtrend.fsf")
+    featOutDir <- file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2.gfeat")
+    featFile <- file.path(dirname(subdf$feat_dir[1L]), "FEAT_LVL2.fsf")
     if (file.exists(featOutDir) && force==FALSE) { return(NULL) } #skip re-creation of FSF and do not run below unless force==TRUE
     cat(thisTemplate, file=featFile, sep="\n")
 
@@ -149,12 +151,13 @@ run_feat_lvl2 <- function(feat_l2_inputs_df, run=TRUE, force=FALSE, ncpus=8) {
 
   print(allFeatRuns)
 
+
   if (run == TRUE) {
     cl_fork <- makeForkCluster(nnodes=ncpus)
     runfeat <- function(fsf) {
       runname <- basename(fsf)
       runFSLCommand(paste("feat", fsf), stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)), stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)))
-      system(paste0("feat_lvl2_to_afni.R --gfeat_dir ", sub(".fsf", ".gfeat", fsf, fixed=TRUE), " --no_subjstats --no_varcope --stat_outfile ", sub(".fsf", "_gfeat_stats", fsf, fixed=TRUE))) #aggregate FEAT statistics into a single file
+      #system(paste0("feat_lvl2_to_afni.R --gfeat_dir ", sub(".fsf", ".gfeat", fsf, fixed=TRUE), " --no_subjstats --no_varcope --stat_outfile ", sub(".fsf", "_gfeat_stats", fsf, fixed=TRUE))) #aggregate FEAT statistics into a single file
     }
     clusterApply(cl_fork, allFeatRuns, runfeat)
     stopCluster(cl_fork)

@@ -35,7 +35,7 @@ lvl1_args <- fsl_model_arguments[c("trial_statistics", "id_col", "subject_covari
   "sceptic_run_signals", "outdir", "usepreconvolve", "spikeregressors", "model_suffix",
   "execute_feat", "tr")]
 
-
+# list2env(lvl1_args,envir = .GlobalEnv)
 #list2env(lvl1_args, envir = .GlobalEnv)
 #use the list of arguments loaded from the configuration file to call the subject x run FEAT setup function
 do.call(model_clock_fmri_lvl1, lvl1_args)

@@ -17,7 +17,7 @@
 ## run_feat_lvl1_sepqsub(feat_model_arguments, run_model_index, rerun=FALSE, wait_for=wait_for)
 
 run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FALSE, wait_for="") {
-
+  source(file.path(fsl_model_arguments$pipeline_home, "functions", "glm_helper_functions.R"))
   #This function is now called within run_fsl_pipeline, rather than being run in its own qsub
   #to_run <- Sys.getenv("fsl_pipeline_file")
   #run_model_index <- as.numeric(Sys.getenv("run_model_index")) #which variant to execute
@@ -32,8 +32,8 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
   model_match <- fsl_model_arguments$outdir[run_model_index]
   workdir <- fsl_model_arguments$workdir[run_model_index]
 
-  cpusperjob <- 4 #number of cpus per qsub
-  runsperproc <- 2 #number of feat calls per processor
+  #cpusperjob <- 4 #number of cpus per qsub
+  #runsperproc <- 2 #number of feat calls per processor
 
   #look in the subfolder for each subject for fsf files
   fsfFiles <- do.call(c, lapply(subject_covariates$mr_dir, function(s) {
@@ -45,8 +45,10 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
   torun <- c()
 
   for (f in 1:length(fsfFiles)) {
-    if (file.exists(dirExpect[f])) {
-      if (rerun) {
+    #print(f)
+    if (file.exists(dirExpect[f]) ) {
+      toremove<-length(list.files(path = dirExpect[f],pattern = "^stats$",include.dirs = T))>0
+      if (rerun | !toremove) {
         cmd <- paste0("rm -rf \"", dirExpect[f], "\"")
         cat("Removing old directory: ", cmd, "\n")
         system(cmd)
@@ -64,25 +66,28 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
     return(NULL)
   }
 
+  torun_og<-torun
+  #torun<-torun_og[1:(length(torun_og)/2) ]
+  #torun<-torun_og[((length(torun_og)/2)+1):length(torun_og) ]
+
   cat("About to run the following fsf files in parallel:\n\n")
   cat(torun, sep="\n")
 
   if (!file.exists(workdir)) { dir.create(workdir, recursive=TRUE) }
-
-  njobs <- ceiling(length(torun)/(cpusperjob*runsperproc))
-
-  #use length.out on rep to ensure that the vectors align even if chunks are uneven wrt files to run
-  df <- data.frame(fsf=torun, job=rep(1:njobs, each=cpusperjob*runsperproc, length.out=length(torun)), stringsAsFactors=FALSE)
-  df <- df[order(df$job),]
-
+  # njobs <- ceiling(length(torun)/(cpusperjob*runsperproc))
+  #
+  # #use length.out on rep to ensure that the vectors align even if chunks are uneven wrt files to run
+  # df <- data.frame(fsf=torun, job=rep(1:njobs, each=cpusperjob*runsperproc, length.out=length(torun)), stringsAsFactors=FALSE)
+  # df <- df[order(df$job),]
   #We run this locally;
   require(parallel)
-  cla<-parallel::makeCluster((cpusperjob*runsperproc),type="FORK",outfile="lvl1_seqsub_out.txt")
+  cla<- makeForkCluster(ncpus,verbose=TRUE)
+  cat("Start Now")
   runfeat <- function(fsf) {
     runname <- basename(fsf)
-    runFSLCommand(paste("feat", fsf),stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)), stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)),fsldir = "/usr/local/ni_tools/fsl")
+    runFSLCommand(args = paste("feat", fsf),stdout=file.path(dirname(fsf), paste0("feat_stdout_", runname)), stderr=file.path(dirname(fsf), paste0("feat_stderr_", runname)))
   }
-  NX<-clusterApply(cl_fork, allFeatFiles, runfeat)
-  stopCluster(cla)
+  NX<-parallel::clusterApply(cla, torun, runfeat)
+  parallel::stopCluster(cla)
 
 }
