@@ -2,7 +2,7 @@
 
 #PBS -A m5m_a_g_sc_default
 #PBS -l nodes=1:ppn=4
-#PBS -l walltime=120:00:00
+#PBS -l walltime=144:00:00
 #PBS -l pmem=8gb
 #PBS -j oe
 #PBS -M michael.hallquist@psu.edu
