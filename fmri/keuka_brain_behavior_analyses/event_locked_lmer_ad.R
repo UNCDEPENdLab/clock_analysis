@@ -14,10 +14,11 @@ library(mlVAR)
 #####################
 plots = F
 reprocess = T
-analyze = F
+analyze = T
+
+setwd('~/Box/SCEPTIC_fMRI/deconvolved_evt_locked/')
 
 if (reprocess) {
-setwd('~/Box Sync/SCEPTIC_fMRI/deconvolved_evt_locked/')
 l <- read_csv("long_axis_l_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
 r <- read_csv("long_axis_r_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'r')
 clock <- rbind(l,r) 
@@ -296,7 +297,7 @@ names(fb_wide6)[5:length(names(fb_wide6))] <- paste("hipp", names(fb_wide6)[5:le
 fb_wide6_ex <- inner_join(fb_wide6, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi")], by = c("id", "run", "run_trial"))
 
 
-setwd("~/Box Sync/SCEPTIC_fMRI/var/")
+setwd("~/Box/SCEPTIC_fMRI/var/")
 save(fb_wide, fb_wide_ex, fb_wide6, fb_wide6_ex, file = "feedback_hipp_wide_ts.Rdata")
 
 clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
@@ -308,6 +309,12 @@ setwd("~/Box Sync/SCEPTIC_fMRI/var/")
 save(clock_wide, clock_wide_ex, file = "clock_hipp_wide_ts.Rdata")
 
 
+}
+if (!reprocess) {
+  setwd("~/Box/SCEPTIC_fMRI/var/")
+  load('clock_hipp_wide_ts.Rdata')
+  load('feedback_hipp_wide_ts.Rdata')
+  
 }
 # Michael's plotting function
 #####################################
@@ -861,10 +868,17 @@ g + scale_color_viridis_d(option = "plasma") + theme_dark()
 anova(rm1,rm2, rm3)
 
 # offline activity in PH vs AH
+# comparison model without time * bin
+om0 <- lmer(decon_interp ~ evt_time_f + bin_center_z*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+# without time * reward * bin
+om0a <- lmer(decon_interp ~ evt_time_f*bin_center_z + bin_center_z*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+
 om1 <- lmer(decon_interp ~ evt_time_f*bin_center_z*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
 summary(om1)
 vif.lme(om1)
 car::Anova(om1)
+
+anova(om0, om0a, om1)
 g <- ggpredict(om1, terms = c("evt_time_f", "bin_center_z [-2,-1, 0, 1,2]", "reward"))
 g <- plot(g, facet = F, dodge = .4)
 pdf("offline_reward_AH_PH.pdf", width = 6, height = 6)

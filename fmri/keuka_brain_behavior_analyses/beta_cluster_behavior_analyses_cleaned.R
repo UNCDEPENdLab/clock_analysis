@@ -120,7 +120,8 @@ stargazer(mf1, mf2h, mf2v, mf2pe,mf2dh,mf3hpedh3, type="html", out="mf.htm", rep
           star.cutoffs = c(0.05, 0.01, 0.001),
           notes = c("* p<0.05; ** p<0.01; *** p<0.001"), 
           notes.append = F)
-
+m <- mf3hpedh3hipp
+library(emmeans)
 
 anova(mf1,mf2h,mf2v,mf2d,mf2pe, mf2pef2only,mf2kf, mf2dh,mf2dhp, mf3hpedh3, mf3hpedh3hipp)
 
