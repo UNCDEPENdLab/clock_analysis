@@ -13,10 +13,10 @@ library(mlVAR)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
-reprocess = T
-analyze = T
+reprocess = F
+analyze = F
 
-setwd('~/Box/SCEPTIC_fMRI/deconvolved_evt_locked/')
+setwd('~/Box Sync/SCEPTIC_fMRI/deconvolved_evt_locked/')
 
 if (reprocess) {
 l <- read_csv("long_axis_l_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
@@ -297,7 +297,7 @@ names(fb_wide6)[5:length(names(fb_wide6))] <- paste("hipp", names(fb_wide6)[5:le
 fb_wide6_ex <- inner_join(fb_wide6, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi")], by = c("id", "run", "run_trial"))
 
 
-setwd("~/Box/SCEPTIC_fMRI/var/")
+setwd("~/Box Sync/SCEPTIC_fMRI/var/")
 save(fb_wide, fb_wide_ex, fb_wide6, fb_wide6_ex, file = "feedback_hipp_wide_ts.Rdata")
 
 clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
@@ -305,13 +305,13 @@ clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate
 clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
 names(clock_wide)[5:28] <- paste("hipp", names(clock_wide)[5:28], sep = "_")
 clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
-setwd("~/Box Sync/SCEPTIC_fMRI/var/")
+setwd("~/Box Sync Sync/SCEPTIC_fMRI/var/")
 save(clock_wide, clock_wide_ex, file = "clock_hipp_wide_ts.Rdata")
 
 
 }
 if (!reprocess) {
-  setwd("~/Box/SCEPTIC_fMRI/var/")
+  setwd("~/Box Sync/SCEPTIC_fMRI/var/")
   load('clock_hipp_wide_ts.Rdata')
   load('feedback_hipp_wide_ts.Rdata')
   
@@ -942,7 +942,7 @@ summary(itim1)
 # # )
 # 
 # # just the left HIPP
-# load('~/Box Sync/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata')
+# load('~/Box Sync Sync/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata')
 # # vl1 <- mlVAR(fb_wide, vars = names(fb_wide[grep('_l', names(fb_wide))]), idvar = "id", lags = 1, dayvar = "run_trial", beepvar = "evt_time",
 # #             estimator = "lmer",
 # #             contemporaneous = "correlated", temporal = "fixed",
