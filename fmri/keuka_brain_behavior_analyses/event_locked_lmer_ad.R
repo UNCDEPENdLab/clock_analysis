@@ -76,6 +76,7 @@ trial_df <- read_csv(file.path("~/code/clock_analysis/fmri/data/mmclock_fmri_dec
                 rt_change = rt_csv - rt_lag,
                 rt_above_1s = rt_csv > 1000,
                 swing_above_median = as.factor(abs(rt_change) > median(abs(na.omit(rt_change)))),
+                next_swing_above_median = lead(swing_above_median),
                 pe_max_lag = lag(pe_max), 
                 pe_max_lag2 = lag(pe_max_lag),
                 pe_max_lag3 = lag(pe_max_lag2),
@@ -120,7 +121,7 @@ clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, cloc
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(clock)
 fb_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
-                               swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, gamma, total_earnings) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                               swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, gamma, total_earnings, ev,next_swing_above_median) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(fb)
 rtvmax_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
@@ -299,13 +300,13 @@ fb_wide6_ex <- inner_join(fb_wide6, trial_df[,c("id", "run", "run_trial", "pe_ma
 
 setwd("~/Box Sync/SCEPTIC_fMRI/var/")
 save(fb_wide, fb_wide_ex, fb_wide6, fb_wide6_ex, file = "feedback_hipp_wide_ts.Rdata")
-
+save(fb_comb,file = "feedback_hipp_tall.Rdata")
 clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
 # take only online event times
 clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
 names(clock_wide)[5:28] <- paste("hipp", names(clock_wide)[5:28], sep = "_")
 clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
-setwd("~/Box Sync Sync/SCEPTIC_fMRI/var/")
+setwd("~/Box Sync/SCEPTIC_fMRI/var/")
 save(clock_wide, clock_wide_ex, file = "clock_hipp_wide_ts.Rdata")
 
 
@@ -314,7 +315,7 @@ if (!reprocess) {
   setwd("~/Box Sync/SCEPTIC_fMRI/var/")
   load('clock_hipp_wide_ts.Rdata')
   load('feedback_hipp_wide_ts.Rdata')
-  
+  load("feedback_hipp_tall.Rdata")
 }
 # Michael's plotting function
 #####################################
@@ -908,6 +909,16 @@ pdf("offline_abs_pe_reward_AH_PH.pdf", width = 6, height = 6)
 g + scale_color_viridis_d() + theme_dark()
 dev.off()
 
+# reversion in MEDUSA
+# need a measure of closeness to RTvmax: let's start with EV
+e1 = 38
+xtabs(~bin_center + swing_above_median, fb_comb %>% filter(is.na(decon_interp)))
+
+pdf("lose_switch_reversal_to_vmax.pdf", height = 20, width = 20)
+#lty = swing_above_median, 
+ggplot(fb_comb, aes(evt_time, decon_interp, color = factor(bin_center), lty = next_swing_above_median)) +
+  stat_smooth(method = 'gam',se = F) + scale_color_viridis_d("TEST") + facet_grid
+dev.off()
 # Do shorter ITIs disrupt processing?  No, they just seem to fall asleep during ITIs
 itim1 <- lmer(scale(rt_csv) ~ scale(rt_lag)*scale(rt_vmax)*scale(iti_prev) + (1 | id/run), trial_df )
 summary(itim1)
