@@ -9,14 +9,14 @@ library(cowplot)
 # library(sjmisc)
 library(ggeffects)
 library(mlVAR)
-
+library(viridis)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
 reprocess = F
 analyze = F
 
-setwd('~/Box Sync/SCEPTIC_fMRI/deconvolved_evt_locked/')
+setwd('~/Box/SCEPTIC_fMRI/deconvolved_evt_locked/')
 
 if (reprocess) {
 l <- read_csv("long_axis_l_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
@@ -297,25 +297,38 @@ fb_wide6 <- fb_comb %>% select(id, run, run_trial, evt_time, side, bin6, decon_i
 names(fb_wide6)[5:length(names(fb_wide6))] <- paste("hipp", names(fb_wide6)[5:length(names(fb_wide6))], sep = "_")
 fb_wide6_ex <- inner_join(fb_wide6, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi")], by = c("id", "run", "run_trial"))
 
+# save fb responses for trial-wise prediction analyses
 
-setwd("~/Box Sync/SCEPTIC_fMRI/var/")
+library(data.table)
+slices <- names(fb_wide)[5:28]
+fb_wide_t <- dcast(setDT(fb_wide), id + run + run_trial ~ evt_time, value.var = slices)
+
+
+setwd("~/Box/SCEPTIC_fMRI/var/")
 save(fb_wide, fb_wide_ex, fb_wide6, fb_wide6_ex, file = "feedback_hipp_wide_ts.Rdata")
-save(fb_comb,file = "feedback_hipp_tall.Rdata")
+save(fb_comb, file = "feedback_hipp_tall_ts.Rdata")
+save(fb_wide_t, file = 'feedback_hipp_tallest_by_timepoint_decon.Rdata')
+
+
 clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
 # take only online event times
 clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
 names(clock_wide)[5:28] <- paste("hipp", names(clock_wide)[5:28], sep = "_")
 clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
 setwd("~/Box Sync/SCEPTIC_fMRI/var/")
+
+# setwd("~/Box/SCEPTIC_fMRI/var/")
 save(clock_wide, clock_wide_ex, file = "clock_hipp_wide_ts.Rdata")
 
 
 }
 if (!reprocess) {
-  setwd("~/Box Sync/SCEPTIC_fMRI/var/")
+  setwd("~/Box/SCEPTIC_fMRI/var/")
   load('clock_hipp_wide_ts.Rdata')
   load('feedback_hipp_wide_ts.Rdata')
-  load("feedback_hipp_tall.Rdata")
+  # load("feedback_hipp_tall.Rdata")
+  load('feedback_hipp_tall_ts.Rdata')
+  
 }
 # Michael's plotting function
 #####################################
@@ -922,6 +935,93 @@ dev.off()
 # Do shorter ITIs disrupt processing?  No, they just seem to fall asleep during ITIs
 itim1 <- lmer(scale(rt_csv) ~ scale(rt_lag)*scale(rt_vmax)*scale(iti_prev) + (1 | id/run), trial_df )
 summary(itim1)
+
+################
+# responses as a function of trial and explore/exploit
+
+# preliminary plots: trial
+# trial by condition
+pdf("trial_fb_hipp_AH_PH_gam_rew.pdf", width = 11, height = 8)
+ggplot(fb_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", se = F) + facet_wrap(~rewFunc) + scale_color_viridis_d() + theme_dark()
+dev.off()
+# ...and reward
+pdf("trial_fb_hipp_AH_PH_loess_rew.pdf", width = 11, height = 8)
+ggplot(fb_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "loess", se = F) + facet_wrap(~rewFunc) + scale_color_viridis_d() + theme_dark()
+dev.off()
+
+
+# wave form by trial
+pdf("fb_hipp_AP_trial_rew.pdf", width = 11, height = 8)
+ggplot(fb_comb, aes(evt_time, decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", se = F) + facet_grid(first10 ~ rewFunc) + scale_color_viridis_d() + theme_dark()
+dev.off()
+
+# wave form as a function of next swing?
+fb_comb <- fb_comb %>% group_by(id,run) %>% mutate(swing_above_median_lead = lead(swing_above_median)) %>% ungroup()
+
+pdf("fb_hipp_AP_next_swing_loess_rewFunc.pdf", width = 11, height = 8)
+ggplot(fb_comb[!is.na(fb_comb$swing_above_median_lead) & fb_comb$evt_time < 8,], aes(evt_time, decon_interp, color = axis_bin, lty = swing_above_median_lead)) + geom_smooth(method = "loess", se = F) + facet_grid(rewFunc~reward)+ scale_color_viridis_d() + theme_dark()
+dev.off()
+fb_comb$trial_neg_inv <- -1/fb_comb$run_trial
+
+ee1 <- lmer(decon_interp ~ bin_center_z*trial_neg_inv + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+summary(ee1)
+vif.lme(ee1)
+car::Anova(ee1)
+g <- ggpredict(ee1, terms = c(""))
+g <- plot(g, facet = F, dodge = .4)
+pdf("offline_abs_pe_reward_AH_PH.pdf", width = 6, height = 6)
+g + scale_color_viridis_d() + theme_dark()
+dev.off()
+
+ee2 <- lmer(decon_interp ~ bin_center_z*trial_neg_inv*rewFunc + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+summary(ee2)
+car::Anova(ee2)
+anova(ee1,ee2)
+library(emmeans)
+em2 <- emmeans(ee2, "bin_center_z", by = c( "rewFunc","trial_neg_inv"), at = list( bin_center_z = c(-2,2), trial_neg_inv = c(-1, -.1,-.05, -.02)))
+plot(em2, horiz = F)
+df2 <- as.data.frame(em2)
+
+ee3 <- lmer(decon_interp ~ bin_center_z*evt_time*swing_above_median_lead + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+summary(ee3)
+car::Anova(ee3)
+
+# + completely general time
+ee4 <- lmer(decon_interp ~ bin_center_z*evt_time_f*swing_above_median_lead + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+summary(ee4)
+car::Anova(ee4, '3')
+em4 <- as.data.frame(emmeans(ee4, "bin_center_z", by = c( "evt_time_f","swing_above_median_lead"), at = list( bin_center_z = c(-2,2))))
+ggplot(em4, aes(evt_time_f, emmean, color = bin_center_z, lty = swing_above_median_lead)) + geom_point() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL))
+
+# + reward
+ee5 <- lmer(decon_interp ~ bin_center_z*evt_time_f*swing_above_median_lead*reward + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+summary(ee5)
+car::Anova(ee5, '3')
+vif.lme(ee5)
+anova(ee1,ee2,ee3,ee4,ee5)
+
+# # collinearity checks: it's all fine, only non-essential collinearity
+# fb_comb$evt_time_f_sum <- fb_comb$evt_time_f
+# contrasts(fb_comb$evt_time_f_sum) <- contr.sum(12)
+# fb_comb$swing_above_median_lead_sum <- fb_comb$swing_above_median_lead
+# contrasts(fb_comb$swing_above_median_lead_sum) <- contr.sum(2)
+# fb_comb$reward_sum <- fb_comb$reward
+# contrasts(fb_comb$reward_sum) <- contr.sum(2)
+# ee5sum <- lmer(decon_interp ~ bin_center_z*evt_time_f_sum*swing_above_median_lead_sum*reward_sum + scale(rt_csv)*evt_time_f_sum + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+# summary(ee5sum)
+# vif.lme(ee5sum)
+
+em5 <- as.data.frame(emmeans(ee5, "bin_center_z", by = c( "evt_time_f","swing_above_median_lead", "reward"), at = list( bin_center_z = c(-2,2))))
+ggplot(em5, aes(evt_time_f, emmean, color = bin_center_z, lty = swing_above_median_lead)) + 
+  geom_point() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + facet_wrap(.~reward) + scale_color_viridis() + theme_dark()
+
+# + trial?
+ee6 <- lmer(decon_interp ~ bin_center_z*evt_time_f*swing_above_median_lead*reward*run_trial + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+summary(ee6)
+car::Anova(ee6, '3')
+
+
+ggplot(df2, aes(-1/trial_neg_inv, emmean, color = bin_center_z)) + geom_point() + geom_linerange(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + facet_wrap(~rewFunc) + xlab("Trial")
 }
 #############
 ## VAR of PH -> AH
@@ -953,7 +1053,7 @@ summary(itim1)
 # # )
 # 
 # # just the left HIPP
-# load('~/Box Sync Sync/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata')
+# load('~/Box Sync/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata')
 # # vl1 <- mlVAR(fb_wide, vars = names(fb_wide[grep('_l', names(fb_wide))]), idvar = "id", lags = 1, dayvar = "run_trial", beepvar = "evt_time",
 # #             estimator = "lmer",
 # #             contemporaneous = "correlated", temporal = "fixed",
