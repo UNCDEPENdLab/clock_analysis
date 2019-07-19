@@ -10,10 +10,11 @@ library(cowplot)
 library(ggeffects)
 library(mlVAR)
 library(viridis)
+library(car)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
-reprocess = F
+reprocess = T
 analyze = F
 
 setwd('~/Box/SCEPTIC_fMRI/deconvolved_evt_locked/')
@@ -68,6 +69,8 @@ trial_df <- read_csv(file.path("~/code/clock_analysis/fmri/data/mmclock_fmri_dec
                 omission_lag = lag(score_csv==0),
                 rt_vmax_lag = lag(rt_vmax),
                 v_entropy_wi = scale(v_entropy),
+                v_entropy_wi_lead = lead(v_entropy_wi),
+                v_entropy_wi_change = v_entropy_wi_lead - v_entropy_wi,
                 entropy = case_when(
                   v_entropy_wi > mean(v_entropy_wi) ~ "high",
                   v_entropy_wi < mean(v_entropy_wi) ~ "low",
@@ -315,7 +318,7 @@ clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate
 clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
 names(clock_wide)[5:28] <- paste("hipp", names(clock_wide)[5:28], sep = "_")
 clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
-setwd("~/Box Sync/SCEPTIC_fMRI/var/")
+setwd("~/Box/SCEPTIC_fMRI/var/")
 
 # setwd("~/Box/SCEPTIC_fMRI/var/")
 save(clock_wide, clock_wide_ex, file = "clock_hipp_wide_ts.Rdata")
@@ -1000,6 +1003,20 @@ car::Anova(ee5, '3')
 vif.lme(ee5)
 anova(ee1,ee2,ee3,ee4,ee5)
 
+# replicate lm decoding analyses
+# scale(-1/run_trial)*rewFunc + reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi
+fb_comb$bin_num_f <- as.factor(fb_comb$bin_num)
+dm1 <- lmer(decon_interp ~ bin_num_f*evt_time_f*scale(-1/run_trial)*rewFunc + 
+              bin_num_f*evt_time_f*scale(rt_csv) + 
+              bin_num_f*evt_time_f*scale(rt_vmax_lag) +
+              bin_num_f*evt_time_f*scale(rt_vmax_change) + 
+              bin_num_f*evt_time_f*scale(v_entropy_wi) +
+              bin_num_f*evt_time_f*scale(v_entropy_wi_change) +
+              (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+summary(ee5)
+car::Anova(ee5, '3')
+
+
 # # collinearity checks: it's all fine, only non-essential collinearity
 # fb_comb$evt_time_f_sum <- fb_comb$evt_time_f
 # contrasts(fb_comb$evt_time_f_sum) <- contr.sum(12)
@@ -1053,7 +1070,7 @@ ggplot(df2, aes(-1/trial_neg_inv, emmean, color = bin_center_z)) + geom_point() 
 # # )
 # 
 # # just the left HIPP
-# load('~/Box Sync/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata')
+# load('~/Box/SCEPTIC_fMRI/var/feedback_hipp_wide_ts.Rdata')
 # # vl1 <- mlVAR(fb_wide, vars = names(fb_wide[grep('_l', names(fb_wide))]), idvar = "id", lags = 1, dayvar = "run_trial", beepvar = "evt_time",
 # #             estimator = "lmer",
 # #             contemporaneous = "correlated", temporal = "fixed",
