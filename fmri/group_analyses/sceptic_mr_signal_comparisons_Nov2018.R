@@ -1,6 +1,18 @@
 #signal correlation examination
 library(dplyr)
 library(tidyverse)
+global_file <- read.csv("/Users/mnh5174/Data_Analysis/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")
+
+#group fixed parameters (looks good)
+#global_file <- read.csv("/Users/mnh5174/Data_Analysis/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_fixedparams_ffx_sceptic_global_statistics.csv")
+
+hist(global_file$alpha)
+hist(global_file$gamma)
+hist(global_file$beta)
+mean(global_file$alpha)
+mean(global_file$gamma)
+mean(global_file$beta)
+
 trial_df <- read.csv("/Users/mnh5174/Data_Analysis/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz") %>%
 #trial_df <- read.csv("/Users/mnh5174/Data_Analysis/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_mfx_trial_statistics.csv.gz") %>%
   filter(!id %in% c(11335, 11332, 11282, 11246, 10662)) %>% mutate(d_auc = -1*d_auc)
@@ -24,7 +36,7 @@ trial_df_long <- trial_df_subset %>% mutate_at(vars(v_auc, d_auc, v_entropy), sc
   ))
 
 trial_df_long$run_trial <- 1:50
-  
+
 trial_df_long$run_condition <- with(trial_df_long, paste(rewFunc, emotion, sep=":"))
 ggplot(trial_df_long, aes(x=run_trial, y=sig_val, color=signal)) + geom_point() + stat_smooth() + facet_wrap(~id_type, nrow=2) #geom_line() +
 
@@ -33,7 +45,7 @@ ggplot(trial_df_long %>% filter(id %in% c(11243, 11162, 11322, 11262, 11298)), a
   geom_point() + geom_line() + stat_smooth() + facet_grid(signal~id_type)
 
 xx <- split(trial_df_subset, trial_df_subset$id)
-lapply(xx, function(subdf) { 
+lapply(xx, function(subdf) {
   cor(subset(subdf, select=c(v_auc, v_entropy, d_auc)), use="pairwise.complete.obs")
 })
 
