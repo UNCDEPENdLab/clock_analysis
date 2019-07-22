@@ -431,7 +431,7 @@ if (plots) {
   devcc3 <- devcc3 + geom_vline(xintercept = 2:3)
   devcc4 <- plot_by_summary("clock", trial_split=reward, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>6 & rewFunc =="DEV"')
   devcc4 <- devcc4 + geom_vline(xintercept = 3:4) 
-
+  
   pdf("clock_by_reward_by_rt_bin_DEV_only.pdf", width = 16, height = 12)
   # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
   ggarrange(devcc1,devcc2,devcc3,devcc4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
@@ -698,51 +698,51 @@ if (analyze) {
   vif.lme(ee5)
   anova(ee1,ee2,ee3,ee4,ee5)
   
-# replicate lm decoding analyses
-# scale(-1/run_trial)*rewFunc + reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi
-fb_comb$bin_num_f <- as.factor(fb_comb$bin_num)
-dm1 <- lmer(decon_interp ~ bin_num_f*evt_time_f*scale(-1/run_trial)*rewFunc + 
-              bin_num_f*evt_time_f*scale(rt_csv) + 
-              bin_num_f*evt_time_f*scale(rt_vmax_lag) +
-              bin_num_f*evt_time_f*scale(rt_vmax_change) + 
-              bin_num_f*evt_time_f*scale(v_entropy_wi) +
-              bin_num_f*evt_time_f*scale(v_entropy_wi_change) +
-              (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-summary(dm1)
-car::Anova(dm1, '3')
-vif(dm1)
-library(emmeans)
-r1 <- emtrends(dm1, var = 'rt_vmax_change', specs = c('bin_num_f','evt_time_f'), data = fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-r1 <- as.data.frame(r1)
-ggplot(r1, aes(evt_time_f, bin_num_f, color = rt_vmax_change.trend)) + geom_tile()
-
+  # replicate lm decoding analyses
+  # scale(-1/run_trial)*rewFunc + reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi
+  fb_comb$bin_num_f <- as.factor(fb_comb$bin_num)
+  dm1 <- lmer(decon_interp ~ bin_num_f*evt_time_f*scale(-1/run_trial)*rewFunc + 
+          bin_num_f*evt_time_f*scale(rt_csv) + 
+          bin_num_f*evt_time_f*scale(rt_vmax_lag) +
+          bin_num_f*evt_time_f*scale(rt_vmax_change) + 
+          bin_num_f*evt_time_f*scale(v_entropy_wi) +
+          bin_num_f*evt_time_f*scale(v_entropy_wi_change) +
+          (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  summary(dm1)
+  car::Anova(dm1, '3')
+  vif(dm1)
+  library(emmeans)
+  r1 <- emtrends(dm1, var = 'rt_vmax_change', specs = c('bin_num_f','evt_time_f'), data = fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  r1 <- as.data.frame(r1)
+  ggplot(r1, aes(evt_time_f, bin_num_f, color = rt_vmax_change.trend)) + geom_tile()
+  
 # reduce this monstrosity to just one effect of interest
-dm2 <- lmer(decon_interp ~ 
-              bin_num_f*evt_time_f*scale(rt_vmax_lag) +
-              (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-summary(dm2)
-car::Anova(dm2, '3')
-r2 <- emtrends(dm2, var = 'rt_vmax_lag', specs = c('bin_num_f','evt_time_f'), data = fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-r2 <- as.data.frame(r2)
-ggplot(r2, aes(evt_time_f, bin_num_f, color = rt_vmax_lag.trend)) + geom_tile()
-
-dm3 <- lmer(decon_interp ~ 
-              bin_num_f*evt_time_f*scale(v_entropy_wi_change) +
-              (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-summary(dm3)
-car::Anova(dm3, '3')
-r3 <- emtrends(dm3, var = 'rt_vmax_lag', specs = c('bin_num_f','evt_time_f'), data = fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-r3 <- as.data.frame(r3)
-ggplot(r2, aes(evt_time_f, bin_num_f, color = rt_vmax_lag.trend)) + geom_tile()
-
+  dm2 <- lmer(decon_interp ~ 
+          bin_num_f*evt_time_f*scale(rt_vmax_lag) +
+          (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  summary(dm2)
+  car::Anova(dm2, '3')
+  r2 <- emtrends(dm2, var = 'rt_vmax_lag', specs = c('bin_num_f','evt_time_f'), data = fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  r2 <- as.data.frame(r2)
+  ggplot(r2, aes(evt_time_f, bin_num_f, color = rt_vmax_lag.trend)) + geom_tile()
+  
+  dm3 <- lmer(decon_interp ~ 
+          bin_num_f*evt_time_f*scale(v_entropy_wi_change) +
+          (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  summary(dm3)
+  car::Anova(dm3, '3')
+  r3 <- emtrends(dm3, var = 'rt_vmax_lag', specs = c('bin_num_f','evt_time_f'), data = fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  r3 <- as.data.frame(r3)
+  ggplot(r2, aes(evt_time_f, bin_num_f, color = rt_vmax_lag.trend)) + geom_tile()
+  
 # not even reward??
-dm4 <- lmer(decon_interp ~ 
-              bin_num_f*evt_time_f*reward + side +
-              (1 | id/run) , fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-summary(dm4)
-car::Anova(dm4, '3')
-em <- emmeans(dm4, )
- # # collinearity checks: it's all fine, only non-essential collinearity
+  dm4 <- lmer(decon_interp ~ 
+          bin_num_f*evt_time_f*reward + side +
+          (1 | id/run) , fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  summary(dm4)
+  car::Anova(dm4, '3')
+  em <- emmeans(dm4, )
+  # # collinearity checks: it's all fine, only non-essential collinearity
 # fb_comb$evt_time_f_sum <- fb_comb$evt_time_f
 # contrasts(fb_comb$evt_time_f_sum) <- contr.sum(12)
 # fb_comb$swing_above_median_lead_sum <- fb_comb$swing_above_median_lead
