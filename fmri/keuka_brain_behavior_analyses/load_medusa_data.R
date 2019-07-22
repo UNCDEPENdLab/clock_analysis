@@ -72,6 +72,7 @@ if (!reprocess) {
           iti_prev = lag(iti_ideal),
           omission_lag = lag(score_csv==0),
           rt_vmax_lag = lag(rt_vmax),
+          rt_vmax_change = rt_vmax - rt_vmax_lag,
           v_entropy_wi = scale(v_entropy),
           v_entropy_wi_lead = lead(v_entropy_wi),
           v_entropy_wi_change = v_entropy_wi_lead - v_entropy_wi,
@@ -128,7 +129,8 @@ if (!reprocess) {
       group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
       inner_join(clock)
   fb_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
-          swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, gamma, total_earnings, ev,next_swing_above_median) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+          swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, rt_vmax_lag, rt_vmax_change,
+          gamma, total_earnings, ev,next_swing_above_median) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
       group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
       inner_join(fb)
   rtvmax_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,

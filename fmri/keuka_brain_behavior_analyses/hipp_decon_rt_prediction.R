@@ -4,6 +4,7 @@ library(tidyverse)
 library(lme4)
 library(broom)
 library(ggpubr)
+library(car)
 setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var")
 load('feedback_hipp_tallest_by_timepoint_decon.Rdata')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
@@ -11,7 +12,7 @@ load('trial_df_and_vhdkfpe_clusters.Rdata')
 
 # read in behavioral data
 # select relevant columns for compactness
-df <- df %>% select(id, run, run_trial, rewFunc,emotion, rt_csv, score_csv, rt_next, rt_vmax, rt_vmax_lag,rt_vmax_change, v_max_wi, v_entropy_wi, v_entropy_b, v_entropy, v_max_b, Age, Female)
+df <- df %>% select(id, run, run_trial, rewFunc,emotion, rt_csv, score_csv, rt_next, pe_max, rt_vmax, rt_vmax_lag,rt_vmax_change, v_max_wi, v_entropy_wi, v_entropy_b, v_entropy, v_max_b, Age, Female)
 # add deconvolved hippocampal timeseries
 d <- merge(df, fb_wide_t, by = c("id", "run", "run_trial"))
 d <- d %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(reward = score_csv>0, 
@@ -21,33 +22,49 @@ d <- d %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(reward =
 
 # scale decons
 # SKIP this step if running lmer on h
-scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
-d <- d %>% group_by(id,run) %>%  mutate_at(vars(starts_with("hipp")), scale2, na.rm = TRUE) %>% ungroup()
-# test model
-# assign("h",d$hipp_9_l_3)
+scale = T
+if (scale) {
+  scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
+  # d <- d %>% group_by(id,run) %>%  mutate_at(vars(starts_with("hipp")), scale2, na.rm = TRUE) %>% ungroup()
+  # try scaling across subjects
+  d <- d %>% mutate_at(vars(starts_with("hipp")), scale2, na.rm = TRUE) %>% ungroup()
+}
 
-for (trial_cont in c("TRUE", "FALSE")) {
-newlist <- list()
-# try to predict directional RT change
-# loop over slices and timepoints
+plots = T
+
+##########
+# predict directional RT change
+# strategically: pe*rt_t (or reward*rt) - stay vs. shift, rt - explore in general, rt_vmax - exploit, prior, rt_vmax_change - exploit, posterior, that's it!
+# for (trial_cont in c("TRUE", "FALSE")) {
+for (trial_cont in c("FALSE")) {
+    
+  newlist <- list()
 for (slice in 1:12) {print(paste("Processing slice", slice, sep = " "))
   for (side in c("l", "r")) {
     for (t in -1:10) {
       d$h<-d[[paste("hipp", slice, side, t, sep = "_")]]
       if (trial_cont) {
-        mf <-  lmer(rt_next ~ scale(-1/run_trial)*rewFunc + (reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax) + h)^3 + (1|id/run), d)}
+        # mf <-  lmer(rt_next ~ scale(-1/run_trial)*rewFunc + (reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax) + h)^3 + (1|id/run), d)
+        }
       else {
-        mf <-  lmer(rt_next ~ (reward + scale(rt_csv) + scale(rt_vmax_lag) + h)^3 + (1|id/run), d)}
+        # mf <-  lme4::lmer(rt_next ~ (scale(pe_max) + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + scale(v_entropy_wi) + h)^2 + (1|id/run), d)
+        mf <-  lme4::lmer(rt_next ~ scale(rt_csv) * scale(pe_max) * h + scale(rt_vmax_lag) * scale(v_entropy_wi) * h + scale(rt_vmax_change) * scale(v_entropy_wi) * h + (1|id/run), d)
+        }
       dm <- tidy(mf)
       dm$slice <- slice
       dm$side <- side
       dm$t <- t
+      dm <- dm %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
+                                                           abs(statistic) > 2 & abs(statistic) < 3 ~ '2', 
+                                                           abs(statistic) > 3 ~ '3')))
       newlist[[paste("hipp", slice, side, t, sep = "_")]]<-dm
     }
   }
 }
 bdf <- do.call(rbind,newlist)
 bdf$slice <- as.factor(bdf$slice)
+bdf$stat_order <- factor(bdf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
+
 terms <- names(fixef(mf))
 if (trial_cont) {
   setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs')
@@ -55,13 +72,14 @@ if (trial_cont) {
 else {
 setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/no_trial_contingency/')}
 
+if (plots) {
 for (fe in terms)
 {edf <- bdf %>% filter(term == paste(fe) & t < 8)
 p1 <- ggplot(edf, aes(t, estimate, color = slice)) + geom_line() + 
   geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), alpha = .5) + facet_wrap(~side) + 
   theme_dark() + scale_color_viridis_d() + geom_hline(yintercept = 0, lty = "dashed", color = "red") + labs(title = paste(fe))
 
-p2 <- ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = abs(statistic)>2), size = 1) + facet_wrap(~side) + 
+p2 <- ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = stat_order), size = 1) + facet_wrap(~side) + 
   scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe))
 
 termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
@@ -70,30 +88,35 @@ print(ggarrange(p1,p2,ncol = 1, nrow = 2))
 dev.off()
 }
 }
+}
+
+########
 # "decoding" analyses
 # currently running lm
 for (trial_cont in c("TRUE", "FALSE")) {
 newlist <- list()
 # loop over slices and timepoints
+# add entropy change
 for (slice in 1:12) {print(paste("Processing slice", slice, sep = " "))
   for (side in c("l", "r")) {
     for (t in -1:10) {
       d$h<-d[[paste("hipp", slice, side, t, sep = "_")]]
       if (trial_cont) {
-        md <-  lm(h ~ scale(-1/run_trial)*rewFunc + reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi, d)
+        md <-  lme4::lmer(h ~ scale(-1/run_trial)*rewFunc + reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi + v_entropy_wi_change + (1|id:run), d)
         } else {
-        md <-  lm(h ~ reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) +  v_entropy_wi, d)}
+        md <-  lme4::lmer(h ~ reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) +  v_entropy_wi + v_entropy_wi_change + (1|id:run), d)}
       dm <- tidy(md)
       dm$slice <- slice
       dm$side <- side
       dm$t <- t
       dm <- dm %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
                                                  abs(statistic) > 2 & abs(statistic) < 3 ~ '2', 
-                                                 abs(statistic) > 3 ~ '3')),
-                          p_value = as.factor(case_when(p.value > .05 ~ '1',
-                                                        p.value < .05 & p.value > .01 ~ '2',
-                                                        p.value < .01 & p.value > .001 ~ '3',
-                                                        p.value <.001 ~ '4')))
+                                                 abs(statistic) > 3 ~ '3'))
+                          # p_value = as.factor(case_when(p.value > .05 ~ '1',
+                          #                               p.value < .05 & p.value > .01 ~ '2',
+                          #                               p.value < .01 & p.value > .001 ~ '3',
+                          #                               p.value <.001 ~ '4'))
+                          )
       newlist[[paste("hipp", slice, side, t, sep = "_")]]<-dm
     }
   }
@@ -128,8 +151,6 @@ print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_valu
 dev.off()
 }
 }
-
-
 
 
 # mf <-  lmer(rt_next ~ scale(-1/run_trial) * scale(rt_csv) +  scale(rt_csv)  + reward * scale(rt_csv)*hipp_1_r_5 + (1|id/run), d)

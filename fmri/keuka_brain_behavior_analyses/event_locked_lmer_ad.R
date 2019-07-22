@@ -12,15 +12,15 @@ library(mlVAR)
 library(viridis)
 library(car)
 library(data.table)
-
+library(emmeans)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
 reprocess = T
 analyze = F
 
-#repo_directory <- "~/code/clock_analysis"
-repo_directory <- "~/Data_Analysis/clock_analysis"
+repo_directory <- "~/code/clock_analysis"
+# repo_directory <- "~/Data_Analysis/clock_analysis"
 
 #load the data, and reprocess if requested
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/load_medusa_data.R"))
@@ -738,10 +738,23 @@ ggplot(r2, aes(evt_time_f, bin_num_f, color = rt_vmax_lag.trend)) + geom_tile()
 # not even reward??
 dm4 <- lmer(decon_interp ~ 
               bin_num_f*evt_time_f*reward + side +
-              (1 | id/run) , fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+              (1 | id/run) , fb_comb %>% filter (evt_time < 8))
 summary(dm4)
 car::Anova(dm4, '3')
 em <- emmeans(dm4, )
+
+# how about lm?
+lm4 <- lm(decon_interp ~ 
+              bin_num_f*evt_time_f*reward +
+            bin_num_f*evt_time_f*scale(rt_csv) +
+            bin_num_f*evt_time_f*side, fb_comb %>% filter (evt_time < 8))
+summary(lm4)
+anova(lm4)
+elm4 <- emmeans(lm4, ~ reward | evt_time_f)
+plot(elm4, horiz = F)
+elm4 <- emmeans(lm4, ~ reward | bin_num_f)
+plot(elm4, horiz = F)
+
  # # collinearity checks: it's all fine, only non-essential collinearity
 # fb_comb$evt_time_f_sum <- fb_comb$evt_time_f
 # contrasts(fb_comb$evt_time_f_sum) <- contr.sum(12)
