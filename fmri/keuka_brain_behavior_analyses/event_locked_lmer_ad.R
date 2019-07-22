@@ -700,19 +700,49 @@ if (analyze) {
   
 # replicate lm decoding analyses
 # scale(-1/run_trial)*rewFunc + reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi
-  fb_comb$bin_num_f <- as.factor(fb_comb$bin_num)
-  dm1 <- lmer(decon_interp ~ bin_num_f*evt_time_f*scale(-1/run_trial)*rewFunc + 
-          bin_num_f*evt_time_f*scale(rt_csv) + 
-          bin_num_f*evt_time_f*scale(rt_vmax_lag) +
-          bin_num_f*evt_time_f*scale(rt_vmax_change) + 
-          bin_num_f*evt_time_f*scale(v_entropy_wi) +
-          bin_num_f*evt_time_f*scale(v_entropy_wi_change) +
-          (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-  summary(ee5)
-  car::Anova(ee5, '3')
-  
-  
-# # collinearity checks: it's all fine, only non-essential collinearity
+fb_comb$bin_num_f <- as.factor(fb_comb$bin_num)
+dm1 <- lmer(decon_interp ~ bin_num_f*evt_time_f*scale(-1/run_trial)*rewFunc + 
+              bin_num_f*evt_time_f*scale(rt_csv) + 
+              bin_num_f*evt_time_f*scale(rt_vmax_lag) +
+              bin_num_f*evt_time_f*scale(rt_vmax_change) + 
+              bin_num_f*evt_time_f*scale(v_entropy_wi) +
+              bin_num_f*evt_time_f*scale(v_entropy_wi_change) +
+              (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+summary(dm1)
+car::Anova(dm1, '3')
+vif(dm1)
+library(emmeans)
+r1 <- emtrends(dm1, var = 'rt_vmax_change', specs = c('bin_num_f','evt_time_f'), data = fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+r1 <- as.data.frame(r1)
+ggplot(r1, aes(evt_time_f, bin_num_f, color = rt_vmax_change.trend)) + geom_tile()
+
+# reduce this monstrosity to just one effect of interest
+dm2 <- lmer(decon_interp ~ 
+              bin_num_f*evt_time_f*scale(rt_vmax_lag) +
+              (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+summary(dm2)
+car::Anova(dm2, '3')
+r2 <- emtrends(dm2, var = 'rt_vmax_lag', specs = c('bin_num_f','evt_time_f'), data = fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+r2 <- as.data.frame(r2)
+ggplot(r2, aes(evt_time_f, bin_num_f, color = rt_vmax_lag.trend)) + geom_tile()
+
+dm3 <- lmer(decon_interp ~ 
+              bin_num_f*evt_time_f*scale(v_entropy_wi_change) +
+              (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+summary(dm3)
+car::Anova(dm3, '3')
+r3 <- emtrends(dm3, var = 'rt_vmax_lag', specs = c('bin_num_f','evt_time_f'), data = fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+r3 <- as.data.frame(r3)
+ggplot(r2, aes(evt_time_f, bin_num_f, color = rt_vmax_lag.trend)) + geom_tile()
+
+# not even reward??
+dm4 <- lmer(decon_interp ~ 
+              bin_num_f*evt_time_f*reward + side +
+              (1 | id/run) , fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+summary(dm4)
+car::Anova(dm4, '3')
+em <- emmeans(dm4, )
+ # # collinearity checks: it's all fine, only non-essential collinearity
 # fb_comb$evt_time_f_sum <- fb_comb$evt_time_f
 # contrasts(fb_comb$evt_time_f_sum) <- contr.sum(12)
 # fb_comb$swing_above_median_lead_sum <- fb_comb$swing_above_median_lead

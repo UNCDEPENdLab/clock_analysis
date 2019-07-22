@@ -287,7 +287,8 @@ if (!reprocess) {
   # summarize for VAR models
   fb_var <- fb_comb %>% group_by(id, run, run_trial, evt_time, side, online, entropy, reward, reward_lag, abs_pe_f) %>% 
       summarise(AH = mean(ah_mean), PH = mean(ph_mean)) %>% ungroup()
-  View(fb_var)
+  
+  #View(fb_var)
   
   myspread <- function(df, key, value) {
     # quote key
