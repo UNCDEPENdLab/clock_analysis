@@ -12,8 +12,8 @@ if (is.na(run_model_index)) { stop("Couldn't identify usable run_model_index var
 load(to_run)
 
 source(file.path(fsl_model_arguments$pipeline_home, "functions", "glm_helper_functions.R"))
-source(file.path(fsl_model_arguments$pipeline_home, "functions", "deconvolve_funcs.R"))
-source(file.path(fsl_model_arguments$pipeline_home, "functions", "spm_funcs.R"))
+#source(file.path(fsl_model_arguments$pipeline_home, "functions", "deconvolve_funcs.R"))
+#source(file.path(fsl_model_arguments$pipeline_home, "functions", "spm_funcs.R"))
 
 library(tidyverse)
 library(abind)
@@ -32,42 +32,64 @@ feat_run_outdir <- fsl_model_arguments$outdir[run_model_index] #the name of the 
 feat_lvl3_outdir <- file.path(fsl_model_arguments$group_output_dir, feat_run_outdir) #output directory for this run-level model
 
 #used for reading l1 data
-load(file.path(fsl_model_arguments$pipeline_home, "configuration_files", paste0(paste(fsl_model_arguments$analysis_name, feat_run_outdir, "lvl2_inputs", sep="_"), ".RData")))
+#load(file.path(fsl_model_arguments$pipeline_home, "configuration_files", paste0(paste(fsl_model_arguments$analysis_name, feat_run_outdir, "lvl2_inputs", sep="_"), ".RData")))
+
+load(file.path(fsl_model_arguments$pipeline_home, "configuration_files", "MMClock_aroma_preconvolve_fse_groupfixed_sceptic-clock-feedback-pe_max-preconvolve_fse_groupfixed_lvl2_inputs.RData"))
 
 #registerDoSEQ()
 cl <- makeCluster(40) #hard code for now
 registerDoParallel(cl)
-clusterExport(cl, c("sigmoid", "spm_hrf", "generate_feature", "dsigmoid", "deconvolve_nlreg")) #make sure functions are available
+#clusterExport(cl, c("sigmoid", "spm_hrf", "generate_feature", "dsigmoid", "deconvolve_nlreg", "deconvolve_nlreg_resample")) #make sure functions are available
 
 subinfo$dir_found <- file.exists(subinfo$mr_dir)
 
 hrf_pad <- 32 #based on spm_hrf for 1.0 second TR. Used to chop output of deconvolvefilter
 
 #Schaefer 400
-master <- "/gpfs/group/mnh5174/default/lab_resources/CBIG/stable_projects/brain_parcellation/Schaefer2018_LocalGlobal/Parcellations/MNI/Schaefer2018_400Parcels_7Networks_order_fonov_mni152_2.3mm_ants.nii.gz"
+#NB: this is not an NN-interpolated file. So, fractional values get dumped by -thr -uthr below
+#master <- "/gpfs/group/mnh5174/default/lab_resources/CBIG/stable_projects/brain_parcellation/Schaefer2018_LocalGlobal/Parcellations/MNI/Schaefer2018_400Parcels_7Networks_order_fonov_mni152_2.3mm_ants.nii.gz"
+
+#run once outside of R
+#orig <- "/gpfs/group/mnh5174/default/lab_resources/CBIG/stable_projects/brain_parcellation/Schaefer2018_LocalGlobal/Parcellations/MNI/Schaefer2018_400Parcels_7Networks_order_fonov_mni152_1mm_ants.nii.gz"
+#orig=/gpfs/group/mnh5174/default/lab_resources/CBIG/stable_projects/brain_parcellation/Schaefer2018_LocalGlobal/Parcellations/MNI/Schaefer2018_400Parcels_7Networks_order_fonov_mni152_1mm_ants.nii.gz
+#ResampleImageBySpacing 3 $orig Schaefer2018_400Parcels_7Networks_order_fonov_2.3mm_ants_nn.nii.gz 2.3 2.3 2.3 0 0 1
+
+#maintains RPI coordinates to match NIfTI files (use this)
+#flirt -in $orig -ref $MRI_STDDIR/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_2.3mm.nii -out Schaefer2018_400Parcels_7Networks_order_2.3mm_flirt_nn -applyisoxfm 2.3 -interp nearestneighbour
+
+master <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/Schaefer2018_400Parcels_7Networks_order_2.3mm_flirt_nn.nii.gz"
 ##57 is L primary motor for finger/hand
 ##18 is L V1
 ##215 is R V1
 
 system(paste0("fslmaths ", master, " -thr 57 -uthr 57 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/l_motor_2.3mm -odt char"))
+system(paste0("fslmaths ", master, " -thr 256 -uthr 256 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/r_motor_2.3mm -odt char"))
 system(paste0("fslmaths ", master, " -thr 18 -uthr 18 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/l_v1_2.3mm -odt char"))
 system(paste0("fslmaths ", master, " -thr 215 -uthr 215 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/r_v1_2.3mm -odt char"))
 
 atlas_files <- c("/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/long_axis_l_2.3mm.nii.gz",
   "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/long_axis_r_2.3mm.nii.gz",
   "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/l_motor_2.3mm.nii.gz",
+  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/r_motor_2.3mm.nii.gz",
   "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/l_v1_2.3mm.nii.gz",
   "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/r_v1_2.3mm.nii.gz",
   "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/harvardoxford-subcortical_prob_Left_Accumbens_2009c_thr20_2.3mm.nii.gz",
-  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/harvardoxford-subcortical_prob_Right_Accumbens_2009c_thr20_2.3mm.nii.gz" 
-  )
+  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/harvardoxford-subcortical_prob_Right_Accumbens_2009c_thr20_2.3mm.nii.gz",
+  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/hippo_dcm/masks/vmpfc_clust1_z5.7_2009c.nii" #add vmPFC from NeuroSynth
+)
 
 #drop hippo for a sec
 #atlas_files <- atlas_files[-1:-2]
 
 atlas_imgs <- lapply(atlas_files, readNIfTI, reorient=FALSE)
 
+#whether to use unsmoothed data
+unsmoothed <- TRUE
+bush2015 <- TRUE #whether to use Bush 2015 algorithm or 2011 algorithm
+
 out_dir <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/deconvolved_timeseries"
+if (unsmoothed) { out_dir <- paste0(out_dir, "_unsmoothed") }
+if (bush2015) { out_dir <- paste0(out_dir, "_b2015") }
 
 #use this for 1st-level results
 l1_inputs <- feat_l2_inputs_df$feat_dir
@@ -83,6 +105,31 @@ l1_niftis <- sapply(l1_inputs, function(x) {
   return(nifti)
 })
 
+
+#handle unsmoothed: create truncated files that match smoothed side
+if (unsmoothed) {
+  l1_niftis <- sub("mni_5mm_aroma", "mni_nosmooth_aroma", l1_niftis)
+  l1_niftis <- sub("nfaswuktm", "nfawuktm", l1_niftis)
+  l1_niftis <- sub("(_clock\\d+)_5", "\\1", l1_niftis)
+
+  novalue <- foreach(x=iter(l1_niftis), .packages="RNifti") %dopar% {
+    if (!file.exists(x)) {
+      orig_file <- sub("_drop\\d+(_trunc\\d+)*", "", x, perl=TRUE)
+      dropn <- as.numeric(sub(".*drop(\\d+).*", "\\1", x, perl=TRUE))
+      if (grepl("_trunc\\d+", x)) {
+        truncn <- as.numeric(sub(".*_trunc(\\d+).*", "\\1", x, perl=TRUE))
+      } else {
+        truncn <- RNifti::niftiHeader(orig_file)$dim[5] #zero based indexing in fslroi
+      }
+      system(paste("fslroi", orig_file, x, dropn, truncn - dropn))
+    }
+
+    return(x)
+  }
+}
+
+#l1_niftis should now contain the unsmoothed nifti files of the same length as the smoothed side
+
 #l1_subset <- grep("11302|11305|11228|11366", l1_niftis, perl=TRUE)
 #l1_niftis <- l1_niftis[l1_subset]
 #feat_l2_inputs_df <- feat_l2_inputs_df[l1_subset,]
@@ -91,6 +138,7 @@ l1_niftis <- sapply(l1_inputs, function(x) {
 nev_lr <- .01 #neural events learning rate (default in algorithm)
 epsilon <- .005 #convergence criterion (default)
 kernel <- spm_hrf(TR)$hrf #canonical SPM difference of gammas
+Nresample <- 25
 
 #for testing
 #l1_niftis <- l1_niftis[1:5]
@@ -110,7 +158,8 @@ for (ai in 1:length(atlas_files)) {
   dir.create(file.path(out_dir, atlas_img_name, "original"), showWarnings=FALSE, recursive=TRUE)
   
   #loop over niftis
-  ff <- foreach(si = 1:length(l1_niftis), .packages=c("dplyr", "readr", "data.table", "reshape2")) %dopar% {
+  ff <- foreach(si = 1:length(l1_niftis), .packages=c("dplyr", "readr", "data.table", "reshape2", "dependlab", "foreach", "iterators"),
+    .export=c("l1_niftis", "kernel", "epsilon", "nev_lr")) %dopar% {
     #for (si in 1:length(l1_niftis)) {
     
     this_subj <- feat_l2_inputs_df %>% select(subid, run_num, contingency, emotion, drop_volumes) %>% dplyr::slice(si)
@@ -131,7 +180,9 @@ for (ai in 1:length(atlas_files)) {
 
     #to_deconvolve is a voxels x time matrix
     to_deconvolve <- as.matrix(ts_out[, -1:-3]) #remove ijk
-    to_deconvolve <- t(apply(to_deconvolve, 1, scale)) #need to unit normalize for algorithm not to choke on near-constant 100-normed data
+
+    #to_deconvolve <- t(apply(to_deconvolve, 1, scale)) #need to unit normalize for algorithm not to choke on near-constant 100-normed data
+    to_deconvolve <- t(apply(to_deconvolve, 1, function(x) { scale(x, scale=FALSE) })) #just demean, which will rescale to percent signal change around 0 (this matches Bush 2015)
 
     temp_i <- tempfile()
     temp_o <- tempfile()
@@ -165,28 +216,46 @@ for (ai in 1:length(atlas_files)) {
     #cor(test2, fixed[2,])
     #summary(test1)
     #summary(fixed[1,])
-    
-    #fo is 1/TR, I think...
-    #Looking at spm_hrf, it generates a vector of 33 values for the HRF. deconvolvefilter pads the time series at the beginning by this length
-    #if you don't return a convolved result, it doesn't do the trimming for you...
-    res <- system(paste0("/gpfs/group/mnh5174/default/lab_resources/bin/deconvolvefilter -i=", temp_i, " -o=", temp_o, " -convolved=0 -fo=1 -thread=2"), intern=FALSE)
-    if (res != 0) {
-      cat("Problem deconvolving: ", l1_niftis[si], "\n", file="deconvolve_errors_compiled", append=TRUE)
-      deconv_mat <- matrix(NA, nrow=nrow(to_deconvolve), ncol=ncol(to_deconvolve))
+
+    if (bush2015) {
+      #use R implementation of Bush 2015 algorithm
+      alg_input <- as.matrix(read.table(temp_i))
+      deconv_mat <- foreach(vox_ts=iter(alg_input, by="row"), .combine="rbind", .packages=c("dependlab")) %do% {
+        reg <- tryCatch(deconvolve_nlreg_resample(as.vector(vox_ts), kernel=kernel, nev_lr=nev_lr, epsilon=epsilon, Nresample=Nresample),
+          error=function(e) { cat("Problem deconvolving: ", l1_niftis[si], as.character(e), "\n", file="deconvolve_errors", append=TRUE); return(rep(NA, length(vox_ts))) })
+
+        if (is.list(reg)) { reg <- reg$NEVmean } #just keep the mean resampled events vector
+        return(reg)
+      }
     } else {
-      #readr may be faster, but it fails on parsing some outputs...
-      #deconv_mat <- as.matrix(read_table(temp_o, col_names=FALSE)) %>% unname() #remove names to avoid confusion in melt
-      #deconv_mat <- scan(temp_o, what="character", sep="\n") %>% strsplit("\\s+")
-      #if (length(unique(sapply(deconv_mat, length))) != 1L) { browser() } 
+      #use C++ implementation of Bush 2011 algorithm
 
-      deconv_mat <- as.matrix(read.table(temp_o, header=FALSE)) %>% unname()  #remove names to avoid confusion in melt
+      #fo is 1/TR, I think...
+      #Looking at spm_hrf, it generates a vector of 33 values for the HRF. deconvolvefilter pads the time series at the beginning by this length
+      #if you don't return a convolved result, it doesn't do the trimming for you...
+      res <- system(paste0("/gpfs/group/mnh5174/default/lab_resources/bin/deconvolvefilter -i=", temp_i, " -o=", temp_o, " -convolved=0 -fo=1 -thread=2"), intern=FALSE)
+      if (res != 0) {
+        cat("Problem deconvolving: ", l1_niftis[si], "\n", file="deconvolve_errors_compiled", append=TRUE)
+        deconv_mat <- matrix(NA, nrow=nrow(to_deconvolve), ncol=ncol(to_deconvolve))
+      } else {
+        #readr may be faster, but it fails on parsing some outputs...
+        #deconv_mat <- as.matrix(read_table(temp_o, col_names=FALSE)) %>% unname() #remove names to avoid confusion in melt
+        #deconv_mat <- scan(temp_o, what="character", sep="\n") %>% strsplit("\\s+")
+        #if (length(unique(sapply(deconv_mat, length))) != 1L) { browser() } 
 
-      #NB. 17Apr2019. I modified the compiled C++ program to chop the leading zeros itself for all outputs (rather than leaving the leading hrf_pad)
-      #deconv_mat <- deconv_mat[,c(-1*1:hrf_pad, seq(-ncol(deconv_mat), -ncol(deconv_mat)+hrf_pad-1))] #trim leading and trailing padding
+        deconv_mat <- as.matrix(read.table(temp_o, header=FALSE)) %>% unname()  #remove names to avoid confusion in melt
 
-      deconv_mat <- deconv_mat[,c(seq(-ncol(deconv_mat), -ncol(deconv_mat)+hrf_pad-1))] #trim trailing padding added above
+        #NB. 17Apr2019. I modified the compiled C++ program to chop the leading zeros itself for all outputs (rather than leaving the leading hrf_pad)
+        #deconv_mat <- deconv_mat[,c(-1*1:hrf_pad, seq(-ncol(deconv_mat), -ncol(deconv_mat)+hrf_pad-1))] #trim leading and trailing padding
+
+      }
+
     }
 
+    #trip hrf end-padding for both C++ and R variants
+    deconv_mat <- deconv_mat[,c(seq(-ncol(deconv_mat), -ncol(deconv_mat)+hrf_pad-1))] #trim trailing padding added above
+
+    
     #to_deconvolve_augment <- cbind(matrix(0, nrow=nrow(to_deconvolve), ncol=hrf_pad), to_deconvolve)
     #deconv_mat <- foreach(vox_ts=iter(to_deconvolve_augment[1:10,], by="row"), .combine="rbind") %dopar% {
     #  reg <- tryCatch(deconvolve_nlreg(as.vector(vox_ts), kernel=kernel, nev_lr=nev_lr, epsilon=epsilon),

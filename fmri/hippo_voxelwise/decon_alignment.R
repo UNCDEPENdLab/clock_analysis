@@ -5,7 +5,6 @@ library(parallel)
 library(doParallel)
 setwd(file.path(getMainDir(), "clock_analysis", "fmri", "hippo_voxelwise"))
 
-
 #function to get interpolated event locked data
 event_lock_decon <- function(d_by_bin, trial_df, event="feedback_onset", time_before=-3, time_after=3) {
   results <- lapply(d_by_bin, function(bin_data) {
@@ -29,7 +28,7 @@ event_lock_decon <- function(d_by_bin, trial_df, event="feedback_onset", time_be
 
       #rare, but if we have no data at tail end of run, we may not be able to interpolate
       if (nrow(to_interpolate) < 2) {
-        cat("For subject:", subj_df$id[1], ", insufficient interpolation data for run:", subj_df$run[1], ", trial:", t, "\n", file="evtlockerrors.txt", append=TRUE)
+        cat("For subject: ", subj_df$id[1], ", insufficient interpolation data for run: ", subj_df$run[1], ", trial: ", t, "\n", file="evtlockerrors.txt", append=TRUE, sep="")
         next
       }
       
@@ -83,11 +82,9 @@ trial_df <- trial_df %>%
 
 base_dir <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise"
 
-atlas_dirs <- list.dirs(file.path(base_dir, "deconvolved_timeseries"), recursive=FALSE)
-#atlas_dirs <- c(file.path(base_dir, "deconvolved_timeseries", "long_axis_l_2.3mm"),
-#                file.path(base_dir, "deconvolved_timeseries", "long_axis_r_2.3mm"))
+atlas_dirs <- list.dirs(file.path(base_dir, "deconvolved_timeseries_unsmoothed"), recursive=FALSE)
 
-cl <- makeCluster(30)
+cl <- makeCluster(40)
 registerDoParallel(cl)
 on.exit(stopCluster(cl))
 
@@ -123,7 +120,7 @@ for (a in atlas_dirs) {
       time_after=3
     }
 
-    out_name <- paste0(aname, "_", e, "_decon_locked.csv.gz")
+    out_name <- file.path("deconvolved_evt_locked_unsmoothed", paste0(aname, "_", e, "_decon_locked.csv.gz"))
     if (file.exists(out_name)) {
       message("Output file already exists: ", out_name)
       next
