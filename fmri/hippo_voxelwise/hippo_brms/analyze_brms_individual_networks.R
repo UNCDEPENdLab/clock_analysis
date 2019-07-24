@@ -7,9 +7,14 @@ library(afex)
 library(emmeans)
 library(ggplot2)
 library(cowplot)
+library(tidygraph)
+library(ggraph)
+library(scales)
+
 
 #setwd("/Users/Shared/ics/clock_analysis/fmri/hippo_voxelwise/mplus_var_hippo/")
-setwd("/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/hippo_brms")
+#setwd("/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/hippo_brms")
+setwd("~/Data_Analysis/clock_analysis/fmri/hippo_voxelwise")
 
 #load("output/m2_brms_rh_4slc.RData")
 load("output/lm1_brms_lh_6slc.RData")
@@ -144,6 +149,35 @@ summary(e_test)
 emmeans(e_test, ~to | from)
 pairs(emmeans(e_test, ~to | from))
 
+df <- summary(emmeans(e_test, ~to * from))
+gg_lh <- graph_from_edgelist(as.matrix(df[,c("from", "to")]))
+E(gg_lh)$weight <- df$emmean
+
+lmer_lh_plot <- as_tbl_graph(gg_lh) %>%
+  activate(edges) %>%
+  filter(!is.na(weight))
+
+ggraph(lmer_lh_plot, layout='linear', circular=TRUE) + geom_edge_arc(aes(color=weight)) +
+  geom_node_point(aes(label=name), size=3) + 
+  geom_node_text(aes(label=name), repel=TRUE) + 
+  theme_graph(foreground="steelblue") +
+  coord_fixed() + 
+  scale_edge_color_gradient2("weight", low=muted("blue"), mid="white", high=muted("red"))
+
+
+png("lh_brms_group_weights.png", width=12, height=12, units="in", res=300)
+ggraph(lmer_lh_plot, layout='auto') + 
+  geom_edge_fan(edge_width=1.5, aes(color=weight, start_cap = label_rect(node1.name), end_cap = label_rect(node2.name)), arrow = arrow(type = "open", length = unit(3, 'mm'))) +
+  #geom_edge_fan(aes(color=weight)) +
+  geom_node_point(aes(label=name), size=3) + 
+  geom_node_text(aes(label=name), repel=TRUE) + 
+  theme_graph(foreground="steelblue") +
+  #coord_fixed() +
+  scale_edge_color_gradient2("weight", low=muted("blue"), mid="white", high=muted("red")) +
+  ggtitle("LH average edge weight from BRMS")
+dev.off()
+
+
 ###RIGHT
 edge_df_rh <- do.call(rbind, lapply(gobj_all_rh$glist, function(g) {
   df <- get.data.frame(g)
@@ -172,6 +206,57 @@ summary(e_test)
 emmeans(e_test, ~to | from)
 pairs(emmeans(e_test, ~to | from))
 
+df <- summary(emmeans(e_test, ~to * from))
+gg_rh <- graph_from_edgelist(as.matrix(df[,c("from", "to")]))
+E(gg_rh)$weight <- df$emmean
+
+lmer_rh_plot <- as_tbl_graph(gg_rh) %>%
+  activate(edges) %>%
+  filter(!is.na(weight))
+
+ggraph(lmer_rh_plot, layout='linear', circular=TRUE) + geom_edge_arc(aes(color=weight)) +
+  geom_node_point(aes(label=name), size=3) + 
+  geom_node_text(aes(label=name), repel=TRUE) + 
+  theme_graph(foreground="steelblue") +
+  coord_fixed() + 
+  scale_edge_color_gradient2("weight", low=muted("blue"), mid="white", high=muted("red"))
+
+
+png("rh_brms_group_weights.png", width=12, height=12, units="in", res=300)
+ggraph(lmer_rh_plot, layout='auto') + 
+  geom_edge_fan(edge_width=1.5, aes(color=weight, start_cap = label_rect(node1.name), end_cap = label_rect(node2.name)), arrow = arrow(type = "open", length = unit(3, 'mm'))) +
+  #geom_edge_fan(aes(color=weight)) +
+  geom_node_point(aes(label=name), size=3) + 
+  geom_node_text(aes(label=name), repel=TRUE) + 
+  theme_graph(foreground="steelblue") +
+  #coord_fixed() +
+  scale_edge_color_gradient2("weight", low=muted("blue"), mid="white", high=muted("red")) +
+  ggtitle("RH average edge weight from BRMS")
+dev.off()
+
+
+rh_graph <- as_tbl_graph(gg_rh) %>% activate(edges) %>% mutate(side="Right") %>%
+  activate(nodes) %>% mutate(name=sub("^.", "", name))
+lh_graph <- as_tbl_graph(gg_lh) %>% activate(edges) %>% mutate(side="Left") %>%
+  activate(nodes) %>% mutate(name=sub("^.", "", name))
+comb_graph <- graph_join(rh_graph, lh_graph) %>%
+  activate(edges) %>%
+  filter(!is.na(weight) & abs(weight) > 0.015)
+
+pdf("Brms_6slc_combined_group_graphs_filtered.pdf", width=15, height=8)
+ggraph(comb_graph, layout='auto') + #geom_edge_arc(aes(color=weight)) +
+  geom_edge_arc(edge_width=1.5, aes(color=weight, start_cap = label_rect(node1.name), end_cap = label_rect(node2.name)), 
+                arrow = arrow(type = "open", length = unit(3, 'mm'))) +
+  geom_node_point(size=3) + 
+  geom_node_text(aes(label=name), color="black", size=9, repel=TRUE) + 
+  theme_graph(foreground="steelblue") +
+  facet_edges(~side) +
+  scale_edge_color_gradient2("weight", low=muted("blue"), mid="white", high=muted("red")) +
+  #scale_edge_color_gradient2("weight", low="#87CEFA", mid="gray60", high="#EEE8AA") +
+  theme_graph(background="white", caption_colour="gray60", strip_text_size = 20,
+              strip_text_colour="gray30", base_size=15)
+dev.off()
+
 #e_test_brms <- brm(weight ~ from*to + (1|ID), edge_df_rh) # brms of brms? only in your dreams
 #summary(e_test_brms)
 
@@ -179,3 +264,16 @@ pairs(emmeans(e_test, ~to | from))
 #save(gobj_rh, file="output/rm1_rh_6slc_brms_graphmeasures.RData")
 
 save(gobj_lh, gobj_rh, gobj_all_lh, gobj_all_rh, edge_df_lh, edge_df_rh, file="output/brms_6slc_graphs.RData")
+
+edge_df_rh_long <- edge_df_rh %>% dplyr::rename(outgoing=from, incoming=to) %>% gather(key="direction", value="slc", outgoing, incoming)
+pdf("brms_6slc_rh.pdf", width=8, height=6)
+ggplot(edge_df_rh_long, aes(x=slc, y=weight, color=direction)) + geom_point(position=position_dodge(width=0.4), alpha=0.05) + stat_summary(fun.data = "mean_cl_boot", geom="crossbar") +
+  ylim(c(-0.1, 0.18))
+dev.off()
+
+
+edge_df_lh_long <- edge_df_lh %>% dplyr::rename(outgoing=from, incoming=to) %>% gather(key="direction", value="slc", outgoing, incoming)
+pdf("brms_6slc_lh.pdf", width=8, height=6)
+ggplot(edge_df_lh_long, aes(x=slc, y=weight, color=direction)) + geom_point(position=position_dodge(width=0.4), alpha=0.05) + stat_summary(fun.data = "mean_cl_boot", geom="crossbar") +
+  ylim(c(-0.1, 0.18))
+dev.off()
