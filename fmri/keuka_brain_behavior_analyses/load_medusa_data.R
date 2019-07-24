@@ -1,11 +1,14 @@
-unsmoothed = F
+# reads in data
+
 if (unsmoothed) {
-medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked"
+medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_unsmoothed"
 } else {
   medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked"}
 
-
-cache_dir="~/Box/SCEPTIC_fMRI/var"
+if (unsmoothed) {
+cache_dir="~/Box/SCEPTIC_fMRI/var/unsmoothed"
+} else {
+  cache_dir="~/Box/SCEPTIC_fMRI/var"}
 if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
 
 stopifnot(dir.exists(medusa_dir))  

@@ -8,12 +8,17 @@ library(broom.mixed) #plays will with afex p-values in lmer wrapper
 library(ggpubr)
 library(car)
 
-setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var")
+unsmoothed = T
+if (unsmoothed) {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/unsmoothed")
+} else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/")}
+
 load('feedback_hipp_tallest_by_timepoint_decon.Rdata')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 load('trial_df_and_vhdkfpe_clusters.Rdata')
 
-cache_dir <- "~/Box/SCEPTIC_fMRI/var"
+if (unsmoothed) {cache_dir <- "~/Box/SCEPTIC_fMRI/var/unsmoothed"
+} else {cache_dir <- "~/Box/SCEPTIC_fMRI/var/"}
+
 repo_dir <- "~/Data_Analysis/clock_analysis"
 
 #super-wide variant used in lm analysis
@@ -93,11 +98,11 @@ if (rt) {
     
     terms <- names(fixef(mf))
     if (trial_cont) {
-      setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict')
-    }
+      if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/unsmoothed')
+        } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict')}}
     else {
-      setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/no_trial_contingency/')}
-    
+      if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/unsmoothed/no_trial_contingency')
+      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/no_trial_contingency/')}}
     if (plots) {
       for (fe in terms)
       {edf <- bdf %>% filter(term == paste(fe) & t < 8)
@@ -118,7 +123,7 @@ if (rt) {
 }
 ########
 # "decoding" analyses
-for (trial_cont in c("F")) {
+for (trial_cont in c("F", "T")) {
   newlist <- list()
   for (slice in 1:12) {print(paste("Processing slice", slice, sep = " "))
     for (side in c("l", "r")) {
@@ -160,10 +165,11 @@ for (trial_cont in c("F")) {
   
   ddf$p_level_fdr <- factor(ddf$p_level_fdr, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   if (trial_cont) {
-    setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode')
-  } else {
-    setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/no_trial_contingency/')
-  }
+    if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/unsmoothed')
+    } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode')}}
+  else {
+    if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/unsmoothed/no_trial_contingency')
+    } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/no_trial_contingency/')}}
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe) & t < 8) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")

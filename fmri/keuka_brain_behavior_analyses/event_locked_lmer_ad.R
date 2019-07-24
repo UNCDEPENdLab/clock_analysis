@@ -18,6 +18,7 @@ library(emmeans)
 plots = F
 reprocess = T
 analyze = F
+unsmoothed = T
 
 repo_directory <- "~/code/clock_analysis"
 # repo_directory <- "~/Data_Analysis/clock_analysis"

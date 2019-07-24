@@ -100,8 +100,3 @@ ggplot(df,aes(run_trial,rt_csv, lty = pe_f2_hipp_resp)) + geom_smooth() + facet_
 
 # not a huge impact of KLD betas on RT swings...
 
-# read in hippocampal centrality variables
-load('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/brms_6slc_graphs.RData')
-node_df_lh <- gobj_lh$all_nodal
-node_df_rh <- gobj_rh$all_nodal
-
