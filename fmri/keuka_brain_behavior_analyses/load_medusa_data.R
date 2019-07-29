@@ -2,8 +2,21 @@ library(data.table)
 library(tidyr)
 library(readr)
 
-medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked"
-cache_dir="~/Box/SCEPTIC_fMRI/var"
+
+# reads in data
+if (unsmoothed) {
+  medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_unsmoothed"
+} else {
+  medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked"
+}
+
+if (unsmoothed) {
+  cache_dir="~/Box/SCEPTIC_fMRI/var/unsmoothed"
+} else {
+  cache_dir="~/Box/SCEPTIC_fMRI/var"
+}
+
+
 if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
 if (!exists("repo_directory")) { repo_directory <- "~/Data_Analysis/clock_analysis" } #default
 reprocess <- TRUE
@@ -82,6 +95,7 @@ if (!reprocess) {
           iti_prev = lag(iti_ideal),
           omission_lag = lag(score_csv==0),
           rt_vmax_lag = lag(rt_vmax),
+          rt_vmax_change = rt_vmax - rt_vmax_lag,
           v_entropy_wi = scale(v_entropy),
           v_entropy_wi_lead = lead(v_entropy_wi),
           v_entropy_wi_change = v_entropy_wi_lead - v_entropy_wi,
@@ -137,9 +151,9 @@ if (!reprocess) {
           swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, gamma, total_earnings) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
       group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
       inner_join(clock)
-  
-  fb_comb <- trial_df %>% select(id, run, trial, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
-          swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, gamma, total_earnings, ev,next_swing_above_median) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+  fb_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
+          swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, rt_vmax_lag, rt_vmax_change,
+          gamma, total_earnings, ev,next_swing_above_median) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
       group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
       inner_join(fb)
   
@@ -345,7 +359,7 @@ if (!reprocess) {
   
   save(fb_wide, fb_wide_ex, fb_wide6, fb_wide6_ex, file = file.path(cache_dir, "feedback_hipp_wide_ts.Rdata"))
   save(fb_comb, file = file.path(cache_dir, "feedback_hipp_tall_ts.Rdata"))
-  save(fb_wide_t, file = file.path(cache_dir, 'feedback_hipp_tallest_by_timepoint_decon.Rdata'))
+  save(fb_wide_t, file = file.path(cache_dir, 'feedback_hipp_widest_by_timepoint_decon.Rdata'))
   
   clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
   

@@ -49,27 +49,27 @@ anova(r1,r2,r3)
 
 # same for KL distance
 ## paradox: plots show that it speeds them up, but the model does not detect it!!!
-rk0 <- lmer(rt_csv ~ scale(-1/run_trial) + rewFuncIEVsum + k_f1_IPL_ventr_stream + k_f2_prefrontal_bg + (1|id/run), df)
-screen.lmerTest(rk0)
-car::Anova(rk0,'3')
-
-rk2 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFuncIEVsum + k_f1_IPL_ventr_stream )^3 +
-              (scale(-1/run_trial) + rewFuncIEVsum + k_f2_prefrontal_bg )^3 + (1|id/run), df)
-screen.lmerTest(rk2)
-car::Anova(rk2,'3')
-anova(r1,rk2)
-
-# same for KLD at feedback -- not much going on here
-rkf0 <- lmer(rt_csv ~ scale(-1/run_trial) + rewFuncIEVsum + kf_f1_fp_temp + kf_f3_str_front_ins + kf_f2_vmpfc_precun + (1|id/run), df)
-screen.lmerTest(rkf0)
-car::Anova(rkf0,'3')
-
-rkf2 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFuncIEVsum + kf_f1_fp_temp )^3 +
-              (scale(-1/run_trial) + rewFuncIEVsum + kf_f3_str_front_ins )^3 + 
-               (scale(-1/run_trial) + rewFuncIEVsum + kf_f2_vmpfc_precun )^3 +  (1|id/run), df)
-screen.lmerTest(rkf2)
-car::Anova(rkf2,'3')
-anova(r1,rkf2)
+# rk0 <- lmer(rt_csv ~ scale(-1/run_trial) + rewFuncIEVsum + k_f1_IPL_ventr_stream + k_f2_prefrontal_bg + (1|id/run), df)
+# screen.lmerTest(rk0)
+# car::Anova(rk0,'3')
+# 
+# rk2 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFuncIEVsum + k_f1_IPL_ventr_stream )^3 +
+#               (scale(-1/run_trial) + rewFuncIEVsum + k_f2_prefrontal_bg )^3 + (1|id/run), df)
+# screen.lmerTest(rk2)
+# car::Anova(rk2,'3')
+# anova(r1,rk2)
+# 
+# # same for KLD at feedback -- not much going on here
+# rkf0 <- lmer(rt_csv ~ scale(-1/run_trial) + rewFuncIEVsum + kf_f1_fp_temp + kf_f3_str_front_ins + kf_f2_vmpfc_precun + (1|id/run), df)
+# screen.lmerTest(rkf0)
+# car::Anova(rkf0,'3')
+# 
+# rkf2 <- lmer(rt_csv ~ (scale(-1/run_trial) + rewFuncIEVsum + kf_f1_fp_temp )^3 +
+#               (scale(-1/run_trial) + rewFuncIEVsum + kf_f3_str_front_ins )^3 + 
+#                (scale(-1/run_trial) + rewFuncIEVsum + kf_f2_vmpfc_precun )^3 +  (1|id/run), df)
+# screen.lmerTest(rkf2)
+# car::Anova(rkf2,'3')
+# anova(r1,rkf2)
 
 
 # same for PE
@@ -228,6 +228,11 @@ screen.lmerTest(wr2pe)
 
 wr3hpe <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_f1_fp + I(-h_f2_neg_paralimb) + pe_f1_cort_str + pe_f2_hipp)^2 + v_max_b + v_entropy_b +   (1|id/run), df)
 screen.lmerTest(wr3hpe)
+# control for performance
+wr3hpe_perf <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_f1_fp + I(-h_f2_neg_paralimb) + pe_f1_cort_str + pe_f2_hipp + scale(total_earnings))^2 + 
+                      scale(rt_lag)*pe_f2_hipp*scale(total_earnings) + v_max_b + v_entropy_b +   (1|id/run), df)
+screen.lmerTest(wr3hpe_perf)
+
 
 wr3hv <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag  + h_f1_fp + I(-h_f2_neg_paralimb) + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + v_max_b + v_entropy_b +  (1|id/run), df)
 screen.lmerTest(wr3hv)
