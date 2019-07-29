@@ -8,7 +8,7 @@ library(broom.mixed) #plays will with afex p-values in lmer wrapper
 library(ggpubr)
 library(car)
 
-unsmoothed = T
+unsmoothed = F
 if (unsmoothed) {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/unsmoothed")
 } else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/")}
 
@@ -65,11 +65,11 @@ if (rt) {
         for (t in -1:10) {
           d$h<-d[[paste("hipp", slice, side, t, sep = "_")]]
           if (trial_cont) {
-            mf <-  lmerTest::lmer(rt_next ~ scale(-1/run_trial)*rewFunc + scale(rt_csv) * scale(pe_max) * h + scale(rt_vmax_lag) *  h + scale(rt_vmax_change) * h + (1|id/run), d)
+            mf <-  lmerTest::lmer(rt_next ~ scale(-1/run_trial)*rewFunc + scale(rt_csv) * reward * h + scale(rt_vmax_lag) *  h + scale(rt_vmax_change) * h + (1|id/run), d)
           }
           else {
             # mf <-  lme4::lmer(rt_next ~ (scale(pe_max) + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + scale(v_entropy_wi) + h)^2 + (1|id/run), d)
-            mf <-  lmerTest::lmer(rt_next ~ scale(rt_csv) * scale(pe_max) * h + scale(rt_vmax_lag) *  h + scale(rt_vmax_change) *  h + (1|id/run), d)
+            mf <-  lmerTest::lmer(rt_next ~ scale(rt_csv) * reward * h + scale(rt_vmax_lag) *  h + scale(rt_vmax_change) *  h + (1|id/run), d)
           }
           dm <- broom.mixed::tidy(mf,effects = "fixed")
           dm$slice <- slice
