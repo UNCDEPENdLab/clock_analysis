@@ -12,7 +12,7 @@ unsmoothed = F
 if (unsmoothed) {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/unsmoothed")
 } else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/")}
 
-load('feedback_hipp_tallest_by_timepoint_decon.Rdata')
+load('feedback_hipp_widest_by_timepoint_decon.Rdata')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 load('trial_df_and_vhdkfpe_clusters.Rdata')
 

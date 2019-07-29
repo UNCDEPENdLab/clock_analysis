@@ -328,7 +328,7 @@ if (!reprocess) {
   
   save(fb_wide, fb_wide_ex, fb_wide6, fb_wide6_ex, file = file.path(cache_dir, "feedback_hipp_wide_ts.Rdata"))
   save(fb_comb, file = file.path(cache_dir, "feedback_hipp_tall_ts.Rdata"))
-  save(fb_wide_t, file = file.path(cache_dir, 'feedback_hipp_tallest_by_timepoint_decon.Rdata'))
+  save(fb_wide_t, file = file.path(cache_dir, 'feedback_hipp_widest_by_timepoint_decon.Rdata'))
   
   clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
   
