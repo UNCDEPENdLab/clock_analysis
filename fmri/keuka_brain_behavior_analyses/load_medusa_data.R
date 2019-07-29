@@ -1,7 +1,12 @@
+library(data.table)
+library(tidyr)
+library(readr)
+
 medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked"
 cache_dir="~/Box/SCEPTIC_fMRI/var"
 if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
-
+if (!exists("repo_directory")) { repo_directory <- "~/Data_Analysis/clock_analysis" } #default
+reprocess <- TRUE
 stopifnot(dir.exists(medusa_dir))  
 stopifnot(dir.exists(cache_dir))  
 
@@ -23,11 +28,16 @@ if (!reprocess) {
   r <- read_csv("long_axis_r_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'r')
   clock <- rbind(l,r) 
   clock <- clock[clock$id!=11347,]
+  
   # load feedback, SWITCH TO LONG
   l <- read_csv("long_axis_l_2.3mm_feedback_long_decon_locked.csv.gz") %>% mutate(side = 'l')
   r <- read_csv("long_axis_r_2.3mm_feedback_long_decon_locked.csv.gz") %>% mutate(side = 'r')
   fb <- rbind(l,r)
   fb <- fb[fb$id!=11347,]
+  
+  # for a complete run, we have 14400 observations
+  # = 12 time bins * 2 sides * 12 slices * 50 trials
+  #xtabs(~id + run, fb)
   
   # load RT(vmax)
   l <- read_csv("long_axis_l_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'l')
@@ -123,32 +133,36 @@ if (!reprocess) {
   
   trial_df <- inner_join(trial_df, params, by = "id")
   
-  clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
+  clock_comb <- trial_df %>% select(id, run, trial, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
           swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, gamma, total_earnings) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
       group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
       inner_join(clock)
-  fb_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
+  
+  fb_comb <- trial_df %>% select(id, run, trial, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
           swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, gamma, total_earnings, ev,next_swing_above_median) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
       group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
       inner_join(fb)
-  rtvmax_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
+  
+  #xtabs(~id + run, fb_comb) #still looks like 14400 per valid run
+  
+  rtvmax_comb <- trial_df %>% select(id, run, trial, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
           swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, rt_vmax, gamma, total_earnings) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
       group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
       inner_join(rtvmax)
-  v1_clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
+  v1_clock_comb <- trial_df %>% select(id, run, trial, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
           swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
       group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
       inner_join(v1clock)
-  m1L_clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
+  m1L_clock_comb <- trial_df %>% select(id, run, trial, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
           swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
       group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
       inner_join(m1Lclock)
   
-  v1_feedback_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
+  v1_feedback_comb <- trial_df %>% select(id, run, trial, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
           swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
       group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
       inner_join(v1_fb)
-  m1L_feedback_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
+  m1L_feedback_comb <- trial_df %>% select(id, run, trial, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
           swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
       group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
       inner_join(m1L_fb)
@@ -303,16 +317,30 @@ if (!reprocess) {
   
   fb_comb <- fb_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
   fb_comb <- fb_comb %>% mutate(bin6 = round((bin_num + .5)/2,digits = 0)) # also a 6-bin version
-  fb_wide <- fb_comb %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
-  names(fb_wide)[5:28] <- paste("hipp", names(fb_wide)[5:28], sep = "_")
+  
+  #spread slice and side out onto columns. Should decrease rows per run x24 (12 times x 2 sides)
+  fb_wide <- fb_comb %>% select(id, run, trial, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
+  nrow(fb_comb)/nrow(fb_wide) #passes sanity check: should be 24
+  
+  #brms is complaining about repeats of trial within person and potentially run. Do we see this?
+  row_counts <- fb_comb %>% group_by(id, run, run_trial) %>% tally() %>% ungroup()
+  range(row_counts$n) #288 observations for id + run + run_trial combinations. This reflects 12 event times * 12 slices * 2 sides. PASS
+  
+  #what about in wide format?
+  wide_counts <- fb_wide %>% group_by(id, run, run_trial) %>% summarise_at(vars(starts_with("hipp")), tot=n())
+  
+  hcols <- grep("\\d_[lr]", names(fb_wide))
+  names(fb_wide)[hcols] <- paste("hipp", names(fb_wide)[hcols], sep = "_")
   fb_wide_ex <- inner_join(fb_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi")], by = c("id", "run", "run_trial"))
+  
   fb_wide6 <- fb_comb %>% select(id, run, run_trial, evt_time, side, bin6, decon_interp) %>% group_by(id, run, run_trial, evt_time, side, bin6) %>% summarise(decon6  = mean(decon_interp)) %>% spread(key = side, decon6) %>% myspread(bin6, c("l", "r"))
-  names(fb_wide6)[5:length(names(fb_wide6))] <- paste("hipp", names(fb_wide6)[5:length(names(fb_wide6))], sep = "_")
+  hcols6 <- grep("\\d_[lr]", names(fb_wide6))
+  names(fb_wide6)[hcols6] <- paste("hipp", names(fb_wide6)[hcols6], sep = "_")
   fb_wide6_ex <- inner_join(fb_wide6, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi")], by = c("id", "run", "run_trial"))
   
   # save fb responses for trial-wise prediction analyses
   
-  slices <- names(fb_wide)[5:28]
+  slices <- names(fb_wide)[hcols]
   fb_wide_t <- dcast(setDT(fb_wide), id + run + run_trial ~ evt_time, value.var = slices)
   
   save(fb_wide, fb_wide_ex, fb_wide6, fb_wide6_ex, file = file.path(cache_dir, "feedback_hipp_wide_ts.Rdata"))
@@ -322,8 +350,8 @@ if (!reprocess) {
   clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
   
   # take only online event times
-  clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
-  names(clock_wide)[5:28] <- paste("hipp", names(clock_wide)[5:28], sep = "_")
+  clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, trial, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
+  names(clock_wide)[hcols] <- paste("hipp", names(clock_wide)[hcols], sep = "_")
   clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
   
   save(clock_wide, clock_wide_ex, file = file.path(cache_dir, "clock_hipp_wide_ts.Rdata"))
