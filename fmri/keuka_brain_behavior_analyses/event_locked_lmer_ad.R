@@ -531,13 +531,13 @@ if (analyze) {
   dev.off()
   
 # test for ramps in AH in rtvmax-aligned data: quadratic term
-  
-  rm1 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z + decon_prev_z + entropy_lag + reward_lag + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR")))
+# strangely we only see ramps on long-ITI trials  
+  rm1 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z + decon_prev_z + entropy_lag + reward_lag + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>1 & iti_ideal > 2 & rt_csv > 1 & (rewFunc!="CEVR" & rewFunc!="CEV")))
   summary(rm1)
   vif.lme(rm1)
   
 # add entropy modulation
-  rm2 <- lmer(decon_interp ~ evt_time*bin_center_z*entropy_lag + evt_time_sq*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR")))
+  rm2 <- lmer(decon_interp ~ evt_time*bin_center_z*entropy_lag + evt_time_sq*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR" & rewFunc!="CEV")))
   summary(rm2)
   vif.lme(rm2)
   car::Anova(rm2)
@@ -551,14 +551,14 @@ if (analyze) {
   dev.off()
   
 # nesting within trial
-  rm2t <- lmer(decon_interp ~ evt_time*bin_center_z*entropy_lag + evt_time_sq*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + (1 | id/run/run_trial) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR")))
+  rm2t <- lmer(decon_interp ~ evt_time*bin_center_z*entropy_lag + evt_time_sq*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + (1 | id/run/run_trial) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR" & rewFunc!="CEV")))
   summary(rm2t)
   vif.lme(rm2)
   car::Anova(rm2, '3')
   
   
 # test the same with time as factor -- that results in a singular fit
-  rm2f <- lmer(decon_interp ~ evt_time_f*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR") ))
+  rm2f <- lmer(decon_interp ~ evt_time_f*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR" & rewFunc!="CEV") ))
   summary(rm2f)
   vif.lme(rm2f)
   car::Anova(rm2f)
@@ -570,7 +570,7 @@ if (analyze) {
   
 # check that it's specific to entropy and not last reward
 # it is, but PH is also more active after omissions and AH, after rewards
-  rm3 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z*reward_lag + decon_prev_z + entropy_lag + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR") ))
+  rm3 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z*reward_lag + decon_prev_z + entropy_lag + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR" & rewFunc!="CEV") ))
   summary(rm3)
   vif.lme(rm3)
   car::Anova(rm3)
