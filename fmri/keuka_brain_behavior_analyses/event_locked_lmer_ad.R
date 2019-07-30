@@ -16,7 +16,7 @@ library(emmeans)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
-reprocess = F
+reprocess = T
 analyze = F
 unsmoothed = F
 
@@ -557,7 +557,7 @@ if (analyze) {
   car::Anova(rm2, '3')
   
   
-# test the same with time as factor
+# test the same with time as factor -- that results in a singular fit
   rm2f <- lmer(decon_interp ~ evt_time_f*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR") ))
   summary(rm2f)
   vif.lme(rm2f)
@@ -574,7 +574,7 @@ if (analyze) {
   summary(rm3)
   vif.lme(rm3)
   car::Anova(rm3)
-  g <- ggpredict(rm3, terms = c("bin_center_z [-2,-1, 0, 1,2]", "reward_lag"))
+  g <- ggpredict(rm3, terms = c("evt_time","bin_center_z [-2,-1, 0, 1,2]", "reward_lag"))
   g <- plot(g, facet = F, dodge = .3)
   g + scale_color_viridis_d(option = "plasma") + theme_dark()
   
