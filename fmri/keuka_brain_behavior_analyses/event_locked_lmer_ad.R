@@ -698,7 +698,10 @@ if (analyze) {
   car::Anova(ee5, '3')
   vif.lme(ee5)
   anova(ee1,ee2,ee3,ee4,ee5)
-  
+
+  #models: each one has 1 3-way interaction e.g., bin_num_f*evt_time_f*scale(rt_csv)
+  # 2 3-way interactions: 
+    
   # replicate lm decoding analyses
   # scale(-1/run_trial)*rewFunc + reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi
   fb_comb$bin_num_f <- as.factor(fb_comb$bin_num)
