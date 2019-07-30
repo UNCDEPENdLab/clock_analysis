@@ -335,6 +335,8 @@ if (!reprocess) {
   # take only online event times
   clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
   names(clock_wide)[5:28] <- paste("hipp", names(clock_wide)[5:28], sep = "_")
+  fb_wide_t <- dcast(setDT(clock_wide), id + run + run_trial ~ evt_time, value.var = slices)
+  
   clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
   
   save(clock_wide, clock_wide_ex, file = file.path(cache_dir, "clock_hipp_wide_ts.Rdata"))

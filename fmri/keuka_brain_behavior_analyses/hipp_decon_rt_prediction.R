@@ -206,7 +206,7 @@ dfc <- dfc %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(rewa
                                                                             v_entropy_wi_lead = lead(v_entropy_wi),
                                                                             v_entropy_wi_change = v_entropy_wi_lead-v_entropy_wi) %>% ungroup()
 
-# God help me -- centrality loop
+# centrality loop
 newlist <- list()
 for (slice in c(2,4,6,8,10,12)) {print(paste("Processing slice", slice, sep = " "))
   for (side in c("lh", "rh")) {
