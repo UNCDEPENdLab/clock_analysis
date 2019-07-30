@@ -16,7 +16,7 @@ library(emmeans)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
-reprocess = T
+reprocess = F
 analyze = F
 unsmoothed = F
 

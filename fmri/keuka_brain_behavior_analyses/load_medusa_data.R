@@ -25,7 +25,7 @@ if (!reprocess) {
   # load(file.path(cache_dir, "feedback_hipp_tall.Rdata"))
   load(file.path(cache_dir, 'feedback_hipp_tall_ts.Rdata'))
   load(file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))
-  
+  load(file.path(cache_dir, 'rtvmax_hipp_tall_ts.Rdata'))
 } else {
   
   l <- read_csv("long_axis_l_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
