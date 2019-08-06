@@ -16,7 +16,7 @@ library(emmeans)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
-reprocess = F
+reprocess = T
 analyze = F
 unsmoothed = F
 
@@ -116,7 +116,7 @@ if (plots) {
   # Plots made with function
   # Tactics: make line plots and test significance in lmer
   
-  setwd(file.path(repo_directory, "clock_analysis/fmri/keuka_brain_behavior_analyses/plots"))
+  setwd(file.path(repo_directory, "/fmri/keuka_brain_behavior_analyses/plots"))
   
   # offline activity post-feedback
   ch <- plot_by_summary("feedback", trial_split = reward, filter_expr = "iti_ideal>7 & evt_time>=0", change = FALSE)
@@ -530,44 +530,61 @@ if (analyze) {
   g + scale_color_viridis_d(option = "plasma") + theme_dark()
   dev.off()
   
+  
 # test for ramps in AH in rtvmax-aligned data: quadratic term
+  
+# filter by ITI, RT, and evt_time <3
+rvdf <- rtvmax_comb %>% filter(online == "TRUE" & iti_prev>1 & iti_ideal > 2 & rt_csv > 1 & rewFunc!="CEVR" & rewFunc!="CEV" & evt_time < 3)
+rvdf$bin_num <- as.factor(rvdf$bin_num)
 # strangely we only see ramps on long-ITI trials  
-  rm1 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z + decon_prev_z + entropy_lag + reward_lag + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>1 & iti_ideal > 2 & rt_csv > 1 & (rewFunc!="CEVR" & rewFunc!="CEV")))
+  rm1 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z + decon_prev_z + entropy_lag + reward_lag + (1 | id/run) + (1 | side), rvdf)
   summary(rm1)
+  Anova(rm1)
   vif.lme(rm1)
   
 # add entropy modulation
-  rm2 <- lmer(decon_interp ~ evt_time*bin_center_z*entropy_lag + evt_time_sq*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR" & rewFunc!="CEV")))
+  rm2 <- lmer(decon_interp ~ (evt_time + bin_center_z + entropy_lag + side) ^3 + (evt_time_sq + bin_center_z + entropy_lag + side) ^3 + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + scale(rt_csv)*evt_time_sq + (1 | id/run) + (1 | side), rvdf)
   summary(rm2)
   vif.lme(rm2)
-  car::Anova(rm2)
-  anova(rm1,rm2)
+  Anova(rm2)
+  anova(rm1,rm2,rm2f)
   
-# plot out the ramp and entropy modulation
-  g <- ggpredict(rm2, terms = c("evt_time_sq [0,1,2,3,4]", "bin_center_z [-2,-1, 0, 1,2]", "entropy_lag"))
-  g <- plot(g, facet = F, dodge = .2)
-  pdf("ramps_in_AH.pdf", width = 6, height = 6)
-  g + scale_color_viridis_d(option = "plasma") + theme_dark()
-  dev.off()
+# compare 
   
-# nesting within trial
-  rm2t <- lmer(decon_interp ~ evt_time*bin_center_z*entropy_lag + evt_time_sq*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + (1 | id/run/run_trial) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR" & rewFunc!="CEV")))
-  summary(rm2t)
-  vif.lme(rm2)
-  car::Anova(rm2, '3')
-  
-  
-# test the same with time as factor -- that results in a singular fit
-  rm2f <- lmer(decon_interp ~ evt_time_f*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR" & rewFunc!="CEV") ))
+# # nesting within trial
+#   rm2t <- lmer(decon_interp ~ evt_time*bin_center_z*entropy_lag + evt_time_sq*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + (1 | id/run/run_trial) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR" & rewFunc!="CEV")))
+#   summary(rm2t)
+#   vif.lme(rm2)
+#   car::Anova(rm2, '3')
+
+    
+# test the same with time as factor -- that results in a singular fit due to 0 variance for ID
+  rm2f <- lmer(decon_interp ~ (evt_time_f + bin_center_z + entropy_lag + side) ^3 + decon_prev_z + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), rvdf)
   summary(rm2f)
   vif.lme(rm2f)
-  car::Anova(rm2f)
-  g <- ggpredict(rm2f, terms = c("evt_time_f", "bin_center_z [-2,-1, 0, 1,2]", "entropy_lag"))
-  g <- plot(g, facet = F, dodge = .4)
-  pdf("ramps_in_AH_f.pdf", width = 6, height = 6)
-  g + scale_color_viridis_d(option = "plasma") + theme_dark()
+  Anova(rm2f)
+  em2f <- as.data.frame(emmeans(rm2f,specs = c("evt_time_f", "bin_center_z", "entropy_lag"), at = list(bin_center_z = c(-2,-1, 0, 1,2))))
+  em2f$hipp_response <- em2f$emmean
+  
+  pdf("ramps_in_AH_f.pdf", width = 6, height = 4)
+    ggplot(em2f, aes(evt_time_f, hipp_response, group = bin_center_z, color = bin_center_z)) + geom_point() + 
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line() + facet_wrap(side~entropy_lag) + scale_color_viridis() + theme_dark()
+  dev.off()
+
+# make bin a factor
+  rm2ff <- lmer(decon_interp ~ (evt_time_f + bin_num + entropy_lag + side) ^2 + decon_prev_z + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), rvdf)
+  summary(rm2ff)
+  vif.lme(rm2f)
+  Anova(rm2ff)
+  em2ff <- as.data.frame(emmeans(rm2ff,specs = c("evt_time_f", "bin_num", "entropy_lag", "side")))
+  em2ff$hipp_response <- em2ff$emmean
+  anova(rm2f,rm2ff)
+  pdf("ramps_in_AH_ff.pdf", width = 8, height = 6)
+  ggplot(em2ff, aes(evt_time_f, hipp_response, group = bin_num, color = bin_num)) + geom_point() + 
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line() + facet_wrap(side~entropy_lag) + scale_color_viridis_d() + theme_dark()
   dev.off()
   
+    
 # check that it's specific to entropy and not last reward
 # it is, but PH is also more active after omissions and AH, after rewards
   rm3 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z*reward_lag + decon_prev_z + entropy_lag + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR" & rewFunc!="CEV") ))
