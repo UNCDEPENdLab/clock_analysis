@@ -91,13 +91,21 @@ wr3hpe3 <-  update(wr3hpe, . ~ . +
                      (1|id/run), df)
 screen.lmerTest(wr3hpe3)
 car::Anova(wr3hpe3)
-r1 <- emtrends(wr3hpe3, var = "rt_vmax_lag_sc", specs = c("AH_neg_sc"), at = (list(rt_vmax_lag_sc = c(-2,0,2), AH_neg_sc  = c(-2,0,2))))
+
+#### for the paper, plot from simpler model
+r1 <- emtrends(wr3hpe, var = "rt_vmax_lag_sc", specs = c("AH_neg_sc"), at = (list(rt_vmax_lag_sc = c(-2,0,2), AH_neg_sc  = c(-2,0,2))))
 r1 <- as.data.frame(r1)
 ggplot(r1, aes(AH_neg_sc, rt_vmax_lag_sc.trend)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_point(size = 5)
-r1 <- emmeans(wr3hpe3, specs = c("rt_vmax_lag_sc","AH_neg_sc"), at = (list(rt_vmax_lag_sc = c(-2,0,2), AH_neg_sc  = c(-2,0,2))))
-r1 <- as.data.frame(r1)
-r1$`Predicted RT` <- r1$emmean
-ggplot(r1, aes(rt_vmax_lag_sc, `Predicted RT`, group = AH_neg_sc, color = AH_neg_sc)) + geom_line() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_point(size = 5)
+
+r2 <- emtrends(wr3hpe, var = "rt_lag_sc", specs = c("pe_f2_hipp"), at = (list(rt_vmax_lag_sc = c(-2,0,2), pe_f2_hipp  = c(-2,0,2))))
+r2 <- as.data.frame(r2)
+ggplot(r2, aes(pe_f2_hipp, -rt_lag_sc.trend)) + geom_errorbar(aes(ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point(size = 5)
+
+
+# r1 <- emmeans(wr3hpe, specs = c("rt_vmax_lag_sc","AH_neg_sc"), at = (list(rt_vmax_lag_sc = c(-2,0,2), AH_neg_sc  = c(-2,0,2))))
+# r1 <- as.data.frame(r1)
+# r1$`Predicted RT` <- r1$emmean
+# ggplot(r1, aes(rt_vmax_lag_sc, `Predicted RT`, group = AH_neg_sc, color = AH_neg_sc)) + geom_line() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_point(size = 5)
 
 
 
