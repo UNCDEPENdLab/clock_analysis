@@ -4,6 +4,7 @@ library(psych)
 library(corrplot)
 library(lme4)
 library(lmerTest)
+library(emmeans)
 # source('~/code/Rhelpers/')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 load('trial_df_and_vhdkfpe_clusters.Rdata')
@@ -83,13 +84,20 @@ ggplot(r1, aes(rt_lag_sc, emmean, color = AH_neg_sc)) + geom_point(aes(rt_lag_sc
 
 
 
-##### BEST MODEL
+##### more complete model, not significantly better than wr3hpe (2 AIC points)
 wr3hpe3 <-  update(wr3hpe, . ~ . + 
-                     rt_lag_sc:v_entropy_wi_sc:AH_neg + rt_lag_sc:v_entropy_wi_sc:pe_f2_hipp + 
-                     rt_vmax_lag_sc:trial_neg_inv_sc:AH_neg + rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
+                     rt_lag_sc:v_entropy_wi_sc:AH_neg_sc + rt_lag_sc:v_entropy_wi_sc:pe_f2_hipp + 
+                     rt_vmax_lag_sc:trial_neg_inv_sc:AH_neg_sc + rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
                      (1|id/run), df)
 screen.lmerTest(wr3hpe3)
-
+car::Anova(wr3hpe3)
+r1 <- emtrends(wr3hpe3, var = "rt_vmax_lag_sc", specs = c("AH_neg_sc"), at = (list(rt_vmax_lag_sc = c(-2,0,2), AH_neg_sc  = c(-2,0,2))))
+r1 <- as.data.frame(r1)
+ggplot(r1, aes(AH_neg_sc, rt_vmax_lag_sc.trend)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_point(size = 5)
+r1 <- emmeans(wr3hpe3, specs = c("rt_vmax_lag_sc","AH_neg_sc"), at = (list(rt_vmax_lag_sc = c(-2,0,2), AH_neg_sc  = c(-2,0,2))))
+r1 <- as.data.frame(r1)
+r1$`Predicted RT` <- r1$emmean
+ggplot(r1, aes(rt_vmax_lag_sc, `Predicted RT`, group = AH_neg_sc, color = AH_neg_sc)) + geom_line() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_point(size = 5)
 
 
 

@@ -503,39 +503,44 @@ vif.lme <- function (fit) {
 
 
 if (analyze) {
-  mm <- lmer(decon_interp ~ decon_prev*iti_prev + (1 | id/run), clock_comb %>% filter(evt_time == 1))
-  summary(mm)
-  mm2 <- lmer(decon_interp ~ decon_prev*telapsed*evt_time + (1 | id/run), clock_comb %>% filter(side=="l" & evt_time > 0))
-  summary(mm2)
-  m1 <- lmer(decon_interp ~ (scale(decon_prev) + scale(bin_center) + evt_time)^3 + (1 | id/run) + (1 | side), fb_comb %>% filter(evt_time>0))
-  summary(m1)
-  
-# does entropy differentially modulate signal autocorrelation along the axis?
-  cm2 <- lmer(decon_interp ~ (decon_prev_z + bin_center_z + online + entropy)^3 + (1 | id/run) + (1 | side), clock_comb %>% filter (iti_prev>4 & iti_ideal >2))
-  summary(cm2)
-  vif.lme(cm2)
-  g <- ggpredict(cm2, terms = c("entropy_lag", "bin_center_z [-2,0,2]"))
-  g <- ggpredict(cm2, terms = c("online", "bin_center_z [-2,0,2]"))
-# g <- ggpredict(cm2, terms = c("entropy_lag", "decon_prev [.1,.5,.9]"))
-  g <- plot(g, facet = F, dodge = .4)
-  g + scale_color_viridis_d(option = "plasma") + theme_dark()
-  
-  fm2 <- lmer(decon_interp ~ (decon_prev_z + bin_center_z + online)^2 + (1 | id/run) + (1 | side), clock_comb %>% filter (iti_prev>4 & iti_ideal >3))
-  summary(fm2)
-  vif.lme(fm2)
-# g <- ggpredict(fm2, terms = c("entropy", "bin_center [-2,0,2]"))
-  g <- ggpredict(fm2, terms = c("online", "bin_center_z [-2,0,2]"))
-  g <- plot(g, facet = F, dodge = .2)
-  pdf("ah_vs_ph_online_lmer.pdf", width = 6, height = 6)
-  g + scale_color_viridis_d(option = "plasma") + theme_dark()
-  dev.off()
+#   mm <- lmer(decon_interp ~ decon_prev*iti_prev + (1 | id/run), clock_comb %>% filter(evt_time == 1))
+#   summary(mm)
+#   mm2 <- lmer(decon_interp ~ decon_prev*telapsed*evt_time + (1 | id/run), clock_comb %>% filter(side=="l" & evt_time > 0))
+#   summary(mm2)
+#   m1 <- lmer(decon_interp ~ (scale(decon_prev) + scale(bin_center) + evt_time)^3 + (1 | id/run) + (1 | side), fb_comb %>% filter(evt_time>0))
+#   summary(m1)
+#   
+# # does entropy differentially modulate signal autocorrelation along the axis?
+#   cm2 <- lmer(decon_interp ~ (decon_prev_z + bin_center_z + online + entropy)^3 + (1 | id/run) + (1 | side), clock_comb %>% filter (iti_prev>4 & iti_ideal >2))
+#   summary(cm2)
+#   vif.lme(cm2)
+#   g <- ggpredict(cm2, terms = c("entropy_lag", "bin_center_z [-2,0,2]"))
+#   g <- ggpredict(cm2, terms = c("online", "bin_center_z [-2,0,2]"))
+# # g <- ggpredict(cm2, terms = c("entropy_lag", "decon_prev [.1,.5,.9]"))
+#   g <- plot(g, facet = F, dodge = .4)
+#   g + scale_color_viridis_d(option = "plasma") + theme_dark()
+#   
+#   fm2 <- lmer(decon_interp ~ (decon_prev_z + bin_center_z + online)^2 + (1 | id/run) + (1 | side), clock_comb %>% filter (iti_prev>4 & iti_ideal >3))
+#   summary(fm2)
+#   vif.lme(fm2)
+# # g <- ggpredict(fm2, terms = c("entropy", "bin_center [-2,0,2]"))
+#   g <- ggpredict(fm2, terms = c("online", "bin_center_z [-2,0,2]"))
+#   g <- plot(g, facet = F, dodge = .2)
+#   pdf("ah_vs_ph_online_lmer.pdf", width = 6, height = 6)
+#   g + scale_color_viridis_d(option = "plasma") + theme_dark()
+#   dev.off()
   
   
 # test for ramps in AH in rtvmax-aligned data: quadratic term
   
 # filter by ITI, RT, and evt_time <3
-rvdf <- rtvmax_comb %>% filter(online == "TRUE" & iti_prev>1 & iti_ideal > 2 & rt_csv > 1 & rewFunc!="CEVR" & rewFunc!="CEV" & evt_time < 3)
+rvdf <- rtvmax_comb %>% filter(online == "TRUE" & iti_prev>1 & iti_ideal > 2 & rt_csv > 1 & rewFunc!="CEVR" & evt_time < 3)
 rvdf$bin_num <- as.factor(rvdf$bin_num)
+rvdf <- rvdf %>% mutate(`Hippocampal response` = decon_interp, entropy = case_when(
+  entropy_lag == 'high' ~ 'High entropy',
+  entropy_lag == 'low' ~ 'Low entropy'
+))
+
 # strangely we only see ramps on long-ITI trials  
   rm1 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z + decon_prev_z + entropy_lag + reward_lag + (1 | id/run) + (1 | side), rvdf)
   summary(rm1)
@@ -548,7 +553,38 @@ rvdf$bin_num <- as.factor(rvdf$bin_num)
   vif.lme(rm2)
   Anova(rm2)
   anova(rm1,rm2,rm2f)
+
+  em2 <- as_tibble(emmeans(rm2,specs = c("evt_time_sq", "bin_center_z", "entropy_lag", "evt_time"), at = list(bin_center_z = c(-2,-1, 0, 1,2), evt_time_sq = c(0,2,4), evt_time = c(-2,-1,0,1,2))))
+  em2 <- em2 %>% mutate(`Hippocampal response` = emmean, `Time, squared` = as.numeric(as.character(em2$evt_time)), entropy = case_when(
+    entropy_lag == 'high' ~ 'High entropy',
+    entropy_lag == 'low' ~ 'Low entropy'), 
+    time = case_when(
+      evt_time == -2 & evt_time_sq == 4 ~ -2,
+      evt_time == -1 & evt_time_sq == 2 ~ -1,
+      evt_time == 0 & evt_time_sq == 0 ~ 0,
+      evt_time == 1 & evt_time_sq == 2 ~ 1,
+      evt_time == 2 & evt_time_sq == 4 ~ 2
+    )
+  )
+  pdf("ramps_in_AH_lin_quad.pdf", width = 6, height = 3)
+    ggplot(em2, aes(time, `Hippocampal response`, color = as.factor(bin_center_z))) + 
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
+    geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + scale_x_continuous(breaks = c(-2,-1,0,1,2)) + ylab('Hippocampal response')
+  dev.off()
+  pdf("ramps_in_AH.pdf", width = 6, height = 3)
+  ggplot(em2, aes(evt_time_sq, `Hippocampal response`, color = as.factor(bin_center_z))) + 
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
+    geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time, squared') + scale_x_continuous(breaks = c(0,2,4)) + ylab('Hippocampal response')
+  dev.off()
   
+# add completely general bin
+  rm2binf <- lmer(decon_interp ~ (evt_time + bin_num + entropy_lag + side) ^3 + (evt_time_sq + bin_num + entropy_lag + side) ^3 + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + scale(rt_csv)*evt_time_sq + (1 | id/run) + (1 | side), rvdf)
+  summary(rm2binf)
+  vif.lme(rm2)
+  Anova(rm2binf)
+  anova(rm1,rm2,rm2f, rm2binf)
+  
+    
 # compare 
   
 # # nesting within trial
@@ -564,11 +600,14 @@ rvdf$bin_num <- as.factor(rvdf$bin_num)
   vif.lme(rm2f)
   Anova(rm2f)
   em2f <- as.data.frame(emmeans(rm2f,specs = c("evt_time_f", "bin_center_z", "entropy_lag"), at = list(bin_center_z = c(-2,-1, 0, 1,2))))
-  em2f$hipp_response <- em2f$emmean
-  
-  pdf("ramps_in_AH_f.pdf", width = 6, height = 4)
-    ggplot(em2f, aes(evt_time_f, hipp_response, group = bin_center_z, color = bin_center_z)) + geom_point() + 
-    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line() + facet_wrap(side~entropy_lag) + scale_color_viridis() + theme_dark()
+  em2f <- em2f %>% mutate(`Hippocampal response` = emmean, evt_time = as.numeric(as.character(em2f$evt_time_f)), entropy = case_when(
+    entropy_lag == 'high' ~ 'High entropy',
+    entropy_lag == 'low' ~ 'Low entropy'
+  ))
+  pdf("ramps_in_AH_f.pdf", width = 6, height = 3)
+    ggplot(em2f, aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z))) + 
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
+      geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5)+ xlab('Time') + ylab('Hippocampal response')
   dev.off()
 
 # make bin a factor
@@ -584,13 +623,34 @@ rvdf$bin_num <- as.factor(rvdf$bin_num)
     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line() + facet_wrap(side~entropy_lag) + scale_color_viridis_d() + theme_dark()
   dev.off()
   
+# also plot smoothed raw data
+pdf('smoothed_ramps.pdf', width = 6, height = 3)
+# ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num)) + geom_smooth(method = "loess", se = F) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy_lag)
+ggplot() + stat_smooth(data = rvdf[!is.na(rvdf$entropy),], aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z)), geom = 'line', method = "loess", se = F)  + 
+  scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") + geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + 
+  scale_x_continuous(breaks = c(-2,0,2)) + ylab('Hippocampal response')
+dev.off()
+
+# try and combine two plots
+pdf("ramps_in_AH_combined.pdf", width = 6, height = 3)
+ggplot(em2f, aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z))) + geom_point() + geom_line() +
+  geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) +
+  stat_smooth(data = rvdf[!is.na(rvdf$entropy),], aes(evt_time, decon_interp, color = as.factor(bin_center_z)), geom = 'line', alpha = .2, method = "loess", se = F)  + theme(legend.position = "none") + ylab('Hippocampal response')
+dev.off()
+
+
+# inspect all data that go into this analysis -- nothing too worrisome, but hard to read.  Some subjects have constricted evt_time ranges (responded mostly early).
+pdf('ind_ramps.pdf', width = 30, height = 30)
+ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num, lty = entropy_lag)) + geom_jitter() + scale_color_viridis_d() + theme_dark() + facet_wrap(id~side)
+dev.off()
+
     
 # check that it's specific to entropy and not last reward
 # it is, but PH is also more active after omissions and AH, after rewards
-  rm3 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z*reward_lag + decon_prev_z + entropy_lag + (1 | id/run) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR" & rewFunc!="CEV") ))
-  summary(rm3)
+rm3 <- lmer(decon_interp ~ (evt_time + bin_center_z + reward_lag + side) ^3 + (evt_time_sq + bin_center_z + reward_lag + side) ^3 + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + scale(rt_csv)*evt_time_sq + (1 | id/run) + (1 | side), rvdf)
+summary(rm3)
   vif.lme(rm3)
-  car::Anova(rm3)
+  Anova(rm3)
   g <- ggpredict(rm3, terms = c("evt_time","bin_center_z [-2,-1, 0, 1,2]", "reward_lag"))
   g <- plot(g, facet = F, dodge = .3)
   g + scale_color_viridis_d(option = "plasma") + theme_dark()
