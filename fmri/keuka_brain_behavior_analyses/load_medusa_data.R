@@ -11,6 +11,12 @@ if (unsmoothed) {
   cache_dir="~/Box/SCEPTIC_fMRI/var"}
 if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
 
+if (newmask) {
+  medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_smooth_in_mask_pct_change"
+  # medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_smooth_in_mask_demean_only"  
+  cache_dir="~/Box/SCEPTIC_fMRI/var/newmask"
+}
+
 stopifnot(dir.exists(medusa_dir))  
 stopifnot(dir.exists(cache_dir))  
 
@@ -26,44 +32,49 @@ if (!reprocess) {
   load(file.path(cache_dir, 'feedback_hipp_tall_ts.Rdata'))
   load(file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))
   load(file.path(cache_dir, 'rtvmax_hipp_tall_ts.Rdata'))
-} else {
-  
+} else { 
+  if (newmask) {
+    l <- read_csv("long_axis_l_cobra_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
+    r <- read_csv("long_axis_r_cobra_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'r')
+    clock <- rbind(l,r) 
+    # load feedback, SWITCH TO LONG
+    l <- read_csv("long_axis_l_cobra_2.3mm_feedback_long_decon_locked.csv.gz") %>% mutate(side = 'l')
+    r <- read_csv("long_axis_r_cobra_2.3mm_feedback_long_decon_locked.csv.gz") %>% mutate(side = 'r')
+    fb <- rbind(l,r)
+    
+    # load RT(vmax)
+    l <- read_csv("long_axis_l_cobra_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'l')
+    r <- read_csv("long_axis_r_cobra_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'r')
+    rtvmax <- rbind(l,r)
+  } else {
   l <- read_csv("long_axis_l_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
   r <- read_csv("long_axis_r_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'r')
   clock <- rbind(l,r) 
-  clock <- clock[clock$id!=11347,]
-  # load feedback, SWITCH TO LONG
+    # load feedback, SWITCH TO LONG
   l <- read_csv("long_axis_l_2.3mm_feedback_long_decon_locked.csv.gz") %>% mutate(side = 'l')
   r <- read_csv("long_axis_r_2.3mm_feedback_long_decon_locked.csv.gz") %>% mutate(side = 'r')
   fb <- rbind(l,r)
-  fb <- fb[fb$id!=11347,]
-  
-  # load RT(vmax)
+    # load RT(vmax)
   l <- read_csv("long_axis_l_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'l')
   r <- read_csv("long_axis_r_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'r')
   rtvmax <- rbind(l,r)
-  rtvmax <- rtvmax[rtvmax$id!=11347,]
-  
-  # load V1 clock
-  l <- read_csv("l_v1_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
-  r <- read_csv("r_v1_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'r')
-  v1clock <- rbind(l,r)
-  v1clock <- v1clock[v1clock$id!=11347,]
-  
-  # load M1
-  m1Lclock <- read_csv("l_motor_2.3mm_clock_long_decon_locked.csv.gz")
-  m1Lclock <- m1Lclock[m1Lclock$id!=11347,]
-  
-  # V1 feedback
-  l <- read_csv("l_v1_2.3mm_feedback_onset_decon_locked.csv.gz") %>% mutate(side = 'l')
-  r <- read_csv("r_v1_2.3mm_feedback_onset_decon_locked.csv.gz") %>% mutate(side = 'r')
-  v1_fb <- rbind(l,r)
-  v1_fb <- v1_fb[v1_fb$id!=11347,]
-  
-  # load M1 fb
-  m1L_fb <- read_csv("l_motor_2.3mm_feedback_onset_decon_locked.csv.gz")
-  m1L_fb <- m1L_fb[m1L_fb$id!=11347,]
-  
+  }
+  #   # load V1 clock
+  # l <- read_csv("l_v1_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
+  # r <- read_csv("r_v1_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'r')
+  # v1clock <- rbind(l,r)
+  # 
+  # # load M1
+  # m1Lclock <- read_csv("l_motor_2.3mm_clock_long_decon_locked.csv.gz")
+  # 
+  # # V1 feedback
+  # l <- read_csv("l_v1_2.3mm_feedback_onset_decon_locked.csv.gz") %>% mutate(side = 'l')
+  # r <- read_csv("r_v1_2.3mm_feedback_onset_decon_locked.csv.gz") %>% mutate(side = 'r')
+  # v1_fb <- rbind(l,r)
+  # 
+  # # load M1 fb
+  # m1L_fb <- read_csv("l_motor_2.3mm_feedback_onset_decon_locked.csv.gz")
+
   
   trial_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")) %>%
     mutate(trial=as.numeric(trial)) %>%
@@ -147,40 +158,40 @@ if (!reprocess) {
                                      gamma, total_earnings, ev,next_swing_above_median) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
     group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
     inner_join(rtvmax)
-  v1_clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
-                                       swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
-    group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
-    inner_join(v1clock)
-  m1L_clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
-                                        swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
-    group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
-    inner_join(m1Lclock)
-  
-  v1_feedback_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
-                                          swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
-    group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
-    inner_join(v1_fb)
-  m1L_feedback_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
-                                           swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
-    group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
-    inner_join(m1L_fb)
-  
+  # v1_clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
+  #                                      swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+  #   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
+  #   inner_join(v1clock)
+  # m1L_clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
+  #                                       swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+  #   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
+  #   inner_join(m1Lclock)
+  # 
+  # v1_feedback_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
+  #                                         swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+  #   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
+  #   inner_join(v1_fb)
+  # m1L_feedback_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
+  #                                          swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+  #   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
+  #   inner_join(m1L_fb)
+  # 
   
   # 20% of clock- and 32% of feedback-aligned timepoints are from the next trial: censor
   clock_comb$decon_interp[clock_comb$evt_time > clock_comb$rt_csv + clock_comb$iti_ideal] <- NA
   fb_comb$decon_interp[fb_comb$evt_time > fb_comb$iti_ideal] <- NA
-  m1L_clock_comb$decon_interp[m1L_clock_comb$evt_time > m1L_clock_comb$iti_ideal] <- NA
-  v1_clock_comb$decon_interp[v1_clock_comb$evt_time > v1_clock_comb$iti_ideal] <- NA
-  m1L_feedback_comb$decon_interp[m1L_feedback_comb$evt_time > m1L_feedback_comb$iti_ideal] <- NA
-  v1_feedback_comb$decon_interp[v1_feedback_comb$evt_time > v1_feedback_comb$iti_ideal] <- NA
+  # m1L_clock_comb$decon_interp[m1L_clock_comb$evt_time > m1L_clock_comb$iti_ideal] <- NA
+  # v1_clock_comb$decon_interp[v1_clock_comb$evt_time > v1_clock_comb$iti_ideal] <- NA
+  # m1L_feedback_comb$decon_interp[m1L_feedback_comb$evt_time > m1L_feedback_comb$iti_ideal] <- NA
+  # v1_feedback_comb$decon_interp[v1_feedback_comb$evt_time > v1_feedback_comb$iti_ideal] <- NA
   
   # code on- and offline periods and evt_time^2 for plotting models
   clock_comb <- clock_comb %>% mutate(online = evt_time > -1 & evt_time < rt_csv)
   clock_comb$online <- as.factor(clock_comb$online)
-  v1_clock_comb <- v1_clock_comb %>% mutate(online = evt_time > -1 & evt_time <= rt_csv + 1)
-  v1_clock_comb$online <- as.factor(v1_clock_comb$online)
-  m1L_clock_comb <- m1L_clock_comb %>% mutate(online = evt_time > -1 & evt_time <= rt_csv + 1)
-  m1L_clock_comb$online <- as.factor(m1L_clock_comb$online)
+  # v1_clock_comb <- v1_clock_comb %>% mutate(online = evt_time > -1 & evt_time <= rt_csv + 1)
+  # v1_clock_comb$online <- as.factor(v1_clock_comb$online)
+  # m1L_clock_comb <- m1L_clock_comb %>% mutate(online = evt_time > -1 & evt_time <= rt_csv + 1)
+  # m1L_clock_comb$online <- as.factor(m1L_clock_comb$online)
   
   # try more stringent feedback online window
   fb_comb <- fb_comb %>% mutate(online = evt_time > -rt_csv & evt_time < 0)
@@ -244,37 +255,37 @@ if (!reprocess) {
     mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
   
   
-  v1_clock_comb <- v1_clock_comb %>% group_by(id, run, axis_bin, side, evt_time) %>%
-    mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
-           telapsed=clock_onset - clock_onset_prev) %>%
-    ungroup() %>%
-    mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
-  
-  m1L_clock_comb <- m1L_clock_comb %>% group_by(id, run, axis_bin, evt_time) %>%
-    mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
-           telapsed=clock_onset - clock_onset_prev) %>%
-    ungroup() %>%
-    mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
-  
-  v1_feedback_comb <- v1_feedback_comb %>% group_by(id, run, axis_bin, side, evt_time) %>%
-    mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
-           telapsed=feedback_onset - feedback_onset_prev) %>%
-    ungroup() %>%
-    mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
-  
-  m1L_feedback_comb <- m1L_feedback_comb %>% group_by(id, run, axis_bin, evt_time) %>%
-    mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
-           telapsed=feedback_onset - feedback_onset_prev) %>%
-    ungroup() %>%
-    mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
+  # v1_clock_comb <- v1_clock_comb %>% group_by(id, run, axis_bin, side, evt_time) %>%
+  #   mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
+  #          telapsed=clock_onset - clock_onset_prev) %>%
+  #   ungroup() %>%
+  #   mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
+  # 
+  # m1L_clock_comb <- m1L_clock_comb %>% group_by(id, run, axis_bin, evt_time) %>%
+  #   mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
+  #          telapsed=clock_onset - clock_onset_prev) %>%
+  #   ungroup() %>%
+  #   mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
+  # 
+  # v1_feedback_comb <- v1_feedback_comb %>% group_by(id, run, axis_bin, side, evt_time) %>%
+  #   mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
+  #          telapsed=feedback_onset - feedback_onset_prev) %>%
+  #   ungroup() %>%
+  #   mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
+  # 
+  # m1L_feedback_comb <- m1L_feedback_comb %>% group_by(id, run, axis_bin, evt_time) %>%
+  #   mutate(decon_prev = dplyr::lag(decon_interp, order_by = run_trial),
+  #          telapsed=feedback_onset - feedback_onset_prev) %>%
+  #   ungroup() %>%
+  #   mutate(decon_prev_z=as.vector(scale(decon_prev)), iti_ideal_z=as.vector(scale(iti_ideal)))
   
   # I wonder whether we should subtract the previous trial's signal to isolate unique variation
   clock_comb$decon_change <- clock_comb$decon_interp - clock_comb$decon_prev
   fb_comb$decon_change <- fb_comb$decon_interp - fb_comb$decon_prev
-  m1L_clock_comb$decon_change <- m1L_clock_comb$decon_interp - m1L_clock_comb$decon_prev
-  v1_clock_comb$decon_change <- v1_clock_comb$decon_interp - v1_clock_comb$decon_prev
-  m1L_feedback_comb$decon_change <- m1L_feedback_comb$decon_interp - m1L_feedback_comb$decon_prev
-  v1_feedback_comb$decon_change <- v1_feedback_comb$decon_interp - v1_feedback_comb$decon_prev
+  # m1L_clock_comb$decon_change <- m1L_clock_comb$decon_interp - m1L_clock_comb$decon_prev
+  # v1_clock_comb$decon_change <- v1_clock_comb$decon_interp - v1_clock_comb$decon_prev
+  # m1L_feedback_comb$decon_change <- m1L_feedback_comb$decon_interp - m1L_feedback_comb$decon_prev
+  # v1_feedback_comb$decon_change <- v1_feedback_comb$decon_interp - v1_feedback_comb$decon_prev
   
   # lagged AH and PH mean signal by evt_time -- spot-checked these, correct
   clock_comb <- clock_comb %>% group_by(id, run, run_trial, side, evt_time) %>%

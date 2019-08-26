@@ -10,14 +10,14 @@ library(car)
 
 unsmoothed = F
 if (unsmoothed) {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/unsmoothed")
-} else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/")}
+} else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/newmask")}
 
 load('feedback_hipp_widest_by_timepoint_decon.Rdata')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 load('trial_df_and_vhdkfpe_clusters.Rdata')
 
 if (unsmoothed) {cache_dir <- "~/Box/SCEPTIC_fMRI/var/unsmoothed"
-} else {cache_dir <- "~/Box/SCEPTIC_fMRI/var/"}
+} else {cache_dir <- "~/Box/SCEPTIC_fMRI/var/newmask"}
 
 repo_dir <- "~/Data_Analysis/clock_analysis"
 
@@ -99,10 +99,10 @@ if (rt) {
     terms <- names(fixef(mf))
     if (trial_cont) {
       if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/unsmoothed')
-        } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict')}}
+        } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/rt_predict')}}
     else {
       if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/unsmoothed/no_trial_contingency')
-      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/no_trial_contingency/')}}
+      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/rt_predict/no_trial_contingency/')}}
     if (plots) {
       for (fe in terms)
       {edf <- bdf %>% filter(term == paste(fe) & t < 8)
@@ -166,18 +166,19 @@ for (trial_cont in c("F", "T")) {
   ddf$p_level_fdr <- factor(ddf$p_level_fdr, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   if (trial_cont) {
     if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/unsmoothed')
-    } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode')}}
+    } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/decode/uncorrected')}}
   else {
     if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/unsmoothed/no_trial_contingency')
-    } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/no_trial_contingency/')}}
+    } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/decode/no_trial_contingency/uncorrected')}}
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe) & t < 8) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
     pdf(paste(termstr, ".pdf", sep = ""), width = 12, height = 7)
     
     # print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = abs(statistic)>2), size = 1) + facet_wrap(~side) + 
-    print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = 1) + facet_wrap(~side) + 
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe)))
+    # print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = 1) + facet_wrap(~side) + 
+    print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_value), size = 1) + facet_wrap(~side) + 
+                scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe)))
     # print(ggarrange(p2,ncol = 1, labels = paste(fe), vjust = 4, font.label = list(color = "black", size = 16)))
     dev.off()
   }

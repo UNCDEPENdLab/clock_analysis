@@ -16,9 +16,10 @@ library(emmeans)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
-reprocess = T
+reprocess = F
 analyze = F
 unsmoothed = F
+newmask = T
 
 repo_directory <- "~/code/clock_analysis"
 # repo_directory <- "~/Data_Analysis/clock_analysis"
@@ -534,6 +535,7 @@ if (analyze) {
 # test for ramps in AH in rtvmax-aligned data: quadratic term
   
 # filter by ITI, RT, and evt_time <3
+  setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/ramps/')
 rvdf <- rtvmax_comb %>% filter(online == "TRUE" & iti_prev>1 & iti_ideal > 2 & rt_csv > 1 & rewFunc!="CEVR" & evt_time < 3)
 rvdf$bin_num <- as.factor(rvdf$bin_num)
 rvdf <- rvdf %>% mutate(`Hippocampal response` = decon_interp, entropy = case_when(
@@ -542,16 +544,17 @@ rvdf <- rvdf %>% mutate(`Hippocampal response` = decon_interp, entropy = case_wh
 ))
 
 # strangely we only see ramps on long-ITI trials  
-  rm1 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z + decon_prev_z + entropy_lag + reward_lag + (1 | id/run) + (1 | side), rvdf)
+# rm* models do not converge with cobra percentchange
+  rm1 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z + entropy_lag + reward_lag + (1 | id/run), rvdf)
   summary(rm1)
-  Anova(rm1)
+  Anova(rm1, '3')
   vif.lme(rm1)
   
 # add entropy modulation
-  rm2 <- lmer(decon_interp ~ (evt_time + bin_center_z + entropy_lag + side) ^3 + (evt_time_sq + bin_center_z + entropy_lag + side) ^3 + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + scale(rt_csv)*evt_time_sq + (1 | id/run) + (1 | side), rvdf)
+  rm2 <- lmer(decon_interp ~ (evt_time + bin_center_z + entropy_lag) ^3 + (evt_time_sq + bin_center_z + entropy_lag) ^3 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
   summary(rm2)
   vif.lme(rm2)
-  Anova(rm2)
+  Anova(rm2, '3')
   anova(rm1,rm2,rm2f)
 
   em2 <- as_tibble(emmeans(rm2,specs = c("evt_time_sq", "bin_center_z", "entropy_lag", "evt_time"), at = list(bin_center_z = c(-2,-1, 0, 1,2), evt_time_sq = c(0,2,4), evt_time = c(-2,-1,0,1,2))))
@@ -566,65 +569,61 @@ rvdf <- rvdf %>% mutate(`Hippocampal response` = decon_interp, entropy = case_wh
       evt_time == 2 & evt_time_sq == 4 ~ 2
     )
   )
-  pdf("ramps_in_AH_lin_quad.pdf", width = 6, height = 3)
+  pdf("ramps_in_AH_lin_quad_cobra_demean.pdf", width = 6, height = 3)
     ggplot(em2, aes(time, `Hippocampal response`, color = as.factor(bin_center_z))) + 
     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
     geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + scale_x_continuous(breaks = c(-2,-1,0,1,2)) + ylab('Hippocampal response')
   dev.off()
-  pdf("ramps_in_AH.pdf", width = 6, height = 3)
-  ggplot(em2, aes(evt_time_sq, `Hippocampal response`, color = as.factor(bin_center_z))) + 
-    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
-    geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time, squared') + scale_x_continuous(breaks = c(0,2,4)) + ylab('Hippocampal response')
-  dev.off()
+  # pdf("ramps_in_AH_cobra.pdf", width = 6, height = 3)
+  # ggplot(em2, aes(evt_time_sq, `Hippocampal response`, color = as.factor(bin_center_z))) + 
+  #   geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
+  #   geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time, squared') + scale_x_continuous(breaks = c(0,2,4)) + ylab('Hippocampal response')
+  # dev.off()
   
-# add completely general bin
-  rm2binf <- lmer(decon_interp ~ (evt_time + bin_num + entropy_lag + side) ^3 + (evt_time_sq + bin_num + entropy_lag + side) ^3 + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + scale(rt_csv)*evt_time_sq + (1 | id/run) + (1 | side), rvdf)
+# add completely general bin -- that worsens fit by 80 AIC points
+  rm2binf <- lmer(decon_interp ~ (evt_time + bin_num + entropy_lag) ^3 + (evt_time_sq + bin_num + entropy_lag) ^3 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
   summary(rm2binf)
   vif.lme(rm2)
-  Anova(rm2binf)
-  anova(rm1,rm2,rm2f, rm2binf)
+  Anova(rm2binf, '3')
   
-    
-# compare 
-  
-# # nesting within trial
-#   rm2t <- lmer(decon_interp ~ evt_time*bin_center_z*entropy_lag + evt_time_sq*bin_center_z*entropy_lag + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + (1 | id/run/run_trial) + (1 | side), rtvmax_comb %>% filter (online == "TRUE" & iti_prev>2 & iti_ideal>2 & rt_csv >1 & (rewFunc!="CEVR" & rewFunc!="CEV")))
-#   summary(rm2t)
-#   vif.lme(rm2)
-#   car::Anova(rm2, '3')
 
-    
 # test the same with time as factor -- that results in a singular fit due to 0 variance for ID
-  rm2f <- lmer(decon_interp ~ (evt_time_f + bin_center_z + entropy_lag + side) ^3 + decon_prev_z + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), rvdf)
+  # side RE has a variance of 0
+  # THE MOST CONVINCING MODEL
+  rm2f <- lmer(decon_interp ~ (evt_time_f + bin_center_z + entropy_lag) ^2 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
   summary(rm2f)
   vif.lme(rm2f)
-  Anova(rm2f)
+  Anova(rm2f, '3')
   em2f <- as.data.frame(emmeans(rm2f,specs = c("evt_time_f", "bin_center_z", "entropy_lag"), at = list(bin_center_z = c(-2,-1, 0, 1,2))))
   em2f <- em2f %>% mutate(`Hippocampal response` = emmean, evt_time = as.numeric(as.character(em2f$evt_time_f)), entropy = case_when(
     entropy_lag == 'high' ~ 'High entropy',
     entropy_lag == 'low' ~ 'Low entropy'
   ))
-  pdf("ramps_in_AH_f.pdf", width = 6, height = 3)
+  pdf("ramps_in_AH_f_cobra.pdf", width = 6, height = 3)
     ggplot(em2f, aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z))) + 
     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
       geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5)+ xlab('Time') + ylab('Hippocampal response')
   dev.off()
 
+  anova(rm1,rm2,rm2f, rm2binf)
+  
+  
 # make bin a factor
-  rm2ff <- lmer(decon_interp ~ (evt_time_f + bin_num + entropy_lag + side) ^2 + decon_prev_z + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), rvdf)
+  # 3-way interaction is NS with any decon
+  rm2ff <- lmer(decon_interp ~ (evt_time_f + bin_num + entropy_lag) ^2 + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run), rvdf)
   summary(rm2ff)
   vif.lme(rm2f)
-  Anova(rm2ff)
-  em2ff <- as.data.frame(emmeans(rm2ff,specs = c("evt_time_f", "bin_num", "entropy_lag", "side")))
+  Anova(rm2ff, '3')
+  em2ff <- as.data.frame(emmeans(rm2ff,specs = c("evt_time_f", "bin_num", "entropy_lag")))
   em2ff$hipp_response <- em2ff$emmean
   anova(rm2f,rm2ff)
   pdf("ramps_in_AH_ff.pdf", width = 8, height = 6)
   ggplot(em2ff, aes(evt_time_f, hipp_response, group = bin_num, color = bin_num)) + geom_point() + 
-    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line() + facet_wrap(side~entropy_lag) + scale_color_viridis_d() + theme_dark()
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line() + facet_wrap(~entropy_lag) + scale_color_viridis_d() + theme_dark()
   dev.off()
   
 # also plot smoothed raw data
-pdf('smoothed_ramps.pdf', width = 6, height = 3)
+pdf('smoothed_ramps_cobra_demean.pdf', width = 6, height = 3)
 # ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num)) + geom_smooth(method = "loess", se = F) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy_lag)
 ggplot() + stat_smooth(data = rvdf[!is.na(rvdf$entropy),], aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z)), geom = 'line', method = "loess", se = F)  + 
   scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") + geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + 
