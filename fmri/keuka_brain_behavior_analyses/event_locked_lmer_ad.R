@@ -551,7 +551,8 @@ rvdf <- rvdf %>% mutate(`Hippocampal response` = decon_interp, entropy = case_wh
   vif.lme(rm1)
   
 # add entropy modulation
-  rm2 <- lmer(decon_interp ~ (evt_time + bin_center_z + entropy_lag) ^3 + (evt_time_sq + bin_center_z + entropy_lag) ^3 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
+  # no longer a 3-way interaction on Cobra-masked data
+  rm2 <- lmer(decon_interp ~ (evt_time + bin_center_z + entropy_lag) ^2 + (evt_time_sq + bin_center_z + entropy_lag) ^2 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
   summary(rm2)
   vif.lme(rm2)
   Anova(rm2, '3')
@@ -580,7 +581,7 @@ rvdf <- rvdf %>% mutate(`Hippocampal response` = decon_interp, entropy = case_wh
   #   geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time, squared') + scale_x_continuous(breaks = c(0,2,4)) + ylab('Hippocampal response')
   # dev.off()
   
-# add completely general bin -- that worsens fit by 80 AIC points
+# add completely general bin -- BUT that worsens fit by 80 AIC points
   rm2binf <- lmer(decon_interp ~ (evt_time + bin_num + entropy_lag) ^3 + (evt_time_sq + bin_num + entropy_lag) ^3 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
   summary(rm2binf)
   vif.lme(rm2)
@@ -608,48 +609,49 @@ rvdf <- rvdf %>% mutate(`Hippocampal response` = decon_interp, entropy = case_wh
   anova(rm1,rm2,rm2f, rm2binf)
   
   
-# make bin a factor
-  # 3-way interaction is NS with any decon
-  rm2ff <- lmer(decon_interp ~ (evt_time_f + bin_num + entropy_lag) ^2 + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run), rvdf)
-  summary(rm2ff)
-  vif.lme(rm2f)
-  Anova(rm2ff, '3')
-  em2ff <- as.data.frame(emmeans(rm2ff,specs = c("evt_time_f", "bin_num", "entropy_lag")))
-  em2ff$hipp_response <- em2ff$emmean
-  anova(rm2f,rm2ff)
-  pdf("ramps_in_AH_ff.pdf", width = 8, height = 6)
-  ggplot(em2ff, aes(evt_time_f, hipp_response, group = bin_num, color = bin_num)) + geom_point() + 
-    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line() + facet_wrap(~entropy_lag) + scale_color_viridis_d() + theme_dark()
-  dev.off()
+# # make bin a factor
+#   # 3-way interaction is NS with any decon
+#   rm2ff <- lmer(decon_interp ~ (evt_time_f + bin_num + entropy_lag) ^2 + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run), rvdf)
+#   summary(rm2ff)
+#   vif.lme(rm2f)
+#   Anova(rm2ff, '3')
+#   em2ff <- as.data.frame(emmeans(rm2ff,specs = c("evt_time_f", "bin_num", "entropy_lag")))
+#   em2ff$hipp_response <- em2ff$emmean
+#   anova(rm2f,rm2ff)
+#   pdf("ramps_in_AH_ff.pdf", width = 8, height = 6)
+#   ggplot(em2ff, aes(evt_time_f, hipp_response, group = bin_num, color = bin_num)) + geom_point() + 
+#     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line() + facet_wrap(~entropy_lag) + scale_color_viridis_d() + theme_dark()
+#   dev.off()
   
 # also plot smoothed raw data
-pdf('smoothed_ramps_cobra_demean.pdf', width = 6, height = 3)
+pdf('smoothed_ramps_cobra_percent.pdf', width = 6, height = 3)
 # ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num)) + geom_smooth(method = "loess", se = F) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy_lag)
-ggplot() + stat_smooth(data = rvdf[!is.na(rvdf$entropy),], aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z)), geom = 'line', method = "loess", se = F)  + 
-  scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") + geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + 
+ggplot() + stat_smooth(data = rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z)), geom = 'line', method = "loess", se = F)  + 
+  scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy_lag) + theme(legend.position = "none") + geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + 
   scale_x_continuous(breaks = c(-2,0,2)) + ylab('Hippocampal response')
 dev.off()
 
 # try and combine two plots
-pdf("ramps_in_AH_combined.pdf", width = 6, height = 3)
-ggplot(em2f, aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z))) + geom_point() + geom_line() +
-  geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) +
-  stat_smooth(data = rvdf[!is.na(rvdf$entropy),], aes(evt_time, decon_interp, color = as.factor(bin_center_z)), geom = 'line', alpha = .2, method = "loess", se = F)  + theme(legend.position = "none") + ylab('Hippocampal response')
+pdf("ramps_in_AH_combined_cobra_percent.pdf", width = 6, height = 3)
+ggplot(em2f, aes(evt_time, `Hippocampal response`, group = bin_center_z, color = bin_center_z)) + geom_point() + geom_line() +
+  geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + scale_color_viridis_c() + theme_dark() + facet_wrap(~entropy) +
+  stat_smooth(data = rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, group = bin_center_z, color = bin_center_z), geom = 'line', alpha = .2, method = "loess", se = F)  + theme(legend.position = "none") + ylab('Hippocampal response')
 dev.off()
 
 
 # inspect all data that go into this analysis -- nothing too worrisome, but hard to read.  Some subjects have constricted evt_time ranges (responded mostly early).
-pdf('ind_ramps.pdf', width = 30, height = 30)
-ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num, lty = entropy_lag)) + geom_jitter() + scale_color_viridis_d() + theme_dark() + facet_wrap(id~side)
+# also, more variability in AH than in PH
+pdf('ind_ramps_cobra_percent.pdf', width = 30, height = 30)
+ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num)) + geom_jitter() + scale_color_viridis_d() + theme_dark() + facet_wrap(id~entropy_lag)
 dev.off()
 
     
 # check that it's specific to entropy and not last reward
 # it is, but PH is also more active after omissions and AH, after rewards
-rm3 <- lmer(decon_interp ~ (evt_time + bin_center_z + reward_lag + side) ^3 + (evt_time_sq + bin_center_z + reward_lag + side) ^3 + decon_prev_z + reward_lag + scale(rt_csv)*evt_time + scale(rt_csv)*evt_time_sq + (1 | id/run) + (1 | side), rvdf)
+rm3 <- lmer(decon_interp ~ (evt_time + bin_center_z + reward_lag + side) ^2 + (evt_time_sq + bin_center_z + reward_lag + side) ^2 + decon_prev_z + reward_lag + scale(rt_csv) +  (1 | id/run), rvdf)
 summary(rm3)
   vif.lme(rm3)
-  Anova(rm3)
+  Anova(rm3, '3')
   g <- ggpredict(rm3, terms = c("evt_time","bin_center_z [-2,-1, 0, 1,2]", "reward_lag"))
   g <- plot(g, facet = F, dodge = .3)
   g + scale_color_viridis_d(option = "plasma") + theme_dark()
