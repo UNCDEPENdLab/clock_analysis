@@ -16,10 +16,10 @@ library(emmeans)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
-reprocess = F
-analyze = F
+reprocess = T
+analyze = T
 unsmoothed = F
-newmask = T
+newmask = F
 
 repo_directory <- "~/code/clock_analysis"
 # repo_directory <- "~/Data_Analysis/clock_analysis"

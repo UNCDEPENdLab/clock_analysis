@@ -450,12 +450,12 @@ vif(ub2)
 
 # brute force approach to betas
 # u_chosen looks more interpretable than u_chosen_change
-ub3 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + h_f1_fp)^3 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + I(-h_HippAntL))^3 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + pe_f1_cort_str)^3 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + pe_f2_hipp)^3 +
+ub3 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + h_f1_fp)^2 +
+              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + I(-h_HippAntL))^2 +
+              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + pe_f1_cort_str)^2 +
+              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + pe_f2_hipp)^2 +
        scale(rt_lag)*scale(u_chosen_lag) + scale(-1/run_trial)*scale(run) + 
-         h_f1_fp*scale(u_chosen_lag) + I(-h_f2_neg_paralimb)*scale(u_chosen_lag) +pe_f1_cort_str*scale(u_chosen_lag) +pe_f2_hipp*scale(u_chosen_lag) + (1|id/run), df)
+         h_f1_fp*scale(u_chosen_lag) + I(-h_HippAntL)*scale(u_chosen_lag) +pe_f1_cort_str*scale(u_chosen_lag) +pe_f2_hipp*scale(u_chosen_lag) + (1|id/run), df)
 screen.lmerTest(ub3, .01)
 
 
@@ -464,8 +464,17 @@ ub3f <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag
               (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str)^3 +
               (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f2_hipp)^3 +
               v_max_b + v_entropy_b + scale(rt_lag)*scale(u_chosen_lag) + scale(-1/run_trial)*scale(run) + 
-              h_f1_fp*scale(u_chosen_lag) + I(-h_f2_neg_paralimb)*scale(u_chosen_lag) +pe_f1_cort_str*scale(u_chosen_lag) +pe_f2_hipp*scale(u_chosen_lag) + (1|id/run), fdf)
+              h_f1_fp*scale(u_chosen_lag) + I(-h_HippAntL)*scale(u_chosen_lag) +pe_f1_cort_str*scale(u_chosen_lag) +pe_f2_hipp*scale(u_chosen_lag) + (1|id/run), fdf)
 screen.lmerTest(ub3f, .01)
+
+pdf('AH_entropy_uncertainty_aversion_by_cond.pdf', height = 6, width = 8)
+ggplot(df %>% filter(!is.na(v_entropy_wi)), aes(run_trial, u_chosen, lty = v_entropy_wi>0, color = h_HippAntL_resp)) + 
+  geom_smooth(method = 'gam', formula = y ~ splines::ns(x,2)) + facet_wrap(~rewFunc)
+dev.off()
+
+ggplot(df %>% filter(!is.na(rt_lag)), aes(rt_lag, u_chosen,color = pe_f2_hipp_resp)) + 
+  geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3)) #+ facet_wrap(~rewFunc)
+
 
 ub3a <- lmer(u_chosen_change ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_f1_fp)^3 +
               (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + I(-h_HippAntL))^3 +

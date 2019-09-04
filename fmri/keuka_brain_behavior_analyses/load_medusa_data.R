@@ -139,7 +139,14 @@ if (!reprocess) {
   trial_df$rewFunc <- as.factor(trial_df$rewFunc)
   levels(trial_df$rewFunc) <- c("DEV", "IEV", "CEV", "CEVR")
   
-  # add parameters
+
+  u_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_ureset_mfx_trial_statistics.csv.gz")
+  u_df <- u_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change)
+  
+  trial_df <- inner_join(trial_df,u_df)
+  
+  
+    # add parameters
   params <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv"))
   
   trial_df <- inner_join(trial_df, params, by = "id")
