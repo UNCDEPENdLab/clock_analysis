@@ -14,8 +14,8 @@ if (unsmoothed) {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/unsmoothed")
 
 load('feedback_hipp_widest_by_timepoint_decon.Rdata')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
-load('trial_df_and_vhdkfpe_clusters.Rdata')
-
+# load('trial_df_and_vhdkfpe_clusters.Rdata')
+load('trial_df_and_vh_pe_clusters_u.Rdata')
 if (unsmoothed) {cache_dir <- "~/Box/SCEPTIC_fMRI/var/unsmoothed"
 } else {cache_dir <- "~/Box/SCEPTIC_fMRI/var/newmask"}
 
@@ -31,18 +31,19 @@ df <- df %>% dplyr::ungroup()
 
 # read in behavioral data
 # select relevant columns for compactness
-df <- df %>% select(id, run, run_trial, rewFunc,emotion, rt_csv, score_csv, rt_next, pe_max, rt_vmax, rt_vmax_lag,rt_vmax_change, v_max_wi, v_entropy_wi, v_entropy_b, v_entropy, v_max_b, Age, Female)
+df <- df %>% select(id, run, run_trial, rewFunc,emotion, rt_csv, score_csv, rt_next, pe_max, rt_vmax, rt_vmax_lag,rt_vmax_change, v_max_wi, v_entropy_wi, v_entropy_b, v_entropy, v_max_b, u_chosen, u_chosen_lag, u_chosen_change, Age, Female)
 # add deconvolved hippocampal timeseries
 d <- merge(df, fb_wide_t, by = c("id", "run", "run_trial"))
 d <- d %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(reward = score_csv > 0, 
                                                                         rt_change = 100*rt_next - rt_csv, 
                                                                         v_entropy_wi_lead = lead(v_entropy_wi),
-                                                                        v_entropy_wi_change = v_entropy_wi_lead-v_entropy_wi) %>% ungroup()
+                                                                        v_entropy_wi_change = v_entropy_wi_lead-v_entropy_wi,
+                                                                        u_chosen_next = lead(u_chosen)) %>% ungroup()
 
 # scale decons
 # SKIP this step if running lmer on h
 
-scale = T
+scale = F
 if (scale) {
   scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
   # d <- d %>% group_by(id,run) %>%  mutate_at(vars(starts_with("hipp")), scale2, na.rm = TRUE) %>% ungroup()
@@ -51,14 +52,16 @@ if (scale) {
 }
 
 plots = T
-rt = T
+rt = F
+u = T
+decode = F
 ##########
 # predict directional RT change
 # try removing the entropy terms for simplicity
 # strategically: pe*rt_t (or reward*rt) - stay vs. shift, rt - explore in general, rt_vmax - exploit, prior, rt_vmax_change - exploit, posterior, that's it!
 # for (trial_cont in c("TRUE", "FALSE")) {
 if (rt) {
-  for (trial_cont in c("TRUE", "FALSE")) {
+  for (trial_cont in c("TRUE")) {
     newlist <- list()
     for (slice in 1:12) {print(paste("Processing slice", slice, sep = " "))
       for (side in c("l", "r")) {
@@ -99,7 +102,7 @@ if (rt) {
     terms <- names(fixef(mf))
     if (trial_cont) {
       if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/unsmoothed')
-        } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/rt_predict')}}
+      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/rt_predict')}}
     else {
       if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/unsmoothed/no_trial_contingency')
       } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/rt_predict/no_trial_contingency/')}}
@@ -122,7 +125,92 @@ if (rt) {
   }
 }
 ########
+# choice uncertainty prediction analyses
+# diagnose trial/h collinearity
+# ggplot(fb_comb, aes(run_trial, decon_interp, color = as.factor(bin_center))) + geom_smooth(method = 'gam', se = F)
+# drop models without contingency and trial
+if (u) {
+  # for (trial_cont in c("TRUE", "FALSE")) {
+  # for (trial_cont in c("FALSE")) {
+  newlist <- list()
+  for (slice in 1:12) {print(paste("Processing slice", slice, sep = " "))
+    for (side in c("l", "r")) {
+      for (t in -1:10) {
+        d$h<-d[[paste("hipp", slice, side, t, sep = "_")]]
+        # if (trial_cont) {
+        uf <- lmer(u_chosen_next ~ scale(-1/run_trial)*scale(h) + scale(rt_csv)*scale(h) + scale(rt_vmax)*scale(h) + reward*scale(h) + v_entropy_wi*scale(h) + scale(u_chosen) + rewFunc*scale(-1/run_trial) + (1|id/run), d)         #}
+      # else {
+      # mf <-  lme4::lmer(rt_next ~ (scale(pe_max) + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + scale(v_entropy_wi) + h)^2 + (1|id/run), d)
+      # uf <- lmer(u_chosen_next ~ scale(-1/run_trial)*scale(h) + scale(rt_csv)*scale(h) + scale(rt_vmax)*scale(h) + reward*scale(h) + v_entropy_wi*scale(h) + scale(u_chosen) + (1|id/run), d) 
+      # }
+      dm <- broom.mixed::tidy(uf,effects = "fixed")
+      an <- broom.mixed::tidy(car::Anova(uf, '3')) %>% rename(anova_p = p.value, chisq = statistic)
+      dm$slice <- slice
+      dm$side <- side
+      dm$t <- t
+      dm <- inner_join(dm, an, by = "term") # this only works for continuous terms, unfortunately
+      dm <- dm %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
+                                                           abs(statistic) > 2 & abs(statistic) < 3 ~ '2', 
+                                                           abs(statistic) > 3 ~ '3')),
+                          p_value = as.factor(case_when(p.value > .05 ~ '1',
+                                                        p.value < .05 & p.value > .01 ~ '2',
+                                                        p.value < .01 & p.value > .001 ~ '3',
+                                                        p.value <.001 ~ '4')))
+      newlist[[paste("hipp", slice, side, t, sep = "_")]]<-dm
+    }
+  }
+ }
+bdf <- do.call(rbind,newlist)
+bdf$slice <- as.factor(bdf$slice)
+bdf$stat_order <- factor(bdf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
+bdf <- bdf  %>% group_by(term,side) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
+                                               p_level_fdr = as.factor(case_when(p_fdr > .05 ~ '1',
+                                                                                 p_fdr < .05 & p_fdr > .01 ~ '2',
+                                                                                 p_fdr < .01 & p_fdr > .001 ~ '3',
+                                                                                 p_fdr <.001 ~ '4')),
+                                               p_anova_fdr = p.adjust(anova_p, method = 'fdr'),
+                                               p_anova_level_fdr = as.factor(case_when(p_anova_fdr > .05 ~ '1',
+                                                                                       p_anova_fdr < .05 & p_anova_fdr > .01 ~ '2',
+                                                                                       p_anova_fdr < .01 & p_anova_fdr > .001 ~ '3',
+                                                                                       p_anova_fdr <.001 ~ '4')),
+)
+bdf$p_level_fdr <- factor(bdf$p_level_fdr, labels = c("NS", "p < .05", "p < .01", "p < .001"))
+bdf$p_anova_level_fdr <- factor(bdf$p_anova_level_fdr, labels = c("NS", "p < .05", "p < .01", "p < .001"))
+
+terms <- unique(bdf$term)
+# if (trial_cont) {
+if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/u_predict/unsmoothed')
+} else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/u_predict')}
+# else {
+# if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/u_predict/unsmoothed/no_trial_contingency')
+# } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/u_predict/no_trial_contingency/')}}
+if (plots) {
+  for (fe in terms)
+  {edf <- bdf %>% filter(term == paste(fe) & t < 8)
+  p1 <- ggplot(edf, aes(t, estimate, color = slice)) + geom_line() + 
+    geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), alpha = .5) + facet_wrap(~side) + 
+    theme_dark() + scale_color_viridis_d() + geom_hline(yintercept = 0, lty = "dashed", color = "red") + labs(title = paste(fe))
+  
+  p2 <- ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = 1) + facet_wrap(~side) + 
+    scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe))
+  p3 <- ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = chisq, alpha = p_anova_level_fdr), size = 1) + facet_wrap(~side) + 
+    scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe))
+  
+  termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
+  pdf(paste(termstr, ".pdf", sep = ""), width = 12, height = 16)
+  print(ggarrange(p1,p2,p3,ncol = 1, nrow = 3))
+  dev.off()
+  }
+}
+}
+# }
+
+
+#######
+
+
 # "decoding" analyses
+if (decode) {
 for (trial_cont in c("F", "T")) {
   newlist <- list()
   for (slice in 1:12) {print(paste("Processing slice", slice, sep = " "))
@@ -158,10 +246,10 @@ for (trial_cont in c("F", "T")) {
   terms <- names(md$coefficients)
   # FDR
   ddf <- ddf  %>% group_by(term,side) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
-                 p_level_fdr = as.factor(case_when(p_fdr > .05 ~ '1',
-                                                   p_fdr < .05 & p_fdr > .01 ~ '2',
-                                                   p_fdr < .01 & p_fdr > .001 ~ '3',
-                                                   p_fdr <.001 ~ '4')))
+                                                 p_level_fdr = as.factor(case_when(p_fdr > .05 ~ '1',
+                                                                                   p_fdr < .05 & p_fdr > .01 ~ '2',
+                                                                                   p_fdr < .01 & p_fdr > .001 ~ '3',
+                                                                                   p_fdr <.001 ~ '4')))
   
   ddf$p_level_fdr <- factor(ddf$p_level_fdr, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   if (trial_cont) {
@@ -178,12 +266,12 @@ for (trial_cont in c("F", "T")) {
     # print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = abs(statistic)>2), size = 1) + facet_wrap(~side) + 
     # print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = 1) + facet_wrap(~side) + 
     print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_value), size = 1) + facet_wrap(~side) + 
-                scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe)))
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe)))
     # print(ggarrange(p2,ncol = 1, labels = paste(fe), vjust = 4, font.label = list(color = "black", size = 16)))
     dev.off()
   }
 }
-
+}
 #########
 # add centrality for a similar RT prediction analysis
 load('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/brms_6slc_graphs.RData')

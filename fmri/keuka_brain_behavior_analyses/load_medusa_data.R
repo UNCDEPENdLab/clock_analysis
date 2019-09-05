@@ -152,17 +152,17 @@ if (!reprocess) {
   trial_df <- inner_join(trial_df, params, by = "id")
   
   clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
-                                    swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, gamma, total_earnings) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                                    swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, gamma, total_earnings, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
     group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
     inner_join(clock)
   fb_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
                                  swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, rt_vmax_lag, rt_vmax_change,
-                                 gamma, total_earnings, ev,next_swing_above_median) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                                 gamma, total_earnings, ev,next_swing_above_median, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
     group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
     inner_join(fb)
   rtvmax_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc, rt_vmax,
                                      swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, rt_vmax_lag, rt_vmax_change,
-                                     gamma, total_earnings, ev,next_swing_above_median) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                                     gamma, total_earnings, ev,next_swing_above_median, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
     group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
     inner_join(rtvmax)
   # v1_clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
