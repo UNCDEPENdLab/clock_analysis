@@ -4,8 +4,9 @@ library(psych)
 library(corrplot)
 library(lme4)
 library(ggpubr)
-# library(lmerTest)
+library(lmerTest)
 library(stargazer)
+library(car)
 # source('~/code/Rhelpers/')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 # load('trial_df_and_vhdkfpe_clusters.Rdata')
@@ -521,17 +522,33 @@ summary(ub4)
 
 
 # do they swing in the direction of greater uncertainty?
-us1 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + 
-                                 v_entropy_wi +  scale(rt_swing) + scale(u_chosen_lag))^2 + 
-              v_max_b + v_entropy_b + scale(-1/run_trial)*scale(run) + (1|id), df)
+us1 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + 
+                                  )^2 + 
+               scale(-1/run_trial)*scale(run) + (1|id), df)
 screen.lmerTest(us1, .001)
 
-us2 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + 
-                          v_entropy_wi +  scale(rt_swing) + scale(u_chosen_lag) +
-                          h_f1_fp + I(-h_f2_neg_paralimb) + pe_f1_cort_str + pe_f2_hipp)^2 + 
-              v_max_b + v_entropy_b + scale(-1/run_trial)*scale(run) + (1|id), df)
-screen.lmerTest(us2, .001)
+us2 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + 
+                          h_f1_fp + I(-h_HippAntL) + pe_f1_cort_str + pe_f2_hipp)^2 + 
+              scale(-1/run_trial)*scale(run) + (1|id), df)
+screen.lmerTest(us2, .01)
 ggplot(df %>% filter(!is.na(rt_swing)), aes(pe_f2_hipp, u_chosen, color = rt_swing>700, group = rt_swing>700)) + geom_smooth(method = 'gam') #+ facet_wrap(~run)
+
+# predict RT with u_chosen and HIPP
+urs1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag)^2 + scale(rt_lag) * scale(u_chosen) + (1|id/run), df)
+screen.lmerTest(urs1, .01)
+Anova(urs1)
+urs2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + h_f1_fp )^2 +
+               (scale(-1/run_trial) + scale(rt_lag) + omission_lag + I(-h_HippAntL))^2 + 
+               (scale(-1/run_trial) + scale(rt_lag) + omission_lag + pe_f1_cort_str)^2 + 
+               (scale(-1/run_trial) + scale(rt_lag) + omission_lag + pe_f2_hipp)^2 + 
+               (scale(rt_lag) + scale(u_chosen) +h_f1_fp)^3 + 
+               (scale(rt_lag) + scale(u_chosen) +I(-h_HippAntL))^3 + 
+               (scale(rt_lag) + scale(u_chosen) + pe_f1_cort_str)^3 + 
+               (scale(rt_lag) + scale(u_chosen) + pe_f2_hipp)^3 + 
+               (1|id/run), df)
+screen.lmerTest(urs2, .01)
+Anova(urs2)
+
 ###########
 ## PLOTS ##
 #####
