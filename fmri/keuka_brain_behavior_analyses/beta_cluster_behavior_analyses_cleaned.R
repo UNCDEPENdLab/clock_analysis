@@ -61,7 +61,7 @@ mf2v <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag  + I
 # KLD at feedback: kf_f2_vmpfc_precun favors exploitation, but fit is comparatively poor
 mf2kf <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag  + kf_f1_pos + I(-kf_f2_vmpfc_precun))^2 +
                 scale(rt_lag):omission_lag:kf_f1_pos + scale(rt_lag):omission_lag:I(-kf_f2_vmpfc_precun) +
-              (1|id/run), df)
+                (1|id/run), df)
 #screen.lmerTest(mf2kf)
 
 # entropy change -- nothing spectacular, but vmpfc-precuneus promotes exploitation
@@ -85,8 +85,8 @@ mf2pe <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag  + 
 # but the two PE factors are inter-correlated at r=.52
 # post. hippocampal effects are even stronger after taking the first factor out!
 mf2pef2only <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag  + pe_f2_hipp)^2 + 
-                scale(rt_lag):omission_lag:pe_f2_hipp +
-                (1|id/run), df)
+                      scale(rt_lag):omission_lag:pe_f2_hipp +
+                      (1|id/run), df)
 #screen.lmerTest(mf2pef2only)
 
 ggplot(df,aes(rt_csv,rt_lag, lty = pe_f2_hipp_resp, color = omission_lag)) + geom_smooth(method = 'glm')
@@ -100,22 +100,22 @@ mf2d <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag + d_
 #################
 # best model
 mf3hpedh3 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag + 
-                    h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp)^2 + 
+                               h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp)^2 + 
                      scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + 
                      scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
                      scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
                      scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                    (1|id/run), df)
+                     (1|id/run), df)
 #screen.lmerTest(mf3hpedh3)
 
 # swap in hippocampal low-H cluster for vmpfcHipp factor -- fit is worse
 mf3hpedh3hipp <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag + 
-                               h_f1_fp + I(-h_HippAntL) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp)^2 + 
-                     scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_HippAntL) + 
-                     scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                     scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
-                     scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                     (1|id/run), df)
+                                   h_f1_fp + I(-h_HippAntL) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp)^2 + 
+                         scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_HippAntL) + 
+                         scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
+                         scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
+                         scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
+                         (1|id/run), df)
 #screen.lmerTest(mf3hpedh3hipp)
 
 stargazer(mf1, mf2h, mf2v, mf2pe,mf2dh,mf3hpedh3, type="html", out="mf.htm", report = "vcs*",
@@ -158,10 +158,10 @@ mb1a <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) 
 #screen.lmerTest(mb1a)
 
 mb2h <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_f1_fp + I(-h_f2_neg_paralimb))^2 + 
-                      scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) +
-                      scale(rt_vmax_lag):v_max_wi_lag:h_f1_fp + scale(rt_vmax_lag):v_max_wi_lag:I(-h_f2_neg_paralimb) +
-                      scale(-1/run_trial):scale(rt_vmax_lag):h_f1_fp +  scale(-1/run_trial):scale(rt_vmax_lag):I(-h_f2_neg_paralimb) +
-                      v_max_b + v_entropy_b +  (1|id/run), df)
+               scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) +
+               scale(rt_vmax_lag):v_max_wi_lag:h_f1_fp + scale(rt_vmax_lag):v_max_wi_lag:I(-h_f2_neg_paralimb) +
+               scale(-1/run_trial):scale(rt_vmax_lag):h_f1_fp +  scale(-1/run_trial):scale(rt_vmax_lag):I(-h_f2_neg_paralimb) +
+               v_max_b + v_entropy_b +  (1|id/run), df)
 #screen.lmerTest(mb2h)
 mb2v <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + rt_vmax_change + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + 
                scale(rt_lag):omission_lag:I(-v_f1_neg_cog) + scale(rt_lag):omission_lag:v_f2_paralimb +
@@ -176,10 +176,10 @@ mb2v <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) 
 # KLD at feedback: kf_f2_vmpfc_precun favors exploitation, but fit is comparatively poor
 # nothing remarkable for kf_f1_pos
 mb2kf <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + rt_vmax_change + kf_f1_pos + I(-kf_f2_vmpfc_precun))^2 +
-  scale(rt_lag):omission_lag:kf_f1_pos + scale(rt_lag):omission_lag:I(-kf_f2_vmpfc_precun) +
-  scale(rt_vmax_lag):v_max_wi_lag:kf_f1_pos + scale(rt_vmax_lag):v_max_wi_lag:I(-kf_f2_vmpfc_precun) +
-  scale(-1/run_trial):scale(rt_vmax_lag):kf_f1_pos + scale(-1/run_trial):scale(rt_vmax_lag):I(-kf_f2_vmpfc_precun) +
-  v_max_b + v_entropy_b +  (1|id/run), df)
+                scale(rt_lag):omission_lag:kf_f1_pos + scale(rt_lag):omission_lag:I(-kf_f2_vmpfc_precun) +
+                scale(rt_vmax_lag):v_max_wi_lag:kf_f1_pos + scale(rt_vmax_lag):v_max_wi_lag:I(-kf_f2_vmpfc_precun) +
+                scale(-1/run_trial):scale(rt_vmax_lag):kf_f1_pos + scale(-1/run_trial):scale(rt_vmax_lag):I(-kf_f2_vmpfc_precun) +
+                v_max_b + v_entropy_b +  (1|id/run), df)
 #screen.lmerTest(mb2kf)
 
 # entropy change -- nothing spectacular, but vmpfc-precuneus promotes exploitation 
@@ -191,26 +191,26 @@ mb2dh <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag)
 #screen.lmerTest(mb2dh)
 # intercorrelated factors, test separately:
 mb2dh1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + rt_vmax_change + dh_f1_co_bg + I(-dh_f_neg_vmpfc_precun))^2 +
-                scale(rt_lag):omission_lag:dh_f1_co_bg + scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                scale(rt_vmax_lag):v_max_wi_lag:dh_f1_co_bg + scale(rt_vmax_lag):v_max_wi_lag:I(-dh_f_neg_vmpfc_precun) +
-                scale(-1/run_trial):scale(rt_vmax_lag):dh_f1_co_bg + scale(-1/run_trial):scale(rt_vmax_lag):I(-dh_f_neg_vmpfc_precun) +
-                v_max_b + v_entropy_b +   (1|id/run), df)
+                 scale(rt_lag):omission_lag:dh_f1_co_bg + scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
+                 scale(rt_vmax_lag):v_max_wi_lag:dh_f1_co_bg + scale(rt_vmax_lag):v_max_wi_lag:I(-dh_f_neg_vmpfc_precun) +
+                 scale(-1/run_trial):scale(rt_vmax_lag):dh_f1_co_bg + scale(-1/run_trial):scale(rt_vmax_lag):I(-dh_f_neg_vmpfc_precun) +
+                 v_max_b + v_entropy_b +   (1|id/run), df)
 #screen.lmerTest(mb2dh1)
 # dh_f2_dan dampens the effect of rt_vmax_change (there was also a small effect of v2 above)!
 mb2dh2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + rt_vmax_change + dh_f2_dan + I(-dh_f_neg_vmpfc_precun))^2 +
-                scale(rt_lag):omission_lag:dh_f2_dan + scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                scale(rt_vmax_lag):v_max_wi_lag:scale(rt_vmax_lag):v_max_wi_lag:dh_f2_dan + scale(rt_vmax_lag):v_max_wi_lag:I(-dh_f_neg_vmpfc_precun) +
-                scale(-1/run_trial):scale(rt_vmax_lag):dh_f2_dan + scale(-1/run_trial):scale(rt_vmax_lag):I(-dh_f_neg_vmpfc_precun) +
-                v_max_b + v_entropy_b +   (1|id/run), df)
+                 scale(rt_lag):omission_lag:dh_f2_dan + scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
+                 scale(rt_vmax_lag):v_max_wi_lag:scale(rt_vmax_lag):v_max_wi_lag:dh_f2_dan + scale(rt_vmax_lag):v_max_wi_lag:I(-dh_f_neg_vmpfc_precun) +
+                 scale(-1/run_trial):scale(rt_vmax_lag):dh_f2_dan + scale(-1/run_trial):scale(rt_vmax_lag):I(-dh_f_neg_vmpfc_precun) +
+                 v_max_b + v_entropy_b +   (1|id/run), df)
 #screen.lmerTest(mb2dh2)
 
 
 # dhp_f1_all
 mb2dhp <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + rt_vmax_change + dhp_f1_all + I(-dh_f_neg_vmpfc_precun))^2 +
-                scale(rt_lag):omission_lag:dhp_f1_all + scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                scale(rt_vmax_lag):v_max_wi_lag:dhp_f1_all + scale(rt_vmax_lag):v_max_wi_lag:I(-dh_f_neg_vmpfc_precun) +
-                scale(-1/run_trial):scale(rt_vmax_lag):dhp_f1_all + scale(-1/run_trial):scale(rt_vmax_lag):I(-dh_f_neg_vmpfc_precun) +
-                v_max_b + v_entropy_b +   (1|id/run), df)
+                 scale(rt_lag):omission_lag:dhp_f1_all + scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
+                 scale(rt_vmax_lag):v_max_wi_lag:dhp_f1_all + scale(rt_vmax_lag):v_max_wi_lag:I(-dh_f_neg_vmpfc_precun) +
+                 scale(-1/run_trial):scale(rt_vmax_lag):dhp_f1_all + scale(-1/run_trial):scale(rt_vmax_lag):I(-dh_f_neg_vmpfc_precun) +
+                 v_max_b + v_entropy_b +   (1|id/run), df)
 #screen.lmerTest(mb2dhp)
 
 # set DHP aside for now, too many factors
@@ -227,10 +227,10 @@ mb2pe <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag)
 #screen.lmerTest(mb2pe)
 
 mb2pe_hipp <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + rt_vmax_change +  pe_f2_hipp)^2 + 
-                scale(rt_lag):omission_lag:pe_f2_hipp +
-                scale(rt_vmax_lag):v_max_wi_lag:pe_f2_hipp +
-                scale(-1/run_trial):scale(rt_vmax_lag):pe_f2_hipp +
-                v_max_b + v_entropy_b + (1|id/run), df)
+                     scale(rt_lag):omission_lag:pe_f2_hipp +
+                     scale(rt_vmax_lag):v_max_wi_lag:pe_f2_hipp +
+                     scale(-1/run_trial):scale(rt_vmax_lag):pe_f2_hipp +
+                     v_max_b + v_entropy_b + (1|id/run), df)
 screen.lmerTest(mb2pe_hipp)
 
 # add h_HippAntL
@@ -266,7 +266,7 @@ mb2d <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) 
 #################
 # second-best model
 mb3hpedh3 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + 
-                     v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp)^2 + 
+                               v_max_wi_lag + v_entropy_wi +rt_vmax_change +  h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp)^2 + 
                      scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + 
                      scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
                      scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
@@ -279,16 +279,16 @@ mb3hpedh3 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax
 
 # add in DHP -- best model
 mb3hpedh_p4 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + 
-                               v_max_wi_lag + v_entropy_wi + scale(rt_vmax_change) +  
+                                 v_max_wi_lag + v_entropy_wi + scale(rt_vmax_change) +  
                                  h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp + dhp_f1_all)^2 + 
-                     scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + scale(rt_lag):omission_lag:dhp_f1_all +
-                     scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                     scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
-                     scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                     scale(rt_vmax_lag):scale(-1/run_trial):h_f1_fp + scale(rt_vmax_lag):scale(-1/run_trial):I(-h_f2_neg_paralimb) + 
-                     scale(rt_vmax_lag):scale(-1/run_trial):pe_f1_cort_str + scale(rt_vmax_lag):scale(-1/run_trial):pe_f2_hipp  +
-                     scale(rt_vmax_lag):scale(-1/run_trial):I(-dh_f_neg_vmpfc_precun) + scale(rt_vmax_lag):scale(-1/run_trial):dhp_f1_all +
-                     v_max_b + v_entropy_b + (1|id/run), df)
+                       scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + scale(rt_lag):omission_lag:dhp_f1_all +
+                       scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
+                       scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
+                       scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
+                       scale(rt_vmax_lag):scale(-1/run_trial):h_f1_fp + scale(rt_vmax_lag):scale(-1/run_trial):I(-h_f2_neg_paralimb) + 
+                       scale(rt_vmax_lag):scale(-1/run_trial):pe_f1_cort_str + scale(rt_vmax_lag):scale(-1/run_trial):pe_f2_hipp  +
+                       scale(rt_vmax_lag):scale(-1/run_trial):I(-dh_f_neg_vmpfc_precun) + scale(rt_vmax_lag):scale(-1/run_trial):dhp_f1_all +
+                       v_max_b + v_entropy_b + (1|id/run), df)
 #screen.lmerTest(mb3hpedh_p4, .05)
 
 # remove pe_f1 to make sure pe_f2_hipp effects are not driven by multicollinearity
@@ -307,36 +307,36 @@ mb3hpedh_p5 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vm
 
 # test with current rt_vmax instead of change
 mb3hpedh_p_cur <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax) + omission_lag + 
-                                 v_max_wi_lag + v_entropy_wi +
-                                 h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp + dhp_f1_all)^2 + 
-                       scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + scale(rt_lag):omission_lag:dhp_f1_all +
-                       scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                       scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
-                       scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                       scale(rt_vmax):scale(-1/run_trial):h_f1_fp + scale(rt_vmax_lag):scale(-1/run_trial):I(-h_f2_neg_paralimb) + 
-                       scale(rt_vmax):scale(-1/run_trial):pe_f1_cort_str + scale(rt_vmax_lag):scale(-1/run_trial):pe_f2_hipp  +
-                       scale(rt_vmax):scale(-1/run_trial):I(-dh_f_neg_vmpfc_precun) + scale(rt_vmax_lag):scale(-1/run_trial):dhp_f1_all +
-                       v_max_b + v_entropy_b + (1|id/run), df)
+                                    v_max_wi_lag + v_entropy_wi +
+                                    h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp + dhp_f1_all)^2 + 
+                          scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + scale(rt_lag):omission_lag:dhp_f1_all +
+                          scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
+                          scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
+                          scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
+                          scale(rt_vmax):scale(-1/run_trial):h_f1_fp + scale(rt_vmax_lag):scale(-1/run_trial):I(-h_f2_neg_paralimb) + 
+                          scale(rt_vmax):scale(-1/run_trial):pe_f1_cort_str + scale(rt_vmax_lag):scale(-1/run_trial):pe_f2_hipp  +
+                          scale(rt_vmax):scale(-1/run_trial):I(-dh_f_neg_vmpfc_precun) + scale(rt_vmax_lag):scale(-1/run_trial):dhp_f1_all +
+                          v_max_b + v_entropy_b + (1|id/run), df)
 #screen.lmerTest(mb3hpedh_p_cur, .05)
 
 # remove pe_f1 to make sure pe_f2_hipp effects are not driven by multicollinearity
 mb3hpedh_p_cur2 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax) + omission_lag + 
-                                 v_max_wi_lag + v_entropy_wi +
-                                 h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) +  pe_f2_hipp + dhp_f1_all)^2 + 
-                       scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + scale(rt_lag):omission_lag:dhp_f1_all +
-                       scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                       scale(rt_lag):omission_lag:pe_f2_hipp +
-                       scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                       scale(rt_vmax_lag):scale(-1/run_trial):h_f1_fp + scale(rt_vmax_lag):scale(-1/run_trial):I(-h_f2_neg_paralimb) + 
-                       scale(rt_vmax_lag):scale(-1/run_trial):pe_f2_hipp  +
-                       scale(rt_vmax_lag):scale(-1/run_trial):I(-dh_f_neg_vmpfc_precun) + scale(rt_vmax_lag):scale(-1/run_trial):dhp_f1_all +
-                       v_max_b + v_entropy_b + (1|id/run), df)
+                                     v_max_wi_lag + v_entropy_wi +
+                                     h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) +  pe_f2_hipp + dhp_f1_all)^2 + 
+                           scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + scale(rt_lag):omission_lag:dhp_f1_all +
+                           scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
+                           scale(rt_lag):omission_lag:pe_f2_hipp +
+                           scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
+                           scale(rt_vmax_lag):scale(-1/run_trial):h_f1_fp + scale(rt_vmax_lag):scale(-1/run_trial):I(-h_f2_neg_paralimb) + 
+                           scale(rt_vmax_lag):scale(-1/run_trial):pe_f2_hipp  +
+                           scale(rt_vmax_lag):scale(-1/run_trial):I(-dh_f_neg_vmpfc_precun) + scale(rt_vmax_lag):scale(-1/run_trial):dhp_f1_all +
+                           v_max_b + v_entropy_b + (1|id/run), df)
 #screen.lmerTest(mb3hpedh_p_cur2, .05)
 
 # and test the rt_vmax*omission*ROI interaction to see if they get more dislodged
 mb3hpedh_p_cur3 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax) + omission_lag + 
-                           v_max_wi_lag + v_entropy_wi +
-                           h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp + dhp_f1_all)^2 + 
+                                     v_max_wi_lag + v_entropy_wi +
+                                     h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp + dhp_f1_all)^2 + 
                            scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + scale(rt_lag):omission_lag:dhp_f1_all +
                            scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
                            scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
@@ -392,19 +392,9 @@ corrplot(u_cor$r, cl.lim=c(-1,1),
          p.mat = u_cor$p, sig.level=0.05, insig = "blank")
 dev.off()
 
-uf1 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + rewFunc)^2 + 
-               scale(-1/run_trial)*scale(run) + (1|id/run), df)
-summary(uf1)
-
-# I don't really believe this model, looks like there are hidden confounds here
-uf3 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + rewFunc + omission_lag + h_f1_fp + I(-h_HippAntL) + pe_f1_cort_str + pe_f2_hipp)^3 + 
-              scale(-1/run_trial)*scale(run) + (1|id/run), df)
-screen.lmerTest(uf3, .01)
-ggplot(df, aes(run_trial, u_chosen, group = interaction(h_f1_fp_resp, rt_lag>2000), color = h_f1_fp_resp, lty = rt_lag>2000)) +
-  geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 2)) + facet_wrap(~rewFunc)
-ggplot(df, aes(run_trial, u_chosen, group = interaction(pe_f2_hipp_resp, rt_lag>2000), color = pe_f2_hipp_resp, lty = rt_lag>2000)) +
-  geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 2)) + facet_wrap(~rewFunc)
-
+uf1 <- lmer(u_chosen ~ (scale(run_trial) + scale(rt_lag) + rewFunc)^2 + 
+              scale(run_trial)*scale(run) + (1|id/run), df)
+vif(uf1)
 
 # check: does entropy decay here? -- need to import the right entropy, value, etc.
 ggplot(df, aes(run_trial, v_entropy_wi)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3)) #+ facet_wrap(~run)
@@ -420,77 +410,65 @@ ggplot(df %>% filter(run_trial>5), aes(run_trial, u_chosen, color = rewFunc, lty
 ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = h_HippAntL_resp, group = interaction(rewFunc, h_HippAntL_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3)) #+ facet_wrap(~run)
 ggplot(df, aes(run_trial, u_chosen, color = rt_lag>2000, lty = pe_f2_hipp_resp, group = interaction(rt_lag>2000, pe_f2_hipp_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3))  + facet_wrap(~rewFunc)
 ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = pe_f2_hipp_resp, group = interaction(rewFunc, pe_f2_hipp_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3)) + facet_wrap(~rewFunc)
+ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = h_HippAntL_resp, group = interaction(rewFunc, h_HippAntL_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3)) + facet_wrap(~rewFunc)
+ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = h_f1_fp_resp, group = interaction(rewFunc, h_f1_fp_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3)) + facet_wrap(~rewFunc)
 
 # U vs. V
 ggplot(df %>% filter(v_chosen>0), aes(v_chosen, u_chosen)) + geom_smooth() #+ facet_wrap(~run)
-ggplot(df %>% filter(run_trial>5), aes(y_chosen, u_chosen)) + geom_jitter() #+ facet_wrap(~run)
+ggplot(df %>% filter(run_trial>5), aes(y_chosen, u_chosen)) + geom_smooth() #+ facet_wrap(~run)
 
 
 # reasonable basis for builidng the model for interactions with betas
-ub1 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi)^2 + 
-            omission_lag * scale(u_chosen_lag) + scale(rt_vmax_lag) * scale(u_chosen_lag) + scale(rt_lag)*scale(u_chosen_lag) + 
-              v_max_b + v_entropy_b + scale(-1/run_trial)*scale(run) + (1|id/run), df)
-screen.lmerTest(ub1,.01)
-ub1f <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi)^2 + 
+# NB: use run_trial, not -1/run_trial in U analyses
+ub1 <- lmer(u_chosen ~ (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi)^2 + 
               omission_lag * scale(u_chosen_lag) + scale(rt_vmax_lag) * scale(u_chosen_lag) + scale(rt_lag)*scale(u_chosen_lag) + 
-              v_max_b + v_entropy_b + scale(-1/run_trial)*scale(run) + (1|id/run), fdf)
-screen.lmerTest(ub1f,.01)
-# ub1e <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi)^2 + 
+              v_max_b + v_entropy_b + scale(run_trial)*scale(run) + (1|id/run), df)
+screen.lmerTest(ub1,.01)
+# # excluding the first 5 trials -- same results, no need to do that
+# ub1f <- lmer(u_chosen ~ (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi)^2 + 
 #                omission_lag * scale(u_chosen_lag) + scale(rt_vmax_lag) * scale(u_chosen_lag) + scale(rt_lag)*scale(u_chosen_lag) + 
-#                v_max_b + v_entropy_b + scale(-1/run_trial)*scale(run) + (1|id/run), edf)
+#                v_max_b + v_entropy_b + scale(run_trial)*scale(run) + (1|id/run), fdf)
+# screen.lmerTest(ub1f,.01)
+# ub1e <- lmer(u_chosen ~ (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi)^2 + 
+#                omission_lag * scale(u_chosen_lag) + scale(rt_vmax_lag) * scale(u_chosen_lag) + scale(rt_lag)*scale(u_chosen_lag) + 
+#                v_max_b + v_entropy_b + scale(run_trial)*scale(run) + (1|id/run), edf)
 # screen.lmerTest(ub1e,.001)
 
 
-vif(ub1)
 # cannot allow u_chosen_lag to interact with trial because of multi-collinearity
-Anova(ub1)
-ub2 <- lmer(u_chosen_change ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi)^2 + 
-              v_max_b + v_entropy_b + scale(-1/run_trial)*scale(run) + scale(u_chosen_lag) + (1|id/run), df)
+ub2 <- lmer(u_chosen_change ~ (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi)^2 + 
+              v_max_b + v_entropy_b + scale(run_trial)*scale(run) + scale(u_chosen_lag) + (1|id/run), df)
 screen.lmerTest(ub2,.01)
 vif(ub2)
 
 # brute force approach to betas
 # u_chosen looks more interpretable than u_chosen_change
-ub3 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + h_f1_fp)^2 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + I(-h_HippAntL))^2 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + pe_f1_cort_str)^2 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + pe_f2_hipp)^2 +
-       scale(rt_lag)*scale(u_chosen_lag) + scale(-1/run_trial)*scale(run) + 
-         h_f1_fp*scale(u_chosen_lag) + I(-h_HippAntL)*scale(u_chosen_lag) +pe_f1_cort_str*scale(u_chosen_lag) +pe_f2_hipp*scale(u_chosen_lag) + (1|id/run), df)
+ub3 <- lmer(u_chosen ~ (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + h_f1_fp)^2 +
+              (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + I(-h_HippAntL))^2 +
+              (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + pe_f1_cort_str)^2 +
+              (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_entropy_wi + pe_f2_hipp)^2 +
+              scale(rt_lag)*scale(u_chosen_lag) + scale(run_trial)*scale(run) +  (1|id/run), df)
 screen.lmerTest(ub3, .01)
-
-
-ub3f <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_f1_fp)^3 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + I(-h_HippAntL))^3 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str)^3 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f2_hipp)^3 +
-              v_max_b + v_entropy_b + scale(rt_lag)*scale(u_chosen_lag) + scale(-1/run_trial)*scale(run) + 
-              h_f1_fp*scale(u_chosen_lag) + I(-h_HippAntL)*scale(u_chosen_lag) +pe_f1_cort_str*scale(u_chosen_lag) +pe_f2_hipp*scale(u_chosen_lag) + (1|id/run), fdf)
-screen.lmerTest(ub3f, .01)
 
 pdf('AH_entropy_uncertainty_aversion_by_cond.pdf', height = 6, width = 8)
 ggplot(df %>% filter(!is.na(v_entropy_wi)), aes(run_trial, u_chosen, lty = v_entropy_wi>0, color = h_HippAntL_resp)) + 
   geom_smooth(method = 'gam', formula = y ~ splines::ns(x,2)) + facet_wrap(~rewFunc)
 dev.off()
 
-ggplot(df %>% filter(!is.na(rt_lag)), aes(rt_lag, u_chosen,color = pe_f2_hipp_resp)) + 
-  geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3)) #+ facet_wrap(~rewFunc)
 
-
-ub3a <- lmer(u_chosen_change ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_f1_fp)^3 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + I(-h_HippAntL))^3 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str)^3 +
-              (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f2_hipp)^3 +
-              v_max_b + v_entropy_b + scale(rt_lag)*scale(u_chosen_lag) + scale(-1/run_trial)*scale(run) + 
-              h_f1_fp*scale(u_chosen_lag) + I(-h_f2_neg_paralimb)*scale(u_chosen_lag) +pe_f1_cort_str*scale(u_chosen_lag) +pe_f2_hipp*scale(u_chosen_lag) + (1|id/run), df)
+ub3a <- lmer(u_chosen_change ~ (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_f1_fp)^3 +
+               (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + I(-h_HippAntL))^3 +
+               (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str)^3 +
+               (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f2_hipp)^3 +
+               v_max_b + v_entropy_b + scale(rt_lag)*scale(u_chosen_lag) + scale(run_trial)*scale(run) + (1|id/run), df)
 screen.lmerTest(ub3a, .01)
 
 
-# ub3e <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_f1_fp)^3 +
-#               (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + I(-h_f2_neg_paralimb))^3 +
-#               (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str)^3 +
-#               (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f2_hipp)^3 +
-#               v_max_b + v_entropy_b + scale(rt_lag)*scale(u_chosen_lag) + scale(-1/run_trial)*scale(run) + 
+# ub3e <- lmer(u_chosen ~ (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + h_f1_fp)^3 +
+#               (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + I(-h_f2_neg_paralimb))^3 +
+#               (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str)^3 +
+#               (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + pe_f2_hipp)^3 +
+#               v_max_b + v_entropy_b + scale(rt_lag)*scale(u_chosen_lag) + scale(run_trial)*scale(run) + 
 #               h_f1_fp*scale(u_chosen_lag) + I(-h_f2_neg_paralimb)*scale(u_chosen_lag) +pe_f1_cort_str*scale(u_chosen_lag) +pe_f2_hipp*scale(u_chosen_lag) + (1|id/run), edf)
 # screen.lmerTest(ub3e, .01)
 
@@ -504,50 +482,66 @@ ggarrange(p1,p2,p3,p4,ncol = 2, nrow = 2)
 dev.off()
 
 p1 <- ggplot(df, aes(run_trial, u_chosen, lty = pe_f1_cort_str_resp, group = pe_f1_cort_str_resp)) + geom_smooth() #+ facet_wrap(~run)
-p2 <- ggplot(df, aes(run_trial, u_chosen, lty = pe_f1_cort_str_resp, group = interaction(run,pe_f1_cort_str_resp) , color = run)) + geom_smooth() #+ facet_wrap(~run)
-pdf("striatum_on_u_sensitivity.pdf", height = 4, width = 8)
-ggarrange(p1,p2,ncol = 2, nrow = 1)
+p2 <- ggplot(df, aes(run_trial, u_chosen, lty = pe_f2_hipp_resp, group = pe_f2_hipp_resp)) + geom_smooth() #+ facet_wrap(~run)
+p3 <- ggplot(df, aes(run_trial, u_chosen, lty = h_f1_fp_resp, group = h_f1_fp_resp)) + geom_smooth() #+ facet_wrap(~run)
+p4 <- ggplot(df, aes(run_trial, u_chosen, lty = h_HippAntL_resp, group = h_HippAntL_resp)) + geom_smooth() #+ facet_wrap(~run)
+
+pdf("clusters_u_sensitivity.pdf", height = 4, width = 8)
+ggarrange(p1,p2,p3, p4, ncol = 2, nrow = 2)
 dev.off()
 
 
-ub4 <- lmer(u_chosen_change ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + 
-                          v_max_wi_lag + v_entropy_wi + scale(rt_vmax_change) +  
-                          h_f1_fp + I(-h_f2_neg_paralimb) + pe_f1_cort_str + pe_f2_hipp)^2 + 
+ub4 <- lmer(u_chosen_change ~ (scale(run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + 
+                                 v_max_wi_lag + v_entropy_wi + scale(rt_vmax_change) +  
+                                 h_f1_fp + I(-h_f2_neg_paralimb) + pe_f1_cort_str + pe_f2_hipp)^2 + 
               scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + 
               scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
-              scale(rt_vmax_lag):scale(-1/run_trial):h_f1_fp + scale(rt_vmax_lag):scale(-1/run_trial):I(-h_f2_neg_paralimb) + 
-              scale(rt_vmax_lag):scale(-1/run_trial):pe_f1_cort_str + scale(rt_vmax_lag):scale(-1/run_trial):pe_f2_hipp  +
-              v_max_b + v_entropy_b + scale(-1/run_trial)*scale(run) + (1|id/run), df)
+              scale(rt_vmax_lag):scale(run_trial):h_f1_fp + scale(rt_vmax_lag):scale(run_trial):I(-h_f2_neg_paralimb) + 
+              scale(rt_vmax_lag):scale(run_trial):pe_f1_cort_str + scale(rt_vmax_lag):scale(run_trial):pe_f2_hipp  +
+              v_max_b + v_entropy_b + scale(run_trial)*scale(run) + (1|id/run), df)
 summary(ub4)
 
 
 # do they swing in the direction of greater uncertainty?
-us1 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + 
-                                  )^2 + 
-               scale(-1/run_trial)*scale(run) + (1|id), df)
-screen.lmerTest(us1, .001)
-
-us2 <- lmer(u_chosen ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + 
+us1 <- lmer(u_chosen ~ (scale(run_trial) + omission_lag)^2 + 
+              scale(run_trial)*rewFunc + (1|id), df)
+screen.lmerTest(us1)
+us2 <- lmer(u_chosen ~ (scale(run_trial) + omission_lag + 
                           h_f1_fp + I(-h_HippAntL) + pe_f1_cort_str + pe_f2_hipp)^2 + 
-              scale(-1/run_trial)*scale(run) + (1|id), df)
+              scale(run_trial)*rewFunc + (1|id), df)
 screen.lmerTest(us2, .01)
-ggplot(df %>% filter(!is.na(rt_swing)), aes(pe_f2_hipp, u_chosen, color = rt_swing>700, group = rt_swing>700)) + geom_smooth(method = 'gam') #+ facet_wrap(~run)
+p1 <- ggplot(df %>% filter(!is.na(omission_lag)), aes(pe_f2_hipp, u_chosen, color = omission_lag)) + geom_smooth(method = 'gam') + 
+  geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)
+p2 <- ggplot(df %>% filter(!is.na(omission_lag)), aes(pe_f1_cort_str, u_chosen, color = omission_lag)) + geom_smooth(method = 'gam') + 
+  geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)
+pdf("pe_clusters_u_reward.pdf", height = 4, width = 8)
+ggarrange(p1,p2, ncol = 2, nrow = 1)
+dev.off()
 
 # predict RT with u_chosen and HIPP
-urs1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag)^2 + scale(rt_lag) * scale(u_chosen) + (1|id/run), df)
+urs1 <- lmer(rt_csv ~ (scale(run_trial) + scale(rt_lag) + omission_lag)^2 + 
+               scale(rt_lag) * scale(u_chosen) + scale(run_trial) * rewFunc +  (1|id/run), df %>% filter(rt_csv<1000))
 screen.lmerTest(urs1, .01)
+vif(urs1)
 Anova(urs1)
-urs2 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag + h_f1_fp )^2 +
-               (scale(-1/run_trial) + scale(rt_lag) + omission_lag + I(-h_HippAntL))^2 + 
-               (scale(-1/run_trial) + scale(rt_lag) + omission_lag + pe_f1_cort_str)^2 + 
-               (scale(-1/run_trial) + scale(rt_lag) + omission_lag + pe_f2_hipp)^2 + 
+urs2 <- lmer(rt_csv ~ (scale(run_trial) + scale(rt_lag) + omission_lag + h_f1_fp)^2 +
+               (scale(run_trial) + scale(rt_lag) + omission_lag + I(-h_HippAntL))^2 + 
+               (scale(run_trial) + scale(rt_lag) + omission_lag + pe_f1_cort_str)^2 + 
+               (scale(run_trial) + scale(rt_lag) + omission_lag + pe_f2_hipp)^2 + 
                (scale(rt_lag) + scale(u_chosen) +h_f1_fp)^3 + 
                (scale(rt_lag) + scale(u_chosen) +I(-h_HippAntL))^3 + 
                (scale(rt_lag) + scale(u_chosen) + pe_f1_cort_str)^3 + 
                (scale(rt_lag) + scale(u_chosen) + pe_f2_hipp)^3 + 
+               scale(run_trial) * rewFunc +
                (1|id/run), df)
 screen.lmerTest(urs2, .01)
 Anova(urs2)
+# unpack PH*u_chosen
+ggplot(df, aes(rt_lag, rt_csv, lty = u_chosen>1500, color = pe_f2_hipp_resp)) + geom_smooth(method = "gam",
+                                                                                            formula = y ~ splines::ns(x,3))
+# ideas for improving uncertainty analyses:
+# try ML Cox survival with time-varying within-trial U
+# look at relative rather than absolute uncertainty of the choice
 
 ###########
 ## PLOTS ##
@@ -657,12 +651,12 @@ ggarrange(r4,r5,r6,r7,r1,r2,r3, ncol = 2,nrow = 7, common.legend = F, align = c(
 dev.off()
 
 allplots <- ggarrange(p4, t4, r4,
-          p5, t5, r5,
-          p6, t6, r6,
-          p7, t7, r7,
-          p1, t1, r1,
-          p2, t2, r2,
-          p3, t3, r3, ncol = 3,nrow = 7, common.legend = F)
+                      p5, t5, r5,
+                      p6, t6, r6,
+                      p7, t7, r7,
+                      p1, t1, r1,
+                      p2, t2, r2,
+                      p3, t3, r3, ncol = 3,nrow = 7, common.legend = F)
 
 
 pdf("all_betas_H_rt_swing_RT_timecourse.pdf", width = 12, height = 16)
@@ -733,4 +727,4 @@ summary(m0 <- lmer(log(rt_swing) ~ scale(-1/run_trial) * scale(v_max) * scale(v_
 
 
 save(file = 'vhd_models.Rdata', list = ls(all.names = TRUE))
- # load('vhd_models.Rdata')
+# load('vhd_models.Rdata')
