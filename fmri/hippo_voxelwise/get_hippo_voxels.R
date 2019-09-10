@@ -2,10 +2,17 @@
 library(oro.nifti)
 library(dplyr)
 
-l_hippo <- readNIfTI("harvardoxford-subcortical_prob_Left_Hippocampus_2009c_thr50.nii.gz", reorient=FALSE)
-r_hippo <- readNIfTI("harvardoxford-subcortical_prob_Right_Hippocampus_2009c_thr50.nii.gz", reorient=FALSE)
-r_hippo_downsamp <- readNIfTI("harvardoxford-subcortical_prob_Right_Hippocampus_2009c_thr50_2.3mm.nii.gz", reorient=TRUE)
-l_hippo_downsamp <- readNIfTI("harvardoxford-subcortical_prob_Left_Hippocampus_2009c_thr50_2.3mm.nii.gz", reorient=TRUE)
+#harvard-oxford
+#l_hippo <- readNIfTI("harvardoxford-subcortical_prob_Left_Hippocampus_2009c_thr50.nii.gz", reorient=FALSE)
+#r_hippo <- readNIfTI("harvardoxford-subcortical_prob_Right_Hippocampus_2009c_thr50.nii.gz", reorient=FALSE)
+#l_hippo_downsamp <- readNIfTI("harvardoxford-subcortical_prob_Left_Hippocampus_2009c_thr50_2.3mm.nii.gz", reorient=FALSE)
+#r_hippo_downsamp <- readNIfTI("harvardoxford-subcortical_prob_Right_Hippocampus_2009c_thr50_2.3mm.nii.gz", reorient=FALSE)
+
+#cobra atlas approach
+l_hippo <- readNIfTI("l_hipp_cobra_con.nii.gz", reorient=FALSE)
+r_hippo <- readNIfTI("r_hipp_cobra_con.nii.gz", reorient=FALSE)
+l_hippo_downsamp <- readNIfTI("l_hipp_cobra_con_2.3mm.nii.gz", reorient=FALSE)
+r_hippo_downsamp <- readNIfTI("r_hipp_cobra_con_2.3mm.nii.gz", reorient=FALSE)
 
 #verified coordinate lookup against fsleyes
 #note that the matrix position here is 1-based, but fsleyes is 0-based (i.e., fsleyes is one less)
@@ -59,16 +66,29 @@ r_vox %>% arrange(sum_pct_ai) %>% head(n=5)
 r_vox %>% arrange(sum_pct_ps) %>% head(n=5)
 
 #find the extremes on the 1mm R mask
-top <- r_vox %>% arrange(sum_pct_ps) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
-bottom <- r_vox %>% arrange(sum_pct_ai) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
+top_r <- r_vox %>% arrange(sum_pct_ps) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
+bottom_r <- r_vox %>% arrange(sum_pct_ai) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
 
 #NB. I'm computing this with a sagittal view in mind. So the X axis of the equation is A-P; Y axis is S-I.
-slope <- (top$SI - bottom$SI)/(top$AP - bottom$AP)
+slope_r <- (top_r$SI - bottom_r$SI)/(top_r$AP - bottom_r$AP)
 
 # To get intercept, fill in one of the points to solve for b
 # SI = slope * AP
 # 5 = slope * -40    ==>
-intercept <- top$SI - slope * top$AP
+intercept_r <- top_r$SI - slope_r * top_r$AP
+
+#find the extremes on the 1mm L mask
+top_l <- l_vox %>% arrange(sum_pct_ps) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
+bottom_l <- l_vox %>% arrange(sum_pct_ai) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
+
+#NB. I'm computing this with a sagittal view in mind. So the X axis of the equation is A-P; Y axis is S-I.
+slope_l <- (top_l$SI - bottom_l$SI)/(top_l$AP - bottom_l$AP)
+
+# To get intercept, fill in one of the points to solve for b
+# SI = slope * AP
+# 5 = slope * -40    ==>
+intercept_l <- top_l$SI - slope_l * top_l$AP
+
 
 #handy: http://www.webmath.com/equline1.html
 
@@ -95,11 +115,16 @@ intercept <- top$SI - slope * top$AP
 #PA = -11/12 * SI + -95/3
 
 # And the angle between these lines is given by the difference in the arctans of their slopes
-theta <- (atan(0) - atan(slope)) # Yields radians clockwise
+theta_r <- (atan(0) - atan(slope_r)) # Yields radians clockwise
+cat("The right hippocampus is", theta_r * 180/pi, "degrees CW from the MNI AP axis\n")
 
-cat("The hippocampus is", theta * 180/pi, "degrees CW from the MNI AP axis\n")
+theta_l <- (atan(0) - atan(slope_l)) # Yields radians clockwise
+cat("The left hippocampus is", theta_l * 180/pi, "degrees CW from the MNI AP axis\n")
 
-theta <- 2*pi - theta #should be CCW before coordinate transformation
+cat("We will take the mean of the left and right rotation calculations to get the best compromise position\n")
+cat("The calculated mean rotation is: ", mean(c(theta_r, theta_l)) * 180/pi, "\n")
+
+theta <- 2*pi - mean(c(theta_r, theta_l)) #should be CCW before coordinate transformation
 
 #rotate AP axis 42.51 degrees CW to reach HPC heading
 #remember: x is AP, y is SI
@@ -115,10 +140,10 @@ r_vox %>% arrange(long_axis) %>% select(LR,AP,SI,long_axis) %>% filter(long_axis
 #r_vox %>% arrange(long_axis) %>% select(LR,AP,SI,long_axis) %>% filter(long_axis > .3 & long_axis < .31)
 #r_vox %>% arrange(long_axis) %>% select(LR,AP,SI,long_axis) %>% filter(long_axis > .9 & long_axis < .91)
 
-write_long_axis(r_hippo, r_vox, "long_axis_r_1mm")
-write_long_axis(l_hippo, l_vox, "long_axis_l_1mm")
-write_long_axis(r_hippo_downsamp, r_vox_downsamp, "long_axis_r_2.3mm")
-write_long_axis(l_hippo_downsamp, l_vox_downsamp, "long_axis_l_2.3mm")
+write_long_axis(r_hippo, r_vox, "long_axis_r_cobra_1mm")
+write_long_axis(l_hippo, l_vox, "long_axis_l_cobra_1mm")
+write_long_axis(r_hippo_downsamp, r_vox_downsamp, "long_axis_r_cobra_2.3mm")
+write_long_axis(l_hippo_downsamp, l_vox_downsamp, "long_axis_l_cobra_2.3mm")
 
 ##TESTING AND VALIDATION
 ##whole image test to verify angle of rotation

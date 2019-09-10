@@ -87,8 +87,8 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
     "#module load \"fsl/5.0.11\" >/dev/null 2>&1",
     "module unload fsl", #make sure that the ni_path version of FSL is unloaded
     "#module load \"openblas/0.2.20\" >/dev/null 2>&1",
-    "#module load \"fsl/6.0.0\" >/dev/null 2>&1",
     "module load \"fsl/6.0.1\" >/dev/null 2>&1",
+    "module load gsl/2.5", #for dependlab R package to work (some new dependency)
     "",
     "cd $PBS_O_WORKDIR"
   )

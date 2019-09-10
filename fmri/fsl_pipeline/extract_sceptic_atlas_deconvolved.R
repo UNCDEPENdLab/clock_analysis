@@ -67,28 +67,33 @@ system(paste0("fslmaths ", master, " -thr 256 -uthr 256 -bin /gpfs/group/mnh5174
 system(paste0("fslmaths ", master, " -thr 18 -uthr 18 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/l_v1_2.3mm -odt char"))
 system(paste0("fslmaths ", master, " -thr 215 -uthr 215 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/r_v1_2.3mm -odt char"))
 
-atlas_files <- c("/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/long_axis_l_2.3mm.nii.gz",
-  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/long_axis_r_2.3mm.nii.gz",
-  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/l_motor_2.3mm.nii.gz",
-  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/r_motor_2.3mm.nii.gz",
-  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/l_v1_2.3mm.nii.gz",
-  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/r_v1_2.3mm.nii.gz",
-  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/harvardoxford-subcortical_prob_Left_Accumbens_2009c_thr20_2.3mm.nii.gz",
-  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/harvardoxford-subcortical_prob_Right_Accumbens_2009c_thr20_2.3mm.nii.gz",
-  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/hippo_dcm/masks/vmpfc_clust1_z5.7_2009c.nii" #add vmPFC from NeuroSynth
-)
+hippo_dir <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise"
 
-#drop hippo for a sec
-#atlas_files <- atlas_files[-1:-2]
+## atlas_files <- c(
+##   file.path(hippo_dir, "long_axis_l_2.3mm.nii.gz"),
+##   file.path(hippo_dir, "long_axis_r_2.3mm.nii.gz"),
+##   file.path(hippo_dir, "l_motor_2.3mm.nii.gz"),
+##   file.path(hippo_dir, "r_motor_2.3mm.nii.gz"),
+##   file.path(hippo_dir, "l_v1_2.3mm.nii.gz"),
+##   file.path(hippo_dir, "r_v1_2.3mm.nii.gz"),
+##   file.path(hippo_dir, "harvardoxford-subcortical_prob_Left_Accumbens_2009c_thr20_2.3mm.nii.gz"),
+##   file.path(hippo_dir, "harvardoxford-subcortical_prob_Right_Accumbens_2009c_thr20_2.3mm.nii.gz"),
+##   file.path(hippo_dir, "hippo_dcm/masks/vmpfc_clust1_z5.7_2009c.nii") #add vmPFC from NeuroSynth
+## )
+
+#Just the new cobra-based long axis masks
+atlas_files <- c(
+  file.path(hippo_dir, "long_axis_l_cobra_2.3mm.nii.gz"),
+  file.path(hippo_dir, "long_axis_r_cobra_2.3mm.nii.gz")
+)
 
 atlas_imgs <- lapply(atlas_files, readNIfTI, reorient=FALSE)
 
 #whether to use unsmoothed data
-unsmoothed <- TRUE
-bush2015 <- TRUE #whether to use Bush 2015 algorithm or 2011 algorithm
+data_type <- "smooth_in_mask" #alternatives "unsmoothed" "smoothed"
+bush2015 <- FALSE #whether to use Bush 2015 algorithm or 2011 algorithm
 
-out_dir <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/deconvolved_timeseries"
-if (unsmoothed) { out_dir <- paste0(out_dir, "_unsmoothed") }
+out_dir <- file.path(hippo_dir, "deconvolved_timeseries", data_type)
 if (bush2015) { out_dir <- paste0(out_dir, "_b2015") }
 
 #use this for 1st-level results
@@ -106,10 +111,16 @@ l1_niftis <- sapply(l1_inputs, function(x) {
 })
 
 
-#handle unsmoothed: create truncated files that match smoothed side
-if (unsmoothed) {
+#handle unsmoothed or smooth in mask: create truncated files that match smoothed side
+if (data_type != "smoothed") {
   l1_niftis <- sub("mni_5mm_aroma", "mni_nosmooth_aroma", l1_niftis)
-  l1_niftis <- sub("nfaswuktm", "nfawuktm", l1_niftis)
+  if (data_type == "unsmoothed") {
+    l1_niftis <- sub("nfaswuktm", "nfawuktm", l1_niftis)
+  } else if (data_type=="smooth_in_mask") {
+    l1_niftis <- sub("nfaswuktm_(.*)\\.nii\\.gz", "fawuktm_\\1_hippblur.nii.gz", l1_niftis)
+  }
+
+  #strip smoothing suffix
   l1_niftis <- sub("(_clock\\d+)_5", "\\1", l1_niftis)
 
   novalue <- foreach(x=iter(l1_niftis), .packages="RNifti") %dopar% {
@@ -129,6 +140,11 @@ if (unsmoothed) {
 }
 
 #l1_niftis should now contain the unsmoothed nifti files of the same length as the smoothed side
+
+if (!all(fexists <- file.exists(l1_niftis))) {
+  print(l1_niftis[!fexists])
+  stop("Could not locate all l1 input file")
+}
 
 #l1_subset <- grep("11302|11305|11228|11366", l1_niftis, perl=TRUE)
 #l1_niftis <- l1_niftis[l1_subset]
@@ -182,7 +198,8 @@ for (ai in 1:length(atlas_files)) {
     to_deconvolve <- as.matrix(ts_out[, -1:-3]) #remove ijk
 
     #to_deconvolve <- t(apply(to_deconvolve, 1, scale)) #need to unit normalize for algorithm not to choke on near-constant 100-normed data
-    to_deconvolve <- t(apply(to_deconvolve, 1, function(x) { scale(x, scale=FALSE) })) #just demean, which will rescale to percent signal change around 0 (this matches Bush 2015)
+    #to_deconvolve <- t(apply(to_deconvolve, 1, function(x) { scale(x, scale=FALSE) })) #just demean, which will rescale to percent signal change around 0 (this matches Bush 2015)
+    to_deconvolve <- t(apply(to_deconvolve, 1, function(x) { x/mean(x)*100 - 100 })) #pct signal change around 0
 
     temp_i <- tempfile()
     temp_o <- tempfile()

@@ -56,7 +56,7 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
       mrfiles <- mrfiles[!grepl("(exclude|bbr_noref|old)", mrfiles, ignore.case=TRUE)] #if exclude is in path/filename, then skip
 
       ##mrrunnums <- as.integer(sub(paste0(".*", expectfile, "$"), "\\1", mrfiles, perl=TRUE))
-      mrrunnums <- as.integer(sub(paste0(".*clock(\\d+)_.*$"), "\\1", mrfiles, perl=TRUE)) #extract run number from file name
+      mrrunnums <- as.integer(sub(paste0(".*clock(\\d+).*$"), "\\1", mrfiles, perl=TRUE)) #extract run number from file name
 
       ##NB. If we reorder the mrfiles, then the run numbers diverge unless we sort(mrrunnums). Remove for now for testing
       ##mrfiles <- mrfiles[order(mrrunnums)] #make absolutely sure that runs are ordered ascending

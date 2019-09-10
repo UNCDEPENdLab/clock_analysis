@@ -2,6 +2,7 @@
 
 #For testing
 #Sys.setenv(fsl_pipeline_file="/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/MMClock_aroma_preconvolve_fse_groupfixed.RData")
+#Sys.setenv(fsl_pipeline_file="/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/MMClock_aroma_preconvolve_fse_groupfixed_unsmoothed.RData")
 #Sys.setenv(run_model_index=1)
 
 to_run <- Sys.getenv("fsl_pipeline_file")

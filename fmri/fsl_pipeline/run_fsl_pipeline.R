@@ -45,6 +45,7 @@ trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/cl
   dplyr::mutate(   #compute rt_swing within run and subject
     rt_vmax_lag = dplyr::lag(rt_vmax, 1, order_by=trial),
     rt_vmax_change = abs(rt_vmax - rt_vmax_lag),
+    rt_vmax_change_dir = rt_vmax - rt_vmax_lag,
     v_entropy_lag = dplyr::lag(v_entropy, 1, order_by=trial),
     v_entropy_change = v_entropy - v_entropy_lag, #change in entropy
     v_entropy_change_pos = v_entropy_change*(v_entropy_change > 0),
@@ -53,6 +54,18 @@ trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/cl
     rt_swing_sqrt=sqrt(rt_swing)) %>%
   ungroup()
 
+
+#add generic action-value under a fixed learning rate of 0.1 (following Badre/Frank)
+trial_df <- trial_df %>% arrange(id, trial) %>% group_by(id) %>% do({
+  this_subj <- .
+  this_subj$v_trial_fixed <- 0
+  this_subj$pe_trial_fixed <- 0
+  for (i in 1:nrow(this_subj)) {
+    if (i > 1)  { this_subj[i,"v_trial_fixed"] <- this_subj[i-1,"v_trial_fixed"] + 0.1*(this_subj[i-1, "score_csv"] - this_subj[i-1,"v_trial_fixed"]) }
+    this_subj[i,"pe_trial_fixed"] <- this_subj[i, "score_csv"] - this_subj[i,"v_trial_fixed"]
+  }
+  this_subj
+}) %>% ungroup()
 
 subject_df <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/mmy3_demographics.tsv", header=TRUE) %>%
   rename(id=lunaid, Age=age, Female=female, ScanDate=scandate) %>%
@@ -72,13 +85,16 @@ subject_df <- read.table("/gpfs/group/mnh5174/default/clock_analysis/fmri/data/m
 #Setup the global configuration for the full FSL pipeline
 fsl_model_arguments <- list(
   #analysis_name="MMClock_aroma_preconvolve_fse",
-  analysis_name="MMClock_aroma_preconvolve_fse_groupfixed",
+  #analysis_name="MMClock_aroma_preconvolve_fse_groupfixed",
+  analysis_name="MMClock_aroma_preconvolve_fse_groupfixed_unsmoothed",
   trial_statistics = trial_df,
   subject_covariates = subject_df,
   id_col = "id",
   fmri_dir = "/gpfs/group/mnh5174/default/MMClock/MR_Proc",
-  expectdir = "mni_5mm_aroma", #subfolder name for processed data
-  expectfile = "nfaswuktm_clock[0-9]_5.nii.gz", #expected file name for processed clock data
+  #expectdir = "mni_5mm_aroma", #subfolder name for processed data
+  #expectfile = "nfaswuktm_clock[0-9]_5.nii.gz", #expected file name for processed clock data
+  expectdir = "mni_nosmooth_aroma",
+  expectfile = "nfawuktm_clock[0-9].nii.gz", #expected file name for processed clock data
   usepreconvolve=TRUE,
   ncpus=20,
   drop_volumes=2, #to handle steady state concerns
@@ -89,27 +105,30 @@ fsl_model_arguments <- list(
 #    c("clock_bs", "feedback")
 #    c("clock", "feedback", "v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
 #    c("clock", "feedback", "v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
-    c("clock", "feedback", "v_chosen"), #individual regressors
+#    c("clock", "feedback", "v_chosen"), #individual regressors
     c("clock", "feedback", "v_entropy"), #clock-aligned
 #    c("clock", "feedback", "v_entropy_feedback"), #feedback-aligned
 #    c("clock", "feedback", "v_entropy_func"),
-    c("clock", "feedback", "d_auc"), #feedback-aligned
+#    c("clock", "feedback", "d_auc"), #feedback-aligned
 #    c("clock", "feedback", "d_auc_clock"), #clock-aligned
-    c("clock", "feedback", "pe_max"),
+    c("clock", "feedback", "pe_max")
 #    c("clock", "feedback", "v_entropy_no5"),
 #    c("clock", "feedback", "v_auc"),
 #    c("clock", "feedback", "d_auc_sqrt"),
-    c("clock", "feedback", "rt_swing"),
+#    c("clock", "feedback", "rt_swing"),
 #    c("clock", "feedback", "rt_swing_sqrt"),
 #    c("clock", "feedback", "v_max"),
 #    c("clock", "feedback", "mean_kld"),
 #    c("clock", "feedback", "intrinsic_discrepancy"),
 #    c("clock", "feedback", "mean_kld_feedback"),
 #    c("clock", "feedback", "intrinsic_discrepancy_feedback"),
-    c("clock", "feedback", "rt_vmax_change"),
-    c("clock", "feedback", "v_entropy_change"),
-    c("clock", "feedback", "v_entropy_change_pos"),
-    c("clock", "feedback", "v_entropy_change_neg")
+#    c("clock", "feedback", "rt_vmax_change"),
+#    c("clock", "feedback", "rt_vmax_change_dir"),
+#    c("clock", "feedback", "v_trial_fixed"),
+#    c("clock", "feedback", "pe_trial_fixed")    
+#    c("clock", "feedback", "v_entropy_change"),
+#    c("clock", "feedback", "v_entropy_change_pos"),
+#    c("clock", "feedback", "v_entropy_change_neg")
 #    c("clock", "feedback", "rew_om"),
 #    c("clock", "feedback", "pe_max", "rew_om")
   ),
