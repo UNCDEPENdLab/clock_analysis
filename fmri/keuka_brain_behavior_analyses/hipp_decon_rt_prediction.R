@@ -9,16 +9,18 @@ library(ggpubr)
 library(car)
 
 unsmoothed = F
+# now run with the old mask
 if (unsmoothed) {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/unsmoothed")
-} else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/newmask")}
+# } else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/newmask")}
+} else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var")}
 
 load('feedback_hipp_widest_by_timepoint_decon.Rdata')
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 # load('trial_df_and_vhdkfpe_clusters.Rdata')
 load('trial_df_and_vh_pe_clusters_u.Rdata')
 if (unsmoothed) {cache_dir <- "~/Box/SCEPTIC_fMRI/var/unsmoothed"
-} else {cache_dir <- "~/Box/SCEPTIC_fMRI/var/newmask"}
-
+# } else {cache_dir <- "~/Box/SCEPTIC_fMRI/var/newmask"}
+} else {cache_dir <- "~/Box/SCEPTIC_fMRI/var"}
 repo_dir <- "~/Data_Analysis/clock_analysis"
 
 #super-wide variant used in lm analysis
@@ -102,11 +104,15 @@ if (rt) {
     terms <- names(fixef(mf))
     if (trial_cont) {
       if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/unsmoothed')
-      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/rt_predict')}}
-    else {
+      # } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/rt_predict')}}
+      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict')}}
+
+        else {
       if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/unsmoothed/no_trial_contingency')
-      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/rt_predict/no_trial_contingency/')}}
-    if (plots) {
+      # } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/rt_predict/no_trial_contingency/')}}
+      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/rt_predict/no_trial_contingency/')}}
+
+        if (plots) {
       for (fe in terms)
       {edf <- bdf %>% filter(term == paste(fe) & t < 8)
       p1 <- ggplot(edf, aes(t, estimate, color = slice)) + geom_line() + 
@@ -138,12 +144,12 @@ if (u) {
       for (t in -1:10) {
         d$h<-d[[paste("hipp", slice, side, t, sep = "_")]]
         # if (trial_cont) {
-        uf <- lmer(u_chosen_next ~ scale(-1/run_trial)*scale(h) + scale(rt_csv)*scale(h) + scale(rt_vmax)*scale(h) + reward*scale(h) + v_entropy_wi*scale(h) + scale(u_chosen) + rewFunc*scale(-1/run_trial) + (1|id/run), d)         #}
+        uf <- lmer(u_chosen_next ~ scale(-1/run_trial)*scale(h) + reward*scale(h) + rewFunc*scale(-1/run_trial) + (1|id/run), d)         #}
       # else {
       # mf <-  lme4::lmer(rt_next ~ (scale(pe_max) + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + scale(v_entropy_wi) + h)^2 + (1|id/run), d)
       # uf <- lmer(u_chosen_next ~ scale(-1/run_trial)*scale(h) + scale(rt_csv)*scale(h) + scale(rt_vmax)*scale(h) + reward*scale(h) + v_entropy_wi*scale(h) + scale(u_chosen) + (1|id/run), d) 
       # }
-      dm <- broom.mixed::tidy(uf,effects = "fixed")
+      dm <- broom.mixed::tidy(uf,effects = "fixed") %>% mutate(term = str_remove(term, "TRUE")) # make betas compatible with ANOVA
       an <- broom.mixed::tidy(car::Anova(uf, '3')) %>% rename(anova_p = p.value, chisq = statistic)
       dm$slice <- slice
       dm$side <- side
@@ -180,7 +186,9 @@ bdf$p_anova_level_fdr <- factor(bdf$p_anova_level_fdr, labels = c("NS", "p < .05
 terms <- unique(bdf$term)
 # if (trial_cont) {
 if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/u_predict/unsmoothed')
-} else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/u_predict')}
+# } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/u_predict')}
+} else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/u_predict')}
+
 # else {
 # if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/u_predict/unsmoothed/no_trial_contingency')
 # } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/u_predict/no_trial_contingency/')}}
