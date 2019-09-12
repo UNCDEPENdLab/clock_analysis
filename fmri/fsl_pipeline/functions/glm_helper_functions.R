@@ -347,6 +347,12 @@ populate_sceptic_signals <- function(sceptic_signals, subj_data) {
       value=subj_data %>% select(run, trial, v_chosen) %>% rename(value=v_chosen))
   }
 
+  if ("v_trial_fixed" %in% sceptic_signals) {
+    #value of trial according to a fixed learning rate of 0.1 (just trial - outcome)
+    signals[["v_trial_fixed"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_trial_fixed) %>% rename(value=v_trial_fixed))
+  }
+    
   if ("v_auc" %in% sceptic_signals) {
     #value of chosen action, aligned with choice
     signals[["v_auc"]] <- list(event="clock", normalization="evtmax_1",
@@ -363,6 +369,12 @@ populate_sceptic_signals <- function(sceptic_signals, subj_data) {
     #absolute value of change in best RT (vmax)
     signals[["rt_vmax_change"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, rt_vmax_change) %>% rename(value=rt_vmax_change))
+  }
+
+  if ("rt_vmax_change_dir" %in% sceptic_signals) {
+    #directed change in value of best RT (vmax)
+    signals[["rt_vmax_change_dir"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, rt_vmax_change_dir) %>% rename(value=rt_vmax_change_dir))
   }
   
   if ("v_entropy" %in% sceptic_signals) {
@@ -408,6 +420,13 @@ populate_sceptic_signals <- function(sceptic_signals, subj_data) {
       value=subj_data %>% select(run, trial, pe_max) %>% rename(value=pe_max))
   }
 
+  #PEs from fixed learning rate analysis
+  if ("pe_trial_fixed" %in% sceptic_signals) {
+    # PE from fixed 0.1 learning rate, non-SCEPTIC representation (just trial - outcome)
+    signals[["pe_trial_fixed"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, pe_trial_fixed) %>% rename(value=pe_trial_fixed))
+  }
+  
   if ("rew_om" %in% sceptic_signals) {
     signals[["rew_om"]] <- list(event="feedback", normalization="none",
       value=subj_data %>% select(run, trial, rew_om) %>% rename(value=rew_om))

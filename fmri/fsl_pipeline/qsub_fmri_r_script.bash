@@ -24,6 +24,7 @@ module use $G/sw/modules
 module load r/3.6.0
 module load fsl/6.0.1
 module load afni/19.0.26
+module load gsl/2.5
 
 ni_tools="$G/lab_resources"
 

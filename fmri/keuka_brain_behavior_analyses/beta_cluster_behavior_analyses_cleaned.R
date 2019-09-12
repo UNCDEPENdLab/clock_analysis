@@ -11,7 +11,10 @@ library(car)
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 # load('trial_df_and_vhdkfpe_clusters.Rdata')
 # cleaner version with only H, PE and uncertainty trial vars
-load('trial_df_and_vh_pe_clusters_u.Rdata')
+unsmoothed = T
+if (unsmoothed) {
+  load('trial_df_and_vh_pe_clusters_u_unsmoothed.Rdata')
+} else { load('trial_df_and_vh_pe_clusters_u.Rdata') }
 
 ######
 # end of preprocessing
@@ -50,7 +53,7 @@ mf1 <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + omission_lag )^2  + 
 mf2h <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag  + h_f1_fp + I(-h_f2_neg_paralimb))^2 + 
                scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) +
                (1|id/run), df)
-#screen.lmerTest(mf2h)
+screen.lmerTest(mf2h)
 mf2v <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag  + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + 
                scale(rt_lag):omission_lag:I(-v_f1_neg_cog) + scale(rt_lag):omission_lag:v_f2_paralimb +
                (1|id/run), df)
@@ -81,7 +84,7 @@ mf2dhp <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag  +
 mf2pe <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag  + pe_f1_cort_str + pe_f2_hipp)^2 + 
                 scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
                 (1|id/run), df)
-#screen.lmerTest(mf2pe)
+screen.lmerTest(mf2pe)
 
 # but the two PE factors are inter-correlated at r=.52
 # post. hippocampal effects are even stronger after taking the first factor out!
@@ -163,7 +166,7 @@ mb2h <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) 
                scale(rt_vmax_lag):v_max_wi_lag:h_f1_fp + scale(rt_vmax_lag):v_max_wi_lag:I(-h_f2_neg_paralimb) +
                scale(-1/run_trial):scale(rt_vmax_lag):h_f1_fp +  scale(-1/run_trial):scale(rt_vmax_lag):I(-h_f2_neg_paralimb) +
                v_max_b + v_entropy_b +  (1|id/run), df)
-#screen.lmerTest(mb2h)
+screen.lmerTest(mb2h)
 mb2v <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + v_max_wi_lag + v_entropy_wi + rt_vmax_change + I(-v_f1_neg_cog) + v_f2_paralimb)^2 + 
                scale(rt_lag):omission_lag:I(-v_f1_neg_cog) + scale(rt_lag):omission_lag:v_f2_paralimb +
                scale(rt_vmax_lag):v_max_wi_lag:I(-v_f1_neg_cog) + scale(rt_vmax_lag):v_max_wi_lag:v_f2_paralimb +
@@ -277,6 +280,17 @@ mb3hpedh3 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax
                      scale(rt_vmax_lag):scale(-1/run_trial):I(-dh_f_neg_vmpfc_precun) +
                      v_max_b + v_entropy_b + (1|id/run), df)
 #screen.lmerTest(mb3hpedh3, .05)
+
+# purely hippocampal model
+mb3hpe_hipp <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + 
+                               v_max_wi_lag + v_entropy_wi +rt_vmax_change +  I(-h_HippAntL) +  pe_f2_hipp)^2 + 
+                     scale(rt_lag):omission_lag:I(-h_HippAntL) + 
+                     scale(rt_lag):omission_lag:pe_f2_hipp +
+                     scale(rt_vmax_lag):scale(-1/run_trial):I(-h_HippAntL) + 
+                     scale(rt_vmax_lag):scale(-1/run_trial):pe_f2_hipp  +
+                     v_max_b + v_entropy_b + (1|id/run), df)
+screen.lmerTest(mb3hpe_hipp, .05)
+
 
 # add in DHP -- best model
 mb3hpedh_p4 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + 
@@ -507,12 +521,30 @@ summary(ub4)
 us1 <- lmer(u_chosen ~ (scale(run_trial) + last_outcome)^2 + 
               scale(run_trial)*rewFunc + (1|id), df)
 screen.lmerTest(us1)
+<<<<<<< HEAD
 us2 <- lmer(u_chosen ~ (scale(run_trial) + last_outcome + 
                           h_f1_fp + I(-h_HippAntL) + pe_f1_cort_str + pe_f2_hipp)^2 + 
               scale(run_trial)*rewFunc + (1|id), df)
 screen.lmerTest(us2, .01)
 Anova(us2, '3')
 p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f2_hipp, u_chosen, color = last_outcome)) + geom_smooth(method = 'gam') + 
+=======
+us2 <- lmer(u_chosen ~ (scale(run_trial) + omission_lag + 
+                          h_f1_fp + I(-h_HippAntL) + pe_f1_cort_str + pe_PH)^2 + 
+              scale(run_trial)*rewFunc + (1|id), df)
+screen.lmerTest(us2, .01)
+
+p1 <- ggplot(df %>% filter(!is.na(omission_lag)), aes(pe_PH, u_chosen, color = omission_lag)) + geom_smooth(method = 'gam') + 
+  geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)
+p2 <- ggplot(df %>% filter(!is.na(omission_lag)), aes(-h_HippAntL, u_chosen, color = omission_lag)) + geom_smooth(method = 'gam') + 
+  geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)
+pdf("hipp_clusters_u_reward_unsmoothed.pdf", height = 4, width = 8)
+ggarrange(p1,p2, ncol = 2, nrow = 1)
+dev.off()
+
+
+p1 <- ggplot(df %>% filter(!is.na(omission_lag)), aes(pe_f2_hipp, u_chosen, color = omission_lag)) + geom_smooth(method = 'gam') + 
+>>>>>>> 6d63688239d8a2c83227448a0303069379eca022
   geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)
 p2 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f1_cort_str, u_chosen, color = last_outcome)) + geom_smooth(method = 'gam') + 
   geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)

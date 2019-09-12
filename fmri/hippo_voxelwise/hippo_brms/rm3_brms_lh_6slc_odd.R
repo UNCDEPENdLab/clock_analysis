@@ -38,4 +38,4 @@ rm3_rh_6slc_odd <- brm(b1 + b3 + b5 + b7 + b9 + b11 + set_rescor(TRUE), data = f
 
 summary(rm3_rh_6slc_odd)
 
-save(rm3_rh_6slc, file="output/rm3_brms_rh_6slc_odd.RData")
+save(rm3_rh_6slc_odd, file="output/rm3_brms_rh_6slc_odd.RData")
