@@ -44,6 +44,7 @@ screen.lmerTest <- function (mod,p=NULL) {
 #####
 ## "model-free analyses"
 
+
 ## let's set decay aside for now
 
 # MF RT analyses
@@ -517,9 +518,17 @@ summary(ub4)
 
 
 # do they swing in the direction of greater uncertainty?
-us1 <- lmer(u_chosen ~ (scale(run_trial) + omission_lag)^2 + 
+us1 <- lmer(u_chosen ~ (scale(run_trial) + last_outcome)^2 + 
               scale(run_trial)*rewFunc + (1|id), df)
 screen.lmerTest(us1)
+<<<<<<< HEAD
+us2 <- lmer(u_chosen ~ (scale(run_trial) + last_outcome + 
+                          h_f1_fp + I(-h_HippAntL) + pe_f1_cort_str + pe_f2_hipp)^2 + 
+              scale(run_trial)*rewFunc + (1|id), df)
+screen.lmerTest(us2, .01)
+Anova(us2, '3')
+p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f2_hipp, u_chosen, color = last_outcome)) + geom_smooth(method = 'gam') + 
+=======
 us2 <- lmer(u_chosen ~ (scale(run_trial) + omission_lag + 
                           h_f1_fp + I(-h_HippAntL) + pe_f1_cort_str + pe_PH)^2 + 
               scale(run_trial)*rewFunc + (1|id), df)
@@ -535,34 +544,48 @@ dev.off()
 
 
 p1 <- ggplot(df %>% filter(!is.na(omission_lag)), aes(pe_f2_hipp, u_chosen, color = omission_lag)) + geom_smooth(method = 'gam') + 
+>>>>>>> 6d63688239d8a2c83227448a0303069379eca022
   geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)
-p2 <- ggplot(df %>% filter(!is.na(omission_lag)), aes(pe_f1_cort_str, u_chosen, color = omission_lag)) + geom_smooth(method = 'gam') + 
+p2 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f1_cort_str, u_chosen, color = last_outcome)) + geom_smooth(method = 'gam') + 
   geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)
 pdf("pe_clusters_u_reward.pdf", height = 4, width = 8)
 ggarrange(p1,p2, ncol = 2, nrow = 1)
 dev.off()
+# is there a similar effect with v_chosen?
+vs2 <- lmer(v_chosen ~ (scale(run_trial) + last_outcome + 
+                          h_f1_fp + I(-h_HippAntL) + pe_f1_cort_str + pe_f2_hipp)^2 + 
+              scale(run_trial)*rewFunc + (1|id), df)
+screen.lmerTest(vs2, .01)
+p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f2_hipp, v_chosen, color = last_outcome)) + geom_smooth(method = 'gam') + 
+  geom_hline(yintercept = 27.62)#+ facet_wrap(~run)
+p2 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f1_cort_str, v_chosen, color = last_outcome)) + geom_smooth(method = 'gam') + 
+  geom_hline(yintercept = 27.62)#+ facet_wrap(~run)
+pdf("pe_clusters_v_reward.pdf", height = 4, width = 8)
+ggarrange(p1,p2, ncol = 2, nrow = 1)
+dev.off()
+
+# do the PH PE people RT-swing more post rewards?!!!
 
 # predict RT with u_chosen and HIPP
 urs1 <- lmer(rt_csv ~ (scale(run_trial) + scale(rt_lag) + omission_lag)^2 + 
-               scale(rt_lag) * scale(u_chosen) + scale(run_trial) * rewFunc +  (1|id/run), df %>% filter(rt_csv<1000))
+               scale(run_trial) * rewFunc +  (1|id/run), df)
 screen.lmerTest(urs1, .01)
 vif(urs1)
 Anova(urs1)
-urs2 <- lmer(rt_csv ~ (scale(run_trial) + scale(rt_lag) + omission_lag + h_f1_fp)^2 +
-               (scale(run_trial) + scale(rt_lag) + omission_lag + I(-h_HippAntL))^2 + 
-               (scale(run_trial) + scale(rt_lag) + omission_lag + pe_f1_cort_str)^2 + 
-               (scale(run_trial) + scale(rt_lag) + omission_lag + pe_f2_hipp)^2 + 
-               (scale(rt_lag) + scale(u_chosen) +h_f1_fp)^3 + 
-               (scale(rt_lag) + scale(u_chosen) +I(-h_HippAntL))^3 + 
-               (scale(rt_lag) + scale(u_chosen) + pe_f1_cort_str)^3 + 
-               (scale(rt_lag) + scale(u_chosen) + pe_f2_hipp)^3 + 
+urs2 <- lmer(rt_csv ~ (scale(run_trial) + scale(rt_lag) + omission_lag + h_f1_fp)^3 +
+               (scale(run_trial) + scale(rt_lag) + omission_lag + I(-h_HippAntL))^3 + 
+               (scale(run_trial) + scale(rt_lag) + omission_lag + pe_f1_cort_str)^3 + 
+               (scale(run_trial) + scale(rt_lag) + omission_lag + pe_f2_hipp)^3 + 
                scale(run_trial) * rewFunc +
                (1|id/run), df)
 screen.lmerTest(urs2, .01)
 Anova(urs2)
 # unpack PH*u_chosen
-ggplot(df, aes(rt_lag, rt_csv, lty = u_chosen>1500, color = pe_f2_hipp_resp)) + geom_smooth(method = "gam",
-                                                                                            formula = y ~ splines::ns(x,3))
+ggplot(df, aes(rt_lag, rt_csv, lty = last_outcome, color = pe_f2_hipp_resp)) + geom_smooth(method = "gam",
+                                                                                            formula = y ~ splines::ns(x,2))
+ggplot(df, aes(rt_lag, rt_csv, lty = last_outcome, color = h_f1_fp>0)) + geom_smooth(method = "gam",
+                                                                                           formula = y ~ splines::ns(x,2))
+
 # ideas for improving uncertainty analyses:
 # try ML Cox survival with time-varying within-trial U
 # look at relative rather than absolute uncertainty of the choice
