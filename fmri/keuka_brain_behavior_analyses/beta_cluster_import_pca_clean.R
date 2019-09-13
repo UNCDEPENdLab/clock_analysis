@@ -4,7 +4,7 @@ library(psych)
 library(corrplot)
 library(lme4)
 
-unsmoothed = T
+unsmoothed = F
 # get H betas
 sort_names <- function(data) {
   name  <- names(data)
@@ -224,11 +224,6 @@ df$rewFunc <- relevel(as.factor(df$rewFunc),ref = "CEV")
 df$rewFuncIEVsum <- df$rewFunc
 contrasts(df$rewFuncIEVsum) <- contr.sum
 colnames(contrasts(df$rewFuncIEVsum)) <- c('CEV','CEVR', 'DEV')
-# dichotomize betas for plotting
-df$h_fp <- 'low'
-df$h_fp[df$h_f1_fp>0] <- 'high'
-df$low_h_paralimbic <- 'low'
-df$low_h_paralimbic[df$h_f2_neg_paralimb<0] <- 'high'
 
 df$learning_epoch <- 'trials 1-10'
 df$learning_epoch[df$run_trial>10] <- 'trials 11-50'
@@ -295,8 +290,48 @@ df$last_outcome[!df$omission_lag] <- 'Reward'
 # Okay, some behavioral relevance of KLD
 # ggplot(df, aes(run_trial, v_entropy_wi, color = k_f1_all_pos_resp)) + geom_smooth(method = "loess")
 
+# add MEG behavioral data
+# mtdf = MEG trial df
+mtdf <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_meg_decay_factorize_selective_psequate_fixedparams_meg_ffx_trial_statistics.csv.gz")
+mtdf <- mtdf %>%
+  group_by(id, run) %>%  dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))),
+                                       rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
+                                       rt_lag = lag(rt_csv) ,
+                                       rt_swing_lag = lag(rt_swing),
+                                       omission_lag = lag(score_csv==0),
+                                       rt_vmax_lag = lag(rt_vmax),
+                                       run_trial=1:63, 
+                                       v_max_wi = scale(v_max),
+                                       v_max_wi_lag = lag(v_max_wi),
+                                       v_entropy_wi = scale(v_entropy),
+                                       v_max_b = mean(na.omit(v_max)),
+                                       v_entropy_b = mean(na.omit(v_entropy)),
+                                       rt_change = rt_csv - rt_lag,
+                                       pe_max_lag = lag(pe_max), 
+                                       abs_pe_max_lag = abs(pe_max_lag), 
+                                       rt_vmax_change = rt_vmax - rt_vmax_lag) %>% ungroup() %>% 
+  mutate(id = as.integer(substr(id, 1, 5)))#compute rt_swing within run and subject
+# add fMRI betas
+mdf <- inner_join(mtdf,sub_df, by = "id")
+mdf$rewFunc <- relevel(as.factor(mdf$rewFunc),ref = "CEV")
+mdf$rewFuncIEVsum <- mdf$rewFunc
+contrasts(mdf$rewFuncIEVsum) <- contr.sum
+colnames(contrasts(mdf$rewFuncIEVsum)) <- c('CEV','CEVR', 'DEV')
+mdf$h_f1_fp_resp <- 'low'
+mdf$h_f1_fp_resp[mdf$h_f1_fp>0] <- 'high'
+mdf$pe_f1_cort_str_resp <- 'low'
+mdf$pe_f1_cort_str_resp[mdf$pe_f1_cort_str>0] <- 'high'
+mdf$pe_f2_hipp_resp <- 'low'
+mdf$pe_f2_hipp_resp[mdf$pe_f2_hipp>0] <- 'high'
+mdf$h_HippAntL_resp <- 'low'
+mdf$h_HippAntL_resp[mdf$h_HippAntL<mean(mdf$h_HippAntL)] <- 'high'
+mdf$last_outcome <- NA
+mdf$last_outcome[mdf$omission_lag] <- 'Omission'
+mdf$last_outcome[!mdf$omission_lag] <- 'Reward'
+
+
 if (unsmoothed) {
-  save(file = 'trial_df_and_vh_pe_clusters_u_unsmoothed.Rdata', df)
-} else {save(file = 'trial_df_and_vh_pe_clusters_u.Rdata', df)}
+  save(file = 'trial_df_and_vh_pe_clusters_u_unsmoothed.Rdata', df, mdf)
+} else {save(file = 'trial_df_and_vh_pe_clusters_u.Rdata', df, mdf)}
 
 
