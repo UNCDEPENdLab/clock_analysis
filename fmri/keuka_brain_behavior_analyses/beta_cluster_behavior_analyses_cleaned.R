@@ -11,7 +11,7 @@ library(car)
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 # load('trial_df_and_vhdkfpe_clusters.Rdata')
 # cleaner version with only H, PE and uncertainty trial vars
-unsmoothed = T
+unsmoothed = F
 if (unsmoothed) {
   load('trial_df_and_vh_pe_clusters_u_unsmoothed.Rdata')
 } else { load('trial_df_and_vh_pe_clusters_u.Rdata') }
@@ -114,13 +114,15 @@ mf3hpedh3 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_la
 
 # swap in hippocampal low-H cluster for vmpfcHipp factor -- fit is worse
 mf3hpedh3hipp <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag + 
-                                   h_f1_fp + I(-h_HippAntL) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp)^2 + 
+                                   I(-h_HippAntL) +  pe_f2_hipp)^2 + 
                          scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_HippAntL) + 
-                         scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                         scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
-                         scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-                         (1|id/run), df)
-#screen.lmerTest(mf3hpedh3hipp)
+                         scale(rt_lag):omission_lag:pe_f2_hipp + (1|id/run), df)
+screen.lmerTest(mf3hpedh3hipp)
+mmf3hpedh3hipp <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag + 
+                                   I(-h_HippAntL) +  pe_f2_hipp)^2 + 
+                         scale(rt_lag):omission_lag:I(-h_HippAntL) + 
+                         scale(rt_lag):omission_lag:pe_f2_hipp + scale(-1/run_trial)*rewFunc + (1|id/run), mdf)
+screen.lmerTest(mmf3hpedh3hipp)
 
 stargazer(mf1, mf2h, mf2v, mf2pe,mf2dh,mf3hpedh3, type="html", out="mf.htm", report = "vcs*",
           digits = 1,single.row=TRUE,omit.stat = "bic",
@@ -291,6 +293,14 @@ mb3hpe_hipp <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vm
                      v_max_b + v_entropy_b + (1|id/run), df)
 screen.lmerTest(mb3hpe_hipp, .05)
 
+mmb3hpe_hipp <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + 
+                                 v_max_wi_lag + v_entropy_wi +rt_vmax_change +  I(-h_HippAntL) +  pe_f2_hipp)^2 + 
+                       scale(rt_lag):omission_lag:I(-h_HippAntL) + 
+                       scale(rt_lag):omission_lag:pe_f2_hipp +
+                       scale(rt_vmax_lag):scale(-1/run_trial):I(-h_HippAntL) + 
+                       scale(rt_vmax_lag):scale(-1/run_trial):pe_f2_hipp  +
+                       v_max_b + v_entropy_b + (1|id/run), mdf)
+screen.lmerTest(mmb3hpe_hipp, .05)
 
 # add in DHP -- best model
 mb3hpedh_p4 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + 
