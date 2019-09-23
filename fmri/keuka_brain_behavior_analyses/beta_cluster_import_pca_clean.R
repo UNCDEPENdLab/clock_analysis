@@ -185,7 +185,10 @@ pc_scores$id <- pc_scores$ID
 # get trial_level data
 trial_df <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")
 # trial_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_mfx_trial_statistics.csv.gz")
-u_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_ureset_mfx_trial_statistics.csv.gz")
+# u_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_ureset_mfx_trial_statistics.csv.gz")
+# use fixed-parameter U
+u_df <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz")
+
 trial_df <- trial_df %>%
   group_by(id, run) %>%  dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))),
                                        rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
@@ -241,8 +244,12 @@ df <- df %>% group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
                                          rt_change = rt_csv - rt_lag,
                                          pe_max_lag = lag(pe_max), 
                                          abs_pe_max_lag = abs(pe_max_lag), 
-                                         rt_vmax_change = rt_vmax - rt_vmax_lag
-)
+                                         rt_vmax_change = rt_vmax - rt_vmax_lag,
+                                         trial_neg_inv_sc = scale(-1/run_trial),
+                                         rt_lag_sc = scale(rt_lag),
+                                         rt_csv_sc = scale(rt_csv),
+                                         rt_vmax_lag_sc = scale(rt_vmax_lag)
+) %>% ungroup()
 
 # correlate between-subject V and H with clusters
 b_df <- df %>% group_by(id) %>% dplyr::summarise(v_maxB = mean(v_max, na.rm = T),
@@ -274,7 +281,7 @@ df$pe_f1_cort_str_resp <- 'low'
 df$pe_f1_cort_str_resp[df$pe_f1_cort_str>0] <- 'high'
 df$pe_f2_hipp_resp <- 'low'
 df$pe_f2_hipp_resp[df$pe_f2_hipp>0] <- 'high'
-
+df$h_HippAntL_neg <- -df$h_HippAntL
 df$h_HippAntL_resp <- 'low'
 df$h_HippAntL_resp[df$h_HippAntL<mean(df$h_HippAntL)] <- 'high'
 df$last_outcome <- NA
@@ -292,7 +299,7 @@ df$last_outcome[!df$omission_lag] <- 'Reward'
 
 # add MEG behavioral data
 # mtdf = MEG trial df
-mtdf <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_meg_decay_factorize_selective_psequate_fixedparams_meg_ffx_trial_statistics.csv.gz")
+mtdf <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_meg_decay_factorize_selective_psequate_fixedparams_meg_ffx_trial_statistics.csv.gz")
 mtdf <- mtdf %>%
   group_by(id, run) %>%  dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))),
                                        rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
@@ -309,7 +316,12 @@ mtdf <- mtdf %>%
                                        rt_change = rt_csv - rt_lag,
                                        pe_max_lag = lag(pe_max), 
                                        abs_pe_max_lag = abs(pe_max_lag), 
-                                       rt_vmax_change = rt_vmax - rt_vmax_lag) %>% ungroup() %>% 
+                                       rt_vmax_change = rt_vmax - rt_vmax_lag,
+                                       trial_neg_inv_sc = scale(-1/run_trial),
+                                       rt_lag_sc = scale(rt_lag),
+                                       rt_csv_sc = scale(rt_csv),
+                                       rt_vmax_lag_sc = scale(rt_vmax_lag)
+  ) %>% ungroup() %>% 
   mutate(id = as.integer(substr(id, 1, 5)))#compute rt_swing within run and subject
 # add fMRI betas
 mdf <- inner_join(mtdf,sub_df, by = "id")
@@ -328,6 +340,9 @@ mdf$h_HippAntL_resp[mdf$h_HippAntL<mean(mdf$h_HippAntL)] <- 'high'
 mdf$last_outcome <- NA
 mdf$last_outcome[mdf$omission_lag] <- 'Omission'
 mdf$last_outcome[!mdf$omission_lag] <- 'Reward'
+mdf$learning_epoch <- 'trials 1-10'
+mdf$learning_epoch[df$run_trial>10] <- 'trials 11-50'
+mdf$h_HippAntL_neg <- -mdf$h_HippAntL
 
 
 if (unsmoothed) {
