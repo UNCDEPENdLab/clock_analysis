@@ -10,7 +10,7 @@ library(car)
 library(viridis)
 
 unsmoothed = F
-# now run with the old mask
+# default is the more inclusive Harvard-Oxford mask
 if (unsmoothed) {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/unsmoothed")
   # } else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/newmask")}
 } else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var")}
@@ -35,21 +35,23 @@ df <- df %>% dplyr::ungroup()
 # read in behavioral data
 # select relevant columns for compactness
 df <- df %>% select(id, run, run_trial, rewFunc,emotion, last_outcome, rt_csv, score_csv, rt_next, pe_max, rt_vmax, rt_vmax_lag,
-                    rt_vmax_change, v_max_wi, v_entropy_wi, v_entropy_b, v_entropy, v_max_b, u_chosen, u_chosen_lag, u_chosen_change, 
+                    rt_vmax_change, v_max_wi, v_entropy_wi, v_entropy_b, v_entropy, v_max_b, u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change, 
                     rt_vmax_lag_sc, rt_lag_sc, rt_csv_sc, trial_neg_inv_sc, Age, Female)
 # add deconvolved hippocampal timeseries
 d <- merge(df, fb_wide_t, by = c("id", "run", "run_trial"))
 d <- d %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(rt_change = 100*rt_next - rt_csv, 
                                                                         v_entropy_wi_lead = lead(v_entropy_wi),
                                                                         v_entropy_wi_change = v_entropy_wi_lead-v_entropy_wi,
-                                                                        u_chosen_next = lead(u_chosen)) %>% ungroup()
+                                                                        u_chosen_quantile_next = lead(u_chosen_quantile),
+                                                                        u_chosen_quantile_change_next = lead(u_chosen_quantile_change),
+                                                                        outcome = lead(last_outcome)) %>% ungroup()
 
 # scale decons
-# SKIP this step if running lmer on h
+# SKIP this step if running lmer with h as predictor
 
 # h by trial
 
-scale = F
+scale = T
 if (scale) {
   scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
   # d <- d %>% group_by(id,run) %>%  mutate_at(vars(starts_with("hipp")), scale2, na.rm = TRUE) %>% ungroup()
@@ -58,8 +60,8 @@ if (scale) {
 }
 
 plots = T
-rt = T
-u = F
+rt = F
+u = T
 decode = F
 ##########
 # predict directional RT change
@@ -139,6 +141,11 @@ if (rt) {
 # diagnose trial/h collinearity
 # ggplot(fb_comb, aes(run_trial, decon_interp, color = as.factor(bin_center))) + geom_smooth(method = 'gam', se = F)
 # drop models without contingency and trial
+# running with h scaled
+
+# to think more about it, all behavioral variables should be represented in the brain, resulting in a main effect rather than an interaction
+# what is represented is addressed in decoding analyses
+# that said, it seems that uncertainty prediction analyses yield negative results over a range of models
 if (u) {
   # for (trial_cont in c("TRUE", "FALSE")) {
   # for (trial_cont in c("FALSE")) {
@@ -148,17 +155,18 @@ if (u) {
       for (t in -1:10) {
         d$h<-d[[paste("hipp", slice, side, t, sep = "_")]]
         # if (trial_cont) {
-        uf <- lmer(u_chosen_next ~ scale(-1/run_trial)*scale(h) + last_outcome*scale(h) + rewFunc*scale(-1/run_trial) + (1|id/run), d)         #}
+        uf <- lmer(u_chosen_quantile_next ~  h * scale(run_trial) + u_chosen_quantile + (1|id/run), d)
         # else {
         # mf <-  lme4::lmer(rt_next ~ (scale(pe_max) + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + scale(v_entropy_wi) + h)^2 + (1|id/run), d)
         # uf <- lmer(u_chosen_next ~ scale(-1/run_trial)*scale(h) + scale(rt_csv)*scale(h) + scale(rt_vmax)*scale(h) + last_outcome*scale(h) + v_entropy_wi*scale(h) + scale(u_chosen) + (1|id/run), d) 
         # }
         dm <- broom.mixed::tidy(uf,effects = "fixed") %>% mutate(term = str_remove(term, "TRUE")) # make betas compatible with ANOVA
-        an <- broom.mixed::tidy(car::Anova(uf, '3')) %>% rename(anova_p = p.value, chisq = statistic)
+        # run without anova
+        # an <- broom.mixed::tidy(car::Anova(uf, '3')) %>% rename(anova_p = p.value, chisq = statistic)
         dm$slice <- slice
         dm$side <- side
         dm$t <- t
-        dm <- inner_join(dm, an, by = "term") # this only works for continuous terms, unfortunately
+        # dm <- inner_join(dm, an, by = "term") # this only works for continuous terms, unfortunately
         dm <- dm %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
                                                              abs(statistic) > 2 & abs(statistic) < 3 ~ '2', 
                                                              abs(statistic) > 3 ~ '3')),
@@ -177,15 +185,18 @@ if (u) {
                                                  p_level_fdr = as.factor(case_when(p_fdr > .05 ~ '1',
                                                                                    p_fdr < .05 & p_fdr > .01 ~ '2',
                                                                                    p_fdr < .01 & p_fdr > .001 ~ '3',
-                                                                                   p_fdr <.001 ~ '4')),
-                                                 p_anova_fdr = p.adjust(anova_p, method = 'fdr'),
-                                                 p_anova_level_fdr = as.factor(case_when(p_anova_fdr > .05 ~ '1',
-                                                                                         p_anova_fdr < .05 & p_anova_fdr > .01 ~ '2',
-                                                                                         p_anova_fdr < .01 & p_anova_fdr > .001 ~ '3',
-                                                                                         p_anova_fdr <.001 ~ '4')),
+                                                                                   p_fdr <.001 ~ '4'))
+                                                 # p_anova_fdr = p.adjust(anova_p, method = 'fdr'),
+                                                 # p_anova_level_fdr = as.factor(case_when(p_anova_fdr > .05 ~ '1',
+                                                                                         # p_anova_fdr < .05 & p_anova_fdr > .01 ~ '2',
+                                                                                         # p_anova_fdr < .01 & p_anova_fdr > .001 ~ '3',
+                                                                                         # p_anova_fdr <.001 ~ '4')),
   )
-  bdf$p_level_fdr <- factor(bdf$p_level_fdr, labels = c("NS", "p < .05", "p < .01", "p < .001"))
-  bdf$p_anova_level_fdr <- factor(bdf$p_anova_level_fdr, labels = c("NS", "p < .05", "p < .01", "p < .001"))
+  # bdf$p_level_fdr <- factor(bdf$p_level_fdr, labels = c("NS", "p < .05", "p < .01", "p < .001"))
+  bdf$p_level_fdr <- factor(bdf$p_level_fdr, labels = c("NS", "p < .01", "p < .001"))
+  # bdf$p_level_fdr <- factor(bdf$p_level_fdr, labels = c("NS", "p < .001"))
+  
+  # bdf$p_anova_level_fdr <- factor(bdf$p_anova_level_fdr, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   
   terms <- unique(bdf$term)
   # if (trial_cont) {
@@ -197,20 +208,22 @@ if (u) {
   # if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/u_predict/unsmoothed/no_trial_contingency')
   # } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/u_predict/no_trial_contingency/')}}
   if (plots) {
-    for (fe in terms)
-    {edf <- bdf %>% filter(term == paste(fe) & t < 8)
+    for (fe in terms) 
+      {
+      edf <- bdf %>% filter(term == paste(fe) & t < 8)
     p1 <- ggplot(edf, aes(t, estimate, color = slice)) + geom_line() + 
       geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), alpha = .5) + facet_wrap(~side) + 
       theme_dark() + scale_color_viridis_d() + geom_hline(yintercept = 0, lty = "dashed", color = "red") + labs(title = paste(fe))
     
     p2 <- ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = 1) + facet_wrap(~side) + 
       scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe))
-    p3 <- ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = chisq, alpha = p_anova_level_fdr), size = 1) + facet_wrap(~side) + 
-      scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe))
-    
+    # p3 <- ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = chisq, alpha = p_anova_level_fdr), size = 1) + facet_wrap(~side) + 
+      # scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe))
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    pdf(paste(termstr, ".pdf", sep = ""), width = 12, height = 16)
-    print(ggarrange(p1,p2,p3,ncol = 1, nrow = 3))
+    pdf(paste(termstr, ".pdf", sep = ""), width = 12, height = 12)
+    # pdf(paste(termstr, ".pdf", sep = ""), width = 12, height = 16)
+    # print(ggarrange(p1,p2,p3,ncol = 1, nrow = 3))
+    print(ggarrange(p1,p2,ncol = 1, nrow = 2))
     dev.off()
     }
   }
