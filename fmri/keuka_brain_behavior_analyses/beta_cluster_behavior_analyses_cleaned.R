@@ -49,9 +49,6 @@ screen.lmerTest <- function (mod,p=NULL) {
 #####
 ## "model-free analyses"
 
-# recode last outcome to make "reward" the reference
-df$last_outcome <- relevel(as.factor(df$last_outcome), ref = "Reward")
-mdf$last_outcome <- relevel(as.factor(mdf$last_outcome), ref = "Reward")
 
 ## let's set decay aside for now
 
@@ -63,24 +60,24 @@ summary(mf1)
 ## earlier code
 # best model
 # mf3hpedh3 <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag + 
-#                                h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_PH)^2 + 
+#                                h_f1_fp + I(-h_f2_neg_paralimb) + I(-dh_f_neg_vmpfc_precun) + pe_f1_cort_str + pe_f2_hipp)^2 + 
 #                      scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_f2_neg_paralimb) + 
 #                      scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
-#                      scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_PH +
+#                      scale(rt_lag):omission_lag:pe_f1_cort_str + scale(rt_lag):omission_lag:pe_f2_hipp +
 #                      scale(rt_lag):omission_lag:I(-dh_f_neg_vmpfc_precun) +
 #                      (1|id/run), df)
 # #screen.lmerTest(mf3hpedh3)
 # 
 # # swap in hippocampal low-H cluster for vmpfcHipp factor -- fit is worse
 # mf3hpedh3hipp <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag + 
-#                                    I(-h_HippAntL) +  pe_PH)^2 + 
+#                                    I(-h_HippAntL) +  pe_f2_hipp)^2 + 
 #                          scale(rt_lag):omission_lag:h_f1_fp + scale(rt_lag):omission_lag:I(-h_HippAntL) + 
-#                          scale(rt_lag):omission_lag:pe_PH + (1|id/run), df)
+#                          scale(rt_lag):omission_lag:pe_f2_hipp + (1|id/run), df)
 # screen.lmerTest(mf3hpedh3hipp)
 # mmf3hpedh3hipp <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) +   omission_lag + 
-#                                    I(-h_HippAntL) +  pe_PH)^2 + 
+#                                    I(-h_HippAntL) +  pe_f2_hipp)^2 + 
 #                          scale(rt_lag):omission_lag:I(-h_HippAntL) + 
-#                          scale(rt_lag):omission_lag:pe_PH + scale(-1/run_trial)*rewFunc + (1|id/run), mdf)
+#                          scale(rt_lag):omission_lag:pe_f2_hipp + scale(-1/run_trial)*rewFunc + (1|id/run), mdf)
 # screen.lmerTest(mmf3hpedh3hipp)
 # 
 # stargazer(mf1, mf2h, mf2v, mf2pe,mf2dh,mf3hpedh3, type="html", out="mf.htm", report = "vcs*",
@@ -98,18 +95,17 @@ summary(mf1)
 ##################
 # best hippocampal model
 mf3hpe <-  lmer(rt_csv ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
-                            h_HippAntL_neg + pe_PH)^2 + 
+                            h_HippAntL_neg + pe_f2_hipp)^2 + 
                      rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                     rt_lag_sc:last_outcome:pe_PH + trial_neg_inv_sc*rewFunc + (1|id/run), df[df$run_trial>2,])
+                     rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc + (1|id/run), df[df$run_trial>2,])
 summary(mf3hpe)
 screen.lmerTest(mf3hpe)
 ##
 ## MEG data
 mmf3hpe <-  lmer(rt_csv ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
-                             h_HippAntL_neg + pe_PH)^2 + 
+                             h_HippAntL_neg + pe_f2_hipp)^2 + 
                   rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                  rt_lag_sc:last_outcome:pe_PH + trial_neg_inv_sc*rewFunc + (1|id/run), mdf)
-summary(mmf3hpe)
+                  rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc + (1|id/run), mdf)
 screen.lmerTest(mmf3hpe)
 
 mfterms <- names(fixef(mf3hpe))
@@ -132,15 +128,15 @@ dev.off()
 ###############
 # purely hippocampal model-based
 mb3hpe_hipp <-  lmer(rt_csv ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                               v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH)^2 + 
+                               v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
                      rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                     rt_lag_sc:last_outcome:pe_PH +
+                     rt_lag_sc:last_outcome:pe_f2_hipp +
                      rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
-                     rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
+                     rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
                      (1|id/run), df)
 summary(mb3hpe_hipp)
 screen.lmerTest(mb3hpe_hipp, .05)
-Anova(mb3hpe_hipp, '3')
+Anova(mmb3hpe_hipp, '3')
 anova(mf3hpe, mb3hpe_hipp)
 ########
 # out-of-session replication with MEG behavioral data
@@ -167,21 +163,21 @@ plot_models(mb3hpe_hipp,mmb3hpe_hipp, rm.terms = mterms[c(-25, -39)], m.labels =
 dev.off()
 
 # visual checks
-p1 <- ggplot(df, aes(rt_lag, rt_csv, color = pe_PH_resp, lty = last_outcome)) + geom_smooth(method = 'glm') #+ facet_wrap(~rewFunc)
-p2 <- ggplot(mdf, aes(rt_lag, rt_csv, color = pe_PH_resp, lty = last_outcome)) + geom_smooth(method = 'glm') #+ facet_wrap(~rewFunc)
+p1 <- ggplot(df, aes(rt_lag, rt_csv, color = pe_f2_hipp_resp, lty = last_outcome)) + geom_smooth(method = 'glm') #+ facet_wrap(~rewFunc)
+p2 <- ggplot(mdf, aes(rt_lag, rt_csv, color = pe_f2_hipp_resp, lty = last_outcome)) + geom_smooth(method = 'glm') #+ facet_wrap(~rewFunc)
 ggarrange(p1,p2, ncol = 1, nrow = 2, labels = c("fMRI", "MEG"))
 
-p1 <- ggplot(df, aes(rt_vmax_lag, rt_csv, color = pe_PH_resp)) + geom_smooth(method = 'glm') + facet_wrap(~learning_epoch)
-p2 <- ggplot(mdf, aes(rt_vmax_lag, rt_csv, color = pe_PH_resp)) + geom_smooth(method = 'glm') + facet_wrap(~learning_epoch)
+p1 <- ggplot(df, aes(rt_vmax_lag, rt_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'glm') + facet_wrap(~learning_epoch)
+p2 <- ggplot(mdf, aes(rt_vmax_lag, rt_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'glm') + facet_wrap(~learning_epoch)
 ggarrange(p1,p2, ncol = 1, nrow = 2, labels = c("fMRI", "MEG"))
 
 ## initial replication code
 # mmb3hpe_hipp <-  lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + omission_lag + 
-#                                  v_max_wi_lag + v_entropy_wi +rt_vmax_change +  I(-h_HippAntL) +  pe_PH)^2 + 
+#                                  v_max_wi_lag + v_entropy_wi +rt_vmax_change +  I(-h_HippAntL) +  pe_f2_hipp)^2 + 
 #                        scale(rt_lag):omission_lag:I(-h_HippAntL) + 
-#                        scale(rt_lag):omission_lag:pe_PH +
+#                        scale(rt_lag):omission_lag:pe_f2_hipp +
 #                        scale(rt_vmax_lag):scale(-1/run_trial):I(-h_HippAntL) + 
-#                        scale(rt_vmax_lag):scale(-1/run_trial):pe_PH  +
+#                        scale(rt_vmax_lag):scale(-1/run_trial):pe_f2_hipp  +
 #                        v_max_b + v_entropy_b + (1|id/run), mdf)
 # screen.lmerTest(mmb3hpe_hipp, .05)
 
@@ -196,7 +192,7 @@ ggarrange(p1,p2, ncol = 1, nrow = 2, labels = c("fMRI", "MEG"))
 
 
 # understand rt_vmax_change effect
-ggplot(df, aes(rt_vmax_change, rt_csv, color = pe_PH_resp)) + geom_smooth(method = "glm")
+ggplot(df, aes(rt_vmax_change, rt_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = "glm")
 
 ########
 # uncertainty models
@@ -236,8 +232,8 @@ ggplot(df, aes(run_trial, u_chosen, color = rewFunc, lty = h_HippAntL_resp, grou
 ggplot(df %>% filter(run_trial>5), aes(run_trial, u_chosen, color = rewFunc, lty = h_HippAntL_resp, group = interaction(rewFunc, h_HippAntL_resp))) + geom_smooth() #+ facet_wrap(~run)
 
 ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = h_HippAntL_resp, group = interaction(rewFunc, h_HippAntL_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3)) #+ facet_wrap(~run)
-ggplot(df, aes(run_trial, u_chosen, color = rt_lag>2000, lty = pe_PH_resp, group = interaction(rt_lag>2000, pe_PH_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3))  + facet_wrap(~rewFunc)
-ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = pe_PH_resp, group = interaction(rewFunc, pe_PH_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3)) + facet_wrap(~rewFunc)
+ggplot(df, aes(run_trial, u_chosen, color = rt_lag>2000, lty = pe_f2_hipp_resp, group = interaction(rt_lag>2000, pe_f2_hipp_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3))  + facet_wrap(~rewFunc)
+ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = pe_f2_hipp_resp, group = interaction(rewFunc, pe_f2_hipp_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3)) + facet_wrap(~rewFunc)
 ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = h_HippAntL_resp, group = interaction(rewFunc, h_HippAntL_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3)) + facet_wrap(~rewFunc)
 ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = h_f1_fp_resp, group = interaction(rewFunc, h_f1_fp_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3)) + facet_wrap(~rewFunc)
 
@@ -273,7 +269,7 @@ screen.lmerTest(ub2,.01)
 ub3 <- lmer(u_chosen ~ (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_entropy_wi + h_f1_fp)^3 +
               (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_entropy_wi + h_HippAntL_neg)^3 +
               (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_entropy_wi + pe_f1_cort_str)^3 +
-              (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_entropy_wi + pe_PH)^3 +
+              (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_entropy_wi + pe_f2_hipp)^3 +
               scale(u_chosen_lag) + scale(run_trial)*scale(run)  +  (1|id/run), df)
 screen.lmerTest(ub3, .01)
 
@@ -294,7 +290,7 @@ dev.off()
 # ub3a <- lmer(u_chosen_change ~ (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + h_f1_fp)^3 +
 #                (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + h_HippAntL_neg)^3 +
 #                (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str)^3 +
-#                (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + pe_PH)^3 +
+#                (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + pe_f2_hipp)^3 +
 #                v_max_b + v_entropy_b + rt_lag_sc*scale(u_chosen_lag) + scale(run_trial)*scale(run) + (1|id/run), df)
 # screen.lmerTest(ub3a, .01)
 # 
@@ -302,14 +298,14 @@ dev.off()
 # ub3e <- lmer(u_chosen ~ (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + h_f1_fp)^3 +
 #               (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + I(-h_f2_neg_paralimb))^3 +
 #               (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str)^3 +
-#               (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + pe_PH)^3 +
+#               (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + pe_f2_hipp)^3 +
 #               v_max_b + v_entropy_b + rt_lag_sc*scale(u_chosen_lag) + scale(run_trial)*scale(run) + 
-#               h_f1_fp*scale(u_chosen_lag) + I(-h_f2_neg_paralimb)*scale(u_chosen_lag) +pe_f1_cort_str*scale(u_chosen_lag) +pe_PH*scale(u_chosen_lag) + (1|id/run), edf)
+#               h_f1_fp*scale(u_chosen_lag) + I(-h_f2_neg_paralimb)*scale(u_chosen_lag) +pe_f1_cort_str*scale(u_chosen_lag) +pe_f2_hipp*scale(u_chosen_lag) + (1|id/run), edf)
 # screen.lmerTest(ub3e, .01)
 
 # plot the striking effect of HIPP on uncertainty sensitivity
-p1 <- ggplot(df, aes(run_trial, u_chosen, lty = pe_PH_resp, group = pe_PH_resp)) + geom_smooth() #+ facet_wrap(~run)
-p2 <- ggplot(df, aes(run_trial, u_chosen, lty = pe_PH_resp, group = interaction(run,pe_PH_resp) , color = run)) + geom_smooth() #+ facet_wrap(~run)
+p1 <- ggplot(df, aes(run_trial, u_chosen, lty = pe_f2_hipp_resp, group = pe_f2_hipp_resp)) + geom_smooth() #+ facet_wrap(~run)
+p2 <- ggplot(df, aes(run_trial, u_chosen, lty = pe_f2_hipp_resp, group = interaction(run,pe_f2_hipp_resp) , color = run)) + geom_smooth() #+ facet_wrap(~run)
 p3 <- ggplot(df, aes(run_trial, u_chosen, lty = h_HippAntL_resp, group = h_HippAntL_resp)) + geom_smooth()#+ facet_wrap(~run)
 p4 <- ggplot(df, aes(run_trial, u_chosen, lty = h_HippAntL_resp, group = interaction(run, h_HippAntL_resp), color = run)) + geom_smooth() #+ facet_wrap(~run)
 pdf("PH_AH_on_u_sensitivity.pdf", height = 8, width = 8)
@@ -317,7 +313,7 @@ ggarrange(p1,p2,p3,p4,ncol = 2, nrow = 2)
 dev.off()
 
 p1 <- ggplot(df, aes(run_trial, u_chosen, lty = pe_f1_cort_str_resp, group = pe_f1_cort_str_resp)) + geom_smooth() #+ facet_wrap(~run)
-p2 <- ggplot(df, aes(run_trial, u_chosen, lty = pe_PH_resp, group = pe_PH_resp)) + geom_smooth() #+ facet_wrap(~run)
+p2 <- ggplot(df, aes(run_trial, u_chosen, lty = pe_f2_hipp_resp, group = pe_f2_hipp_resp)) + geom_smooth() #+ facet_wrap(~run)
 p3 <- ggplot(df, aes(run_trial, u_chosen, lty = h_f1_fp_resp, group = h_f1_fp_resp)) + geom_smooth() #+ facet_wrap(~run)
 p4 <- ggplot(df, aes(run_trial, u_chosen, lty = h_HippAntL_resp, group = h_HippAntL_resp)) + geom_smooth() #+ facet_wrap(~run)
 
@@ -328,11 +324,11 @@ dev.off()
 # 
 # ub4 <- lmer(u_chosen_change ~ (scale(run_trial) + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
 #                                  v_max_wi_lag + v_entropy_wi + scale(rt_vmax_change) +  
-#                                  h_f1_fp + I(-h_f2_neg_paralimb) + pe_f1_cort_str + pe_PH)^2 + 
+#                                  h_f1_fp + I(-h_f2_neg_paralimb) + pe_f1_cort_str + pe_f2_hipp)^2 + 
 #               rt_lag_sc:last_outcome:h_f1_fp + rt_lag_sc:last_outcome:I(-h_f2_neg_paralimb) + 
-#               rt_lag_sc:last_outcome:pe_f1_cort_str + rt_lag_sc:last_outcome:pe_PH +
+#               rt_lag_sc:last_outcome:pe_f1_cort_str + rt_lag_sc:last_outcome:pe_f2_hipp +
 #               rt_vmax_lag_sc:scale(run_trial):h_f1_fp + rt_vmax_lag_sc:scale(run_trial):I(-h_f2_neg_paralimb) + 
-#               rt_vmax_lag_sc:scale(run_trial):pe_f1_cort_str + rt_vmax_lag_sc:scale(run_trial):pe_PH  +
+#               rt_vmax_lag_sc:scale(run_trial):pe_f1_cort_str + rt_vmax_lag_sc:scale(run_trial):pe_f2_hipp  +
 #               v_max_b + v_entropy_b + scale(run_trial)*scale(run) + (1|id/run), df)
 # summary(ub4)
 # 
@@ -349,13 +345,13 @@ screen.lmerTest(us1)
 us2 <- lmer(u_chosen ~ (scale(run_trial) + last_outcome + h_f1_fp)^2 +
               (scale(run_trial) + last_outcome+ h_HippAntL_neg)^2 +
               (scale(run_trial)+ last_outcome + pe_f1_cort_str)^2 +
-            (scale(run_trial)+ last_outcome + pe_PH)^2 +
+            (scale(run_trial)+ last_outcome + pe_f2_hipp)^2 +
               scale(run_trial)*rewFunc + scale(u_chosen_lag) + (1|id), df)
 screen.lmerTest(us2, .01)
 us2r <- lmer(u_chosen_resid ~ (scale(run_trial) + last_outcome + h_f1_fp)^2 +
               (scale(run_trial) + last_outcome+ h_HippAntL_neg)^2 +
               (scale(run_trial)+ last_outcome + pe_f1_cort_str)^2 +
-              (scale(run_trial)+ last_outcome + pe_PH)^2 +
+              (scale(run_trial)+ last_outcome + pe_f2_hipp)^2 +
               scale(run_trial)*rewFunc + scale(u_chosen_lag) + (1|id), df)
 screen.lmerTest(us2r, .01)
 # understand the time course of uncertainty residualized for value
@@ -364,7 +360,7 @@ ggplot(df, aes(run_trial, u_chosen, color = rewFunc, lty = last_outcome)) + geom
 ggplot(df, aes(run_trial, v_chosen, color = rewFunc, lty = last_outcome)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,3))
 
 Anova(us2, '3')
-p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_PH, u_chosen_change, color = last_outcome)) + geom_smooth(method = 'gam') #+ 
+p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f2_hipp, u_chosen_change, color = last_outcome)) + geom_smooth(method = 'gam') #+ 
   geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)
 p2 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f1_cort_str, u_chosen_change, color = last_outcome)) + geom_smooth(method = 'gam') #+ 
   geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)
@@ -375,7 +371,7 @@ dev.off()
 us3 <- lmer(u_chosen ~ (scale(run_trial) + last_outcome + h_f1_fp)^2 +
               (scale(run_trial) + last_outcome + h_HippAntL_neg)^2 +
               (scale(run_trial) + last_outcome + pe_f1_cort_str)^2 +
-              (scale(run_trial) + last_outcome + pe_PH)^2 +
+              (scale(run_trial) + last_outcome + pe_f2_hipp)^2 +
               scale(run_trial)*rewFunc + scale(v_chosen) + (1|id), df)
 screen.lmerTest(us3, .05)
 Anova(us3, '3')
@@ -383,10 +379,10 @@ anova(us1,us2,us3)
 
 # is there a similar effect with v_chosen?
 vs2 <- lmer(v_chosen ~ (scale(run_trial) + last_outcome + 
-                          h_f1_fp + h_HippAntL_neg + pe_f1_cort_str + pe_PH)^2 + 
+                          h_f1_fp + h_HippAntL_neg + pe_f1_cort_str + pe_f2_hipp)^2 + 
               scale(run_trial)*rewFunc + (1|id), df)
 screen.lmerTest(vs2, .01)
-p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_PH, v_chosen, color = last_outcome)) + geom_smooth(method = 'gam') + 
+p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f2_hipp, v_chosen, color = last_outcome)) + geom_smooth(method = 'gam') + 
   geom_hline(yintercept = 27.62)#+ facet_wrap(~run)
 p2 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f1_cort_str, v_chosen, color = last_outcome)) + geom_smooth(method = 'gam') + 
   geom_hline(yintercept = 27.62)#+ facet_wrap(~run)
@@ -394,7 +390,7 @@ pdf("pe_clusters_v_reward.pdf", height = 4, width = 8)
 ggarrange(p1,p2, ncol = 2, nrow = 1)
 dev.off()
 
-p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_PH, rt_csv-rt_lag, color = last_outcome)) + geom_smooth(method = 'gam') + 
+p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f2_hipp, rt_csv-rt_lag, color = last_outcome)) + geom_smooth(method = 'gam') + 
   geom_hline(yintercept = 0)#+ facet_wrap(~rewFunc)
 p2 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f1_cort_str, rt_csv-rt_lag, color = last_outcome)) + geom_smooth(method = 'gam') + 
   geom_hline(yintercept = 0)#+ facet_wrap(~rewFunc)
@@ -416,13 +412,13 @@ Anova(urs1)
 urs2 <- lmer(rt_csv ~ (scale(run_trial) + rt_lag_sc + last_outcome + h_f1_fp)^3 +
                (scale(run_trial) + rt_lag_sc + last_outcome + h_HippAntL_neg)^3 + 
                (scale(run_trial) + rt_lag_sc + last_outcome + pe_f1_cort_str)^3 + 
-               (scale(run_trial) + rt_lag_sc + last_outcome + pe_PH)^3 + 
+               (scale(run_trial) + rt_lag_sc + last_outcome + pe_f2_hipp)^3 + 
                scale(run_trial) * rewFunc +
                (1|id/run), df)
 screen.lmerTest(urs2, .01)
 Anova(urs2)
 # unpack PH*u_chosen
-ggplot(df, aes(rt_lag, rt_csv, lty = last_outcome, color = pe_PH_resp)) + geom_smooth(method = "gam",
+ggplot(df, aes(rt_lag, rt_csv, lty = last_outcome, color = pe_f2_hipp_resp)) + geom_smooth(method = "gam",
                                                                                             formula = y ~ splines::ns(x,2))
 ggplot(df, aes(rt_lag, rt_csv, lty = last_outcome, color = h_f1_fp>0)) + geom_smooth(method = "gam",
                                                                                            formula = y ~ splines::ns(x,2))

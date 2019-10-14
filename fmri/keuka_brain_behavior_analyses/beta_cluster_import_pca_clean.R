@@ -169,11 +169,10 @@ pe.fa = psych::fa(pejust_rois, nfactors=2)
 pefscores <- factor.scores(pejust_rois, pe.fa)$scores
 pe_wide$pe_f1_cort_str <- pefscores[,1]
 pe_wide$pe_f2_hipp <- pefscores[,2]
-pe_wide$pe_PH <- rowMeans(cbind(pe_wide$`10 Left Hippocampus`, pe_wide$`7 Right Hippocampus`))
 if (unsmoothed) {
   pe_wide$pe_PH <- (pe_wide$`7 Right Hippocampus` + pe_wide$`10 Left Hippocampus`)/2
   hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH")])
-} else {  hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH")])  }
+} else {  hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp")])  }
 
 
 #####
@@ -216,7 +215,7 @@ if (unsmoothed) {
                            "total_earnings", "LL", "alpha", "gamma", "beta")]
 } else {
 params_beta <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb","h_HippAntL",
-                         "pe_f1_cort_str", "pe_f2_hipp", "pe_PH",
+                         "pe_f1_cort_str", "pe_f2_hipp", 
                          "total_earnings", "LL", "alpha", "gamma", "beta")]}
 param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
@@ -263,7 +262,7 @@ if (unsmoothed) {
                    "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]  
 } else {
 bdf <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb",
-                 "pe_f1_cort_str", "pe_f2_hipp", "pe_PH",
+                 "pe_f1_cort_str", "pe_f2_hipp",
                  "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]}
 b_cor <- corr.test(bdf,method = 'pearson', adjust = 'none')
 
