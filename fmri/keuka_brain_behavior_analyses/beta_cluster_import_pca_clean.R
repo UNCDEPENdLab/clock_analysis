@@ -37,8 +37,8 @@ rois <- distinct(meta_overall[,c(5,12)])
 hrois <- inner_join(h,meta_overall)
 hrois$labeled_cluster <- paste(hrois$cluster_number,hrois$label)
 hrois <- hrois %>% select(-c(model, l1_contrast, l2_contrast, l3_contrast, cluster_size, cluster_number, cluster_threshold,
-                                       z_threshold, x, y, z, label))
-ggplot(hrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
+                             z_threshold, x, y, z, label))
+# ggplot(hrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
 h_wide <- spread(hrois,labeled_cluster,cope_value) 
 # head(h_wide)
 # with group-fixed parameters we don't seem to need the winsorization step!!!
@@ -64,7 +64,7 @@ corrplot(clust_cor, cl.lim=c(-1,1),
          addCoef.col="black", addCoefasPercent = FALSE,
          p.mat = 1-clust_cor, sig.level=0.75, insig = "blank")
 dev.off()
-mh <- nfactors(clust_cor, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
+# mh <- nfactors(clust_cor, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
 h.fa = psych::fa(just_rois, nfactors=2, rotate = "oblimin", fm = "pa")
 fscores <- factor.scores(just_rois, h.fa)$scores
 h_wide$h_f1_fp <- fscores[,1]
@@ -99,7 +99,7 @@ perois_list <- distinct(pemeta_overall[c(1:7, 10:11),c(5,12)])
 perois <- inner_join(pe,pemeta_overall)
 perois$labeled_cluster <- paste(perois$cluster_number,perois$label)
 pemeta_overall$labeled_cluster <- paste(pemeta_overall$cluster_number,pemeta_overall$label)
-ggplot(perois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
+# ggplot(perois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
 
 pe_labeled <- inner_join(pe,perois_list)
 pe_labeled$labeled_cluster <- paste(pe_labeled$cluster_number,pe_labeled$label)
@@ -169,10 +169,14 @@ pe.fa = psych::fa(pejust_rois, nfactors=2)
 pefscores <- factor.scores(pejust_rois, pe.fa)$scores
 pe_wide$pe_f1_cort_str <- pefscores[,1]
 pe_wide$pe_f2_hipp <- pefscores[,2]
+pe_wide$pe_PH <- rowMeans(cbind(pe_wide$`10 Left Hippocampus`, pe_wide$`7 Right Hippocampus`))
+pe_wide$pe_PH_l <- pe_wide$`10 Left Hippocampus`
+pe_wide$pe_PH_r <- pe_wide$`7 Right Hippocampus`
+
 if (unsmoothed) {
   pe_wide$pe_PH <- (pe_wide$`7 Right Hippocampus` + pe_wide$`10 Left Hippocampus`)/2
   hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH")])
-} else {  hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp")])  }
+} else {  hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r")])  }
 
 
 #####
@@ -196,8 +200,11 @@ trial_df <- trial_df %>%
                                        rt_swing_lag = lag(rt_swing),
                                        omission_lag = lag(score_csv==0),
                                        rt_vmax_lag = lag(rt_vmax),
+                                       v_chosen_lag = lag(v_chosen),
                                        run_trial=1:50) %>% ungroup() #compute rt_swing within run and subject
-u_df <- u_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change)
+u_df <- u_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change, 
+                        u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change,
+                        v_chosen_quantile, v_chosen_quantile_lag, v_chosen_quantile_change)
 
 trial_df <- inner_join(trial_df,u_df)
 
@@ -211,11 +218,11 @@ sub_df <- inner_join(beta_sum,params)
 sub_df$id <- sub_df$ID
 if (unsmoothed) {
   params_beta <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb","h_HippAntL",
-                           "pe_f1_cort_str", "pe_f2_hipp", "pe_PH",
+                           "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
                            "total_earnings", "LL", "alpha", "gamma", "beta")]
 } else {
 params_beta <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb","h_HippAntL",
-                         "pe_f1_cort_str", "pe_f2_hipp", 
+                         "pe_f1_cort_str", "pe_f2_hipp", "pe_PH",
                          "total_earnings", "LL", "alpha", "gamma", "beta")]}
 param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
@@ -245,24 +252,23 @@ df <- df %>% group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
                                          pe_max_lag = lag(pe_max), 
                                          abs_pe_max_lag = abs(pe_max_lag), 
                                          rt_vmax_change = rt_vmax - rt_vmax_lag,
-                                         trial_neg_inv_sc = scale(-1/run_trial),
-                                         rt_lag_sc = scale(rt_lag),
-                                         rt_csv_sc = scale(rt_csv),
-                                         rt_vmax_lag_sc = scale(rt_vmax_lag)
-) %>% ungroup()
+                                         trial_neg_inv_sc = scale(-1/run_trial)) %>% ungroup() %>% 
+  mutate(rt_lag_sc = scale(rt_lag),
+         rt_csv_sc = scale(rt_csv),
+         rt_vmax_lag_sc = scale(rt_vmax_lag))
 
 # correlate between-subject V and H with clusters
 b_df <- df %>% group_by(id) %>% dplyr::summarise(v_maxB = mean(v_max, na.rm = T),
-                                          v_entropyB = mean(v_entropy, na.rm = T))
+                                                 v_entropyB = mean(v_entropy, na.rm = T))
 
 sub_df <- inner_join(sub_df, b_df, by = 'id')
 if (unsmoothed) {
   bdf <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb",
-                   "pe_f1_cort_str", "pe_f2_hipp", "pe_PH",
+                   "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
                    "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]  
 } else {
 bdf <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb",
-                 "pe_f1_cort_str", "pe_f2_hipp",
+                 "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
                  "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]}
 b_cor <- corr.test(bdf,method = 'pearson', adjust = 'none')
 
@@ -287,6 +293,7 @@ df$h_HippAntL_resp[df$h_HippAntL<mean(df$h_HippAntL)] <- 'high'
 df$last_outcome <- NA
 df$last_outcome[df$omission_lag] <- 'Omission'
 df$last_outcome[!df$omission_lag] <- 'Reward'
+df$last_outcome <- relevel(as.factor(df$last_outcome), ref = "Reward")
 
 # circular, but just check to what extent each area conforms to SCEPTIC-SM: looks like there is an interaction, both need to be involved again
 # ggplot(df, aes(run_trial, v_entropy_wi, color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "loess") #+ facet_wrap(~gamma>0)
@@ -317,12 +324,11 @@ mtdf <- mtdf %>%
                                        pe_max_lag = lag(pe_max), 
                                        abs_pe_max_lag = abs(pe_max_lag), 
                                        rt_vmax_change = rt_vmax - rt_vmax_lag,
-                                       trial_neg_inv_sc = scale(-1/run_trial),
-                                       rt_lag_sc = scale(rt_lag),
-                                       rt_csv_sc = scale(rt_csv),
-                                       rt_vmax_lag_sc = scale(rt_vmax_lag)
-  ) %>% ungroup() %>% 
-  mutate(id = as.integer(substr(id, 1, 5)))#compute rt_swing within run and subject
+                                       trial_neg_inv_sc = scale(-1/run_trial)) %>% ungroup() %>% 
+  mutate(rt_lag_sc = scale(rt_lag),
+         rt_csv_sc = scale(rt_csv),
+         rt_vmax_lag_sc = scale(rt_vmax_lag),
+         id = as.integer(substr(id, 1, 5)))#compute rt_swing within run and subject
 # add fMRI betas
 mdf <- inner_join(mtdf,sub_df, by = "id")
 mdf$rewFunc <- relevel(as.factor(mdf$rewFunc),ref = "CEV")
@@ -340,6 +346,8 @@ mdf$h_HippAntL_resp[mdf$h_HippAntL<mean(mdf$h_HippAntL)] <- 'high'
 mdf$last_outcome <- NA
 mdf$last_outcome[mdf$omission_lag] <- 'Omission'
 mdf$last_outcome[!mdf$omission_lag] <- 'Reward'
+mdf$last_outcome <- relevel(as.factor(mdf$last_outcome), ref = "Reward")
+
 mdf$learning_epoch <- 'trials 1-10'
 mdf$learning_epoch[df$run_trial>10] <- 'trials 11-50'
 mdf$h_HippAntL_neg <- -mdf$h_HippAntL
