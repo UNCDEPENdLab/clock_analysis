@@ -52,12 +52,6 @@ if (unsmoothed) {
 #   print(dd[dd$`Pr(>|t|)`<p,c(1,3)], digits = 3)}
 
 
-# ascertain replication overall 
-p1 <- plot_model(mf3hpe, show.values = T)
-p2 <- plot_model(mmf3hpe, show.values = T)
-pdf("model_free_beta_replication.pdf", height = 6, width = 12)
-ggarrange(p1,p2,ncol = 2, labels  = c("fMRI", "MEG"))
-dev.off()
 
 ###############
 # hippocampal model-based analysis
@@ -84,6 +78,7 @@ mmb3hpe_hipp <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc
 screen.lmerTest(mmb3hpe_hipp, .05)
 summary(mmb3hpe_hipp)
 Anova(mmb3hpe_hipp, '3')
+
 
 # # NB: stargazer only works with lme4, not lmerTest
 # stargazer(mb3hpe_hipp, mmb3hpe_hipp, type="html", out="hippo_mb.htm", report = "vcs*",
@@ -160,6 +155,12 @@ summary(mmf3hpe)
 Anova(mmf3hpe,'3')
 ## ascertain replication -- visual check
 # plot_models(mmf3hpe,mf3hpe)
+# ascertain replication overall 
+p1 <- plot_model(mf3hpe, show.values = T)
+p2 <- plot_model(mmf3hpe, show.values = T)
+pdf("model_free_beta_replication.pdf", height = 6, width = 12)
+ggarrange(p1,p2,ncol = 2, labels  = c("fMRI", "MEG"))
+dev.off()
 
 # save model statistics for supplement
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
@@ -171,6 +172,77 @@ stargazer(mf3hpe, mmf3hpe, type="html", out="hippo_mf.htm", report = "vcs*",
           star.cutoffs = c(0.05, 0.01, 0.001),
           notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
           notes.append = F)
+
+
+##############
+# R vs. L PH (sensitivity analyses, cont.)
+
+mb3hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                      v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH)^2 + 
+                         rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                         rt_lag_sc:last_outcome:pe_PH +
+                         rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                         rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
+                         (1|id/run), df)
+# summary(mb3hpe_hipp)
+screen.lmerTest(mb3hpe_hipp_rl, .05)
+# Anova(mmb3hpe_hipp, '3')
+
+mmb3hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                       v_max_wi_lag + v_entropy_wi +h_HippAntL_neg +  pe_PH)^2 + 
+                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                          rt_lag_sc:last_outcome:pe_PH +
+                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
+                          (1|id/run), mdf)
+screen.lmerTest(mmb3hpe_hipp_rl, .05)
+summary(mmb3hpe_hipp_rl)
+Anova(mmb3hpe_hipp_rl, '3')
+
+
+mb3hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                    v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH)^2 + 
+                       rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                       rt_lag_sc:last_outcome:pe_PH +
+                       rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                       rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
+                       (1|id/run), df)
+# summary(mb3hpe_hipp)
+screen.lmerTest(mb3hpe_hipp_rl, .05)
+# Anova(mmb3hpe_hipp, '3')
+
+mmb3hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                     v_max_wi_lag + v_entropy_wi +h_HippAntL_neg +  pe_PH)^2 + 
+                        rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                        rt_lag_sc:last_outcome:pe_PH +
+                        rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                        rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
+                        (1|id/run), mdf)
+screen.lmerTest(mmb3hpe_hipp_rl, .05)
+summary(mmb3hpe_hipp_rl)
+Anova(mmb3hpe_hipp_rl, '3')
+
+mb3hpe_hipp_r <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                      v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH_r)^2 + 
+                         rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                         rt_lag_sc:last_outcome:pe_PH_r +
+                         rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                         rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH_r  +
+                         (1|id/run), df)
+# summary(mb3hpe_hipp)
+screen.lmerTest(mb3hpe_hipp_r, .05)
+# Anova(mmb3hpe_hipp, '3')
+
+mmb3hpe_hipp_r <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                       v_max_wi_lag + v_entropy_wi +h_HippAntL_neg +  pe_PH_r)^2 + 
+                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                          rt_lag_sc:last_outcome:pe_PH_r +
+                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH_r  +
+                          (1|id/run), mdf)
+screen.lmerTest(mmb3hpe_hipp_r, .05)
+summary(mmb3hpe_hipp_r)
+Anova(mmb3hpe_hipp_r, '3')
 
 
 # visual sanity checks

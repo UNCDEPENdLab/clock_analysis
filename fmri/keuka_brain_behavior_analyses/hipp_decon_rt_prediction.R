@@ -10,6 +10,7 @@ library(car)
 library(viridis)
 
 unsmoothed = F
+newmask = F
 # default is the more inclusive Harvard-Oxford mask
 if (unsmoothed) {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/unsmoothed")
   # } else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/newmask")}
@@ -61,8 +62,8 @@ if (scale) {
 
 plots = T
 rt = F
-u = T
-decode = F
+u = F
+decode = T
 ##########
 # predict directional RT change
 # try removing the entropy terms for simplicity
@@ -243,9 +244,9 @@ if (decode) {
         for (t in -1:10) {
           d$h<-d[[paste("hipp", slice, side, t, sep = "_")]]
           if (trial_cont) {
-            md <-  lm(h ~ scale(-1/run_trial)*rewFunc + last_outcome + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi + v_entropy_wi_change, d)
+            md <-  lm(h ~ scale(-1/run_trial)*rewFunc + last_outcome + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi + v_entropy_wi_change + u_chosen_quantile_change, d)
           } else {
-            md <-  lm(h ~ last_outcome + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) +  v_entropy_wi + v_entropy_wi_change, d)}
+            md <-  lm(h ~ last_outcome + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) +  v_entropy_wi + v_entropy_wi_change + u_chosen_quantile_change, d)}
           dm <- tidy(md)
           dm$slice <- slice
           dm$side <- side
@@ -279,10 +280,10 @@ if (decode) {
     ddf$p_level_fdr <- factor(ddf$p_level_fdr, labels = c("NS", "p < .05", "p < .01", "p < .001"))
     if (trial_cont) {
       if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/unsmoothed')
-      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/decode/uncorrected')}}
+      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode')}} # manually indicate if this is the new COBRA lab mask
     else {
       if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/unsmoothed/no_trial_contingency')
-      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/newmask/decode/no_trial_contingency/uncorrected')}}
+      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/no_trial_contingency')}}  # manually indicate if this is the new COBRA lab mask
     for (fe in terms) {
       edf <- ddf %>% filter(term == paste(fe) & t < 8) 
       termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
@@ -290,7 +291,7 @@ if (decode) {
       
       # print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = abs(statistic)>2), size = 1) + facet_wrap(~side) + 
       # print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = 1) + facet_wrap(~side) + 
-      print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_value), size = 1) + facet_wrap(~side) + 
+      print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = 1) + facet_wrap(~side) + 
               scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe)))
       # print(ggarrange(p2,ncol = 1, labels = paste(fe), vjust = 4, font.label = list(color = "black", size = 16)))
       dev.off()
