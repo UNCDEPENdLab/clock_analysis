@@ -54,6 +54,7 @@ if (unsmoothed) {
 
 
 ###############
+# Main analyses including model-derived behavioral variables
 # hippocampal model-based analysis
 mb3hpe_hipp <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
                                v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
@@ -62,9 +63,9 @@ mb3hpe_hipp <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc 
                      rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                      rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
                      (1|id/run), df)
-summary(mb3hpe_hipp)
 screen.lmerTest(mb3hpe_hipp, .05)
-Anova(mmb3hpe_hipp, '3')
+summary(mb3hpe_hipp)
+Anova(mb3hpe_hipp, '3')
 
 ########
 # out-of-session replication with MEG behavioral data
@@ -81,13 +82,29 @@ Anova(mmb3hpe_hipp, '3')
 
 
 # # NB: stargazer only works with lme4, not lmerTest
-# stargazer(mb3hpe_hipp, mmb3hpe_hipp, type="html", out="hippo_mb.htm", report = "vcs*",
-#           digits = 1,single.row=TRUE,omit.stat = "bic",
-#           # column.labels = c("Null", "Value", "Prediction error", "Entropy", "Entropy change", "Best model"),
-#           star.char = c("*", "**", "***"),
-#           star.cutoffs = c(0.05, 0.01, 0.001),
-#           notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
-#           notes.append = F)
+mb3hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                    v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                       rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                       rt_lag_sc:last_outcome:pe_f2_hipp +
+                       rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                       rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
+                       (1|id/run), df)
+mmb3hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                     v_max_wi_lag + v_entropy_wi +h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                        rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                        rt_lag_sc:last_outcome:pe_f2_hipp +
+                        rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                        rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
+                        (1|id/run), mdf)
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
+
+stargazer(mb3hpe_hipp_lme4, mmb3hpe_hipp_lme4, type="html", out="hippo_mb.htm", report = "vcs*",
+          digits = 1,single.row=TRUE,omit.stat = "bic",
+          column.labels = c("fMRI session", "Out-of-session replication"),
+          star.char = c("*", "**", "***"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
+          notes.append = F)
 
 ## AH replication forest plot
 mterms <- names(fixef(mb3hpe_hipp))
@@ -163,20 +180,42 @@ ggarrange(p1,p2,ncol = 2, labels  = c("fMRI", "MEG"))
 dev.off()
 
 # save model statistics for supplement
+mf3hpe_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
+                               h_HippAntL_neg + pe_f2_hipp)^2 + 
+                  rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                  rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc + (1|id/run), df)
+# summary(mf3hpe)
+screen.lmerTest(mf3hpe)
+##
+## MEG data for out-of-session replication
+mmf3hpe_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
+                               h_HippAntL_neg + pe_f2_hipp)^2 + 
+                  rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                  rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc + (1|id/run), mdf)
+
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
 # NB: stargazer only runs with lmer, not lmerTest objects
-stargazer(mf3hpe, mmf3hpe, type="html", out="hippo_mf.htm", report = "vcs*",
+stargazer(mf3hpe_lme4, mmf3hpe_lme4, type="html", out="hippo_mf.htm", report = "vcs*",
           digits = 1,single.row=TRUE,omit.stat = "bic",
-          # column.labels = c("Null", "Value", "Prediction error", "Entropy", "Entropy change", "Best model"),
+          column.labels = c("fMRI session", "Out-of-session replication"),
           star.char = c("*", "**", "***"),
           star.cutoffs = c(0.05, 0.01, 0.001),
           notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
           notes.append = F)
-
+##############
+# Sensitivity analyses (cont.):
+# without covariates: effects are unchanged
+summary(m0 <-  lmer(rt_csv_sc ~  rt_lag_sc*last_outcome*pe_f2_hipp +
+                                  rt_vmax_lag_sc*trial_neg_inv_sc*h_HippAntL_neg + 
+                                 (1|id/run), df))
+summary(mm0 <-  lmer(rt_csv_sc ~  rt_lag_sc*last_outcome*pe_f2_hipp +
+                      rt_vmax_lag_sc*trial_neg_inv_sc*h_HippAntL_neg + 
+                      (1|id/run), mdf))
 
 ##############
-# R vs. L PH (sensitivity analyses, cont.)
-
+# Sensitivity analyses (cont.):
+# R vs. L PH 
+#
 mb3hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH)^2 + 
                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
@@ -218,6 +257,11 @@ mmb3hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag
                         rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                         rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
                         (1|id/run), mdf)
+while (any(grepl("failed to converge", mmb3hpe_hipp_rl@optinfo$conv$lme4$messages) )) {
+  ss <- getME(mmb3hpe_hipp_rl,c("theta","fixef"))
+  mmb3hpe_hipp_rl <- update(mmb3hpe_hipp_rl, start=ss)}
+
+
 screen.lmerTest(mmb3hpe_hipp_rl, .05)
 summary(mmb3hpe_hipp_rl)
 Anova(mmb3hpe_hipp_rl, '3')
@@ -244,6 +288,17 @@ screen.lmerTest(mmb3hpe_hipp_r, .05)
 summary(mmb3hpe_hipp_r)
 Anova(mmb3hpe_hipp_r, '3')
 
+## PH replication plot for mean of R and left
+mterms <- names(fixef(mb3hpe_hipp_rl))
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots/')
+ph <- plot_models(mb3hpe_hipp_rl,mmb3hpe_hipp_rl, rm.terms = mterms[c(-22, -39)], m.labels = c("fMRI", "replication"),
+                  show.values = T,  std.est = "std2", legend.title = "Session", vline.color = "slategray3",
+                  wrap.labels = 15,  axis.labels = c("Previous RT * Omission * Post. hippocampal PE response","Previous RT * Post. hippocampal PE response"),
+                  axis.title = "Greater RT swing  <==>  Smaller RT swing")
+ph <- ph + ggplot2::ylim(-.1,.1)
+pdf("ph_beta_models_replication_mean_LR.pdf", height = 3, width = 5)
+ph
+dev.off()
 
 # visual sanity checks
 # p1 <- ggplot(df, aes(rt_lag, rt_csv, color = pe_f2_hipp_resp, lty = last_outcome)) + geom_smooth(method = 'glm') #+ facet_wrap(~rewFunc)
