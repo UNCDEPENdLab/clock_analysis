@@ -184,7 +184,7 @@ mb3hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_
                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
                          (1|id/run), df)
-# summary(mb3hpe_hipp)
+summary(mb3hpe_hipp_rl)
 screen.lmerTest(mb3hpe_hipp_rl, .05)
 # Anova(mmb3hpe_hipp, '3')
 
@@ -319,6 +319,8 @@ ub3v <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + rt_swing
               scale(u_chosen_quantile_lag) + v_chosen_quantile_change + (1|id/run), df)
 screen.lmerTest(ub3v, .05)
 summary(ub3v)
+
+# re-examine in 
 
 # demonstrate that this holds across contingencies and early/late learning
 pdf('AH_entropy_uncertainty_aversion_by_cond.pdf', height = 6, width = 8)
