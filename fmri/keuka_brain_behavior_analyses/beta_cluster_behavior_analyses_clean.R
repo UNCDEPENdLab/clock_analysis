@@ -318,9 +318,26 @@ ub3v <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + rt_swing
               (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + pe_f2_hipp)^2 +
               scale(u_chosen_quantile_lag) + v_chosen_quantile_change + (1|id/run), df)
 screen.lmerTest(ub3v, .05)
-summary(ub3v)
+# summary(ub3v)
 
-# re-examine in 
+# sanity check in simple models: they both predict uncertainty-aversion
+us1 <- lmer(u_chosen_quantile ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
+              (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + (1|id/run), df)
+screen.lmerTest(us1, .05)
+
+us1v <- lmer(u_chosen_quantile ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
+              (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + v_chosen_quantile + (1|id/run), df)
+screen.lmerTest(us1v, .05)
+
+mus1 <- lmer(u_chosen ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
+              (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + (1|id/run), mdf)
+screen.lmerTest(mus1, .05)
+
+mus1v <- lmer(u_chosen ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
+               (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + v_chosen + (1|id/run), mdf)
+screen.lmerTest(mus1v, .05)
+
+
 
 # demonstrate that this holds across contingencies and early/late learning
 pdf('AH_entropy_uncertainty_aversion_by_cond.pdf', height = 6, width = 8)
