@@ -252,7 +252,8 @@ df <- df %>% group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
                                          pe_max_lag = lag(pe_max), 
                                          abs_pe_max_lag = abs(pe_max_lag), 
                                          rt_vmax_change = rt_vmax - rt_vmax_lag,
-                                         trial_neg_inv_sc = scale(-1/run_trial)) %>% ungroup() %>% 
+                                         trial_neg_inv_sc = scale(-1/run_trial),
+                                         v_chosen_change = v_chosen - lag(v_chosen)) %>% ungroup() %>% 
   mutate(rt_lag_sc = scale(rt_lag),
          rt_csv_sc = scale(rt_csv),
          rt_vmax_lag_sc = scale(rt_vmax_lag))
@@ -324,6 +325,7 @@ mtdf <- mtdf %>%
                                        pe_max_lag = lag(pe_max), 
                                        abs_pe_max_lag = abs(pe_max_lag), 
                                        rt_vmax_change = rt_vmax - rt_vmax_lag,
+                                       v_chosen_change = v_chosen - lag(v_chosen),
                                        trial_neg_inv_sc = scale(-1/run_trial)) %>% ungroup() %>% 
   mutate(rt_lag_sc = scale(rt_lag),
          rt_csv_sc = scale(rt_csv),
@@ -351,6 +353,15 @@ mdf$last_outcome <- relevel(as.factor(mdf$last_outcome), ref = "Reward")
 mdf$learning_epoch <- 'trials 1-10'
 mdf$learning_epoch[df$run_trial>10] <- 'trials 11-50'
 mdf$h_HippAntL_neg <- -mdf$h_HippAntL
+
+mu_df <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_meg_fixed_uv_ureset_fixedparams_meg_ffx_trial_statistics.csv.gz")
+# mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change, 
+#                         u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change,
+#                         v_chosen_quantile, v_chosen_quantile_lag, v_chosen_quantile_change) %>% mutate(id = as.integer(substr(id, 1, 5)))
+mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(
+    id = as.integer(substr(id, 1, 5))) 
+
+mdf <- inner_join(mdf,mu_df, by = c("id", "run", "trial"))
 
 
 if (unsmoothed) {
