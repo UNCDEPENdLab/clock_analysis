@@ -1,4 +1,5 @@
 # loops over RT prediction models for various hippocampal slices and post-feedback time points
+# first run medusa_event_locked_lmer.R
 library(modelr)
 library(tidyverse)
 library(lme4)
@@ -9,8 +10,16 @@ library(ggpubr)
 library(car)
 library(viridis)
 
+# select data
 unsmoothed = F
 newmask = F
+
+# what to run
+plots = T
+rt = F
+u = F
+decode = T
+
 # default is the more inclusive Harvard-Oxford mask
 if (unsmoothed) {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/unsmoothed")
   # } else {setwd("/Users/localadmin/Box/SCEPTIC_fMRI/var/newmask")}
@@ -47,23 +56,13 @@ d <- d %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(rt_chang
                                                                         u_chosen_quantile_change_next = lead(u_chosen_quantile_change),
                                                                         outcome = lead(last_outcome)) %>% ungroup()
 
-# scale decons
-# SKIP this step if running lmer with h as predictor
 
-# h by trial
+scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
+# scale decon across subjects as a predictor
+# RT and U prediction analyses now run on 'ds' instead of 'd'
+ds <- d %>% mutate_at(vars(starts_with("hipp")), scale2, na.rm = TRUE) %>% ungroup()
 
-scale = T
-if (scale) {
-  scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
-  # d <- d %>% group_by(id,run) %>%  mutate_at(vars(starts_with("hipp")), scale2, na.rm = TRUE) %>% ungroup()
-  # try scaling across subjects
-  d <- d %>% mutate_at(vars(starts_with("hipp")), scale2, na.rm = TRUE) %>% ungroup()
-}
 
-plots = T
-rt = F
-u = F
-decode = T
 ##########
 # predict directional RT change
 # try removing the entropy terms for simplicity
@@ -76,13 +75,13 @@ if (rt) {
       for (side in c("l", "r")) {
         for (t in -1:10) {
           d$h<-d[[paste("hipp", slice, side, t, sep = "_")]]
-          # mf <-  lme4::lmer(rt_next ~ (scale(pe_max) + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + scale(v_entropy_wi) + h)^2 + (1|id/run), d)
-          # mf <-  lmerTest::lmer(rt_next ~ scale(rt_csv) * last_outcome * h + scale(rt_vmax_lag) *  h + scale(rt_vmax_change) *  h + (1|id/run), d)
+          # mf <-  lme4::lmer(rt_next ~ (scale(pe_max) + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + scale(v_entropy_wi) + h)^2 + (1|id/run), ds)
+          # mf <-  lmerTest::lmer(rt_next ~ scale(rt_csv) * last_outcome * h + scale(rt_vmax_lag) *  h + scale(rt_vmax_change) *  h + (1|id/run), ds)
 # a more detailed model
           mf <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + h)^2 + 
                         rt_lag_sc:last_outcome:h + 
                         rt_vmax_lag_sc:trial_neg_inv_sc:h + 
-                        (1|id/run), d)
+                        (1|id/run), ds)
           dm <- broom.mixed::tidy(mf,effects = "fixed")
           dm$slice <- slice
           dm$side <- side
@@ -144,9 +143,11 @@ if (rt) {
 # drop models without contingency and trial
 # running with h scaled
 
-# to think more about it, all behavioral variables should be represented in the brain, resulting in a main effect rather than an interaction
+# to think more about it, all behavioral variables should be represented in the brain
 # what is represented is addressed in decoding analyses
 # that said, it seems that uncertainty prediction analyses yield negative results over a range of models
+
+# uncertainty prediction analyses also run on scaled data
 if (u) {
   # for (trial_cont in c("TRUE", "FALSE")) {
   # for (trial_cont in c("FALSE")) {
@@ -156,10 +157,10 @@ if (u) {
       for (t in -1:10) {
         d$h<-d[[paste("hipp", slice, side, t, sep = "_")]]
         # if (trial_cont) {
-        uf <- lmer(u_chosen_quantile_next ~  h * scale(run_trial) + u_chosen_quantile + (1|id/run), d)
+        uf <- lmer(u_chosen_quantile_next ~  h * scale(run_trial) + u_chosen_quantile + (1|id/run), ds)
         # else {
-        # mf <-  lme4::lmer(rt_next ~ (scale(pe_max) + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + scale(v_entropy_wi) + h)^2 + (1|id/run), d)
-        # uf <- lmer(u_chosen_next ~ scale(-1/run_trial)*scale(h) + scale(rt_csv)*scale(h) + scale(rt_vmax)*scale(h) + last_outcome*scale(h) + v_entropy_wi*scale(h) + scale(u_chosen) + (1|id/run), d) 
+        # mf <-  lme4::lmer(rt_next ~ (scale(pe_max) + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + scale(v_entropy_wi) + h)^2 + (1|id/run), ds)
+        # uf <- lmer(u_chosen_next ~ scale(-1/run_trial)*scale(h) + scale(rt_csv)*scale(h) + scale(rt_vmax)*scale(h) + last_outcome*scale(h) + v_entropy_wi*scale(h) + scale(u_chosen) + (1|id/run), ds) 
         # }
         dm <- broom.mixed::tidy(uf,effects = "fixed") %>% mutate(term = str_remove(term, "TRUE")) # make betas compatible with ANOVA
         # run without anova
@@ -236,17 +237,23 @@ if (u) {
 
 
 # "decoding" analyses
+# this will always include trial and contingency
+
+# trying lmer instead of lm on un-scaled decon data
+# getting rid of run nested within ID eliminates most singular fit warnings
 if (decode) {
-  for (trial_cont in c("F", "T")) {
     newlist <- list()
     for (slice in 1:12) {print(paste("Processing slice", slice, sep = " "))
       for (side in c("l", "r")) {
         for (t in -1:10) {
           d$h<-d[[paste("hipp", slice, side, t, sep = "_")]]
-          if (trial_cont) {
-            md <-  lm(h ~ scale(-1/run_trial)*rewFunc + last_outcome + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi + v_entropy_wi_change + u_chosen_quantile_change, d)
-          } else {
-            md <-  lm(h ~ last_outcome + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) +  v_entropy_wi + v_entropy_wi_change + u_chosen_quantile_change, d)}
+          md <-  lmer(h ~ scale(-1/run_trial)*rewFunc + last_outcome + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi + v_entropy_wi_change + u_chosen_quantile_change
+                        + (0|id), d, control=lmerControl(optimizer = "nloptwrap"))
+          while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
+            print(md@optinfo$conv$lme4$conv)
+            ss <- getME(md,c("theta","fixef"))
+            md <- update(md, start=ss)}
+          
           dm <- tidy(md)
           dm$slice <- slice
           dm$side <- side
@@ -268,8 +275,8 @@ if (decode) {
     ddf$stat_order <- factor(ddf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
     ddf$p_value <- factor(ddf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
     
-    # terms <- names(fixef(md))
-    terms <- names(md$coefficients)
+    terms <- names(fixef(md))
+    # terms <- names(md$coefficients)
     # FDR
     ddf <- ddf  %>% group_by(term,side) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
                                                    p_level_fdr = as.factor(case_when(p_fdr > .05 ~ '1',
@@ -278,12 +285,8 @@ if (decode) {
                                                                                      p_fdr <.001 ~ '4')))
     
     ddf$p_level_fdr <- factor(ddf$p_level_fdr, labels = c("NS", "p < .05", "p < .01", "p < .001"))
-    if (trial_cont) {
-      if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/unsmoothed')
-      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode')}} # manually indicate if this is the new COBRA lab mask
-    else {
-      if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/unsmoothed/no_trial_contingency')
-      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/no_trial_contingency')}}  # manually indicate if this is the new COBRA lab mask
+      if (unsmoothed) {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/unsmoothed/lmer')
+      } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/decode/lmer')} # manually indicate if this is the new COBRA lab mask
     for (fe in terms) {
       edf <- ddf %>% filter(term == paste(fe) & t < 8) 
       termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
@@ -297,7 +300,7 @@ if (decode) {
       dev.off()
     }
   }
-}
+
 #########
 # add centrality for a similar RT prediction analysis
 load('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/brms_6slc_graphs.RData')

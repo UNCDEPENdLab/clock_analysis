@@ -355,11 +355,10 @@ mdf$learning_epoch[df$run_trial>10] <- 'trials 11-50'
 mdf$h_HippAntL_neg <- -mdf$h_HippAntL
 
 mu_df <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_meg_fixed_uv_ureset_fixedparams_meg_ffx_trial_statistics.csv.gz")
-# mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change, 
-#                         u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change,
-#                         v_chosen_quantile, v_chosen_quantile_lag, v_chosen_quantile_change) %>% mutate(id = as.integer(substr(id, 1, 5)))
-mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(
-    id = as.integer(substr(id, 1, 5))) 
+mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change,
+                        u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change) %>% mutate(id = as.integer(substr(id, 1, 5)))
+# mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(
+#     id = as.integer(substr(id, 1, 5))) 
 
 mdf <- inner_join(mdf,mu_df, by = c("id", "run", "trial"))
 

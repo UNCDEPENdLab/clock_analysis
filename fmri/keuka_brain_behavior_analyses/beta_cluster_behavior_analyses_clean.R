@@ -237,7 +237,7 @@ mb3hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_
                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
                          (1|id/run), df)
-# summary(mb3hpe_hipp)
+summary(mb3hpe_hipp_rl)
 screen.lmerTest(mb3hpe_hipp_rl, .05)
 # Anova(mmb3hpe_hipp, '3')
 
@@ -340,9 +340,9 @@ dev.off()
 # # understand rt_vmax_change effect
 # ggplot(df, aes(rt_vmax_change, rt_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = "glm")
 
-###########
-# Uncertainty models
-
+######################
+# Uncertainty models #
+######################
 
 # Sanity checks
 # ggplot(df, aes(run_trial, u_chosen, group = interaction(rewFunc, rt_lag>2000), color = rewFunc, lty = rt_lag>2000)) + geom_smooth()
@@ -364,13 +364,13 @@ corrplot(u_cor$r, cl.lim=c(-1,1),
          p.mat = u_cor$p, sig.level=0.05, insig = "blank")
 dev.off()
 
-# 
+# timecourses of choice uncertainty by HIPP response
 # ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = h_HippAntL_resp, group = interaction(rewFunc, h_HippAntL_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3)) #+ facet_wrap(~run)
 p1 <- ggplot(df, aes(run_trial, u_chosen, color = rt_lag>2000, lty = pe_f2_hipp_resp, group = interaction(rt_lag>2000, pe_f2_hipp_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3))  + facet_wrap(last_outcome~rewFunc)
 p2 <- ggplot(mdf, aes(run_trial, u_chosen, color = rt_lag>2000, lty = pe_f2_hipp_resp, group = interaction(rt_lag>2000, pe_f2_hipp_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3))  + facet_wrap(last_outcome~rewFunc)
 ggarrange(p1,p2)
 
-# RT timecourses by hipp respons
+# RT timecourses by hipp response
 p1 <- ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = pe_f2_hipp_resp, group = interaction(rewFunc, pe_f2_hipp_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 4))
 p2 <- ggplot(mdf, aes(run_trial, rt_csv, color = rewFunc, lty = pe_f2_hipp_resp, group = interaction(rewFunc, pe_f2_hipp_resp))) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 4))
 ggarrange(p1,p2)
@@ -394,10 +394,20 @@ pdf('rt_swings_by_AH_resp.pdf', height = 5, width = 10)
 ggarrange(p1,p2, labels = c("fMRI", "MEG"))
 dev.off()
 
-# Builidng the model for interactions with betas
+##
+# Builidng the uncertainty model for interactions with betas
 # more sanity checks on quantiles (relative uncertainty) -- looks right
+# ggplot(df, aes(run_trial, u_chosen)) + geom_smooth()+ facet_wrap(~rewFunc)
 ggplot(df, aes(run_trial, u_chosen_quantile)) + geom_smooth()+ facet_wrap(~rewFunc)
 ggplot(df, aes(run_trial, u_chosen_quantile_change)) + geom_smooth()+ facet_wrap(~rewFunc)
+
+# Regress value out of uncertainty for plotting
+m <- lmer(u_chosen_quantile ~ v_chosen + (1|ID), df)
+df$u_chosen_v_partialed_out <- resid(m)
+#
+p1 <- ggplot(df, aes(run_trial, u_chosen_quantile, color = pe_f2_hipp_resp, lty = h_HippAntL_resp)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3))#+ facet_wrap(~rewFunc)
+p2 <- ggplot(df, aes(run_trial, u_chosen_v_partialed_out, color = pe_f2_hipp_resp, lty = h_HippAntL_resp)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3))#+ facet_wrap(~rewFunc)
+
 
 # most interpretable set of models
 umb1 <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + rt_swing + last_outcome + v_entropy_wi + h_HippAntL_neg)^2 +
@@ -406,8 +416,7 @@ umb1 <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + rt_swing
 screen.lmerTest(umb1, .05)
 
 umb1v <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + rt_swing + last_outcome + v_entropy_wi + h_HippAntL_neg)^2 +
-              (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + pe_f2_hipp)^2 +
-              scale(u_chosen_quantile_lag) + v_chosen_quantile_change + rt_lag_sc*rewFunc + (1|id/run), df)
+              (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + pe_f2_hipp)^2 + scale(u_chosen_quantile_lag) + v_chosen_quantile_change + rt_lag_sc*rewFunc + (1|id/run), df)
 screen.lmerTest(umb1v, .05)
 # summary(umb1v)
 
@@ -465,10 +474,31 @@ p2 <- ggplot(mdf, aes(rt_lag, u_chosen, color = pe_f2_hipp_resp)) + geom_smooth(
 # pdf('uncertainty_change_prev_RT_by_PH.pdf', height = 6, width = 12)
 ggarrange(p1,p2, labels = c("fMRI", "MEG"))
 # dev.off()
+# summary(ub3v)
+
+# sanity check in simple models: they both predict uncertainty-aversion
+us1 <- lmer(u_chosen_quantile ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
+              (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + (1|id/run), df)
+screen.lmerTest(us1, .05)
+
+us1v <- lmer(u_chosen_quantile ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
+              (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + v_chosen_quantile + (1|id/run), df)
+screen.lmerTest(us1v, .05)
+
+
+mus1 <- lmer(u_chosen ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
+              (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + (1|id/run), mdf)
+screen.lmerTest(mus1, .05)
+mus1v <- lmer(u_chosen ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
+               (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + v_chosen + (1|id/run), mdf)
+screen.lmerTest(mus1v, .05)
+
+
+
 # demonstrate that this holds across contingencies and early/late learning
 pdf('AH_entropy_uncertainty_aversion_by_cond.pdf', height = 6, width = 8)
 ggplot(df %>% filter(!is.na(v_entropy_wi)), aes(run_trial, u_chosen_quantile, lty = v_entropy_wi>0, color = h_HippAntL_resp)) + 
-  geom_smooth(method = 'gam', formula = y ~ splines::ns(x,2)) + facet_wrap(~rewFunc)
+  geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3)) + facet_wrap(~rewFunc)
 dev.off()
 
 
