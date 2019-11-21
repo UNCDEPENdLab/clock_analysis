@@ -438,23 +438,23 @@ p2 <- ggplot(df, aes(run_trial, u_chosen_v_partialed_out, color = pe_f2_hipp_res
 
 
 # most interpretable set of models
-umb1 <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + rt_swing + last_outcome + v_entropy_wi + h_HippAntL_neg)^2 +
+umb1 <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + h_HippAntL_neg)^2 +
               (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + pe_f2_hipp)^2 +
               scale(u_chosen_quantile_lag) + rt_lag_sc*rewFunc + (1|id/run), df)
 screen.lmerTest(umb1, .05)
 
-umb1v <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + rt_swing + last_outcome + v_entropy_wi + h_HippAntL_neg)^2 +
+umb1v <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + h_HippAntL_neg)^2 +
               (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + pe_f2_hipp)^2 + scale(u_chosen_quantile_lag) + v_chosen_quantile_change + rt_lag_sc*rewFunc + (1|id/run), df)
 screen.lmerTest(umb1v, .05)
 # summary(umb1v)
 
 # attempt MEG replication
-mumb1 <- lmer(u_chosen_change ~ (trial_neg_inv_sc + rt_lag_sc + rt_swing + last_outcome + v_entropy_wi + h_HippAntL_neg)^2 +
+mumb1 <- lmer(u_chosen_change ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + h_HippAntL_neg)^2 +
                (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + pe_f2_hipp)^2 +
                scale(u_chosen_lag) + rt_lag_sc*rewFunc + (1|id/run), mdf)
 screen.lmerTest(mumb1, .05)
 
-mumb1v <- lmer(u_chosen_change ~ (trial_neg_inv_sc + rt_lag_sc + rt_swing + last_outcome + v_entropy_wi + h_HippAntL_neg)^2 +
+mumb1v <- lmer(u_chosen_change ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + h_HippAntL_neg)^2 +
                 (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + pe_f2_hipp)^2 +
                 scale(u_chosen_lag) + v_chosen_change + rt_lag_sc*rewFunc + (1|id/run), mdf)
 screen.lmerTest(mumb1v, .05)
