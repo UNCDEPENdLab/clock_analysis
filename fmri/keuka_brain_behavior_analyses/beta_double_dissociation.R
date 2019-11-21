@@ -40,6 +40,26 @@ pdf('h_pe_betas_smooth.pdf', height = 6, width = 7)
 ggplot(df, aes(atlas_value,beta, color = l1_contrast)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,8))
 dev.off()
 
+#########
+# maps - I think we need z stats to weigh the betas or z stats instead of betas
+h1 <- h %>% mutate(low_h_beta = -winsor(beta, trim = .01))
+ggplot(h1, aes(y, z, fill = low_h_beta)) + geom_tile() + scale_fill_viridis_c()
+pdf('individual_low_h_hippo_maps_xy.pdf', height = 10, width = 10)
+ggplot(h1, aes(x, y, fill = low_h_beta)) + geom_tile() + scale_fill_viridis_c() + facet_wrap(~ID)
+dev.off()
+
+pe1 <- pe %>% mutate(pe_beta = winsor(beta, trim = .01))
+ggplot(pe1, aes(y, z, fill = pe_beta)) + geom_tile() + scale_fill_viridis_c() + facet_wrap(~ID)
+pdf('individual_pe_hippo_maps_xy.pdf', height = 10, width = 10)
+ggplot(pe1, aes(x, y, fill = pe_beta)) + geom_tile() + scale_fill_viridis_c() + facet_wrap(~ID)
+dev.off()
+
+# what about the difference map?
+diff <- pe %>% mutate(pe_beta = scale(winsor(beta, .01)),
+                      h_beta = -scale(winsor(h$beta, .01)),
+                      beta_diff_h_minus_pe = h_beta - pe_beta)
+ggplot(diff, aes(x, y, fill = beta_diff_h_minus_pe)) + geom_tile() + scale_fill_viridis_c() + facet_wrap(~ID)
+ggplot(diff, aes(z, y, fill = beta_diff_h_minus_pe)) + geom_tile() + scale_fill_viridis_c()
 # formal models
 
 # start with linear location
