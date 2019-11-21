@@ -585,9 +585,9 @@ if (analyze) {
     geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + scale_x_continuous(breaks = c(-2,-1,0,1,2)) + ylab('Hippocampal response') +
     scale_color_gradientn(colors = pal, guide = 'none') + 
     theme(legend.title = element_blank(),
-          panel.grid.major = element_line(colour = "grey35"), 
-          panel.grid.minor = element_line(colour = "grey35"), 
-          panel.background = element_rect(fill = 'grey30'))
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40'))
   
   dev.off()
   
@@ -635,9 +635,9 @@ if (analyze) {
     geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5)+ xlab('Time') + ylab('Hippocampal response') +
     scale_color_gradientn(colors = pal, guide = 'none') + 
     theme(legend.title = element_blank(),
-          panel.grid.major = element_line(colour = "grey35"), 
-          panel.grid.minor = element_line(colour = "grey35"), 
-          panel.background = element_rect(fill = 'grey30'))
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40'))
   dev.off()
   
   
@@ -675,9 +675,9 @@ if (analyze) {
     scale_x_continuous(breaks = c(-2,0,2)) + ylab('Hippocampal response') + 
     scale_color_gradientn(colors = pal, guide = 'none') + 
     theme(legend.title = element_blank(),
-          panel.grid.major = element_line(colour = "grey35"), 
-          panel.grid.minor = element_line(colour = "grey35"), 
-          panel.background = element_rect(fill = 'grey30'))
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40'))
   
   dev.off()
   
@@ -854,14 +854,14 @@ if (analyze) {
   
   # anderson version
   setwd('../early_late')
-  pdf('medusa_feedback_ph_ah_reward_anderson.pdf', height = 3, width = 6.5)
-  ggplot(em6, aes(as.numeric(evt_time_f), emmean, color = bin_center_z)) + 
-    geom_point(position = position_dodge2(width = 1)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge2(width = .2)) + geom_line(position = position_dodge2(width = .2)) + facet_wrap(.~reward_text) +
+  pdf('medusa_feedback_ph_ah_reward_anderson.pdf', height = 3.5, width = 6.5)
+  ggplot(em6, aes(as.numeric(evt_time_f), emmean, color = bin_center_z, group = bin_center_z)) + 
+    geom_point(position = position_dodge2(width = 1)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge2(width = .2)) + geom_line(position = position_dodge2(width = 1)) + facet_wrap(.~reward_text) +
     scale_color_gradientn(colors = pal, guide = 'none') + xlab("Time after feedback, seconds") + ylab("Hippocampal response") +
     theme(legend.title = element_blank(),
-          panel.grid.major = element_line(colour = "grey35"), 
-          panel.grid.minor = element_line(colour = "grey35"), 
-          panel.background = element_rect(fill = 'grey30'))
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40'))
   
   dev.off()
   
@@ -875,9 +875,9 @@ if (analyze) {
   ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(as.numeric(evt_time_f), decon_interp, group = bin_center_z, color = bin_center_z)) + geom_smooth(method = 'loess',  se = F) +   
     scale_color_gradientn(colors = pal, guide = 'none') + xlab("Time after feedback, seconds") + ylab("Hippocampal response") +
     theme(legend.title = element_blank(),
-          panel.grid.major = element_line(colour = "grey35"), 
-          panel.grid.minor = element_line(colour = "grey35"), 
-          panel.background = element_rect(fill = 'grey30')) + facet_wrap(side~reward_text)
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40')) + facet_wrap(side~reward_text)
   
   dev.off()
   

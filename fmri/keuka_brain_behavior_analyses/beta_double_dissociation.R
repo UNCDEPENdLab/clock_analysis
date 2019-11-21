@@ -65,12 +65,12 @@ ggplot(em, aes(axis_bin, beta, lty = l1_contrast, color = as.numeric(axis_bin), 
   scale_color_gradientn(colors = pal, guide = 'none') +
   # scale_color_brewer(type = 'seq', guide = 'none') +
   theme(legend.title = element_blank(),
-                                                                   panel.grid.major = element_line(colour = "grey35"), 
-                                                                   panel.grid.minor = element_line(colour = "grey35"), 
-                                                                   panel.background = element_rect(fill = 'grey30'), 
+                                                                   panel.grid.major = element_line(colour = "grey45"), 
+                                                                   panel.grid.minor = element_line(colour = "grey45"), 
+                                                                   panel.background = element_rect(fill = 'grey40'), 
                                                                    axis.text.x = element_blank())  +
   scale_linetype(labels = c("Prediction error", "Entropy, reversed")) +   scale_shape(labels = c("Prediction error", "Entropy, reversed")) + 
-  xlab("Posterior <= position => Anterior")
+  xlab("Post. <= Long axis position => Ant.")
 dev.off()
 # 100 bins
 df$location <- as.factor(round(df$atlas_value, digits = 2))

@@ -226,6 +226,34 @@ stargazer(m0, mm0, type="html", out="hippo_mb_no_covariates.htm", report = "vcs*
           notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
           notes.append = F)
 #
+
+##############
+# controlling for uncertainty
+mf3hpe_u <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + scale(u_chosen_lag) +
+                               h_HippAntL_neg + pe_f2_hipp)^2 + 
+                  rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                  rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc + (1|id/run), df)
+while (any(grepl("failed to converge", mf3hpe_u@optinfo$conv$lme4$messages) )) {
+  print(mf3hpe_u@optinfo$conv$lme4$conv)
+  ss <- getME(mf3hpe_u,c("theta","fixef"))
+  mf3hpe_u <- update(mf3hpe_u, start=ss)}
+
+# summary(mf3hpe)
+screen.lmerTest(mf3hpe_u)
+##
+## MEG data for out-of-session replication
+mmf3hpe_u <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + scale(u_chosen_lag) +
+                                 h_HippAntL_neg + pe_f2_hipp)^2 + 
+                    rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                    rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc + (1|id/run), mdf)
+while (any(grepl("failed to converge", mmf3hpe_u@optinfo$conv$lme4$messages) )) {
+  print(mmf3hpe_u@optinfo$conv$lme4$conv)
+  ss <- getME(mmf3hpe_u,c("theta","fixef"))
+  mmf3hpe_u <- update(mmf3hpe_u, start=ss)}
+
+# summary(mmf3hpe)
+screen.lmerTest(mmf3hpe_u)
+
 ##############
 # Sensitivity analyses (cont.):
 # R vs. L PH 
