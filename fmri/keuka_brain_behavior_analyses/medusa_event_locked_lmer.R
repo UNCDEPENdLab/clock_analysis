@@ -16,7 +16,7 @@ library(emmeans)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
-reprocess = T
+reprocess = F
 analyze = T
 unsmoothed = F
 newmask = F
@@ -66,39 +66,39 @@ plot_by_summary <- function(alignment, trial_split=NULL, facet_by, filter_expr=N
   if (alignment == "clock" | alignment == "feedback" | alignment == "rtvmax") {
     if (change) {
       df_sum <- df %>% group_by(id, run, evt_time, axis_bin, side, !!gg) %>% #, !!fb) %>%
-          summarise(mdecon_interp = mean(abs(decon_change))) %>% ungroup() # version with abs signal change
+        summarise(mdecon_interp = mean(abs(decon_change))) %>% ungroup() # version with abs signal change
     } else {
       df_sum <- df %>% group_by(id, run, evt_time, axis_bin, side, !!gg) %>% #, !!fb) %>%
-          summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()  
+        summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()  
     }
     # }
     g <- ggplot(df_sum, aes(x=evt_time, y=mdecon_interp, color = axis_bin, lty = !!gg)) +
-        stat_summary(fun.y=mean, geom="line")
+      stat_summary(fun.y=mean, geom="line")
     # stat_summary(fun.data=mean_cl_boot, geom="pointrange", position=position_dodge(width=0.4))
     g <- g + facet_wrap(~side) + theme_dark()
   } else if (alignment == "v1_clock" | alignment == "v1_feedback") {
     if (change) {
       df_sum <- df %>% group_by(id, run, evt_time, side, !!gg) %>% #, !!fb) %>%
-          summarise(mdecon_interp = mean(abs(decon_change))) %>% ungroup() # version with abs signal change
+        summarise(mdecon_interp = mean(abs(decon_change))) %>% ungroup() # version with abs signal change
     } else {
       df_sum <- df %>% group_by(id, run, evt_time, side, !!gg) %>% #, !!fb) %>%
-          summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()  
+        summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()  
     }
     # }
     g <- ggplot(df_sum, aes(x=evt_time, y=mdecon_interp, lty = !!gg)) +
-        stat_summary(fun.y=mean, geom="line")
+      stat_summary(fun.y=mean, geom="line")
     g <- g + facet_wrap(~side) + theme_gray()
   } else if (alignment == "m1_clock" | alignment == 'm1_feedback') {
     if (change) {
       df_sum <- df %>% group_by(id, run, evt_time, axis_bin, !!gg) %>% #, !!fb) %>%
-          summarise(mdecon_interp = mean(abs(decon_change))) %>% ungroup() # version with abs signal change
+        summarise(mdecon_interp = mean(abs(decon_change))) %>% ungroup() # version with abs signal change
     } else {
       df_sum <- df %>% group_by(id, run, evt_time, axis_bin, !!gg) %>% #, !!fb) %>%
-          summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()  
+        summarise(mdecon_interp = mean(decon_interp)) %>% ungroup()  
     }
     # }
     g <- ggplot(df_sum, aes(x=evt_time, y=mdecon_interp, lty = !!gg)) +
-        stat_summary(fun.y=mean, geom="line") + theme_gray()
+      stat_summary(fun.y=mean, geom="line") + theme_gray()
   }
   # browser()
   # if (!missing(facet_by)) {
@@ -254,10 +254,10 @@ if (plots) {
   v2 <- plot_by_summary("v1_feedback", trial_split = rewFunc, filter_expr = 'iti_prev > 4 & evt_time < 6 & rt_csv>1 & rt_csv<=2')
   v3 <- plot_by_summary("v1_feedback", trial_split = rewFunc, filter_expr = 'iti_prev > 4 & evt_time < 6 & rt_csv>2 & rt_csv<=3')
   v4 <- plot_by_summary("v1_feedback", trial_split = rewFunc, filter_expr = 'iti_prev > 4 & evt_time < 6 & rt_csv>3')
-# v1 <- v1 + geom_vline(xintercept = 0:1)
-# v2 <- v2 + geom_vline(xintercept = 1:2)
-# v3 <- v3 + geom_vline(xintercept = 2:3)
-# v4 <- v4 + geom_vline(xintercept = 3:4) 
+  # v1 <- v1 + geom_vline(xintercept = 0:1)
+  # v2 <- v2 + geom_vline(xintercept = 1:2)
+  # v3 <- v3 + geom_vline(xintercept = 2:3)
+  # v4 <- v4 + geom_vline(xintercept = 3:4) 
   v <- ggarrange(v1, v2, v3, v4, ncol = 2, nrow = 2, labels = c("V1 <1", "V1 1-2", "V1 2-3", "V1 3-4"), font.label = list(color = "red"))
   
   pdf("feedback_hipp_with_m1_v1_by_rt_rewFunc.pdf", width = 16, height = 16)
@@ -271,36 +271,36 @@ if (plots) {
   c4 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'rt_csv>3')
   
   
-#clock, online
+  #clock, online
   
   h1 <- plot_by_summary("clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv<1')
   h2 <- plot_by_summary("clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>1 & rt_csv<=2')
   h3 <- plot_by_summary("clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>2 & rt_csv<=3')
   h4 <- plot_by_summary("clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>3 & rt_csv<=4')
-# h1 <- h1 + geom_vline(xintercept = 0:1)
-# h2 <- h2 + geom_vline(xintercept = 1:2)
-# h3 <- h3 + geom_vline(xintercept = 2:3)
-# h4 <- h4 + geom_vline(xintercept = 3:4) 
+  # h1 <- h1 + geom_vline(xintercept = 0:1)
+  # h2 <- h2 + geom_vline(xintercept = 1:2)
+  # h3 <- h3 + geom_vline(xintercept = 2:3)
+  # h4 <- h4 + geom_vline(xintercept = 3:4) 
   h <- ggarrange(h1, h2, h3, h4 ,ncol = 2, nrow = 2, labels = c("HIPP <1", "HIPP 1-2", "HIPP 2-3", "HIPP 3-4"), font.label = list(color = "red"))
   
   m1 <- plot_by_summary("m1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv<1')
   m2 <- plot_by_summary("m1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>1 & rt_csv<=2')
   m3 <- plot_by_summary("m1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>2 & rt_csv<=3')
   m4 <- plot_by_summary("m1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>3')
-# m1 <- m1 + geom_vline(xintercept = 0:1)
-# m2 <- m2 + geom_vline(xintercept = 1:2)
-# m3 <- m3 + geom_vline(xintercept = 2:3)
-# m4 <- m4 + geom_vline(xintercept = 3:4) 
+  # m1 <- m1 + geom_vline(xintercept = 0:1)
+  # m2 <- m2 + geom_vline(xintercept = 1:2)
+  # m3 <- m3 + geom_vline(xintercept = 2:3)
+  # m4 <- m4 + geom_vline(xintercept = 3:4) 
   m <- ggarrange(m1, m2, m3, m4, ncol = 2, nrow = 2, labels = c("Left m1 <1", "Left m1 1-2", "Left m1 2-3", "Left m1 3-4"), font.label = list(color = "red"))
   
   v1 <- plot_by_summary("v1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv<1')
   v2 <- plot_by_summary("v1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>1 & rt_csv<=2')
   v3 <- plot_by_summary("v1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>2 & rt_csv<=3')
   v4 <- plot_by_summary("v1_clock", trial_split = rewFunc, filter_expr = 'iti_prev > 2 & online == "TRUE" & rt_csv>3')
-# v1 <- v1 + geom_vline(xintercept = 0:1)
-# v2 <- v2 + geom_vline(xintercept = 1:2)
-# v3 <- v3 + geom_vline(xintercept = 2:3)
-# v4 <- v4 + geom_vline(xintercept = 3:4) 
+  # v1 <- v1 + geom_vline(xintercept = 0:1)
+  # v2 <- v2 + geom_vline(xintercept = 1:2)
+  # v3 <- v3 + geom_vline(xintercept = 2:3)
+  # v4 <- v4 + geom_vline(xintercept = 3:4) 
   v <- ggarrange(v1, v2, v3, v4, ncol = 2, nrow = 2, labels = c("V1 <1", "V1 1-2", "V1 2-3", "V1 3-4"), font.label = list(color = "red"))
   
   pdf("clock_hipp_online_with_m1_v1_by_rt_rewFunc.pdf", width = 16, height = 16)
@@ -309,107 +309,107 @@ if (plots) {
   
   
   
-# pdf("clock_by_swing_rt_bin.pdf", width = 20, height = 8)
-# ggarrange(c1,c2,c3,c4, ncol = 4)
-# dev.off()
+  # pdf("clock_by_swing_rt_bin.pdf", width = 20, height = 8)
+  # ggarrange(c1,c2,c3,c4, ncol = 4)
+  # dev.off()
   
-# f1 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv<1')
-# f2 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>1 & rt_csv<=2')
-# f3 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>2 & rt_csv<=3')
-# f4 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>3')
-# 
-# fe1 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv<1')
-# fe2 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>1 & rt_csv<=2')
-# fe3 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>2 & rt_csv<=3')
-# fe4 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>3')
-# 
-# 
-# pdf("clock_by_swing_and_feedback_by_reward_and_entropy_by_rt_bin.pdf", width = 26, height = 21)
-# ggarrange(c1,c2,c3,c4,f1,f2,f3,f4,fe1,fe2,fe3,fe4,ncol = 4, nrow = 3, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-# dev.off()
-# 
-# # effect of past reward, filtering short iti trials
-# cl1 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>7 & reward == TRUE') 
-# cl1 <- cl1 + geom_vline(xintercept = 0:1)
-# cl2 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-# cl2 <- cl2 + geom_vline(xintercept = 1:2)
-# cl3 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-# cl3 <- cl3 + geom_vline(xintercept = 2:3)
-# cl4 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-# cl4 <- cl4 + geom_vline(xintercept = 3:4) 
-# pdf("clock_by_lagged_reward_by_rt_bin.pdf", width = 16, height = 10)
-# # ggarrange(cl1,cl2,cl3,cl4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-# plot_grid(cl1,cl2,cl3,cl4,ncol = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
-# dev.off()
-# 
-# ce1 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>7 & reward == TRUE') 
-# ce1 <- ce1 + geom_vline(xintercept = 0:1)
-# ce2 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-# ce2 <- ce2 + geom_vline(xintercept = 1:2)
-# ce3 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-# ce3 <- ce3 + geom_vline(xintercept = 2:3)
-# ce4 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
-# ce4 <- ce4 + geom_vline(xintercept = 3:4) 
-# pdf("clock_by_lagged_entropy_by_rt_bin)_rew_only.pdf", width = 16, height = 10)
-# # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-# plot_grid(ce1,ce2,ce3,ce4,ncol = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
-# dev.off()
-# 
-# cs1 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>4 & iti_prev>8 & reward == TRUE') 
-# cs1 <- cs1 + geom_vline(xintercept = 0:1)
-# cs2 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
-# cs2 <- cs2 + geom_vline(xintercept = 1:2)
-# cs3 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
-# cs3 <- cs3 + geom_vline(xintercept = 2:3)
-# cs4 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
-# cs4 <- cs4 + geom_vline(xintercept = 3:4) 
-# pdf("clock_by_rt_swing_by_rt_bin)_rew_only.pdf", width = 16, height = 10)
-# # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-# ggarrange(cs1,cs2,cs3,cs4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
-# dev.off()
-# 
-# # by contingency -- learnable, rewarded only
-# cc1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"' ) 
-# cc1 <- cc1 + geom_vline(xintercept = 0:1)
-# cc2 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
-# cc2 <- cc2 + geom_vline(xintercept = 1:2)
-# cc3 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
-# cc3 <- cc3 + geom_vline(xintercept = 2:3)
-# cc4 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
-# cc4 <- cc4 + geom_vline(xintercept = 3:4) 
-# pdf("clock_by_learnable_rewFunc_by_rt_bin_rew_only.pdf", width = 16, height = 12)
-# # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-# ggarrange(cc1,cc2,cc3,cc4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
-# dev.off()
-# 
-# # omission only
-# occ1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"' ) 
-# occ1 <- occ1 + geom_vline(xintercept = 0:1)
-# occ2 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
-# occ2 <- occ2 + geom_vline(xintercept = 1:2)
-# occ3 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
-# occ3 <- occ3 + geom_vline(xintercept = 2:3)
-# occ4 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
-# occ4 <- occ4 + geom_vline(xintercept = 3:4) 
-# pdf("clock_by_learnable_rewFunc_by_rt_bin_omission_only.pdf", width = 16, height = 12)
-# # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-# ggarrange(occ1,occ2,occ3,occ4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
-# dev.off()
-# 
-# # these effects should be stronger on late trials, check
-# # by contingency -- learnable, rewarded only; not enough long preceding ITIs, reduced to >4
-# lcc1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>5 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV" & first10 == FALSE' ) 
-# lcc1 <- lcc1 + geom_vline(xintercept = 0:1)
-# lcc2 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>5 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV" & first10 == FALSE')
-# lcc2 <- lcc2 + geom_vline(xintercept = 1:2)
-# lcc3 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>5 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV" & first10 == FALSE')
-# lcc3 <- lcc3 + geom_vline(xintercept = 2:3)
-# lcc4 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>5 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV" & first10 == FALSE')
-# lcc4 <- lcc4 + geom_vline(xintercept = 3:4) 
-# pdf("clock_by_learnable_rewFunc_by_rt_bin_rew_only_last40.pdf", width = 16, height = 12)
-# # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
-# ggarrange(lcc1,lcc2,lcc3,lcc4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
-# dev.off()
+  # f1 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv<1')
+  # f2 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>1 & rt_csv<=2')
+  # f3 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>2 & rt_csv<=3')
+  # f4 <- plot_by_summary("feedback", trial_split=reward, filter_expr = 'rt_csv>3')
+  # 
+  # fe1 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv<1')
+  # fe2 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>1 & rt_csv<=2')
+  # fe3 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>2 & rt_csv<=3')
+  # fe4 <- plot_by_summary("feedback", trial_split=entropy, filter_expr = 'rt_csv>3')
+  # 
+  # 
+  # pdf("clock_by_swing_and_feedback_by_reward_and_entropy_by_rt_bin.pdf", width = 26, height = 21)
+  # ggarrange(c1,c2,c3,c4,f1,f2,f3,f4,fe1,fe2,fe3,fe4,ncol = 4, nrow = 3, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+  # dev.off()
+  # 
+  # # effect of past reward, filtering short iti trials
+  # cl1 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>7 & reward == TRUE') 
+  # cl1 <- cl1 + geom_vline(xintercept = 0:1)
+  # cl2 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+  # cl2 <- cl2 + geom_vline(xintercept = 1:2)
+  # cl3 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+  # cl3 <- cl3 + geom_vline(xintercept = 2:3)
+  # cl4 <- plot_by_summary("clock", trial_split=reward_lag, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+  # cl4 <- cl4 + geom_vline(xintercept = 3:4) 
+  # pdf("clock_by_lagged_reward_by_rt_bin.pdf", width = 16, height = 10)
+  # # ggarrange(cl1,cl2,cl3,cl4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+  # plot_grid(cl1,cl2,cl3,cl4,ncol = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
+  # dev.off()
+  # 
+  # ce1 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>7 & reward == TRUE') 
+  # ce1 <- ce1 + geom_vline(xintercept = 0:1)
+  # ce2 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+  # ce2 <- ce2 + geom_vline(xintercept = 1:2)
+  # ce3 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+  # ce3 <- ce3 + geom_vline(xintercept = 2:3)
+  # ce4 <- plot_by_summary("clock", trial_split=entropy_lag, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>7 & reward == TRUE')
+  # ce4 <- ce4 + geom_vline(xintercept = 3:4) 
+  # pdf("clock_by_lagged_entropy_by_rt_bin)_rew_only.pdf", width = 16, height = 10)
+  # # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+  # plot_grid(ce1,ce2,ce3,ce4,ncol = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
+  # dev.off()
+  # 
+  # cs1 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>4 & iti_prev>8 & reward == TRUE') 
+  # cs1 <- cs1 + geom_vline(xintercept = 0:1)
+  # cs2 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
+  # cs2 <- cs2 + geom_vline(xintercept = 1:2)
+  # cs3 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
+  # cs3 <- cs3 + geom_vline(xintercept = 2:3)
+  # cs4 <- plot_by_summary("clock", trial_split=swing_above_median, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>4 & iti_prev>8 & reward == TRUE')
+  # cs4 <- cs4 + geom_vline(xintercept = 3:4) 
+  # pdf("clock_by_rt_swing_by_rt_bin)_rew_only.pdf", width = 16, height = 10)
+  # # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+  # ggarrange(cs1,cs2,cs3,cs4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
+  # dev.off()
+  # 
+  # # by contingency -- learnable, rewarded only
+  # cc1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"' ) 
+  # cc1 <- cc1 + geom_vline(xintercept = 0:1)
+  # cc2 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
+  # cc2 <- cc2 + geom_vline(xintercept = 1:2)
+  # cc3 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
+  # cc3 <- cc3 + geom_vline(xintercept = 2:3)
+  # cc4 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>6 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV"')
+  # cc4 <- cc4 + geom_vline(xintercept = 3:4) 
+  # pdf("clock_by_learnable_rewFunc_by_rt_bin_rew_only.pdf", width = 16, height = 12)
+  # # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+  # ggarrange(cc1,cc2,cc3,cc4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
+  # dev.off()
+  # 
+  # # omission only
+  # occ1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"' ) 
+  # occ1 <- occ1 + geom_vline(xintercept = 0:1)
+  # occ2 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
+  # occ2 <- occ2 + geom_vline(xintercept = 1:2)
+  # occ3 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
+  # occ3 <- occ3 + geom_vline(xintercept = 2:3)
+  # occ4 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
+  # occ4 <- occ4 + geom_vline(xintercept = 3:4) 
+  # pdf("clock_by_learnable_rewFunc_by_rt_bin_omission_only.pdf", width = 16, height = 12)
+  # # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+  # ggarrange(occ1,occ2,occ3,occ4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
+  # dev.off()
+  # 
+  # # these effects should be stronger on late trials, check
+  # # by contingency -- learnable, rewarded only; not enough long preceding ITIs, reduced to >4
+  # lcc1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>5 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV" & first10 == FALSE' ) 
+  # lcc1 <- lcc1 + geom_vline(xintercept = 0:1)
+  # lcc2 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>5 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV" & first10 == FALSE')
+  # lcc2 <- lcc2 + geom_vline(xintercept = 1:2)
+  # lcc3 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>2 & rt_csv<=3 & iti_ideal>3 & iti_prev>5 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV" & first10 == FALSE')
+  # lcc3 <- lcc3 + geom_vline(xintercept = 2:3)
+  # lcc4 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>5 & reward == TRUE & rewFunc !="CEVR" & rewFunc !="CEV" & first10 == FALSE')
+  # lcc4 <- lcc4 + geom_vline(xintercept = 3:4) 
+  # pdf("clock_by_learnable_rewFunc_by_rt_bin_rew_only_last40.pdf", width = 16, height = 12)
+  # # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+  # ggarrange(lcc1,lcc2,lcc3,lcc4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
+  # dev.off()
   
   # omission only
   occ1 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"' ) 
@@ -421,11 +421,11 @@ if (plots) {
   occ4 <- plot_by_summary("clock", trial_split=rewFunc, filter_expr = 'bin_center <.80 & rt_csv>3 & iti_ideal>3 & iti_prev>6 & reward == FALSE & rewFunc !="CEVR" & rewFunc !="CEV"')
   occ4 <- occ4 + geom_vline(xintercept = 3:4) 
   pdf("clock_by_learnable_rewFunc_by_rt_bin_omission_only.pdf", width = 16, height = 12)
-# ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
+  # ggarrange(ce1,ce2,ce3,ce4,ncol = 4, nrow = 1, labels = c("RT: 0-1s", "1-2s", "2-3s","3-4s"))
   ggarrange(occ1,occ2,occ3,occ4,ncol = 2,nrow = 2, align = 'hv',  labels = c("0-1s", "1-2s", "2-3s","3-4s"))
   dev.off()
   
-# do they show prescience of the reward once you control for RT and contingency?
+  # do they show prescience of the reward once you control for RT and contingency?
   devcc1 <- plot_by_summary("clock", trial_split=reward, filter_expr = 'bin_center <.80 & rt_csv<1 & iti_ideal>3 & iti_prev>6 & rewFunc =="DEV"') 
   devcc1 <- devcc1 + geom_vline(xintercept = 0:1)
   devcc2 <- plot_by_summary("clock", trial_split=reward, filter_expr = 'bin_center <.80 & rt_csv>1 & rt_csv<=2 & iti_ideal>3 & iti_prev>6  & rewFunc =="DEV"')
@@ -505,60 +505,60 @@ vif.lme <- function (fit) {
 
 
 if (analyze) {
-#   mm <- lmer(decon_interp ~ decon_prev*iti_prev + (1 | id/run), clock_comb %>% filter(evt_time == 1))
-#   summary(mm)
-#   mm2 <- lmer(decon_interp ~ decon_prev*telapsed*evt_time + (1 | id/run), clock_comb %>% filter(side=="l" & evt_time > 0))
-#   summary(mm2)
-#   m1 <- lmer(decon_interp ~ (scale(decon_prev) + scale(bin_center) + evt_time)^3 + (1 | id/run) + (1 | side), fb_comb %>% filter(evt_time>0))
-#   summary(m1)
-#   
-# # does entropy differentially modulate signal autocorrelation along the axis?
-#   cm2 <- lmer(decon_interp ~ (decon_prev_z + bin_center_z + online + entropy)^3 + (1 | id/run) + (1 | side), clock_comb %>% filter (iti_prev>4 & iti_ideal >2))
-#   summary(cm2)
-#   vif.lme(cm2)
-#   g <- ggpredict(cm2, terms = c("entropy_lag", "bin_center_z [-2,0,2]"))
-#   g <- ggpredict(cm2, terms = c("online", "bin_center_z [-2,0,2]"))
-# # g <- ggpredict(cm2, terms = c("entropy_lag", "decon_prev [.1,.5,.9]"))
-#   g <- plot(g, facet = F, dodge = .4)
-#   g + scale_color_viridis_d(option = "plasma") + theme_dark()
-#   
-#   fm2 <- lmer(decon_interp ~ (decon_prev_z + bin_center_z + online)^2 + (1 | id/run) + (1 | side), clock_comb %>% filter (iti_prev>4 & iti_ideal >3))
-#   summary(fm2)
-#   vif.lme(fm2)
-# # g <- ggpredict(fm2, terms = c("entropy", "bin_center [-2,0,2]"))
-#   g <- ggpredict(fm2, terms = c("online", "bin_center_z [-2,0,2]"))
-#   g <- plot(g, facet = F, dodge = .2)
-#   pdf("ah_vs_ph_online_lmer.pdf", width = 6, height = 6)
-#   g + scale_color_viridis_d(option = "plasma") + theme_dark()
-#   dev.off()
+  #   mm <- lmer(decon_interp ~ decon_prev*iti_prev + (1 | id/run), clock_comb %>% filter(evt_time == 1))
+  #   summary(mm)
+  #   mm2 <- lmer(decon_interp ~ decon_prev*telapsed*evt_time + (1 | id/run), clock_comb %>% filter(side=="l" & evt_time > 0))
+  #   summary(mm2)
+  #   m1 <- lmer(decon_interp ~ (scale(decon_prev) + scale(bin_center) + evt_time)^3 + (1 | id/run) + (1 | side), fb_comb %>% filter(evt_time>0))
+  #   summary(m1)
+  #   
+  # # does entropy differentially modulate signal autocorrelation along the axis?
+  #   cm2 <- lmer(decon_interp ~ (decon_prev_z + bin_center_z + online + entropy)^3 + (1 | id/run) + (1 | side), clock_comb %>% filter (iti_prev>4 & iti_ideal >2))
+  #   summary(cm2)
+  #   vif.lme(cm2)
+  #   g <- ggpredict(cm2, terms = c("entropy_lag", "bin_center_z [-2,0,2]"))
+  #   g <- ggpredict(cm2, terms = c("online", "bin_center_z [-2,0,2]"))
+  # # g <- ggpredict(cm2, terms = c("entropy_lag", "decon_prev [.1,.5,.9]"))
+  #   g <- plot(g, facet = F, dodge = .4)
+  #   g + scale_color_viridis_d(option = "plasma") + theme_dark()
+  #   
+  #   fm2 <- lmer(decon_interp ~ (decon_prev_z + bin_center_z + online)^2 + (1 | id/run) + (1 | side), clock_comb %>% filter (iti_prev>4 & iti_ideal >3))
+  #   summary(fm2)
+  #   vif.lme(fm2)
+  # # g <- ggpredict(fm2, terms = c("entropy", "bin_center [-2,0,2]"))
+  #   g <- ggpredict(fm2, terms = c("online", "bin_center_z [-2,0,2]"))
+  #   g <- plot(g, facet = F, dodge = .2)
+  #   pdf("ah_vs_ph_online_lmer.pdf", width = 6, height = 6)
+  #   g + scale_color_viridis_d(option = "plasma") + theme_dark()
+  #   dev.off()
   
   
-# test for ramps in AH in rtvmax-aligned data: quadratic term
+  # test for ramps in AH in rtvmax-aligned data: quadratic term
   
-# filter by ITI, RT, and evt_time <3
+  # filter by ITI, RT, and evt_time <3
   setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/ramps/')
-rvdf <- rtvmax_comb %>% filter(online == "TRUE" & iti_prev>1 & iti_ideal > 2 & rt_csv > 1 & rewFunc!="CEVR" & evt_time < 3)
-rvdf$bin_num <- as.factor(rvdf$bin_num)
-rvdf <- rvdf %>% mutate(`Hippocampal response` = decon_interp, entropy = case_when(
-  entropy_lag == 'high' ~ 'High entropy',
-  entropy_lag == 'low' ~ 'Low entropy'
-))
-
-# strangely we only see ramps on long-ITI trials  
-# rm* models do not converge with cobra percentchange
+  rvdf <- rtvmax_comb %>% filter(online == "TRUE" & iti_prev>1 & iti_ideal > 2 & rt_csv > 1 & rewFunc!="CEVR" & evt_time < 3)
+  rvdf$bin_num <- as.factor(rvdf$bin_num)
+  rvdf <- rvdf %>% mutate(`Hippocampal response` = decon_interp, entropy = case_when(
+    entropy_lag == 'high' ~ 'High entropy',
+    entropy_lag == 'low' ~ 'Low entropy'
+  ))
+  
+  # strangely we only see ramps on long-ITI trials  
+  # rm* models do not converge with cobra percentchange
   rm1 <- lmer(decon_interp ~ evt_time*bin_center_z + evt_time_sq*bin_center_z + entropy_lag + reward_lag + (1 | id/run), rvdf)
   summary(rm1)
   Anova(rm1, '3')
   vif.lme(rm1)
   
-# add entropy modulation
+  # add entropy modulation
   # no longer a 3-way interaction on Cobra-masked data
   rm2 <- lmer(decon_interp ~ (evt_time + bin_center_z + entropy_lag) ^2 + (evt_time_sq + bin_center_z + entropy_lag) ^2 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
   summary(rm2)
   vif.lme(rm2)
   Anova(rm2, '3')
   anova(rm1,rm2,rm2f)
-
+  
   em2 <- as_tibble(emmeans(rm2,specs = c("evt_time_sq", "bin_center_z", "entropy_lag", "evt_time"), at = list(bin_center_z = c(-2,-1, 0, 1,2), evt_time_sq = c(0,2,4), evt_time = c(-2,-1,0,1,2))))
   em2 <- em2 %>% mutate(`Hippocampal response` = emmean, `Time, squared` = as.numeric(as.character(em2$evt_time)), entropy = case_when(
     entropy_lag == 'high' ~ 'High entropy',
@@ -572,27 +572,48 @@ rvdf <- rvdf %>% mutate(`Hippocampal response` = decon_interp, entropy = case_wh
     )
   )
   pdf("ramps_in_AH_lin_quad_cobra_demean.pdf", width = 6, height = 3)
-    ggplot(em2, aes(time, `Hippocampal response`, color = as.factor(bin_center_z))) + 
+  ggplot(em2, aes(time, `Hippocampal response`, color = as.factor(bin_center_z))) + 
     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
     geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + scale_x_continuous(breaks = c(-2,-1,0,1,2)) + ylab('Hippocampal response')
   dev.off()
+  
+  #wesanderson version 
+  library(wesanderson)
+  pal = wes_palette("Zissou1", 12, type = "discrete")
+  pdf("ramps_in_AH_lin_quad_cobra_demean_anderson.pdf", width = 6, height = 3)
+  ggplot(em2, aes(time, `Hippocampal response`, group = bin_center_z, color = bin_center_z)) + 
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge(width = .5), size = .5) + geom_line(size = 1.5, position = position_dodge(width = .5)) + facet_wrap(~entropy) + theme(legend.position = "none") +
+    geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + scale_x_continuous(breaks = c(-2,-1,0,1,2)) + ylab('Hippocampal response') +
+    scale_color_gradientn(colors = pal, guide = 'none') + 
+    theme(legend.title = element_blank(),
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40'))
+  
+  dev.off()
+  
   # pdf("ramps_in_AH_cobra.pdf", width = 6, height = 3)
   # ggplot(em2, aes(evt_time_sq, `Hippocampal response`, color = as.factor(bin_center_z))) + 
   #   geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
   #   geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time, squared') + scale_x_continuous(breaks = c(0,2,4)) + ylab('Hippocampal response')
   # dev.off()
-  
-# add completely general bin -- BUT that worsens fit by 80 AIC points
+  #   
+  # # add completely general bin -- BUT that worsens fit by 80 AIC points
   rm2binf <- lmer(decon_interp ~ (evt_time + bin_num + entropy_lag) ^3 + (evt_time_sq + bin_num + entropy_lag) ^3 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
   summary(rm2binf)
   vif.lme(rm2)
   Anova(rm2binf, '3')
   
-
-# test the same with time as factor -- that results in a singular fit due to 0 variance for ID
+  
+  # test the same with time as factor -- that results in a singular fit due to 0 variance for ID
   # side RE has a variance of 0
   # THE MOST CONVINCING MODEL
   rm2f <- lmer(decon_interp ~ (evt_time_f + bin_center_z + entropy_lag) ^2 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
+  while (any(grepl("failed to converge", rm2f@optinfo$conv$lme4$messages) )) {
+    print(rm2f@optinfo$conv$lme4$conv)
+    ss <- getME(rm2f,c("theta","fixef"))
+    rm2f <- update(rm2f, start=ss)}
+  
   summary(rm2f)
   vif.lme(rm2f)
   Anova(rm2f, '3')
@@ -602,129 +623,71 @@ rvdf <- rvdf %>% mutate(`Hippocampal response` = decon_interp, entropy = case_wh
     entropy_lag == 'low' ~ 'Low entropy'
   ))
   pdf("ramps_in_AH_f_cobra.pdf", width = 6, height = 3)
-    ggplot(em2f, aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z))) + 
+  ggplot(em2f, aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z))) + 
     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
-      geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5)+ xlab('Time') + ylab('Hippocampal response')
+    geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5)+ xlab('Time') + ylab('Hippocampal response')
   dev.off()
-
   anova(rm1,rm2,rm2f, rm2binf)
   
-  
-# # make bin a factor
-#   # 3-way interaction is NS with any decon
-#   rm2ff <- lmer(decon_interp ~ (evt_time_f + bin_num + entropy_lag) ^2 + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run), rvdf)
-#   summary(rm2ff)
-#   vif.lme(rm2f)
-#   Anova(rm2ff, '3')
-#   em2ff <- as.data.frame(emmeans(rm2ff,specs = c("evt_time_f", "bin_num", "entropy_lag")))
-#   em2ff$hipp_response <- em2ff$emmean
-#   anova(rm2f,rm2ff)
-#   pdf("ramps_in_AH_ff.pdf", width = 8, height = 6)
-#   ggplot(em2ff, aes(evt_time_f, hipp_response, group = bin_num, color = bin_num)) + geom_point() + 
-#     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line() + facet_wrap(~entropy_lag) + scale_color_viridis_d() + theme_dark()
-#   dev.off()
-  
-# also plot smoothed raw data
-pdf('smoothed_ramps_cobra_percent.pdf', width = 6, height = 3)
-# ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num)) + geom_smooth(method = "loess", se = F) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy_lag)
-ggplot() + stat_smooth(data = rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z)), geom = 'line', method = "loess", se = F)  + 
-  scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy_lag) + theme(legend.position = "none") + geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + 
-  scale_x_continuous(breaks = c(-2,0,2)) + ylab('Hippocampal response')
-dev.off()
-
-# try and combine two plots
-pdf("ramps_in_AH_combined_cobra_percent.pdf", width = 6, height = 3)
-ggplot(em2f, aes(evt_time, `Hippocampal response`, group = bin_center_z, color = bin_center_z)) + geom_point() + geom_line() +
-  geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + scale_color_viridis_c() + theme_dark() + facet_wrap(~entropy) +
-  stat_smooth(data = rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, group = bin_center_z, color = bin_center_z), geom = 'line', alpha = .2, method = "loess", se = F)  + theme(legend.position = "none") + ylab('Hippocampal response')
-dev.off()
-
-
-# inspect all data that go into this analysis -- nothing too worrisome, but hard to read.  Some subjects have constricted evt_time ranges (responded mostly early).
-# also, more variability in AH than in PH
-pdf('ind_ramps_cobra_percent.pdf', width = 30, height = 30)
-ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num)) + geom_jitter() + scale_color_viridis_d() + theme_dark() + facet_wrap(id~entropy_lag)
-dev.off()
-
-    
-# check that it's specific to entropy and not last reward
-# it is, but PH is also more active after omissions and AH, after rewards
-rm3 <- lmer(decon_interp ~ (evt_time + bin_center_z + reward_lag + side) ^2 + (evt_time_sq + bin_center_z + reward_lag + side) ^2 + decon_prev_z + reward_lag + scale(rt_csv) +  (1 | id/run), rvdf)
-summary(rm3)
-  vif.lme(rm3)
-  Anova(rm3, '3')
-  g <- ggpredict(rm3, terms = c("evt_time","bin_center_z [-2,-1, 0, 1,2]", "reward_lag"))
-  g <- plot(g, facet = F, dodge = .3)
-  g + scale_color_viridis_d(option = "plasma") + theme_dark()
-  
-  anova(rm1,rm2, rm3)
-  
-# offline activity in PH vs AH
-# comparison model without time * bin
-  om0 <- lmer(decon_interp ~ evt_time_f + bin_center_z*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-# without time * reward * bin
-  om0a <- lmer(decon_interp ~ evt_time_f*bin_center_z + bin_center_z*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-  
-  om1 <- lmer(decon_interp ~ evt_time_f*bin_center_z*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-  summary(om1)
-  vif.lme(om1)
-  car::Anova(om1)
-  
-  anova(om0, om0a, om1)
-  g <- ggpredict(om1, terms = c("evt_time_f", "bin_center_z [-2,-1, 0, 1,2]", "reward"))
-  g <- plot(g, facet = F, dodge = .4)
-  pdf("offline_reward_AH_PH.pdf", width = 6, height = 6)
-  g + scale_color_viridis_d(option = "plasma") + theme_dark()
+  # wesanderson
+  pdf("ramps_in_AH_f_cobra_anderson.pdf", width = 6, height = 3)
+  ggplot(em2f, aes(evt_time, `Hippocampal response`, color = bin_center_z, group = bin_center_z)) + 
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge(width = .5), size = .5) + geom_line(size = 1.5,position = position_dodge(width = .5)) +  facet_wrap(~entropy) + theme(legend.position = "none") +
+    geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5)+ xlab('Time') + ylab('Hippocampal response') +
+    scale_color_gradientn(colors = pal, guide = 'none') + 
+    theme(legend.title = element_blank(),
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40'))
   dev.off()
   
-  om2 <- lmer(decon_interp ~ evt_time_f*bin_center_z*abs_pe_f + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-  summary(om2)
-  vif.lme(om2)
-  car::Anova(om2)
-  g <- ggpredict(om2, terms = c("evt_time_f", "bin_center_z [-2,-1, 0, 1,2]", "abs_pe_f"))
-  g <- plot(g, facet = F, dodge = .4)
-  pdf("offline_abs_pe_AH_PH.pdf", width = 6, height = 6)
-  g + scale_color_viridis_d(option = "plasma") + theme_dark()
+  
+  
+  # # make bin a factor
+  #   # 3-way interaction is NS with any decon
+  #   rm2ff <- lmer(decon_interp ~ (evt_time_f + bin_num + entropy_lag) ^2 + reward_lag + scale(rt_csv)*evt_time_f + (1 | id/run), rvdf)
+  #   summary(rm2ff)
+  #   vif.lme(rm2f)
+  #   Anova(rm2ff, '3')
+  #   em2ff <- as.data.frame(emmeans(rm2ff,specs = c("evt_time_f", "bin_num", "entropy_lag")))
+  #   em2ff$hipp_response <- em2ff$emmean
+  #   anova(rm2f,rm2ff)
+  #   pdf("ramps_in_AH_ff.pdf", width = 8, height = 6)
+  #   ggplot(em2ff, aes(evt_time_f, hipp_response, group = bin_num, color = bin_num)) + geom_point() + 
+  #     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line() + facet_wrap(~entropy_lag) + scale_color_viridis_d() + theme_dark()
+  #   dev.off()
+  
+  # also plot smoothed raw data
+  rvdf <- rvdf %>% mutate(entropy = case_when(
+    entropy_lag == 'high' ~ 'High entropy',
+    entropy_lag == 'low' ~ 'Low entropy'))
+  pdf('smoothed_ramps_cobra_percent.pdf', width = 6, height = 3)
+  # ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num)) + geom_smooth(method = "loess", se = F) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy_lag)
+  ggplot() + stat_smooth(data = rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z)), geom = 'line', method = "loess", se = F)  + 
+    scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") + geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + 
+    scale_x_continuous(breaks = c(-2,0,2)) + ylab('Hippocampal response')
   dev.off()
-  anova(om1, om2)
   
-# moderation by gamma?
+  # wesanderson
+  pdf('smoothed_ramps_cobra_percent_anderson.pdf', width = 6, height = 3)
+  # ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num)) + geom_smooth(method = "loess", se = F) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy_lag)
+  ggplot() + stat_smooth(data = rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, `Hippocampal response`, color = bin_center_z, group = bin_center_z), geom = 'line', method = "loess", se = F)  + 
+    facet_wrap(~entropy) + theme(legend.position = "none") + geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + 
+    scale_x_continuous(breaks = c(-2,0,2)) + ylab('Hippocampal response') + 
+    scale_color_gradientn(colors = pal, guide = 'none') + 
+    theme(legend.title = element_blank(),
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40'))
   
-  om3 <- lmer(decon_interp ~ evt_time_f*bin_center_z*abs_pe_f*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-  summary(om3)
-  vif.lme(om3)
-  car::Anova(om3)
-  g <- ggpredict(om3, terms = c("evt_time_f", "abs_pe_f", "reward"))
-  g <- plot(g, facet = F, dodge = .4)
-  pdf("offline_abs_pe_reward_AH_PH.pdf", width = 6, height = 6)
-  g + scale_color_viridis_d() + theme_dark()
   dev.off()
   
-# reversion in MEDUSA
-# need a measure of closeness to RTvmax: let's start with EV
-  e1 = 38
-  xtabs(~bin_center + swing_above_median, fb_comb %>% filter(is.na(decon_interp)))
   
-  pdf("lose_switch_reversal_to_vmax.pdf", height = 20, width = 20)
-#lty = swing_above_median, 
-  ggplot(fb_comb, aes(evt_time, decon_interp, color = factor(bin_center), lty = next_swing_above_median)) +
-      stat_smooth(method = 'gam',se = F) + scale_color_viridis_d("TEST") + facet_grid
-  dev.off()
-# Do shorter ITIs disrupt processing?  No, they just seem to fall asleep during ITIs
-  itim1 <- lmer(scale(rt_csv) ~ scale(rt_lag)*scale(rt_vmax)*scale(iti_prev) + (1 | id/run), trial_df )
-  summary(itim1)
-  
-  ################
-# responses as a function of trial and explore/exploit
-  
-# preliminary plots: trial
-# trial by condition
-  pdf("trial_fb_hipp_AH_PH_gam_rew.pdf", width = 11, height = 8)
-  ggplot(fb_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", se = F) + facet_wrap(~rewFunc) + scale_color_viridis_d() + theme_dark()
-  dev.off()
-# ...and reward
-  pdf("trial_fb_hipp_AH_PH_loess_rew.pdf", width = 11, height = 8)
-  ggplot(fb_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "loess", se = F) + facet_wrap(~rewFunc) + scale_color_viridis_d() + theme_dark()
+  # try and combine two plots
+  pdf("ramps_in_AH_combined_cobra_percent.pdf", width = 6, height = 3)
+  ggplot(em2f, aes(evt_time, `Hippocampal response`, group = bin_center_z, color = bin_center_z)) + geom_point() + geom_line() +
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + scale_color_viridis_c() + theme_dark() + facet_wrap(~entropy) +
+    stat_smooth(data = rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, group = bin_center_z, color = bin_center_z), geom = 'line', alpha = .2, method = "loess", se = F)  + theme(legend.position = "none") + ylab('Hippocampal response')
   dev.off()
   
   # RTvmax-aligned
@@ -736,65 +699,210 @@ summary(rm3)
 # wave form by trial
   pdf("fb_hipp_AP_trial.pdf", width = 11, height = 8)
   ggplot(fb_comb, aes(evt_time, decon_interp, color = axis_bin)) + geom_smooth(method = "gam", formula = 'y~ns(x,3)',  se = F) + facet_grid(first10 ~ rewFunc) + scale_color_viridis_d() + theme_dark()
+  # inspect all data that go into this analysis -- nothing too worrisome, but hard to read.  Some subjects have constricted evt_time ranges (responded mostly early).
+  # also, more variability in AH than in PH
+  pdf('ind_ramps_cobra_percent.pdf', width = 30, height = 30)
+  ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num)) + geom_jitter() + scale_color_viridis_d() + theme_dark() + facet_wrap(id~entropy_lag)
   dev.off()
   
-# wave form as a function of next swing?
-  fb_comb <- fb_comb %>% group_by(id,run) %>% mutate(swing_above_median_lead = lead(swing_above_median)) %>% ungroup()
   
-  pdf("fb_hipp_AP_next_swing_loess_rewFunc.pdf", width = 11, height = 8)
-  ggplot(fb_comb[!is.na(fb_comb$swing_above_median_lead) & fb_comb$evt_time < 8,], aes(evt_time, decon_interp, color = axis_bin, lty = swing_above_median_lead)) + geom_smooth(method = "loess", se = F) + facet_grid(rewFunc~reward)+ scale_color_viridis_d() + theme_dark()
+  # check that it's specific to entropy and not last reward
+  # it is, but PH is also more active after omissions and AH, after rewards
+  rm3 <- lmer(decon_interp ~ (evt_time + bin_center_z + reward_lag + side) ^2 + (evt_time_sq + bin_center_z + reward_lag + side) ^2 + decon_prev_z + reward_lag + scale(rt_csv) +  (1 | id/run), rvdf)
+  summary(rm3)
+  vif.lme(rm3)
+  Anova(rm3, '3')
+  g <- ggpredict(rm3, terms = c("evt_time","bin_center_z [-2,-1, 0, 1,2]", "reward_lag"))
+  g <- plot(g, facet = F, dodge = .3)
+  g + scale_color_viridis_d(option = "plasma") + theme_dark()
+  
+  anova(rm1,rm2, rm3)
+  
+  ########
+  # offline activity in PH vs AH
+  # commented out historic exploratory analyses
+  
+  # # comparison model without time * bin
+  #   om0 <- lmer(decon_interp ~ evt_time_f + bin_center_z*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  # # without time * reward * bin
+  #   om0a <- lmer(decon_interp ~ evt_time_f*bin_center_z + bin_center_z*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  #   
+  #   om1 <- lmer(decon_interp ~ evt_time_f*bin_center_z*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  #   summary(om1)
+  #   vif.lme(om1)
+  #   car::Anova(om1)
+  #   
+  #   anova(om0, om0a, om1)
+  #   g <- ggpredict(om1, terms = c("evt_time_f", "bin_center_z [-2,-1, 0, 1,2]", "reward"))
+  #   g <- plot(g, facet = F, dodge = .4)
+  #   pdf("offline_reward_AH_PH.pdf", width = 6, height = 6)
+  #   g + scale_color_viridis_d(option = "plasma") + theme_dark()
+  #   dev.off()
+  #   
+  #   om2 <- lmer(decon_interp ~ evt_time_f*bin_center_z*abs_pe_f + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  #   summary(om2)
+  #   vif.lme(om2)
+  #   car::Anova(om2)
+  #   g <- ggpredict(om2, terms = c("evt_time_f", "bin_center_z [-2,-1, 0, 1,2]", "abs_pe_f"))
+  #   g <- plot(g, facet = F, dodge = .4)
+  #   pdf("offline_abs_pe_AH_PH.pdf", width = 6, height = 6)
+  #   g + scale_color_viridis_d(option = "plasma") + theme_dark()
+  #   dev.off()
+  #   anova(om1, om2)
+  #   
+  # # moderation by gamma?
+  #   
+  #   om3 <- lmer(decon_interp ~ evt_time_f*bin_center_z*abs_pe_f*reward + decon_prev_z + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  #   summary(om3)
+  #   vif.lme(om3)
+  #   car::Anova(om3)
+  #   g <- ggpredict(om3, terms = c("evt_time_f", "abs_pe_f", "reward"))
+  #   g <- plot(g, facet = F, dodge = .4)
+  #   pdf("offline_abs_pe_reward_AH_PH.pdf", width = 6, height = 6)
+  #   g + scale_color_viridis_d() + theme_dark()
+  #   dev.off()
+  #   
+  # # reversion in MEDUSA
+  # # need a measure of closeness to RTvmax: let's start with EV
+  #   e1 = 38
+  #   xtabs(~bin_center + swing_above_median, fb_comb %>% filter(is.na(decon_interp)))
+  #   
+  #   pdf("lose_switch_reversal_to_vmax.pdf", height = 20, width = 20)
+  # #lty = swing_above_median, 
+  #   ggplot(fb_comb, aes(evt_time, decon_interp, color = factor(bin_center), lty = next_swing_above_median)) +
+  #       stat_smooth(method = 'gam',se = F) + scale_color_viridis_d("TEST") + facet_grid
+  #   dev.off()
+  # # Do shorter ITIs disrupt processing?  No, they just seem to fall asleep during ITIs
+  #   itim1 <- lmer(scale(rt_csv) ~ scale(rt_lag)*scale(rt_vmax)*scale(iti_prev) + (1 | id/run), trial_df )
+  #   summary(itim1)
+  #   
+  #   ################
+  # # responses as a function of trial and explore/exploit
+  #   
+  # # preliminary plots: trial
+  # # trial by condition
+  #   pdf("trial_fb_hipp_AH_PH_gam_rew.pdf", width = 11, height = 8)
+  #   ggplot(fb_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", se = F) + facet_wrap(~rewFunc) + scale_color_viridis_d() + theme_dark()
+  #   dev.off()
+  # # ...and reward
+  #   pdf("trial_fb_hipp_AH_PH_loess_rew.pdf", width = 11, height = 8)
+  #   ggplot(fb_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "loess", se = F) + facet_wrap(~rewFunc) + scale_color_viridis_d() + theme_dark()
+  #   dev.off()
+  #   
+  #   
+  # # wave form by trial
+  #   pdf("fb_hipp_AP_trial_rew.pdf", width = 11, height = 8)
+  #   ggplot(fb_comb, aes(evt_time, decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", se = F) + facet_grid(first10 ~ rewFunc) + scale_color_viridis_d() + theme_dark()
+  #   dev.off()
+  #   
+  # # wave form as a function of next swing?
+  #   fb_comb <- fb_comb %>% group_by(id,run) %>% mutate(swing_above_median_lead = lead(swing_above_median)) %>% ungroup()
+  #   
+  #   pdf("fb_hipp_AP_next_swing_loess_rewFunc.pdf", width = 11, height = 8)
+  #   ggplot(fb_comb[!is.na(fb_comb$swing_above_median_lead) & fb_comb$evt_time < 8,], aes(evt_time, decon_interp, color = axis_bin, lty = swing_above_median_lead)) + geom_smooth(method = "loess", se = F) + facet_grid(rewFunc~reward)+ scale_color_viridis_d() + theme_dark()
+  #   dev.off()
+  #   fb_comb$trial_neg_inv <- -1/fb_comb$run_trial
+  #   
+  #   # final plot without swing:
+  #   pdf("fb_hipp_AP_next_swing_loess_rewFunc.pdf", width = 11, height = 8)
+  #   ggplot(fb_comb[!is.na(fb_comb$swing_above_median_lead) & fb_comb$evt_time < 8,], aes(evt_time, decon_interp, color = axis_bin, lty = swing_above_median_lead)) + geom_smooth(method = "loess", se = F) + facet_grid(rewFunc~reward)+ scale_color_viridis_d() + theme_dark()
+  #   dev.off()
+  #   fb_comb$trial_neg_inv <- -1/fb_comb$run_trial
+  #   
+  #   
+  #   ee1 <- lmer(decon_interp ~ bin_center_z*trial_neg_inv + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  #   summary(ee1)
+  #   vif.lme(ee1)
+  #   car::Anova(ee1)
+  #   g <- ggpredict(ee1, terms = c(""))
+  #   g <- plot(g, facet = F, dodge = .4)
+  #   pdf("offline_abs_pe_reward_AH_PH.pdf", width = 6, height = 6)
+  #   g + scale_color_viridis_d() + theme_dark()
+  #   dev.off()
+  #   
+  #   ee2 <- lmer(decon_interp ~ bin_center_z*trial_neg_inv*rewFunc + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  #   summary(ee2)
+  #   car::Anova(ee2)
+  #   anova(ee1,ee2)
+  #   library(emmeans)
+  #   em2 <- emmeans(ee2, "bin_center_z", by = c( "rewFunc","trial_neg_inv"), at = list( bin_center_z = c(-2,2), trial_neg_inv = c(-1, -.1,-.05, -.02)))
+  #   plot(em2, horiz = F)
+  #   df2 <- as.data.frame(em2)
+  #   
+  #   ee3 <- lmer(decon_interp ~ bin_center_z*evt_time*swing_above_median_lead + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  #   summary(ee3)
+  #   car::Anova(ee3)
+  #   
+  # # + completely general time
+  #   ee4 <- lmer(decon_interp ~ bin_center_z*evt_time_f*swing_above_median_lead + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  #   summary(ee4)
+  #   car::Anova(ee4, '3')
+  #   em4 <- as.data.frame(emmeans(ee4, "bin_center_z", by = c( "evt_time_f","swing_above_median_lead"), at = list( bin_center_z = c(-2,2))))
+  #   ggplot(em4, aes(evt_time_f, emmean, color = bin_center_z, lty = swing_above_median_lead)) + geom_point() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL))
+  #   
+  # # + reward
+  #   ee5 <- lmer(decon_interp ~ bin_center_z*evt_time_f*swing_above_median_lead*reward + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  #   summary(ee5)
+  #   car::Anova(ee5, '3')
+  #   vif.lme(ee5)
+  #   anova(ee1,ee2,ee3,ee4,ee5)
+  
+  #### final descriptive model -- remove swing
+  ee6 <- lmer(decon_interp ~ bin_center_z*evt_time_f*reward + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  summary(ee6)
+  car::Anova(ee6, '3')
+  vif.lme(ee6)
+  em6 <- as.data.frame(emmeans(ee6, "bin_center_z", by = c( "evt_time_f", "reward"), at = list( bin_center_z = c(-2,-1, 0, 1, 2)))) %>% 
+    mutate(reward_text = case_when(
+      reward == 'reward' ~ 'Reward',
+      reward == 'omission' ~ 'Omission'
+    ))
+  ggplot(em6, aes(evt_time_f, emmean, color = bin_center_z)) + 
+    geom_point() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + facet_wrap(.~reward) + scale_color_viridis() + theme_dark()
+  
+  
+  # anderson version
+  setwd('../early_late')
+  pdf('medusa_feedback_ph_ah_reward_anderson.pdf', height = 3.5, width = 6.5)
+  ggplot(em6, aes(as.numeric(evt_time_f), emmean, color = bin_center_z, group = bin_center_z)) + 
+    geom_point(position = position_dodge2(width = 1)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge2(width = .2)) + geom_line(position = position_dodge2(width = 1)) + facet_wrap(.~reward_text) +
+    scale_color_gradientn(colors = pal, guide = 'none') + xlab("Time after feedback, seconds") + ylab("Hippocampal response") +
+    theme(legend.title = element_blank(),
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40'))
+  
   dev.off()
-  fb_comb$trial_neg_inv <- -1/fb_comb$run_trial
   
-  ee1 <- lmer(decon_interp ~ bin_center_z*trial_neg_inv + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-  summary(ee1)
-  vif.lme(ee1)
-  car::Anova(ee1)
-  g <- ggpredict(ee1, terms = c(""))
-  g <- plot(g, facet = F, dodge = .4)
-  pdf("offline_abs_pe_reward_AH_PH.pdf", width = 6, height = 6)
-  g + scale_color_viridis_d() + theme_dark()
+  # smoothed raw data
+  fb_comb <- fb_comb %>%  mutate(reward_text = case_when(
+      reward == 'reward' ~ 'Reward',
+      reward == 'omission' ~ 'Omission'
+    ))
+  
+  pdf('medusa_feedback_ph_ah_reward_anderson_raw_smoothed.pdf', height = 6, width = 6.5)
+  ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(as.numeric(evt_time_f), decon_interp, group = bin_center_z, color = bin_center_z)) + geom_smooth(method = 'loess',  se = F) +   
+    scale_color_gradientn(colors = pal, guide = 'none') + xlab("Time after feedback, seconds") + ylab("Hippocampal response") +
+    theme(legend.title = element_blank(),
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40')) + facet_wrap(side~reward_text)
+  
   dev.off()
   
-  ee2 <- lmer(decon_interp ~ bin_center_z*trial_neg_inv*rewFunc + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-  summary(ee2)
-  car::Anova(ee2)
-  anova(ee1,ee2)
-  library(emmeans)
-  em2 <- emmeans(ee2, "bin_center_z", by = c( "rewFunc","trial_neg_inv"), at = list( bin_center_z = c(-2,2), trial_neg_inv = c(-1, -.1,-.05, -.02)))
-  plot(em2, horiz = F)
-  df2 <- as.data.frame(em2)
   
-  ee3 <- lmer(decon_interp ~ bin_center_z*evt_time*swing_above_median_lead + scale(rt_csv)*evt_time + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-  summary(ee3)
-  car::Anova(ee3)
-  
-# + completely general time
-  ee4 <- lmer(decon_interp ~ bin_center_z*evt_time_f*swing_above_median_lead + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-  summary(ee4)
-  car::Anova(ee4, '3')
-  em4 <- as.data.frame(emmeans(ee4, "bin_center_z", by = c( "evt_time_f","swing_above_median_lead"), at = list( bin_center_z = c(-2,2))))
-  ggplot(em4, aes(evt_time_f, emmean, color = bin_center_z, lty = swing_above_median_lead)) + geom_point() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL))
-  
-# + reward
-  ee5 <- lmer(decon_interp ~ bin_center_z*evt_time_f*swing_above_median_lead*reward + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-  summary(ee5)
-  car::Anova(ee5, '3')
-  vif.lme(ee5)
-  anova(ee1,ee2,ee3,ee4,ee5)
-
   #models: each one has 1 3-way interaction e.g., bin_num_f*evt_time_f*scale(rt_csv)
   # 2 3-way interactions: 
-    
+  
   # replicate lm decoding analyses
   # scale(-1/run_trial)*rewFunc + reward + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi
   fb_comb$bin_num_f <- as.factor(fb_comb$bin_num)
   
   # just because we can
   dm1 <- lmer(decon_interp ~ 
-          bin_num_f*evt_time_f*scale(rt_csv) + 
-          bin_num_f*evt_time_f*scale(rt_vmax_lag) +
-          (1 | id/run) + (1 | side), fb_comb %>% filter (evt_time < 5))
+                bin_num_f*evt_time_f*scale(rt_csv) + 
+                bin_num_f*evt_time_f*scale(rt_vmax_lag) +
+                (1 | id/run) + (1 | side), fb_comb %>% filter (evt_time < 5))
   summary(dm1)
   car::Anova(dm1, '3')
   vif(dm1)
@@ -804,10 +912,10 @@ summary(rm3)
   ggplot(r1, aes(evt_time_f, bin_num_f, fill = rt_vmax_lag.trend)) + 
     geom_tile() + scale_fill_viridis_c(option = "plasma")
   
-# reduce this monstrosity to just one effect of interest
+  # reduce this monstrosity to just one effect of interest
   dm2 <- lmer(decon_interp ~ 
-          bin_num_f*evt_time_f*scale(rt_vmax_lag) +
-          (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+                bin_num_f*evt_time_f*scale(rt_vmax_lag) +
+                (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
   summary(dm2)
   car::Anova(dm2, '3')
   r2 <- emtrends(dm2, var = 'rt_vmax_lag', specs = c('bin_num_f','evt_time_f'), data = fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
@@ -815,46 +923,46 @@ summary(rm3)
   ggplot(r2, aes(evt_time_f, bin_num_f, color = rt_vmax_lag.trend)) + geom_tile()
   
   dm3 <- lmer(decon_interp ~ 
-          bin_num_f*evt_time_f*scale(v_entropy_wi_change) +
-          (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+                bin_num_f*evt_time_f*scale(v_entropy_wi_change) +
+                (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
   summary(dm3)
   car::Anova(dm3, '3')
   r3 <- emtrends(dm3, var = 'rt_vmax_lag', specs = c('bin_num_f','evt_time_f'), data = fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
   r3 <- as.data.frame(r3)
   ggplot(r2, aes(evt_time_f, bin_num_f, color = rt_vmax_lag.trend)) + geom_tile()
   
-# not even reward??
-dm4 <- lmer(decon_interp ~ 
-              bin_num_f*evt_time_f*reward + side +
-              (1 | id/run) , fb_comb %>% filter (evt_time < 8))
-summary(dm4)
-car::Anova(dm4, '3')
-em <- emmeans(dm4, )
-
-r4 <- as.data.frame(emmeans(dm4, specs = c('bin_num_f','evt_time_f', 'reward')))
-ggplot(r4, aes(evt_time_f, bin_num_f,  fill = emmean)) + geom_tile() + facet_wrap(~reward)
-
-
-
- # # collinearity checks: it's all fine, only non-essential collinearity
-# fb_comb$evt_time_f_sum <- fb_comb$evt_time_f
-# contrasts(fb_comb$evt_time_f_sum) <- contr.sum(12)
-# fb_comb$swing_above_median_lead_sum <- fb_comb$swing_above_median_lead
-# contrasts(fb_comb$swing_above_median_lead_sum) <- contr.sum(2)
-# fb_comb$reward_sum <- fb_comb$reward
-# contrasts(fb_comb$reward_sum) <- contr.sum(2)
-# ee5sum <- lmer(decon_interp ~ bin_center_z*evt_time_f_sum*swing_above_median_lead_sum*reward_sum + scale(rt_csv)*evt_time_f_sum + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-# summary(ee5sum)
-# vif.lme(ee5sum)
+  # not even reward??
+  dm4 <- lmer(decon_interp ~ 
+                bin_num_f*evt_time_f*reward + side +
+                (1 | id/run) , fb_comb %>% filter (evt_time < 8))
+  summary(dm4)
+  car::Anova(dm4, '3')
+  em <- emmeans(dm4, )
+  
+  r4 <- as.data.frame(emmeans(dm4, specs = c('bin_num_f','evt_time_f', 'reward')))
+  ggplot(r4, aes(evt_time_f, bin_num_f,  fill = emmean)) + geom_tile() + facet_wrap(~reward)
+  
+  
+  
+  # # collinearity checks: it's all fine, only non-essential collinearity
+  # fb_comb$evt_time_f_sum <- fb_comb$evt_time_f
+  # contrasts(fb_comb$evt_time_f_sum) <- contr.sum(12)
+  # fb_comb$swing_above_median_lead_sum <- fb_comb$swing_above_median_lead
+  # contrasts(fb_comb$swing_above_median_lead_sum) <- contr.sum(2)
+  # fb_comb$reward_sum <- fb_comb$reward
+  # contrasts(fb_comb$reward_sum) <- contr.sum(2)
+  # ee5sum <- lmer(decon_interp ~ bin_center_z*evt_time_f_sum*swing_above_median_lead_sum*reward_sum + scale(rt_csv)*evt_time_f_sum + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  # summary(ee5sum)
+  # vif.lme(ee5sum)
   
   em5 <- as.data.frame(emmeans(ee5, "bin_center_z", by = c( "evt_time_f","swing_above_median_lead", "reward"), at = list( bin_center_z = c(-2,2))))
   ggplot(em5, aes(evt_time_f, emmean, color = bin_center_z, lty = swing_above_median_lead)) + 
-      geom_point() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + facet_wrap(.~reward) + scale_color_viridis() + theme_dark()
+    geom_point() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + facet_wrap(.~reward) + scale_color_viridis() + theme_dark()
   
-# + trial?
-  ee6 <- lmer(decon_interp ~ bin_center_z*evt_time_f*swing_above_median_lead*reward*run_trial + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
-  summary(ee6)
-  car::Anova(ee6, '3')
+  # + trial?
+  ee7 <- lmer(decon_interp ~ bin_center_z*evt_time_f*swing_above_median_lead*reward*run_trial + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  summary(ee7)
+  car::Anova(ee7, '3')
   
   
   ggplot(df2, aes(-1/trial_neg_inv, emmean, color = bin_center_z)) + geom_point() + geom_linerange(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + facet_wrap(~rewFunc) + xlab("Trial")
