@@ -20,6 +20,7 @@ reprocess = T
 analyze = T
 unsmoothed = F
 newmask = F
+smooth_in_mask = T
 
 repo_directory <- "~/code/clock_analysis"
 # repo_directory <- "~/Data_Analysis/clock_analysis"
@@ -726,10 +727,15 @@ summary(rm3)
   ggplot(fb_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "loess", se = F) + facet_wrap(~rewFunc) + scale_color_viridis_d() + theme_dark()
   dev.off()
   
+  # RTvmax-aligned
+  pdf("trial_rtvmax_hipp_AH_PH_gam.pdf", width = 11, height = 8)
+  # ggplot(rtvmax_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", formula = y ~ splines::ns(x,3),  se = F) + scale_color_viridis_d() + theme_dark()
+  ggplot(rtvmax_comb,aes(run_trial,decon_interp, color = axis_bin)) + geom_smooth(method = "loess",  se = F) + scale_color_viridis_d() + theme_dark()
+  dev.off()
   
 # wave form by trial
-  pdf("fb_hipp_AP_trial_rew.pdf", width = 11, height = 8)
-  ggplot(fb_comb, aes(evt_time, decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", se = F) + facet_grid(first10 ~ rewFunc) + scale_color_viridis_d() + theme_dark()
+  pdf("fb_hipp_AP_trial.pdf", width = 11, height = 8)
+  ggplot(fb_comb, aes(evt_time, decon_interp, color = axis_bin)) + geom_smooth(method = "gam", formula = 'y~ns(x,3)',  se = F) + facet_grid(first10 ~ rewFunc) + scale_color_viridis_d() + theme_dark()
   dev.off()
   
 # wave form as a function of next swing?

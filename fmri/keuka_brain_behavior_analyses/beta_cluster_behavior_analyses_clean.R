@@ -64,7 +64,7 @@ mb3hpe_hipp <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc 
                      (1|id/run), df)
 summary(mb3hpe_hipp)
 screen.lmerTest(mb3hpe_hipp, .05)
-Anova(mmb3hpe_hipp, '3')
+Anova(mb3hpe_hipp, '3')
 
 ########
 # out-of-session replication with MEG behavioral data
@@ -135,6 +135,58 @@ dev.off()
 # Model-free RT analyses -- behavioral variables
 mf1 <- lmer(rt_csv ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome )^2  + (1|id/run), df)
 summary(mf1)
+
+
+# ruling out the exploitation account of the PH-guided shifts
+
+# v_chosen change -- the swings in high-PH subjects are toward lower-valued options
+mv1 <- lmer(v_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + h_HippAntL_neg + rewFunc)^3 +
+               (trial_neg_inv_sc + rt_lag_sc + pe_f2_hipp + rewFunc)^3 + v_chosen_quantile_lag + (1|id/run), df)
+screen.lmerTest(mv1, .05)
+em <- as_tibble(emmeans(mv1, ~rt_lag_sc|pe_f2_hipp, at = list(rt_lag_sc = c(-2,0,2), pe_f2_hipp = c(-2,0,2))))
+em$`Chosen value quantile change` <- em$emmean
+ggplot(em, aes(rt_lag_sc, `Chosen value quantile change`, color = pe_f2_hipp, group = pe_f2_hipp)) + geom_point()
+# add reward -- this model is better by a huge margin
+df_tmp <- df %>% filter(rewFunc=='IEV' | rewFunc=='DEV') %>% droplevels()
+mv2 <- lmer(v_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + h_HippAntL_neg + rewFunc + last_outcome)^3 +
+              (trial_neg_inv_sc + rt_lag_sc + pe_f2_hipp + rewFunc + last_outcome)^3 + v_chosen_quantile_lag + (1|id/run), df)
+screen.lmerTest(mv2, .05)
+Anova(mv2, '3')
+# anova(mv1,mv2)
+em <- as_tibble(emmeans(mv2, ~rt_lag_sc|pe_f2_hipp*rewFunc, at = list(rt_lag_sc = c(-2,0,2), pe_f2_hipp = c(-2,0,2))))
+em$`Chosen value quantile change` <- em$emmean
+ggplot(em, aes(rt_lag_sc, `Chosen value quantile change`, color = pe_f2_hipp, group = pe_f2_hipp)) + geom_point() + facet_wrap(~rewFunc)
+mrt2 <- lmer(rt_csv ~ (trial_neg_inv_sc + rt_lag_sc + h_HippAntL_neg + rewFunc + last_outcome)^3 +
+              (trial_neg_inv_sc + rt_lag_sc + pe_f2_hipp + rewFunc + last_outcome)^3 + v_chosen_quantile_lag + (1|id/run), df)
+screen.lmerTest(mrt2, .05)
+em <- as_tibble(emtrends(mrt2, var = "rt_lag_sc", specs = c("rewFunc", "pe_f2_hipp"), at = list( pe_f2_hipp = c(-2,0,2))))
+ggplot(em, aes(pe_f2_hipp, rt_lag_sc.trend, color = rewFunc)) + geom_point()
+
+ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty =  pe_f2_hipp_resp)) + geom_smooth()
+# monotonicity of reward function -- no rew*rewFunc*hipp
+mf2 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome +
+                               h_HippAntL_neg + pe_f2_hipp)^2 +
+                  rt_lag_sc:last_outcome:h_HippAntL_neg +
+                  rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc +
+                  rewFunc:last_outcome:h_HippAntL_neg + rewFunc:last_outcome:pe_f2_hipp + (1|id/run), df)
+screen.lmerTest(mf2)
+# v_chosen
+mf2a <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome +
+                            h_HippAntL_neg + pe_f2_hipp)^2 +
+               rt_lag_sc:last_outcome:h_HippAntL_neg +
+               rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc +
+               rewFunc:last_outcome:h_HippAntL_neg + rewFunc:last_outcome:pe_f2_hipp + (1|id/run), df)
+screen.lmerTest(mf2)
+
+
+##
+## MEG data for out-of-session replication
+mmf3hpe <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
+                               h_HippAntL_neg + pe_f2_hipp)^2 + 
+                  rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                  rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc + (1|id/run), mdf)
+screen.lmerTest(mmf3hpe)
+
 
 ##################
 # best hippocampal model
@@ -243,6 +295,27 @@ mmb3hpe_hipp_r <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_
 screen.lmerTest(mmb3hpe_hipp_r, .05)
 summary(mmb3hpe_hipp_r)
 Anova(mmb3hpe_hipp_r, '3')
+
+# bump refinement vs. more global search -- add rt_lag*rt_vmax interactions
+mb4hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH)^2 + 
+                          rt_lag_sc:last_outcome:rt_vmax_lag_sc:h_HippAntL_neg + 
+                          rt_lag_sc:last_outcome:rt_vmax_lag_sc:pe_PH +
+                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
+                          (1|id/run), df)
+# summary(mb3hpe_hipp)
+screen.lmerTest(mb4hpe_hipp_rl, .05)
+# Anova(mmb3hpe_hipp, '3')
+
+mmb4hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH)^2 + 
+                          rt_lag_sc:last_outcome:rt_vmax_lag_sc:h_HippAntL_neg + 
+                          rt_lag_sc:last_outcome:rt_vmax_lag_sc:pe_PH +
+                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
+                          (1|id/run), mdf)
+screen.lmerTest(mmb4hpe_hipp_rl, .05)
 
 
 # visual sanity checks

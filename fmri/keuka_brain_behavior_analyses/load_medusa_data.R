@@ -2,13 +2,14 @@
 
 if (unsmoothed) {
   medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_unsmoothed"
-} else {
-  medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked"}
-
-if (unsmoothed) {
   cache_dir="~/Box/SCEPTIC_fMRI/var/unsmoothed"
-} else {
+} else if (smooth_in_mask) {
+  medusa_dir = "~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_smooth_in_mask_harvardoxford/"
+  cache_dir = "~/Box/SCEPTIC_fMRI/var/smooth_in_mask"
+  } else {
+  medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked"
   cache_dir="~/Box/SCEPTIC_fMRI/var"}
+
 if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
 
 if (newmask) {
@@ -140,7 +141,7 @@ if (!reprocess) {
   levels(trial_df$rewFunc) <- c("DEV", "IEV", "CEV", "CEVR")
   
 
-  u_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_ureset_mfx_trial_statistics.csv.gz")
+  u_df <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_fmri_fixed_uv_ureset_mfx_trial_statistics.csv.gz")
   u_df <- u_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change)
   
   trial_df <- inner_join(trial_df,u_df)
