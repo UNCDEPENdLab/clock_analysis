@@ -363,6 +363,7 @@ if (!reprocess) {
   clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
   
   save(clock_wide, clock_wide_ex, file = file.path(cache_dir, "clock_hipp_wide_ts.Rdata"))
+  save(clock_comb, file = file.path(cache_dir, "clock_hipp_tall_ts.Rdata"))
   
   save(trial_df, file=file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))
 }

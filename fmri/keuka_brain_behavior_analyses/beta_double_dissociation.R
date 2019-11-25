@@ -22,6 +22,13 @@ pe <- pe %>% filter(l2_contrast=="overall") %>% mutate(beta = scale(beta, center
 
 df <- rbind(h, pe)
 
+setwd("~/Box/SCEPTIC_fMRI/hippo_voxel_betas/sceptic-clock-feedback-pe_trial_fixed-preconvolve_fse_groupfixed/pe_trial_fixed/")
+pe_fixed <- read_csv("pe_trial_fixed_atlas_betas.csv.gz")
+pe_fixed <- pe_fixed %>% filter(l2_contrast=="overall") %>% mutate(beta = as.vector(scale(beta, center = F))) %>% rename(ID = id)
+
+adf <- rbind(df, pe_fixed)
+pedf <- rbind(pe, pe_fixed)
+
 # there is a heteroscedasticity with greater variance anteriorly
 setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/h_pe_betas')
 pdf('h_pe_betas_scatter.pdf', height = 6, width = 7)
@@ -40,6 +47,9 @@ pdf('h_pe_betas_smooth.pdf', height = 6, width = 7)
 ggplot(df, aes(atlas_value,beta, color = l1_contrast)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,8))
 dev.off()
 
+pdf('h_pe_petrialfixed_betas_smooth.pdf', height = 6, width = 7)
+ggplot(adf, aes(atlas_value,beta, color = l1_contrast)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,8))
+dev.off()
 #########
 # maps - I think we need z stats to weigh the betas or z stats instead of betas
 h1 <- h %>% mutate(low_h_beta = -winsor(beta, trim = .01))
@@ -70,6 +80,8 @@ Anova(m1, '3')
 # completely general location
 # 12 bins
 df$axis_bin <- cut(df$atlas_value, breaks = 12, labels = 1:12)
+pedf$axis_bin <- cut(pedf$atlas_value, breaks = 12, labels = 1:12)
+
 m2 <- lmer(beta ~ axis_bin * l1_contrast + (1|numid), df)
 summary(m2)
 Anova(m2, '3')
@@ -94,10 +106,31 @@ ggplot(em, aes(axis_bin, beta, lty = l1_contrast, color = as.numeric(axis_bin), 
 dev.off()
 # 100 bins
 df$location <- as.factor(round(df$atlas_value, digits = 2))
+pedf$location <- as.factor(round(pedf$atlas_value, digits = 2))
+
 m3 <- lmer(beta ~ location * l1_contrast + (1|numid), df)
 summary(m3)
 Anova(m3)
 em <- as_tibble(emmeans(m3, ~ location | l1_contrast))
+em$beta <- em$emmean
+ggplot(em, aes(location, beta, color = l1_contrast)) + geom_point() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL))
+
+# comparisons between SCEPTIC and Q-learning PEs
+m4 <- lmer(beta ~ atlas_value * l1_contrast + (1|numid), pedf)
+summary(m4)
+Anova(m4, '3')
+
+# completely general location
+# 12 bins
+m5 <- lmer(beta ~ axis_bin * l1_contrast + (1|numid), pedf)
+summary(m5)
+Anova(m5, '3')
+# 100 bins
+df$location <- as.factor(round(df$atlas_value, digits = 2))
+m6 <- lmer(beta ~ location * l1_contrast + (1|numid), df)
+summary(m6)
+Anova(m6)
+ em <- as_tibble(emmeans(m3, ~ location | l1_contrast))
 em$beta <- em$emmean
 ggplot(em, aes(location, beta, color = l1_contrast)) + geom_point() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL))
 

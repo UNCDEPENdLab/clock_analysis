@@ -13,11 +13,12 @@ library(viridis)
 library(car)
 library(data.table)
 library(emmeans)
+library(wesanderson)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
-reprocess = F
-analyze = T
+reprocess = T
+analyze = F
 unsmoothed = F
 newmask = F
 smooth_in_mask = T
@@ -691,14 +692,23 @@ if (analyze) {
   dev.off()
   
   # RTvmax-aligned
+    pal = wes_palette("Zissou1", 24, type = "discrete")
   pdf("trial_rtvmax_hipp_AH_PH_gam.pdf", width = 11, height = 8)
   # ggplot(rtvmax_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", formula = y ~ splines::ns(x,3),  se = F) + scale_color_viridis_d() + theme_dark()
-  ggplot(rtvmax_comb,aes(run_trial,decon_interp, color = axis_bin)) + geom_smooth(method = "loess",  se = F) + scale_color_viridis_d() + theme_dark()
+  ggplot(rtvmax_comb,aes(run_trial,decon_interp, color = axis_bin)) + geom_smooth(method = "gam", formula = y~splines::ns(x,4)) + 
+    scale_color_gradientn(colors = pal, guide = 'none') + 
+    theme(legend.title = element_blank(),
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40'))
+  
   dev.off()
   
+ 
 # wave form by trial
   pdf("fb_hipp_AP_trial.pdf", width = 11, height = 8)
   ggplot(fb_comb, aes(evt_time, decon_interp, color = axis_bin)) + geom_smooth(method = "gam", formula = 'y~ns(x,3)',  se = F) + facet_grid(first10 ~ rewFunc) + scale_color_viridis_d() + theme_dark()
+  dev.off()
   # inspect all data that go into this analysis -- nothing too worrisome, but hard to read.  Some subjects have constricted evt_time ranges (responded mostly early).
   # also, more variability in AH than in PH
   pdf('ind_ramps_cobra_percent.pdf', width = 30, height = 30)
