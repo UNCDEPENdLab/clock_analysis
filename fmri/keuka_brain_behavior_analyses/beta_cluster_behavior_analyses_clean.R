@@ -81,32 +81,6 @@ screen.lmerTest(mmb3hpe_hipp, .05)
 summary(mmb3hpe_hipp)
 Anova(mmb3hpe_hipp, '3')
 
-
-# # NB: stargazer only works with lme4, not lmerTest
-mb3hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                               v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
-                                  rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                                  rt_lag_sc:last_outcome:pe_f2_hipp +
-                                  rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
-                                  rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
-                                  (1|id/run), df)
-mmb3hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                                v_max_wi_lag + v_entropy_wi +h_HippAntL_neg +  pe_f2_hipp)^2 + 
-                                   rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                                   rt_lag_sc:last_outcome:pe_f2_hipp +
-                                   rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
-                                   rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
-                                   (1|id/run), mdf)
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
-
-stargazer(mb3hpe_hipp_lme4, mmb3hpe_hipp_lme4, type="html", out="hippo_mb.htm", report = "vcs*",
-          digits = 1,single.row=TRUE,omit.stat = "bic",
-          column.labels = c("fMRI session", "Out-of-session replication"),
-          star.char = c("*", "**", "***"),
-          star.cutoffs = c(0.05, 0.01, 0.001),
-          notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
-          notes.append = F)
-
 ## AH replication forest plot
 mterms <- names(fixef(mb3hpe_hipp))
 setwd('../plots/')
@@ -138,16 +112,16 @@ em2 <- as_tibble(emtrends(mmb3hpe_hipp, var = "rt_lag_sc", specs = c("pe_f2_hipp
 em2$study = 'Replication'
 em1 <- rbind(em1, em2)
 p1 <- ggplot(em1, aes(last_outcome, rt_lag_sc.trend, lty = as.factor(pe_f2_hipp))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
-  theme_bw() + facet_wrap(~study) + scale_y_reverse() + ylab("RT swings (AU)\n Small <---------> Large")  + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "PH RPE\nresponse") +
-  theme(axis.title.x=element_blank()) + scale_y_continuous(limits = c(0, .6))
+  theme_bw() + facet_wrap(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "PH RPE\nresponse") +
+  theme(axis.title.x=element_blank()) + scale_y_reverse(limits = c(.6, 0)) 
 em3 <- as_tibble(emtrends(mb3hpe_hipp, var = "rt_lag_sc", specs = c("h_HippAntL_neg", "last_outcome"), at = list(h_HippAntL_neg = c(-.1, .37)), options = list()))
 em3$study = 'fMRI'
 em4 <- as_tibble(emtrends(mmb3hpe_hipp, var = "rt_lag_sc", specs = c("h_HippAntL_neg", "last_outcome"), at = list(h_HippAntL_neg = c(-.1, .37)), options = list()))
 em4$study = 'Replication'
 em2 <- rbind(em3, em4)
 p2 <- ggplot(em2, aes(last_outcome, rt_lag_sc.trend, lty = as.factor(h_HippAntL_neg))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
-  theme_bw() + facet_wrap(~study) + scale_y_reverse() +   ylab("RT swings (AU)\n Small <---------> Large") + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "AH global max\nresponse") +
-  theme(axis.title.x=element_blank()) + scale_y_continuous(limits = c(0, .6))
+  theme_bw() + facet_wrap(~study) +  ylab("RT swings (AU)\n Small <---------> Large") + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "AH global max\nresponse") +
+  theme(axis.title.x=element_blank()) + scale_y_reverse(limits = c(.6, 0)) 
 ggarrange(p1,p2)
 
 em5 <- as_tibble(emtrends(mb3hpe_hipp, var = "rt_vmax_lag_sc", specs = c("pe_f2_hipp", "trial_neg_inv_sc"), at = list(pe_f2_hipp = c(-1.12, 1.07), trial_neg_inv_sc = c(-.7, 0.44)), options = list()))
@@ -170,22 +144,6 @@ setwd("~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/")
 pdf("beta_PH_AH_behavior.pdf", height = 4.5, width = 9)
 ggarrange(p1,p2,p3,p4)
 dev.off()
-library(wesanderson)
-pal = wes_palette("Zissou1", 12, type = "continuous")
-pdf('h_pe_betas_general_location_12_bins.pdf', height = 3, width = 4.5)
-ggplot(em, aes(axis_bin, beta, lty = l1_contrast, color = as.numeric(axis_bin), shape = l1_contrast)) + geom_point(position = position_dodge(width = .5), size = 2.5) + 
-  geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge(width = .5), size = .5) + 
-  # scale_color_viridis_d(option = "plasma", guide = 'none') +
-  scale_color_gradientn(colors = pal, guide = 'none') +
-  # scale_color_brewer(type = 'seq', guide = 'none') +
-  theme(legend.title = element_blank(),
-        panel.grid.major = element_line(colour = "grey45"), 
-        panel.grid.minor = element_line(colour = "grey45"), 
-        panel.background = element_rect(fill = 'grey40'), 
-        axis.text.x = element_blank())  +
-  scale_linetype(labels = c("Prediction error", "Entropy, reversed")) +   scale_shape(labels = c("Prediction error", "Entropy, reversed")) + 
-  xlab("Post. <= Long axis position => Ant.")
-dev.off()
 
 
 # PH PE cluster suppresses the win-stay-lose-switch behaviors
@@ -207,6 +165,183 @@ dev.off()
 
 #################
 # Sensitivity analysis for the supplement
+
+#####
+# Stargazer tables with covariates
+
+# Main analysis
+# NB: stargazer only works with lme4, not lmerTest
+mb3hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                               v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                  rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                                  rt_lag_sc:last_outcome:pe_f2_hipp +
+                                  rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                                  rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
+                                  (1|id/run), df)
+mmb3hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                                v_max_wi_lag + v_entropy_wi +h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                   rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                                   rt_lag_sc:last_outcome:pe_f2_hipp +
+                                   rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                                   rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
+                                   (1|id/run), mdf)
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
+
+stargazer(mb3hpe_hipp_lme4, mmb3hpe_hipp_lme4, type="html", out="hippo_mb_lab.htm", report = "vcs*",
+          digits = 1,single.row=TRUE,omit.stat = "bic",
+          covariate.labels = c("-1/trial", "RT(t-1)", "RT(Vmax, t-1)", "last outcome: omission vs. reward", "Vmax, within-subject", "entropy, within-subject", "AH low entropy resp.", "PH RPE resp.",  # main effects
+                               "-1/trial * RT(t-1)", "-1/trial * last outcome", "-1/trial * RT(Vmax)", "-1/trial * Vmax", "-1/trial * entropy", "-1/trial * AH", "-1/trial * PH", # 2-way
+                               "RT(t-1) * RT(Vmax)", "RT(t-1) * last outcome", "RT(t-1) * Vmax", "RT(t-1) * entropy", "RT(t-1) * AH", "RT(t-1) * PH",
+                               "RT(Vmax) * last outcome", "RT(Vmax) * Vmax", "RT(Vmax) * entropy", "RT(Vmax) * AH", "RT(Vmax) * PH",
+                               "last outcome * Vmax", "last outcome * entropy", "last outcome * AH", "last outcome * PH",
+                               "Vmax * entropy", "Vmax * AH", "Vmax * PH", 
+                               "Entropy * AH", "Entropy * PH",
+                               "AH * PH",
+                               "RT(t-1) * last outcome * AH", "RT(t-1) * last outcome * PH",
+                               "-1/trial * RT(Vmax) * AH","-1/trial * RT(Vmax) * PH" ), 
+          column.labels = c("fMRI session", "Out-of-session replication"),
+          star.char = c("*", "**", "***"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
+          notes.append = F)
+
+# Sensitivity analyses for fMRI sample
+# add trial and contingency
+summary(mb4hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                                          rt_lag_sc:last_outcome:pe_f2_hipp +
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
+                                          trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
+                                          trial_neg_inv_sc*rewFunc*pe_f2_hipp +
+                                          (1|id/run), df))
+
+# add uncertainty of last choice
+df$u_chosen_lag_sc <- scale(df$u_chosen_lag)
+summary(mb5hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                                          rt_lag_sc:last_outcome:pe_f2_hipp +
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
+                                          trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
+                                          trial_neg_inv_sc*rewFunc*pe_f2_hipp +
+                                          u_chosen_lag_sc*h_HippAntL_neg +
+                                          u_chosen_lag_sc*pe_f2_hipp +
+                                          (1|id/run), df))
+
+# add subject-level performance
+summary(mb6hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                                          rt_lag_sc:last_outcome:pe_f2_hipp +
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
+                                          trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
+                                          trial_neg_inv_sc*rewFunc*pe_f2_hipp +
+                                          u_chosen_lag_sc*h_HippAntL_neg +
+                                          u_chosen_lag_sc*pe_f2_hipp +
+                                          v_entropy_b*h_HippAntL_neg + v_max_b*h_HippAntL_neg +
+                                          v_entropy_b*pe_f2_hipp + v_max_b*pe_f2_hipp +
+                                          (1|id/run), df))
+
+stargazer(mb3hpe_hipp_lme4, mb4hpe_hipp_lme4, mb5hpe_hipp_lme4,mb6hpe_hipp_lme4, type="html", out="hippo_mb_sens_lab.htm", report = "vcs*",
+          digits = 1,single.row=TRUE,omit.stat = c("bic", "LL"),
+          column.labels = c("Main analysis", "+ contingency", "+ choice uncertainty", "+ subject-level performance"),
+          covariate.labels = c("-1/trial", "RT(t-1)", "RT(Vmax, t-1)", "last outcome: omission vs. reward", "Vmax, within-subject", "entropy, within-subject", "AH low entropy resp.", "PH RPE resp.",  
+                              "contingency: CEVR vs. CEV", "contingency: DEV vs. CEV", "contingency: IEV vs. CEV", "uncertainty or last choice", "mean entropy, between-subjects", "mean Vmax, between-subjects",  # main effects
+                               "-1/trial * RT(t-1)", "-1/trial * last outcome", "-1/trial * RT(Vmax)", "-1/trial * Vmax", "-1/trial * entropy", "-1/trial * AH", "-1/trial * PH", # 2-way
+                               "RT(t-1) * RT(Vmax)", "RT(t-1) * last outcome", "RT(t-1) * Vmax", "RT(t-1) * entropy", "RT(t-1) * AH", "RT(t-1) * PH",
+                               "RT(Vmax) * last outcome", "RT(Vmax) * Vmax", "RT(Vmax) * entropy", "RT(Vmax) * AH", "RT(Vmax) * PH",
+                               "last outcome * Vmax", "last outcome * entropy", "last outcome * AH", "last outcome * PH",
+                               "Vmax * entropy", "Vmax * AH", "Vmax * PH", 
+                               "Entropy * AH", "Entropy * PH",
+                               "AH * PH",
+                              "-1/trial * CEVR","-1/trial * DEV","-1/trial * IEV",
+                              "AH * CEVR","AH * DEV","AH * IEV",
+                              "PH * CEVR","PH * DEV","PH * IEV",
+                              "AH * uncertainty","PH * uncertainty",
+                              "AH * mean entropy","AH * mean Vmax",
+                              "PH * mean entropy","PH * mean Vmax",
+                               "RT(t-1) * last outcome * AH", "RT(t-1) * last outcome * PH",
+                               "-1/trial * RT(Vmax) * AH","-1/trial * RT(Vmax) * PH" ,
+          "-1/trial * CEVR * AH","-1/trial * DEV * AH","-1/trial * IEV * AH",
+          "-1/trial * CEVR * PH","-1/trial * DEV * PH","-1/trial * IEV * PH"),
+          star.char = c("*", "**", "***"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
+          notes.append = F)
+
+# Sensitivity analyses for MEG sample
+# add trial and contingency
+summary(mmb4hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                                          rt_lag_sc:last_outcome:pe_f2_hipp +
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
+                                          trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
+                                          trial_neg_inv_sc*rewFunc*pe_f2_hipp +
+                                          (1|id/run),mdf))
+
+# add uncertainty of last choice
+mdf$u_chosen_lag_sc <- scale(mdf$u_chosen_lag)
+summary(mmb5hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                                          rt_lag_sc:last_outcome:pe_f2_hipp +
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
+                                          trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
+                                          trial_neg_inv_sc*rewFunc*pe_f2_hipp +
+                                          u_chosen_lag_sc*h_HippAntL_neg +
+                                          u_chosen_lag_sc*pe_f2_hipp +
+                                          (1|id/run),mdf))
+
+# add subject-level performance
+summary(mmb6hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                                          rt_lag_sc:last_outcome:pe_f2_hipp +
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
+                                          trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
+                                          trial_neg_inv_sc*rewFunc*pe_f2_hipp +
+                                          u_chosen_lag_sc*h_HippAntL_neg +
+                                          u_chosen_lag_sc*pe_f2_hipp +
+                                          v_entropy_b*h_HippAntL_neg + v_max_b*h_HippAntL_neg +
+                                           v_entropy_b*pe_f2_hipp + v_max_b*pe_f2_hipp +
+                                          (1|id/run),mdf))
+
+stargazer(mmb3hpe_hipp_lme4, mmb4hpe_hipp_lme4, mmb5hpe_hipp_lme4,mmb6hpe_hipp_lme4, type="html", out="hippo_mmb_sens_lab.htm", report = "vcs*",
+          digits = 1,single.row=TRUE,omit.stat = c("bic", "LL"),
+          dep.var.labels = "RT, scaled",
+          column.labels = c("Main analysis", "+ contingency", "+ choice uncertainty", "+ subject-level performance"),
+          covariate.labels = c("-1/trial", "RT(t-1)", "RT(Vmax, t-1)", "last outcome: omission vs. reward", "Vmax, within-subject", "entropy, within-subject", "AH low entropy resp.", "PH RPE resp.",  
+                               "contingency: CEVR vs. CEV", "contingency: DEV vs. CEV", "contingency: IEV vs. CEV", "uncertainty or last choice", "mean entropy, between-subjects", "mean Vmax, between-subjects",  # main effects
+                               "-1/trial * RT(t-1)", "-1/trial * last outcome", "-1/trial * RT(Vmax)", "-1/trial * Vmax", "-1/trial * entropy", "-1/trial * AH", "-1/trial * PH", # 2-way
+                               "RT(t-1) * RT(Vmax)", "RT(t-1) * last outcome", "RT(t-1) * Vmax", "RT(t-1) * entropy", "RT(t-1) * AH", "RT(t-1) * PH",
+                               "RT(Vmax) * last outcome", "RT(Vmax) * Vmax", "RT(Vmax) * entropy", "RT(Vmax) * AH", "RT(Vmax) * PH",
+                               "last outcome * Vmax", "last outcome * entropy", "last outcome * AH", "last outcome * PH",
+                               "Vmax * entropy", "Vmax * AH", "Vmax * PH", 
+                               "Entropy * AH", "Entropy * PH",
+                               "AH * PH",
+                               "-1/trial * CEVR","-1/trial * DEV","-1/trial * IEV",
+                               "AH * CEVR","AH * DEV","AH * IEV",
+                               "PH * CEVR","PH * DEV","PH * IEV",
+                               "AH * uncertainty","PH * uncertainty",
+                               "AH * mean entropy","AH * mean Vmax",
+                               "PH * mean entropy","PH * mean Vmax",
+                               "RT(t-1) * last outcome * AH", "RT(t-1) * last outcome * PH",
+                               "-1/trial * RT(Vmax) * AH","-1/trial * RT(Vmax) * PH" ,
+                               "-1/trial * CEVR * AH","-1/trial * DEV * AH","-1/trial * IEV * AH",
+                               "-1/trial * CEVR * PH","-1/trial * DEV * PH","-1/trial * IEV * PH"),
+          star.char = c("*", "**", "***"),
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
+          notes.append = F)
+
 
 # Model-free (mf) RT analyses -- behavioral variables
 mf1 <- lmer(rt_csv ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome )^2  + (1|id/run), df)
