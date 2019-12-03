@@ -189,6 +189,7 @@ setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
 
 stargazer(mb3hpe_hipp_lme4, mmb3hpe_hipp_lme4, type="html", out="hippo_mb_lab.htm", report = "vcs*",
           digits = 1,single.row=TRUE,omit.stat = "bic",
+          dep.var.labels = "RT, scaled",
           covariate.labels = c("-1/trial", "RT(t-1)", "RT(Vmax, t-1)", "last outcome: omission vs. reward", "Vmax, within-subject", "entropy, within-subject", "AH low entropy resp.", "PH RPE resp.",  # main effects
                                "-1/trial * RT(t-1)", "-1/trial * last outcome", "-1/trial * RT(Vmax)", "-1/trial * Vmax", "-1/trial * entropy", "-1/trial * AH", "-1/trial * PH", # 2-way
                                "RT(t-1) * RT(Vmax)", "RT(t-1) * last outcome", "RT(t-1) * Vmax", "RT(t-1) * entropy", "RT(t-1) * AH", "RT(t-1) * PH",
@@ -248,6 +249,7 @@ summary(mb6hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_s
 
 stargazer(mb3hpe_hipp_lme4, mb4hpe_hipp_lme4, mb5hpe_hipp_lme4,mb6hpe_hipp_lme4, type="html", out="hippo_mb_sens_lab.htm", report = "vcs*",
           digits = 1,single.row=TRUE,omit.stat = c("bic", "LL"),
+          dep.var.labels = "RT, scaled",
           column.labels = c("Main analysis", "+ contingency", "+ choice uncertainty", "+ subject-level performance"),
           covariate.labels = c("-1/trial", "RT(t-1)", "RT(Vmax, t-1)", "last outcome: omission vs. reward", "Vmax, within-subject", "entropy, within-subject", "AH low entropy resp.", "PH RPE resp.",  
                               "contingency: CEVR vs. CEV", "contingency: DEV vs. CEV", "contingency: IEV vs. CEV", "uncertainty or last choice", "mean entropy, between-subjects", "mean Vmax, between-subjects",  # main effects
@@ -351,16 +353,17 @@ summary(mf1)
 # ruling out the exploitation account of the PH-guided shifts
 
 # v_chosen change -- the swings in high-PH subjects are toward lower-valued options
-mv1 <- lmer(v_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + h_HippAntL_neg + rewFunc)^3 +
-              (trial_neg_inv_sc + rt_lag_sc + pe_f2_hipp + rewFunc)^3 + v_chosen_quantile_lag + (1|id/run), df)
+mv1 <- lmer(v_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + h_HippAntL_neg + rewFunc + last_outcome)^3 +
+              (trial_neg_inv_sc + rt_lag_sc + pe_f2_hipp + rewFunc + last_outcome)^3 + v_chosen_quantile_lag + (1|id/run), df)
 screen.lmerTest(mv1, .05)
-em <- as_tibble(emmeans(mv1, ~rt_lag_sc|pe_f2_hipp, at = list(rt_lag_sc = c(-2,0,2), pe_f2_hipp = c(-2,0,2))))
+anova(mv1)
+em <- as_tibble(emmeans(mv1, ~rt_lag_sc|pe_f2_hipp*rewFunc, at = list(rt_lag_sc = c(-2,0,2), pe_f2_hipp = c(-2,0,2))))
 em$`Chosen value quantile change` <- em$emmean
-ggplot(em, aes(rt_lag_sc, `Chosen value quantile change`, color = pe_f2_hipp, group = pe_f2_hipp)) + geom_point()
+ggplot(em, aes(rt_lag_sc, `Chosen value quantile change`, color = pe_f2_hipp, lty = rewFunc, group = pe_f2_hipp)) + geom_point() + geom_line()
 # add reward -- this model is better by a huge margin
 df_tmp <- df %>% filter(rewFunc=='IEV' | rewFunc=='DEV') %>% droplevels()
 mv2 <- lmer(v_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + h_HippAntL_neg + rewFunc + last_outcome)^3 +
-              (trial_neg_inv_sc + rt_lag_sc + pe_f2_hipp + rewFunc + last_outcome)^3 + v_chosen_quantile_lag + (1|id/run), df)
+              (trial_neg_inv_sc + rt_lag_sc + pe_f2_hipp + rewFunc + last_outcome)^3 + v_chosen_quantile_lag + (1|id/run), df_tmp)
 screen.lmerTest(mv2, .05)
 Anova(mv2, '3')
 # anova(mv1,mv2)
@@ -400,13 +403,14 @@ screen.lmerTest(mmf3hpe)
 
 
 ##################
-# best hippocampal model
+# model-free sensitivity analyses
 mf3hpe <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
                                h_HippAntL_neg + pe_f2_hipp)^2 + 
                   rt_lag_sc:last_outcome:h_HippAntL_neg + 
                   rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc + (1|id/run), df)
 # summary(mf3hpe)
 screen.lmerTest(mf3hpe)
+summary(mf3hpe)
 ##
 ## MEG data for out-of-session replication
 mmf3hpe <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
@@ -416,6 +420,32 @@ mmf3hpe <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome +
 screen.lmerTest(mmf3hpe)
 summary(mmf3hpe)
 Anova(mmf3hpe,'3')
+summary(mmf3hpe)
+
+# include RTvmax
+
+mf4hpe <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
+                               h_HippAntL_neg + pe_f2_hipp)^2 + 
+                  rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                  rt_lag_sc:last_outcome:pe_f2_hipp + 
+                  rt_vmax_lag_sc*trial_neg_inv_sc*h_HippAntL_neg + 
+                  rt_vmax_lag_sc*trial_neg_inv_sc*pe_f2_hipp  + 
+                  trial_neg_inv_sc*rewFunc + (1|id/run), df)
+screen.lmerTest(mf4hpe)
+anova(mf4hpe)
+##
+## MEG data for out-of-session replication
+mmf4hpe <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
+                               h_HippAntL_neg + pe_f2_hipp)^2 + 
+                  rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                  rt_lag_sc:last_outcome:pe_f2_hipp + 
+                  rt_vmax_lag_sc*trial_neg_inv_sc*h_HippAntL_neg + 
+                  rt_vmax_lag_sc*trial_neg_inv_sc*pe_f2_hipp  + 
+                  trial_neg_inv_sc*rewFunc + (1|id/run), mdf)
+summary(mmf4hpe)
+anova(mf4hpe)
+Anova(mmf3hpe,'3')
+
 ## ascertain replication -- visual check
 # plot_models(mmf3hpe,mf3hpe)
 # ascertain replication overall 
@@ -765,20 +795,25 @@ ggarrange(p1,p2, labels = c("fMRI", "MEG"))
 # summary(ub3v)
 
 # sanity check in simple models: they both predict uncertainty-aversion
-us1 <- lmer(u_chosen_quantile ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
-              (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + (1|id/run), df)
+us1 <- lmer(u_chosen_quantile ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc + last_outcome)^3 +
+              (trial_neg_inv_sc + pe_f2_hipp + rewFunc + last_outcome )^3 + (1|id/run), df)
+anova(us1)
 screen.lmerTest(us1, .05)
-
-us1v <- lmer(u_chosen_quantile ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
-               (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + v_chosen_quantile + (1|id/run), df)
+emu <- as_tibble(emmeans(us1, ~trial_neg_inv_sc | last_outcome * pe_f2_hipp, at = list(pe_f2_hipp = c(-2,2), trial_neg_inv_sc = c(-2,2)))) %>% mutate(`Chosen uncertainty quantile` = emmean)
+ggplot(emu, aes(trial_neg_inv_sc, `Chosen uncertainty quantile`, color = as.factor(pe_f2_hipp), lty = last_outcome)) + geom_line()
+us1v <- lmer(u_chosen_quantile ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc+ last_outcome)^3 +
+               (trial_neg_inv_sc + pe_f2_hipp + rewFunc+ last_outcome)^3 + v_chosen_quantile + (1|id/run), df)
 screen.lmerTest(us1v, .05)
 
 
-mus1 <- lmer(u_chosen ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
-               (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + (1|id/run), mdf)
+mus1 <- lmer(u_chosen ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc+ last_outcome + rt_swing)^3 +
+               (trial_neg_inv_sc + pe_f2_hipp + rewFunc+ last_outcome + rt_swing)^3 + (1|id/run), mdf)
 screen.lmerTest(mus1, .05)
-mus1v <- lmer(u_chosen ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc)^2 +
-                (trial_neg_inv_sc + pe_f2_hipp + rewFunc)^2 + v_chosen + (1|id/run), mdf)
+emu <- as_tibble(emmeans(mus1, ~trial_neg_inv_sc | last_outcome * pe_f2_hipp, at = list(pe_f2_hipp = c(-2,2), trial_neg_inv_sc = c(-2,2)))) %>% mutate(`Chosen uncertainty quantile` = emmean)
+ggplot(emu, aes(trial_neg_inv_sc, `Chosen uncertainty quantile`, color = as.factor(pe_f2_hipp), lty = last_outcome)) + geom_line()
+
+mus1v <- lmer(u_chosen ~ (trial_neg_inv_sc + h_HippAntL_neg + rewFunc+ last_outcome+ rt_swing)^3 +
+                (trial_neg_inv_sc + pe_f2_hipp + rewFunc+ last_outcome+ rt_swing)^3 + v_chosen + (1|id/run), mdf)
 screen.lmerTest(mus1v, .05)
 
 

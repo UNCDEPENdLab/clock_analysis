@@ -17,7 +17,7 @@ library(wesanderson)
 # read in, process; go with "long" [-1:10] clock windows for now, will censor later
 #####################
 plots = F
-reprocess = T
+reprocess = F
 analyze = F
 unsmoothed = F
 newmask = F
@@ -535,8 +535,10 @@ if (analyze) {
   
   
   # test for ramps in AH in rtvmax-aligned data: quadratic term
+  #######
+  # Ramps figures
   
-  # filter by ITI, RT, and evt_time <3
+    # filter by ITI, RT, and evt_time <3
   setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/ramps/')
   rvdf <- rtvmax_comb %>% filter(online == "TRUE" & iti_prev>1 & iti_ideal > 2 & rt_csv > 1 & rewFunc!="CEVR" & evt_time < 3)
   rvdf$bin_num <- as.factor(rvdf$bin_num)
@@ -572,6 +574,7 @@ if (analyze) {
       evt_time == 2 & evt_time_sq == 4 ~ 2
     )
   )
+  # Supp. figs
   pdf("ramps_in_AH_lin_quad_cobra_demean.pdf", width = 6, height = 3)
   ggplot(em2, aes(time, `Hippocampal response`, color = as.factor(bin_center_z))) + 
     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
@@ -609,6 +612,9 @@ if (analyze) {
   # test the same with time as factor -- that results in a singular fit due to 0 variance for ID
   # side RE has a variance of 0
   # THE MOST CONVINCING MODEL
+  
+  #############
+  # Main Fig. 4
   rm2f <- lmer(decon_interp ~ (evt_time_f + bin_center_z + entropy_lag) ^2 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
   while (any(grepl("failed to converge", rm2f@optinfo$conv$lme4$messages) )) {
     print(rm2f@optinfo$conv$lme4$conv)
@@ -623,15 +629,15 @@ if (analyze) {
     entropy_lag == 'high' ~ 'High entropy',
     entropy_lag == 'low' ~ 'Low entropy'
   ))
-  pdf("ramps_in_AH_f_cobra.pdf", width = 6, height = 3)
-  ggplot(em2f, aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z))) + 
-    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
-    geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5)+ xlab('Time') + ylab('Hippocampal response')
-  dev.off()
-  anova(rm1,rm2,rm2f, rm2binf)
-  
+  # pdf("ramps_in_AH_f_cobra.pdf", width = 6, height = 3)
+  # ggplot(em2f, aes(evt_time, `Hippocampal response`, color = as.factor(bin_center_z))) + 
+  #   geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + geom_line(size = 1.5) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy) + theme(legend.position = "none") +
+  #   geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5)+ xlab('Time') + ylab('Hippocampal response')
+  # dev.off()
+  # anova(rm1,rm2,rm2f, rm2binf)
+  # 
   # wesanderson
-  pdf("ramps_in_AH_f_cobra_anderson.pdf", width = 6, height = 3)
+  pdf("ramps_in_AH_f_cobra_anderson.pdf", width = 5, height = 3)
   ggplot(em2f, aes(evt_time, `Hippocampal response`, color = bin_center_z, group = bin_center_z)) + 
     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge(width = .5), size = .5) + geom_line(size = 1.5,position = position_dodge(width = .5)) +  facet_wrap(~entropy) + theme(legend.position = "none") +
     geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5)+ xlab('Time') + ylab('Hippocampal response') +
@@ -670,7 +676,7 @@ if (analyze) {
   dev.off()
   
   # wesanderson
-  pdf('smoothed_ramps_cobra_percent_anderson.pdf', width = 6, height = 3)
+  pdf('smoothed_ramps_cobra_percent_anderson.pdf', width = 5, height = 3)
   # ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num)) + geom_smooth(method = "loess", se = F) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy_lag)
   ggplot() + stat_smooth(data = rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, `Hippocampal response`, color = bin_center_z, group = bin_center_z), geom = 'line', method = "loess", se = F)  + 
     facet_wrap(~entropy) + theme(legend.position = "none") + geom_vline(xintercept = 0, lty = 'dashed', color = 'red', size = 1.5) + xlab('Time') + 
@@ -692,7 +698,7 @@ if (analyze) {
   dev.off()
   
   # RTvmax-aligned
-    pal = wes_palette("Zissou1", 24, type = "discrete")
+    pal = wes_palette("Zissou1", 24, type = "continuous")
   pdf("trial_rtvmax_hipp_AH_PH_gam.pdf", width = 11, height = 8)
   # ggplot(rtvmax_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", formula = y ~ splines::ns(x,3),  se = F) + scale_color_viridis_d() + theme_dark()
   ggplot(rtvmax_comb,aes(run_trial,decon_interp, color = axis_bin)) + geom_smooth(method = "gam", formula = y~splines::ns(x,4)) + 
@@ -705,9 +711,49 @@ if (analyze) {
   dev.off()
   
  
-# wave form by trial
-  pdf("fb_hipp_AP_trial.pdf", width = 11, height = 8)
-  ggplot(fb_comb, aes(evt_time, decon_interp, color = axis_bin)) + geom_smooth(method = "gam", formula = 'y~ns(x,3)',  se = F) + facet_grid(first10 ~ rewFunc) + scale_color_viridis_d() + theme_dark()
+# overall AP response by trial
+  fb_comb$trial_neg_inv_sc = scale(-1/fb_comb$run_trial)
+  fb_comb$bin6_f = as.factor(fb_comb$bin6)
+  fb_comb <- fb_comb %>% mutate(trial_f = as.factor(round((run_trial + 10)/12,digits = 0))) # also a 6-bin version
+  tm1 <- lmer(decon_interp ~ (bin6_f + evt_time_f + trial_f)^2 + scale(rt_csv)*evt_time_f + (1 | id/run) + (1 | side), fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9))
+  while (any(grepl("failed to converge", tm1@optinfo$conv$lme4$messages) )) {
+    print(tm1@optinfo$conv$lme4$conv)
+    ss <- getME(tm1,c("theta","fixef"))
+    tm1 <- update(tm1, start=ss)}
+
+  summary(tm1)
+  vif.lme(tm1)
+  Anova(tm1, '3')
+  # emt <- as.data.frame(emmeans(tm1,specs = c("trial_neg_inv_sc", "bin_center_z"), at = list(bin_center_z = c(-2,-1, 0, 1,2), trial_neg_inv_sc = c(-2,-1, 0, 1,2))))
+  # emt <- as.data.frame(emmeans(tm1,specs = c("trial_neg_inv_sc", "bin6_f"), at = list(trial_neg_inv_sc = c(-2,-1, 0, 1,2))))
+  emt <- as.data.frame(emmeans(tm1,specs = c("trial_f", "bin6_f")))
+  
+    emt <- emt %>% mutate(`Hippocampal response` = emmean)
+  pdf("../early_late/trial_hipp_AH_PH_bin6_f.pdf", width = 3, height = 3)
+  # ggplot(rtvmax_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", formula = y ~ splines::ns(x,3),  se = F) + scale_color_viridis_d() + theme_dark()
+  ggplot(emt, aes(trial_f, `Hippocampal response`, color = as.numeric(bin6_f), group = as.numeric(bin6_f))) + 
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge(width = .5), size = .5) + geom_line(size = 1.5,position = position_dodge(width = .5)) +  theme(legend.position = "none") +
+    xlab('Trial/10') + ylab('Hippocampal response') +
+    scale_color_gradientn(colors = pal, guide = 'none') + 
+    theme(legend.title = element_blank(),
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40'))
+  dev.off()
+  
+  
+  
+  
+  
+  pdf("../early_late/fb_hipp_AP_trial_anderson.pdf", width = 3, height = 3)
+  ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(run_trial, decon_interp, color = bin6, group = bin6)) + geom_smooth(method = "gam", formula = y~splines::ns(x,3),  se = T) + 
+    scale_color_gradientn(colors = pal, guide = 'none') + 
+    xlab('Trial') + ylab('Hippocampal response') +
+    theme(legend.title = element_blank(),
+          panel.grid.major = element_line(colour = "grey45"), 
+          panel.grid.minor = element_line(colour = "grey45"), 
+          panel.background = element_rect(fill = 'grey40'))
+  
   dev.off()
   # inspect all data that go into this analysis -- nothing too worrisome, but hard to read.  Some subjects have constricted evt_time ranges (responded mostly early).
   # also, more variability in AH than in PH
@@ -867,13 +913,16 @@ if (analyze) {
       reward == 'reward' ~ 'Reward',
       reward == 'omission' ~ 'Omission'
     ))
-  ggplot(em6, aes(evt_time_f, emmean, color = bin_center_z)) + 
-    geom_point() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + facet_wrap(.~reward) + scale_color_viridis() + theme_dark()
+  # ggplot(em6, aes(evt_time_f, emmean, color = bin_center_z)) + 
+  #   geom_point() + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + facet_wrap(.~reward) + scale_color_viridis() + theme_dark()
   
-  
-  # anderson version
+  #######
+  # Fig. 5
+  # 
   setwd('../early_late')
-  pdf('medusa_feedback_ph_ah_reward_anderson.pdf', height = 3.5, width = 6.5)
+  pal = wes_palette("Zissou1", 24, type = "continuous")
+  
+  pdf('medusa_feedback_ph_ah_reward_anderson.pdf', height = 3, width = 5)
   ggplot(em6, aes(as.numeric(evt_time_f), emmean, color = bin_center_z, group = bin_center_z)) + 
     geom_point(position = position_dodge2(width = 1)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge2(width = .2)) + geom_line(position = position_dodge2(width = 1)) + facet_wrap(.~reward_text) +
     scale_color_gradientn(colors = pal, guide = 'none') + xlab("Time after feedback, seconds") + ylab("Hippocampal response") +
@@ -890,13 +939,13 @@ if (analyze) {
       reward == 'omission' ~ 'Omission'
     ))
   
-  pdf('medusa_feedback_ph_ah_reward_anderson_raw_smoothed.pdf', height = 6, width = 6.5)
-  ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(as.numeric(evt_time_f), decon_interp, group = bin_center_z, color = bin_center_z)) + geom_smooth(method = 'loess',  se = F) +   
+  pdf('medusa_feedback_ph_ah_reward_anderson_raw_smoothed.pdf', height = 3, width = 5)
+  ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(as.numeric(evt_time_f), decon_interp, group = bin_center_z, color = bin_center_z)) + geom_smooth(method = "gam", formula = y~splines::ns(x,3), se = F) +   
     scale_color_gradientn(colors = pal, guide = 'none') + xlab("Time after feedback, seconds") + ylab("Hippocampal response") +
     theme(legend.title = element_blank(),
           panel.grid.major = element_line(colour = "grey45"), 
           panel.grid.minor = element_line(colour = "grey45"), 
-          panel.background = element_rect(fill = 'grey40')) + facet_wrap(side~reward_text)
+          panel.background = element_rect(fill = 'grey40')) + facet_wrap(~reward_text)
   
   dev.off()
   
