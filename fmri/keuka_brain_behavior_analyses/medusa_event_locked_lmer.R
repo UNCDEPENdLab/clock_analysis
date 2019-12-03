@@ -728,12 +728,18 @@ if (analyze) {
   # emt <- as.data.frame(emmeans(tm1,specs = c("trial_neg_inv_sc", "bin6_f"), at = list(trial_neg_inv_sc = c(-2,-1, 0, 1,2))))
   emt <- as.data.frame(emmeans(tm1,specs = c("trial_f", "bin6_f")))
   
-    emt <- emt %>% mutate(`Hippocampal response` = emmean)
+    emt <- emt %>% mutate(`Hippocampal response` = emmean, epoch = case_when(
+      trial_f == 1 ~ '0-10',
+      trial_f == 2 ~ '11-20',
+      trial_f == 3 ~ '21-30',
+      trial_f == 4 ~ '31-40',
+      trial_f == 5 ~ '41-50',
+    ))
   pdf("../early_late/trial_hipp_AH_PH_bin6_f.pdf", width = 3, height = 3)
   # ggplot(rtvmax_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", formula = y ~ splines::ns(x,3),  se = F) + scale_color_viridis_d() + theme_dark()
-  ggplot(emt, aes(trial_f, `Hippocampal response`, color = as.numeric(bin6_f), group = as.numeric(bin6_f))) + 
+  ggplot(emt, aes(epoch, `Hippocampal response`, color = as.numeric(bin6_f), group = as.numeric(bin6_f))) + 
     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge(width = .5), size = .5) + geom_line(size = 1.5,position = position_dodge(width = .5)) +  theme(legend.position = "none") +
-    xlab('Trial/10') + ylab('Hippocampal response') +
+    xlab('Trial') + ylab('Hippocampal response') +
     scale_color_gradientn(colors = pal, guide = 'none') + 
     theme(legend.title = element_blank(),
           panel.grid.major = element_line(colour = "grey45"), 

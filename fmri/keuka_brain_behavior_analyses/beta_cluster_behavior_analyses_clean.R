@@ -252,7 +252,7 @@ stargazer(mb3hpe_hipp_lme4, mb4hpe_hipp_lme4, mb5hpe_hipp_lme4,mb6hpe_hipp_lme4,
           dep.var.labels = "RT, scaled",
           column.labels = c("Main analysis", "+ contingency", "+ choice uncertainty", "+ subject-level performance"),
           covariate.labels = c("-1/trial", "RT(t-1)", "RT(Vmax, t-1)", "last outcome: omission vs. reward", "Vmax, within-subject", "entropy, within-subject", "AH low entropy resp.", "PH RPE resp.",  
-                              "contingency: CEVR vs. CEV", "contingency: DEV vs. CEV", "contingency: IEV vs. CEV", "uncertainty or last choice", "mean entropy, between-subjects", "mean Vmax, between-subjects",  # main effects
+                               "contingency: CEVR vs. CEV", "contingency: DEV vs. CEV", "contingency: IEV vs. CEV", "uncertainty or last choice", "mean entropy, between-subjects", "mean Vmax, between-subjects",  # main effects
                                "-1/trial * RT(t-1)", "-1/trial * last outcome", "-1/trial * RT(Vmax)", "-1/trial * Vmax", "-1/trial * entropy", "-1/trial * AH", "-1/trial * PH", # 2-way
                                "RT(t-1) * RT(Vmax)", "RT(t-1) * last outcome", "RT(t-1) * Vmax", "RT(t-1) * entropy", "RT(t-1) * AH", "RT(t-1) * PH",
                                "RT(Vmax) * last outcome", "RT(Vmax) * Vmax", "RT(Vmax) * entropy", "RT(Vmax) * AH", "RT(Vmax) * PH",
@@ -260,16 +260,16 @@ stargazer(mb3hpe_hipp_lme4, mb4hpe_hipp_lme4, mb5hpe_hipp_lme4,mb6hpe_hipp_lme4,
                                "Vmax * entropy", "Vmax * AH", "Vmax * PH", 
                                "Entropy * AH", "Entropy * PH",
                                "AH * PH",
-                              "-1/trial * CEVR","-1/trial * DEV","-1/trial * IEV",
-                              "AH * CEVR","AH * DEV","AH * IEV",
-                              "PH * CEVR","PH * DEV","PH * IEV",
-                              "AH * uncertainty","PH * uncertainty",
-                              "AH * mean entropy","AH * mean Vmax",
-                              "PH * mean entropy","PH * mean Vmax",
+                               "-1/trial * CEVR","-1/trial * DEV","-1/trial * IEV",
+                               "AH * CEVR","AH * DEV","AH * IEV",
+                               "PH * CEVR","PH * DEV","PH * IEV",
+                               "AH * uncertainty","PH * uncertainty",
+                               "AH * mean entropy","AH * mean Vmax",
+                               "PH * mean entropy","PH * mean Vmax",
                                "RT(t-1) * last outcome * AH", "RT(t-1) * last outcome * PH",
                                "-1/trial * RT(Vmax) * AH","-1/trial * RT(Vmax) * PH" ,
-          "-1/trial * CEVR * AH","-1/trial * DEV * AH","-1/trial * IEV * AH",
-          "-1/trial * CEVR * PH","-1/trial * DEV * PH","-1/trial * IEV * PH"),
+                               "-1/trial * CEVR * AH","-1/trial * DEV * AH","-1/trial * IEV * AH",
+                               "-1/trial * CEVR * PH","-1/trial * DEV * PH","-1/trial * IEV * PH"),
           star.char = c("*", "**", "***"),
           star.cutoffs = c(0.05, 0.01, 0.001),
           notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
@@ -278,43 +278,43 @@ stargazer(mb3hpe_hipp_lme4, mb4hpe_hipp_lme4, mb5hpe_hipp_lme4,mb6hpe_hipp_lme4,
 # Sensitivity analyses for MEG sample
 # add trial and contingency
 summary(mmb4hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
-                                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                                          rt_lag_sc:last_outcome:pe_f2_hipp +
-                                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
-                                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
-                                          trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
-                                          trial_neg_inv_sc*rewFunc*pe_f2_hipp +
-                                          (1|id/run),mdf))
+                                                        v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                           rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                                           rt_lag_sc:last_outcome:pe_f2_hipp +
+                                           rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                                           rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
+                                           trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
+                                           trial_neg_inv_sc*rewFunc*pe_f2_hipp +
+                                           (1|id/run),mdf))
 
 # add uncertainty of last choice
 mdf$u_chosen_lag_sc <- scale(mdf$u_chosen_lag)
 summary(mmb5hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
-                                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                                          rt_lag_sc:last_outcome:pe_f2_hipp +
-                                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
-                                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
-                                          trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
-                                          trial_neg_inv_sc*rewFunc*pe_f2_hipp +
-                                          u_chosen_lag_sc*h_HippAntL_neg +
-                                          u_chosen_lag_sc*pe_f2_hipp +
-                                          (1|id/run),mdf))
+                                                        v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                           rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                                           rt_lag_sc:last_outcome:pe_f2_hipp +
+                                           rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                                           rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
+                                           trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
+                                           trial_neg_inv_sc*rewFunc*pe_f2_hipp +
+                                           u_chosen_lag_sc*h_HippAntL_neg +
+                                           u_chosen_lag_sc*pe_f2_hipp +
+                                           (1|id/run),mdf))
 
 # add subject-level performance
 summary(mmb6hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
-                                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                                          rt_lag_sc:last_outcome:pe_f2_hipp +
-                                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
-                                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
-                                          trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
-                                          trial_neg_inv_sc*rewFunc*pe_f2_hipp +
-                                          u_chosen_lag_sc*h_HippAntL_neg +
-                                          u_chosen_lag_sc*pe_f2_hipp +
-                                          v_entropy_b*h_HippAntL_neg + v_max_b*h_HippAntL_neg +
+                                                        v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                           rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                                           rt_lag_sc:last_outcome:pe_f2_hipp +
+                                           rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                                           rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  + 
+                                           trial_neg_inv_sc*rewFunc*h_HippAntL_neg +
+                                           trial_neg_inv_sc*rewFunc*pe_f2_hipp +
+                                           u_chosen_lag_sc*h_HippAntL_neg +
+                                           u_chosen_lag_sc*pe_f2_hipp +
+                                           v_entropy_b*h_HippAntL_neg + v_max_b*h_HippAntL_neg +
                                            v_entropy_b*pe_f2_hipp + v_max_b*pe_f2_hipp +
-                                          (1|id/run),mdf))
+                                           (1|id/run),mdf))
 
 stargazer(mmb3hpe_hipp_lme4, mmb4hpe_hipp_lme4, mmb5hpe_hipp_lme4,mmb6hpe_hipp_lme4, type="html", out="hippo_mmb_sens_lab.htm", report = "vcs*",
           digits = 1,single.row=TRUE,omit.stat = c("bic", "LL"),
@@ -436,12 +436,12 @@ anova(mf4hpe)
 ##
 ## MEG data for out-of-session replication
 mmf4hpe <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
-                               h_HippAntL_neg + pe_f2_hipp)^2 + 
-                  rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                  rt_lag_sc:last_outcome:pe_f2_hipp + 
-                  rt_vmax_lag_sc*trial_neg_inv_sc*h_HippAntL_neg + 
-                  rt_vmax_lag_sc*trial_neg_inv_sc*pe_f2_hipp  + 
-                  trial_neg_inv_sc*rewFunc + (1|id/run), mdf)
+                                h_HippAntL_neg + pe_f2_hipp)^2 + 
+                   rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                   rt_lag_sc:last_outcome:pe_f2_hipp + 
+                   rt_vmax_lag_sc*trial_neg_inv_sc*h_HippAntL_neg + 
+                   rt_vmax_lag_sc*trial_neg_inv_sc*pe_f2_hipp  + 
+                   trial_neg_inv_sc*rewFunc + (1|id/run), mdf)
 summary(mmf4hpe)
 anova(mf4hpe)
 Anova(mmf3hpe,'3')
@@ -657,6 +657,45 @@ dev.off()
 
 # # understand rt_vmax_change effect
 # ggplot(df, aes(rt_vmax_change, rt_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = "glm")
+
+######################
+# Neural specificity
+######################
+
+# Add: v_f1_neg_cog"             "v_f2_paralimb"            "h_f1_fp"                  "h_f2_neg_paralimb"       
+# "pe_f1_cort_str"           "pe_f2_hipp"               "pe_PH"         
+mn1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                            v_max_wi_lag + v_entropy_wi + h_HippAntL_neg + pe_f1_cort_str + pe_f2_hipp + v_f2_paralimb + h_f1_fp)^2 + 
+               rt_lag_sc:last_outcome:h_HippAntL_neg + 
+               rt_lag_sc:last_outcome:pe_f2_hipp +
+               rt_lag_sc:last_outcome:pe_f1_cort_str + 
+               rt_lag_sc:last_outcome:v_f2_paralimb + 
+               rt_lag_sc:last_outcome:h_f1_fp + 
+               rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+               rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
+               rt_vmax_lag_sc:trial_neg_inv_sc:pe_f1_cort_str  +
+               rt_vmax_lag_sc:trial_neg_inv_sc:v_f2_paralimb  +
+               rt_vmax_lag_sc:trial_neg_inv_sc:h_f1_fp  +
+               (1|id/run), df)
+summary(mn1)
+Anova(mn1, '3')
+mmn1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                             v_max_wi_lag + v_entropy_wi + h_HippAntL_neg + pe_f1_cort_str + pe_f2_hipp + v_f2_paralimb + h_f1_fp)^2 + 
+                rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                rt_lag_sc:last_outcome:pe_f2_hipp +
+                rt_lag_sc:last_outcome:pe_f1_cort_str + 
+                rt_lag_sc:last_outcome:v_f2_paralimb + 
+                rt_lag_sc:last_outcome:h_f1_fp + 
+                rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
+                rt_vmax_lag_sc:trial_neg_inv_sc:pe_f1_cort_str  +
+                rt_vmax_lag_sc:trial_neg_inv_sc:v_f2_paralimb  +
+                rt_vmax_lag_sc:trial_neg_inv_sc:h_f1_fp  +
+                (1|id/run), mdf)
+summary(mmn1)
+Anova(mmn1, '3')
+
+
 
 ######################
 # Uncertainty models #
