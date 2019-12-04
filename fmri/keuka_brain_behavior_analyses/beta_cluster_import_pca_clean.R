@@ -65,7 +65,7 @@ corrplot(clust_cor, cl.lim=c(-1,1),
          p.mat = 1-clust_cor, sig.level=0.75, insig = "blank")
 dev.off()
 # mh <- nfactors(clust_cor, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
-h.fa = psych::fa(just_rois, nfactors=2, rotate = "oblimin", fm = "pa")
+h.fa = fa.sort(psych::fa(just_rois, nfactors=2, rotate = "oblimin", fm = "pa"))
 fscores <- factor.scores(just_rois, h.fa)$scores
 h_wide$h_f1_fp <- fscores[,1]
 h_wide$h_f2_neg_paralimb <- fscores[,2]
@@ -73,6 +73,10 @@ h_wide$h_HippAntL <- h_wide$`9 Left Hippocampus`
 if (unsmoothed) {
   h_wide$h_vmPFC <- h_wide$`5 Left Mid Orbital Gyrus`
 } else {h_wide$h_vmPFC <- h_wide$`6`}
+hf <- as_tibble(cbind(rownames(unclass(round(h.fa$Structure, digits = 3))),unclass(round(h.fa$Structure, digits = 3)))) %>% arrange(desc(PA1) ) %>%  
+  rename(region = V1, `Factor 1` = PA1, `Factor 2` = PA2)
+hf$region <- gsub('[0-9;]+', '', hf$region)
+stargazer(hf, type = 'html', out = '~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/supp/h_fa_structure.html', summary = F)
 
 
 h_wide <- subset(h_wide, select = c("feat_input_id","h_f1_fp","h_f2_neg_paralimb", "h_HippAntL"))
@@ -165,7 +169,7 @@ pe.fa = psych::fa(pejust_rois, nfactors=2, rotate = "varimax", fm = "pa")
 # summary(mcfa_cor, standardized=TRUE)
 # anova(mcfa,mcfa_cor)
 
-pe.fa = psych::fa(pejust_rois, nfactors=2)
+pe.fa = fa.sort(psych::fa(pejust_rois, nfactors=2))
 pefscores <- factor.scores(pejust_rois, pe.fa)$scores
 pe_wide$pe_f1_cort_str <- pefscores[,1]
 pe_wide$pe_f2_hipp <- pefscores[,2]
@@ -173,7 +177,14 @@ pe_wide$pe_PH <- scale(rowMeans(cbind(pe_wide$`10 Left Hippocampus`, pe_wide$`7 
 pe_wide$pe_PH_l <- scale(pe_wide$`10 Left Hippocampus`)
 pe_wide$pe_PH_r <- scale(pe_wide$`7 Right Hippocampus`)
 
-if (unsmoothed) {
+# save loadings
+setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/supp')
+pf <- as_tibble(cbind(rownames(unclass(round(pe.fa$Structure, digits = 3))),unclass(round(pe.fa$Structure, digits = 3)))) %>% arrange(desc(MR1) ) %>%  
+  rename(region = V1, `Factor 1` = MR1, `Factor 2` = MR2)
+pf$region <- gsub('[0-9;]+', '', pf$region)
+stargazer(pf, type = 'html', out = 'pe_fa_structure.html', summary = F)
+
+ if (unsmoothed) {
   pe_wide$pe_PH <- (pe_wide$`7 Right Hippocampus` + pe_wide$`10 Left Hippocampus`)/2
   hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH")])
 } else {  hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r")])  }
