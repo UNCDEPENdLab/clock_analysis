@@ -247,8 +247,8 @@ if (decode) {
       for (side in c("l", "r")) {
         for (t in -1:10) {
           d$h<-d[[paste("hipp", slice, side, t, sep = "_")]]
-          md <-  lmer(h ~ scale(-1/run_trial)*rewFunc + last_outcome + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi + v_entropy_wi_change + u_chosen_quantile_change
-                        + (0|id), d, control=lmerControl(optimizer = "nloptwrap"))
+          md <-  lmer(h ~ scale(-1/run_trial)*rewFunc + last_outcome + scale(rt_csv) + scale(rt_vmax_lag) + scale(rt_vmax_change) + v_entropy_wi + v_entropy_wi_change + u_chosen_quantile_change +
+                        (1|id), d, control=lmerControl(optimizer = "nloptwrap"))
           while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
             print(md@optinfo$conv$lme4$conv)
             ss <- getME(md,c("theta","fixef"))
@@ -290,12 +290,12 @@ if (decode) {
     for (fe in terms) {
       edf <- ddf %>% filter(term == paste(fe) & t < 8) 
       termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-      pdf(paste(termstr, ".pdf", sep = ""), width = 12, height = 7)
+      pdf(paste(termstr, ".pdf", sep = ""), width = 7, height = 4)
       
       # print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = abs(statistic)>2), size = 1) + facet_wrap(~side) + 
       # print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = 1) + facet_wrap(~side) + 
       print(ggplot(edf, aes(t, slice)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = 1) + facet_wrap(~side) + 
-              scale_fill_viridis(option = "plasma") + scale_color_grey() + labs(title = paste(fe)))
+              scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab("Time after outcome, seconds") + ylab("Posterior <-- Location --> Anterior"))
       # print(ggarrange(p2,ncol = 1, labels = paste(fe), vjust = 4, font.label = list(color = "black", size = 16)))
       dev.off()
     }

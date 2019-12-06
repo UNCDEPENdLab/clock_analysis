@@ -17,6 +17,9 @@ library(car)
 library(data.table)
 library(emmeans)
 library(wesanderson)
+source('~/code/Rhelpers/screen.lmerTest.R')
+source('~/code/Rhelpers/vif.lme.R')
+
 #####################
 reprocess = F
 unsmoothed = F
@@ -525,7 +528,7 @@ car::Anova(ee7, '3')
 
 
 ggplot(df2, aes(-1/trial_neg_inv, emmean, color = bin_center_z)) + geom_point() + geom_linerange(aes(ymin = asymp.LCL, ymax = asymp.UCL)) + facet_wrap(~rewFunc) + xlab("Trial")
-}
+
 #############
 ## VAR of PH -> AH
 ##############
