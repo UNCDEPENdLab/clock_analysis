@@ -67,99 +67,79 @@ plot(badfit1, mark.time=FALSE, lty=1:4,
 legend(3000, .85, c("CEV", "CEVR", "DEV", "IEV"),
        lty=1:4, bty='n')
 
-# add AH and PH, first without run
-summary(cox_hipp <- coxme(Surv(t1,t2,response) ~ rtlag*pe_f2_hipp + rtlag*h_HippAntL_neg + trial*rewFunc + trial*uncertainty +
-                      value*pe_f2_hipp + value*h_HippAntL_neg + uncertainty*h_HippAntL_neg +uncertainty*pe_f2_hipp + (1|ID), sdf))
-summary(cox_hipp_sc <- coxme(Surv(t1,t2,response) ~ rtlag*pe_f2_hipp + rtlag*h_HippAntL_neg + trial*rewFunc + trial*scale(uncertainty) +
-                            scale(value)*pe_f2_hipp + scale(value)*h_HippAntL_neg + scale(uncertainty)*h_HippAntL_neg + scale(uncertainty)*pe_f2_hipp + (1|ID), sdf))
+# number bins
+sdf <- sdf %>% group_by(ID, run, trial) %>% mutate(bin = 1:n(), time = bin/10) %>% ungroup() %>% 
+  group_by(ID) %>% mutate(value_wi = scale(value),
+                          uncertainty_wi = scale(uncertainty),
+                          value_b = mean(value),
+                          uncertainty_b = mean(uncertainty), 
+                          trial_neg_inv_sc = scale(-1/trial)) %>% ungroup() %>% 
+  mutate(rtlag_sc = scale(rtlag),
+         AH_sc = scale(h_HippAntL_neg))
+# filter out no-go zones at the edges
+fdf <- sdf %>% filter(bin >10 & bin <35)
 
-out <- capture.output(summary(cox_hipp))
+# diagnostics on uncertainty and value distributions
+
+ggplot(sdf %>% filter(bin >10 & bin <35), aes(time, value_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
+ggplot(sdf %>% filter(bin >10 & bin <35), aes(time, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2))
+corr.test(fdf$value_wi, fdf$uncertainty_wi)
+corr.test(fdf$value, fdf$uncertainty)
+
+
+pdf('coxme_value_by_cond_ind.pdf', height = 30, width = 30)
+ggplot(sdf %>% filter(bin >5 & bin <35), aes(time, value_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,3)) + facet_wrap(~ID)
+dev.off()
+pdf('coxme_uncertainty_by_cond_ind.pdf', height = 30, width = 30)
+ggplot(sdf %>% filter(bin >5 & bin <35), aes(time, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,3)) + facet_wrap(~ID)
+dev.off()
+
+# can we estimate the effect of bin here?
+# nb: no linear or quadratic effect of time:
+# summary(cox_bin <- coxme(Surv(t1,t2,response) ~ scale(bin) + I(scale(bin)^2) + (1|ID), fdf))
+# Model:  Surv(t1, t2, response) ~ scale(bin) + I(scale(bin)^2) + (1 |      ID) 
+# Fixed coefficients
+# coef    exp(coef) se(coef)     z    p
+# scale(bin)      -136.530173 5.078077e-60 7138.043 -0.02 0.98
+# I(scale(bin)^2)    3.400241 2.997134e+01 2059.950  0.00 1.00
+# cannot estimate completely general time effect
+# try linear and quadratic time
+summary(cox_bin1 <- coxme(Surv(t1,t2,response) ~ scale(bin)*rewFunc + I(scale(bin)^2) + (1|ID), fdf))
+
+
+
+# main analysis
+summary(cox_hipp1a <- coxme(Surv(t1,t2,response) ~ rtlag_sc*pe_f2_hipp + rtlag_sc*AH_sc + trial_neg_inv_sc*rewFunc + trial_neg_inv_sc*uncertainty_wi + trial_neg_inv_sc*value_wi +
+                              value_wi*pe_f2_hipp + value_wi*AH_sc + uncertainty_wi*AH_sc +uncertainty_wi*pe_f2_hipp + (1|ID), sdf))
+out <- capture.output(summary(cox_hipp1a))
 setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/supp/')
 write.csv(out,file = "coxme_hipp_summary.csv", sep = ":\t")
+
+
+# sensitivity analysis: remove no-go zones in the first 1000 ms and last 500 ms
+summary(cox_hipp1 <- coxme(Surv(t1,t2,response) ~ rtlag_sc*pe_f2_hipp + rtlag_sc*AH_sc + trial_neg_inv_sc*rewFunc + trial_neg_inv_sc*uncertainty_wi + trial_neg_inv_sc*value_wi +
+                            value_wi*pe_f2_hipp + value_wi*AH_sc + uncertainty_wi*AH_sc +uncertainty_wi*pe_f2_hipp + (1|ID), fdf))
+
+# add linear and quadratic time
+summary(cox_hipp1b <- coxme(Surv(t1,t2,response) ~ scale(bin) + I(scale(bin)^2) + rtlag_sc*pe_f2_hipp + rtlag_sc*AH_sc + trial_neg_inv_sc*rewFunc + trial_neg_inv_sc*uncertainty_wi + trial_neg_inv_sc*value_wi +
+                              value_wi*pe_f2_hipp + value_wi*AH_sc + uncertainty_wi*AH_sc +uncertainty_wi*pe_f2_hipp + (1|ID), sdf))
+
 
 # devtools::install_github('junkka/ehahelper')
 library(ehahelper)
 library(broom)
 library(broom.mixed)
-tidy_cox_hipp <- tidy(cox_hipp, exponentiate = F)[,1:5]
+tidy_cox_hipp <- tidy(cox_hipp1a, exponentiate = F)[,1:5]
 stargazer(tidy_cox_hipp, type = 'html', out = 'tidy_cox_hipp.html', summary = F, digits = 3, digits.extra = 10)
 write_csv(tidy_cox_hipp, 'tidy_cox_hipp.csv')
-p1 <- plot_model(cox_hipp,transform = 'exp', terms = c("pe_f2_hipp:value", "h_HippAntL_neg:value", "h_HippAntL_neg:uncertainty", "pe_f2_hipp:uncertainty"), axis.lim = c(.99, 1.01))
-p1 + ylim(c(.99, 1.025))
+p1 <- plot_model(cox_hipp1a,transform = 'exp', terms = c("pe_f2_hipp:value_wi", "AH_sc:value_wi", "AH_sc:uncertainty_wi", "pe_f2_hipp:uncertainty_wi"), show.values = T, show.p = T, value.offset = .3 )
+pdf('AH_PH_uncertainty_value_coxme.pdf', height = 3, width = 4.5)
+p1 + ylim(c(.95, 1.05)) + ylab("Effect on hazard of response, A.U.") + scale_x_discrete(labels = c("PH * value", "PH * uncertainty", "AH * value", "AH * uncertainty")) + labs(title = "") +
+  geom_hline(yintercept = 1)
+dev.off()
+# interactions with trial_neg_inv_sc: inferior model
+summary(cox_hipp3 <- coxme(Surv(t1,t2,response) ~ rtlag_sc*pe_f2_hipp + rtlag_sc*AH_sc + trial_neg_inv_sc*rewFunc + trial_neg_inv_sc*value_wi +
+                             value_wi*pe_f2_hipp + value_wi*AH_sc + uncertainty_wi*AH_sc + trial_neg_inv_sc*uncertainty_wi*pe_f2_hipp + (1|ID), fdf))
+summary(cox_hipp3)
+Anova(cox_hipp3, '3')
 
-# no interesting interactions with trial, inferior model
-summary(cox_hipp1 <- coxme(Surv(t1,t2,response) ~ rtlag*pe_f2_hipp + rtlag*h_HippAntL_neg + trial*rewFunc + 
-                             trial*value*pe_f2_hipp + trial*value*h_HippAntL_neg + trial*uncertainty*h_HippAntL_neg + trial*uncertainty*pe_f2_hipp + (1|ID), sdf))
-
-
-# interaction with trial
-summary(c5a <- coxme(Surv(t1,t2,response) ~ scale(rtlag) + scale(value)*scale(trial) + scale(value)*scale(uncertainty) + scale(entropylag) +  (1|ID/run), sdf))
-
-
-# limit analysis to middle 3s to eliminate speed constraints and avoidance of interval end: U-aversion holds
-# remove distance from the edge
-summary(c6 <- coxme(Surv(t1,t2,response) ~ rtlag + trial + value + uncertainty  + (1|ID/run), sdf[sdf$t1>.5 & sdf$t1<3.5,]))
-
-# limit analysis to middle 2s to eliminate speed constraints and avoidance of interval end: U-aversion holds
-summary(c6a <- coxme(Surv(t1,t2,response) ~ rtlag + trial + value + uncertainty + (1|ID/run), sdf[sdf$t1>1 & sdf$t1<3,]))
-
-# limit to IEV to r/o uncertainty/value tradeoff explanation: U-aversion holds
-summary(c7 <- coxme(Surv(t1,t2,response) ~ rtlag + trial + value + uncertainty +  (1|ID/run), sdf[sdf$rewFunc=='IEV' & sdf$t1>1 & sdf$t1<3,]))
-
-# late in learning
-
-summary(c7 <- coxme(Surv(t1,t2,response) ~ rtlag + value + uncertainty + entropylag + distfromedgelag +  (1|ID/run), sdf[sdf$rewFunc=='IEV',]))
-library(s)
-
-summary(test <- lmer(scale(uncertainty) ~ scale(value)*as.factor(trial) + (1|ID/run), sdf[sdf$rewFunc=='IEV',]))
-summary(test <- lmer(scale(uncertainty) ~ scale(value)*as.factor(trial) + (1|ID/run), sdf[sdf$rewFunc=='DEV',]))
-summary(test <- lmer(scale(uncertainty) ~ scale(value)*as.factor(trial) + (1|ID/run), sdf[sdf$rewFunc=='CEVR',]))
-
-# limit to CEVR to r/o probability/magnitude tradeoff explanation: U-aversion holds
-summary(c8 <- coxme(Surv(t1,t2,response) ~ rtlag + trial + value + uncertainty +  (1|ID/run), sdf[sdf$rewFunc=='CEVR',]))
-
-summary(check <- lmer(uncertainty ~ value + (1|ID/run/trial), sdf))
-
-summary(check <- lmer(uncertainty ~ t2 + scale(value) + (1|ID/run/trial), sdf[sdf$rewFunc=='DEV' & sdf$t1>.5,]))
-summary(check <- lmer(uncertainty ~ t2 + scale(value) + (1|ID/run/trial), sdf[sdf$rewFunc=='IEV' & sdf$t1<1,]))
-summary(check <- lmer(scale(uncertainty) ~ scale(value) + (1|ID/run/trial), adf[adf$rewFunc=='IEV',]))
-summary(check <- lmer(scale(uncertainty) ~ scale(value) + (1|ID/run/trial), adf[adf$rewFunc=='DEV' & adf$t1>1 & adf$t1<3,]))
-summary(check <- lmer(scale(uncertainty) ~ scale(value) + (1|ID/run/trial), adf[adf$rewFunc=='IEV' & adf$t1>3 & adf$t1<4,]))
-
-# they are least correlated in the very end of IEV...
-summary(c9 <- coxme(Surv(t1,t2,response) ~ rtlag + value + uncertainty + entropylag + distfromedgelag +  (1|ID/run), sdf[sdf$rewFunc=='IEV' & sdf$t1>3 & sdf$t1<4,]))
-
-d <- adf[adf$rewFunc=='IEV' & adf$t1>3.75 & adf$t1<4,]
-cor.test(d$uncertainty,d$value)
-
-anova(c2,c3,c4, c5)
-
-# apa library did not work
-# library(apa)
-out <- capture.output(summary(c5))
-
-write.csv(out,file = "coxme_c5_summary.csv", sep = ":\t")
-cat("coxme_c5", out, file="coxme_c5_summary.txt", fill = TRUE, sep=":\t", append=FALSE)
-
-stargazer(out, type="html", out="coxme_c5_summary.htm", digits = 2,single.row=FALSE,omit.stat = "bic",
-          star.char = c("+", "*", "**", "***"),
-          star.cutoffs = c(0.1, 0.05, 0.01, 0.001),
-          notes = c("+ p<0.1; * p<0.05; ** p<0.01; *** p<0.001"), 
-          notes.append = F)
-
-
-summary(c5)
-#########
-vif.lme <- function (fit) {
-  ## adapted from rms::vif
-  v <- vcov(fit)
-  nam <- names(fixef(fit))
-  ## exclude intercepts
-  ns <- sum(1 * (nam == "Intercept" | nam == "(Intercept)"))
-  if (ns > 0) {
-    v <- v[-(1:ns), -(1:ns), drop = FALSE]
-    nam <- nam[-(1:ns)] }
-  d <- diag(v)^0.5
-  v <- diag(solve(v/(d %o% d)))
-  names(v) <- nam
-  v }

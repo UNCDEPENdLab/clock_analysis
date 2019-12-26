@@ -3,6 +3,7 @@ library(tidyverse)
 library(psych)
 library(corrplot)
 library(lme4)
+library(stargazer)
 
 unsmoothed = F
 # get H betas
@@ -28,10 +29,10 @@ if (unsmoothed) {
 }
 meta$label <- substr(meta$label,22,100)
 meta_overall <- meta[meta$l2_contrast == 'overall' & meta$l3_contrast == 'Intercept' & meta$model == 'Intercept-Age',]
-h <- as_tibble(Hbetas[Hbetas$l2_contrast == 'overall' & Hbetas$l3_contrast == 'Intercept' & Hbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<11)
+h <- as_tibble(Hbetas[Hbetas$l2_contrast == 'overall' & Hbetas$l3_contrast == 'Intercept' & Hbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<12)
 
 # head(merge(h,meta))
-rois <- distinct(meta_overall[,c(5,12)])
+rois <- distinct(meta_overall[,c(5,6,12)])
 
 # inspect distributions
 hrois <- inner_join(h,meta_overall)
@@ -44,7 +45,7 @@ h_wide <- spread(hrois,labeled_cluster,cope_value)
 # with group-fixed parameters we don't seem to need the winsorization step!!!
 # h_wide <- h_wide %>% mutate_if(is.double, winsor,trim = .075)
 
-just_rois <- h_wide[,2:11]
+just_rois <- h_wide[,2:12]
 # winsorize to deal with beta ouliers
 
 # non-parametric correlations to deal with outliers
@@ -65,7 +66,7 @@ corrplot(clust_cor, cl.lim=c(-1,1),
          p.mat = 1-clust_cor, sig.level=0.75, insig = "blank")
 dev.off()
 # mh <- nfactors(clust_cor, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
-h.fa = fa.sort(psych::fa(just_rois, nfactors=2, rotate = "oblimin", fm = "pa"))
+h.fa = fa.sort(psych::fa(just_rois, nfactors=2, rotate = "varimax", fm = "pa"))
 fscores <- factor.scores(just_rois, h.fa)$scores
 h_wide$h_f1_fp <- fscores[,1]
 h_wide$h_f2_neg_paralimb <- fscores[,2]

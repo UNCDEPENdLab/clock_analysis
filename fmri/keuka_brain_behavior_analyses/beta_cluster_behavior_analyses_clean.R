@@ -644,8 +644,8 @@ Anova(mmb3hpe_hipp_r, '3')
 # bump refinement vs. more global search -- add rt_lag*rt_vmax interactions
 mb4hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
                                        v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH)^2 + 
-                          rt_lag_sc:last_outcome:rt_vmax_lag_sc:h_HippAntL_neg + 
-                          rt_lag_sc:last_outcome:rt_vmax_lag_sc:pe_PH +
+                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                          rt_lag_sc:last_outcome:pe_PH +
                           rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                           rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
                           (1|id/run), df)
@@ -655,8 +655,8 @@ screen.lmerTest(mb4hpe_hipp_rl, .05)
 
 mmb4hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
                                         v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH)^2 + 
-                           rt_lag_sc:last_outcome:rt_vmax_lag_sc:h_HippAntL_neg + 
-                           rt_lag_sc:last_outcome:rt_vmax_lag_sc:pe_PH +
+                           rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                           rt_lag_sc:last_outcome:pe_PH +
                            rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                            rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
                            (1|id/run), mdf)
@@ -737,12 +737,17 @@ mmn1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_
 summary(mmn1)
 Anova(mmn1, '3')
 
+# supplementary figure illustrating v_chosen by PH response to prove that PH explorers were rewarded.
 
-
+ggplot(df, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,4))
+setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/final/supp')
+pdf('score_by_PH.pdf', height = 3, width = 3)
+ggplot(df , aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'loess')
+dev.off()
 ######################
 # Uncertainty models #
 ######################
-
+# archival: these questions are now better addressed in coxme analyses
 # Sanity checks
 # ggplot(df, aes(run_trial, u_chosen, group = interaction(rewFunc, rt_lag>2000), color = rewFunc, lty = rt_lag>2000)) + geom_smooth()
 # ggplot(df, aes(run_trial, u_chosen, group = rewFunc, color = rewFunc)) + geom_smooth()
@@ -832,17 +837,24 @@ dev.off()
 
 # 
 # 
-# ## try cumulative reward sums instead
-# ldf <- ldf %>% group_by(ID, run) %>% mutate(cum_score = cumsum(score_csv)) %>% ungroup()
-# lmdf <- lmdf %>% group_by(ID, run) %>% mutate(cum_score = cumsum(score_csv))
-# # p1 <- ggplot(ldf, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3))+ facet_wrap(~rewFunc)
-# # p2 <- ggplot(lmdf, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3))+ facet_wrap(~rewFunc)
-# p1 <- ggplot(ldf, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'loess')+ facet_wrap(~rewFunc)
-# p2 <- ggplot(lmdf, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'loess')+ facet_wrap(~rewFunc)
-# setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/beta_uncertainty/')
-# pdf('score_by_PH.pdf', width = 6, height = 6)
-# ggarrange(p1,p2, ncol = 1, labels = c("fMRI",  "replication"))
-# dev.off()
+## try cumulative reward sums instead
+ldf <- ldf %>% group_by(ID, run) %>% mutate(cum_score = cumsum(score_csv)) %>% ungroup()
+lmdf <- lmdf %>% group_by(ID, run) %>% mutate(cum_score = cumsum(score_csv))
+# p1 <- ggplot(ldf, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3))+ facet_wrap(~rewFunc)
+# p2 <- ggplot(lmdf, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3))+ facet_wrap(~rewFunc)
+p1 <- ggplot(ldf, aes(run_trial, cum_score, color = pe_f2_hipp_resp)) + geom_smooth(method = 'loess')#+ facet_wrap(~rewFunc)
+p2 <- ggplot(lmdf, aes(run_trial, cum_score, color = pe_f2_hipp_resp)) + geom_smooth(method = 'loess')#+ facet_wrap(~rewFunc)
+setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/beta_uncertainty/')
+pdf('cum_score_by_PH.pdf', width = 6, height = 6)
+ggarrange(p1,p2, ncol = 1, labels = c("fMRI",  "replication"))
+dev.off()
+# they actually pay a price overall; try model predicting earnings
+m100 <- lmer(score_csv ~ trial_neg_inv_sc * pe_f2_hipp *rewFunc + (1|ID), ldf)
+summary(m100)
+anova(m100, '3')
+mm100 <- lmer(score_csv ~ trial_neg_inv_sc * pe_f2_hipp *rewFunc + (1|ID), lmdf)
+summary(mm100)
+anova(mm100, '3')
 # 
 # p1 <- ggplot(ldf, aes(run_trial, score_csv, color = h_HippAntL_resp)) + geom_smooth(method = 'loess')+ facet_wrap(~rewFunc)
 # p2 <- ggplot(lmdf, aes(run_trial, score_csv, color = h_HippAntL_resp)) + geom_smooth(method = 'loess')+ facet_wrap(~rewFunc)
