@@ -3,10 +3,6 @@ library(tidyverse)
 library(psych)
 library(corrplot)
 library(lme4)
-library(stargazer)
-
-#clock_folder <- "~/code/clock_analysis" #alex
-clock_folder <- "~/Data_Analysis/clock_analysis" #michael
 
 unsmoothed = F
 # get H betas
@@ -25,17 +21,17 @@ if (unsmoothed) {
   setwd('~/Box/SCEPTIC_fMRI/')
   meta <- read_csv("~/Box/SCEPTIC_fMRI/v_entropy_unsmoothed_cluster_metadata.csv")
   Hbetas <- read_csv("v_entropy_unsmoothed_subj_betas.csv")
-} else {
+}else {
   setwd('~/Box/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/')
   meta <- read_csv("~/Box/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy_cluster_metadata.csv")
   Hbetas <- read_csv("v_entropy_roi_betas.csv")
 }
 meta$label <- substr(meta$label,22,100)
 meta_overall <- meta[meta$l2_contrast == 'overall' & meta$l3_contrast == 'Intercept' & meta$model == 'Intercept-Age',]
-h <- as_tibble(Hbetas[Hbetas$l2_contrast == 'overall' & Hbetas$l3_contrast == 'Intercept' & Hbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<12)
+h <- as_tibble(Hbetas[Hbetas$l2_contrast == 'overall' & Hbetas$l3_contrast == 'Intercept' & Hbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<11)
 
 # head(merge(h,meta))
-rois <- distinct(meta_overall[,c(5,6,12)])
+rois <- distinct(meta_overall[,c(5,12)])
 
 # inspect distributions
 hrois <- inner_join(h,meta_overall)
@@ -48,7 +44,7 @@ h_wide <- spread(hrois,labeled_cluster,cope_value)
 # with group-fixed parameters we don't seem to need the winsorization step!!!
 # h_wide <- h_wide %>% mutate_if(is.double, winsor,trim = .075)
 
-just_rois <- h_wide[,2:12]
+just_rois <- h_wide[,2:11]
 # winsorize to deal with beta ouliers
 
 # non-parametric correlations to deal with outliers
@@ -56,7 +52,7 @@ clust_cor <- cor(just_rois,method = 'pearson')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 if (unsmoothed) {
   pdf("h_cluster_corr_fixed_unsmoothed.pdf", width=12, height=12)  
 } else {
@@ -69,7 +65,7 @@ corrplot(clust_cor, cl.lim=c(-1,1),
          p.mat = 1-clust_cor, sig.level=0.75, insig = "blank")
 dev.off()
 # mh <- nfactors(clust_cor, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
-h.fa = fa.sort(psych::fa(just_rois, nfactors=2, rotate = "varimax", fm = "pa"))
+h.fa = psych::fa(just_rois, nfactors=2, rotate = "oblimin", fm = "pa")
 fscores <- factor.scores(just_rois, h.fa)$scores
 h_wide$h_f1_fp <- fscores[,1]
 h_wide$h_f2_neg_paralimb <- fscores[,2]
@@ -77,10 +73,6 @@ h_wide$h_HippAntL <- h_wide$`9 Left Hippocampus`
 if (unsmoothed) {
   h_wide$h_vmPFC <- h_wide$`5 Left Mid Orbital Gyrus`
 } else {h_wide$h_vmPFC <- h_wide$`6`}
-hf <- as_tibble(cbind(rownames(unclass(round(h.fa$Structure, digits = 3))),unclass(round(h.fa$Structure, digits = 3)))) %>% arrange(desc(PA1) ) %>%  
-  rename(region = V1, `Factor 1` = PA1, `Factor 2` = PA2)
-hf$region <- gsub('[0-9;]+', '', hf$region)
-stargazer(hf, type = 'html', out = '~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/supp/h_fa_structure.html', summary = F)
 
 
 h_wide <- subset(h_wide, select = c("feat_input_id","h_f1_fp","h_f2_neg_paralimb", "h_HippAntL"))
@@ -132,7 +124,7 @@ peclust_cor <- corr.test(pejust_rois,method = 'pearson', adjust = 'none')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 if (unsmoothed) {
   pdf("pe_cluster_corr_fixed_unsmoothed.pdf", width=12, height=12)
 } else {pdf("pe_cluster_corr_fixed.pdf", width=12, height=12)}
@@ -173,7 +165,7 @@ pe.fa = psych::fa(pejust_rois, nfactors=2, rotate = "varimax", fm = "pa")
 # summary(mcfa_cor, standardized=TRUE)
 # anova(mcfa,mcfa_cor)
 
-pe.fa = fa.sort(psych::fa(pejust_rois, nfactors=2))
+pe.fa = psych::fa(pejust_rois, nfactors=2)
 pefscores <- factor.scores(pejust_rois, pe.fa)$scores
 pe_wide$pe_f1_cort_str <- pefscores[,1]
 pe_wide$pe_f2_hipp <- pefscores[,2]
@@ -181,28 +173,79 @@ pe_wide$pe_PH <- scale(rowMeans(cbind(pe_wide$`10 Left Hippocampus`, pe_wide$`7 
 pe_wide$pe_PH_l <- scale(pe_wide$`10 Left Hippocampus`)
 pe_wide$pe_PH_r <- scale(pe_wide$`7 Right Hippocampus`)
 
-# save loadings
-setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/supp')
-pf <- as_tibble(cbind(rownames(unclass(round(pe.fa$Structure, digits = 3))),unclass(round(pe.fa$Structure, digits = 3)))) %>% arrange(desc(MR1) ) %>%  
-  rename(region = V1, `Factor 1` = MR1, `Factor 2` = MR2)
-pf$region <- gsub('[0-9;]+', '', pf$region)
-stargazer(pf, type = 'html', out = 'pe_fa_structure.html', summary = F)
-
- if (unsmoothed) {
+if (unsmoothed) {
   pe_wide$pe_PH <- (pe_wide$`7 Right Hippocampus` + pe_wide$`10 Left Hippocampus`)/2
   hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH")])
 } else {  hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r")])  }
 
 
+
+# add value betas -- use v_max as theoretically interesting and unbiased by choice
+setwd('~/Box/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_max-preconvolve_fse_groupfixed/v_max/')
+vmeta <- read_csv("v_max_cluster_metadata.csv")
+vmeta$label <- substr(vmeta$label,21,100)
+vmeta_overall <- vmeta[vmeta$l2_contrast == 'overall' & vmeta$l3_contrast == 'Intercept' & vmeta$model == 'Intercept-Age',]
+vbetas <- read_csv("v_max_roi_betas.csv")
+v <- as.tibble(vbetas[vbetas$l2_contrast == 'overall' & vbetas$l3_contrast == 'Intercept' & vbetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<15)
+vrois_list <- distinct(vmeta_overall[,c(5,12)])
+
+vrois <- inner_join(v,vmeta_overall)
+vrois$labeled_cluster <- paste(vrois$cluster_number,vrois$label)
+vmeta_overall$labeled_cluster <- paste(vmeta_overall$cluster_number,vmeta_overall$label)
+
+v_labeled <- inner_join(v,vrois_list)
+v_labeled$labeled_cluster <- paste(v_labeled$cluster_number,v_labeled$label)
+v_labeled <- select(v_labeled,c(1,3,5))
+
+
+
+# inspect distributions
+vrois <- inner_join(v_labeled,vmeta_overall)
+ggplot(vrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
+v_wide <- spread(v_labeled,labeled_cluster,cope_value)
+# try v winsorization given the left outliers
+# v_wide <- v_wide %>% mutate_if(is.double, winsor,trim = .075)
+
+# few outliers, let's hold off on winsorizing for now
+# h_wide <- h_wide %>% mutate_if(is.double, winsor,trim = .075)
+
+# I am worried about these scores: a lot of the V+ f2 variance comes from fusiform gyri (4,11)
+# let's redo using only fronto-striatal clusters (vmPFC - 10, BG - 2, vlPFC - 9,14) removing fusiform (4,11)
+# and cerebellar (8) clusters
+v_wide <- subset(v_wide, select = -c(`11  Right Inferior Temporal Gyrus`, `4  Left Inferior Temporal Gyrus` ,`8  Right Cerebellum (Crus 2)`))
+v_wide <- v_wide %>% mutate_if(is.double, winsor,trim = .075)
+
+
+vjust_rois <- v_wide[,2:ncol(v_wide)]
+# winsorize to deal with beta ouliers
+
+# non-parametric correlations to deal with outliers
+# parametric correlations on winsorised betas
+vclust_cor <- cor(vjust_rois,method = 'pearson')
+
+mv <- nfactors(vclust_cor, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
+v.fa = psych::fa(vjust_rois, nfactors=2, rotate = "oblimin", fm = "pa")
+vfscores <- factor.scores(vjust_rois, v.fa)$scores
+v_wide$v_f1_neg_cog <- vfscores[,1]
+v_wide$v_f2_paralimb <- vfscores[,2]
+
+vhpe_wide <- inner_join(subset(v_wide, select = c("feat_input_id","v_f1_neg_cog","v_f2_paralimb")),
+                      hpe_wide, by = "feat_input_id")
+# vh_wide <- subset(h_wide, select = c("feat_input_id","h_f1_fp","h_f2_neg_paralimb", "h_HippAntL"))
+
+# redacted the D_AUC and KLD parts
+
+
+
 #####
 # add ids
 map_df  <- as.tibble(read.csv("~/Box/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy-Intercept_design.txt", sep=""))
-pc_scores <- inner_join(hpe_wide,map_df[,c(1:2,4:15)])
+pc_scores <- inner_join(vhpe_wide,map_df[,c(1:2,4:15)])
 pc_scores$id <- pc_scores$ID
 
 
 # get trial_level data
-trial_df <- read_csv(file.path(clock_folder, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
+trial_df <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")
 # trial_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_mfx_trial_statistics.csv.gz")
 # u_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_ureset_mfx_trial_statistics.csv.gz")
 # use fixed-parameter U
@@ -228,7 +271,7 @@ sum_df <- trial_df %>% group_by(id) %>% dplyr::summarize(total_earnings = sum(sc
 beta_sum <- inner_join(pc_scores,sum_df)
 
 # model parameters
-params <- read_csv(file.path(clock_folder, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv"))
+params <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")
 sub_df <- inner_join(beta_sum,params)
 sub_df$id <- sub_df$ID
 if (unsmoothed) {
@@ -241,7 +284,7 @@ params_beta <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb","h_HippAntL",
                          "total_earnings", "LL", "alpha", "gamma", "beta")]}
 param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
-setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 
 # merge into trial-level data
 df <- inner_join(trial_df,sub_df, by = "id")
@@ -288,7 +331,7 @@ bdf <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb",
                  "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]}
 b_cor <- corr.test(bdf,method = 'pearson', adjust = 'none')
 
-setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
+setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 pdf("between_subject_v_h_kf_pe_beh_corr_fixed.pdf", width=12, height=12)
 corrplot(b_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -310,15 +353,6 @@ df$last_outcome <- NA
 df$last_outcome[df$omission_lag] <- 'Omission'
 df$last_outcome[!df$omission_lag] <- 'Reward'
 df$last_outcome <- relevel(as.factor(df$last_outcome), ref = "Reward")
-
-# circular, but just check to what extent each area conforms to SCEPTIC-SM: looks like there is an interaction, both need to be involved again
-# ggplot(df, aes(run_trial, v_entropy_wi, color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "loess") #+ facet_wrap(~gamma>0)
-# # I think this means again that H estimates are more precise for high-paralimbic people, esp. late in learning
-# ggplot(df, aes( v_entropy_wi,log(rt_swing), color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "gam") + facet_wrap(~learning_epoch)
-# ggplot(df, aes( v_max_wi,log(rt_swing), color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "gam") + facet_wrap(~run_trial > 10)
-# 
-# Okay, some behavioral relevance of KLD
-# ggplot(df, aes(run_trial, v_entropy_wi, color = k_f1_all_pos_resp)) + geom_smooth(method = "loess")
 
 # add MEG behavioral data
 # mtdf = MEG trial df
@@ -376,7 +410,6 @@ mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_chang
 #     id = as.integer(substr(id, 1, 5))) 
 
 mdf <- inner_join(mdf,mu_df, by = c("id", "run", "trial"))
-
 
 if (unsmoothed) {
   save(file = 'trial_df_and_vh_pe_clusters_u_unsmoothed.Rdata', df, mdf)
