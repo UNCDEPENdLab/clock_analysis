@@ -4,6 +4,9 @@ library(psych)
 library(corrplot)
 library(lme4)
 
+#clock_folder <- "~/code/clock_analysis" #alex
+clock_folder <- "~/Data_Analysis/clock_analysis" #michael
+
 unsmoothed = F
 # get H betas
 sort_names <- function(data) {
@@ -21,7 +24,7 @@ if (unsmoothed) {
   setwd('~/Box/SCEPTIC_fMRI/')
   meta <- read_csv("~/Box/SCEPTIC_fMRI/v_entropy_unsmoothed_cluster_metadata.csv")
   Hbetas <- read_csv("v_entropy_unsmoothed_subj_betas.csv")
-}else {
+} else {
   setwd('~/Box/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/')
   meta <- read_csv("~/Box/skinner/projects_analyses/SCEPTIC/fMRI_paper/signals_review/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy_cluster_metadata.csv")
   Hbetas <- read_csv("v_entropy_roi_betas.csv")
@@ -52,7 +55,7 @@ clust_cor <- cor(just_rois,method = 'pearson')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
 if (unsmoothed) {
   pdf("h_cluster_corr_fixed_unsmoothed.pdf", width=12, height=12)  
 } else {
@@ -124,7 +127,7 @@ peclust_cor <- corr.test(pejust_rois,method = 'pearson', adjust = 'none')
 # parametric correlations on winsorised betas
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
 if (unsmoothed) {
   pdf("pe_cluster_corr_fixed_unsmoothed.pdf", width=12, height=12)
 } else {pdf("pe_cluster_corr_fixed.pdf", width=12, height=12)}
@@ -187,7 +190,7 @@ pc_scores$id <- pc_scores$ID
 
 
 # get trial_level data
-trial_df <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")
+trial_df <- read_csv(file.path(clock_folder, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
 # trial_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_mfx_trial_statistics.csv.gz")
 # u_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_ureset_mfx_trial_statistics.csv.gz")
 # use fixed-parameter U
@@ -213,7 +216,7 @@ sum_df <- trial_df %>% group_by(id) %>% dplyr::summarize(total_earnings = sum(sc
 beta_sum <- inner_join(pc_scores,sum_df)
 
 # model parameters
-params <- read_csv("~/code/clock_analysis/fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")
+params <- read_csv(file.path(clock_folder, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv"))
 sub_df <- inner_join(beta_sum,params)
 sub_df$id <- sub_df$ID
 if (unsmoothed) {
@@ -226,7 +229,7 @@ params_beta <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb","h_HippAntL",
                          "total_earnings", "LL", "alpha", "gamma", "beta")]}
 param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
 
 # merge into trial-level data
 df <- inner_join(trial_df,sub_df, by = "id")
@@ -273,7 +276,7 @@ bdf <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb",
                  "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]}
 b_cor <- corr.test(bdf,method = 'pearson', adjust = 'none')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
 pdf("between_subject_v_h_kf_pe_beh_corr_fixed.pdf", width=12, height=12)
 corrplot(b_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',

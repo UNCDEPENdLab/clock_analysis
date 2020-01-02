@@ -14,12 +14,15 @@ library(sjstats)
 library(sjPlot)
 library(emmeans)
 library(cowplot)
-source('~/code/Rhelpers/screen.lmerTest.R')
-source('~/code/Rhelpers/vif.lme.R')
+#source('~/code/Rhelpers/screen.lmerTest.R')
+#source('~/code/Rhelpers/vif.lme.R')
 # library(stringi)
 
+clock_folder <- "~/Data_Analysis/clock_analysis" #michael
+#clock_folder <- "~/code/clock_analysis" #alex
+
 # source('~/code/Rhelpers/')
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
 
 ### load data
 # load('trial_df_and_vhdkfpe_clusters.Rdata')
@@ -94,7 +97,7 @@ ah
 dev.off()
 
 ## PH replication plot
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/plots/'))
 ph <- plot_models(mb3hpe_hipp,mmb3hpe_hipp, rm.terms = mterms[c(-22, -39)], m.labels = c("fMRI", "replication"),
                   show.values = T,  std.est = "std2", legend.title = "Session", vline.color = "slategray3",
                   wrap.labels = 15,  axis.labels = c("Previous RT * Omission * Post. hippocampal PE response","Previous RT * Post. hippocampal PE response"),
@@ -111,17 +114,48 @@ em1$study = 'fMRI'
 em2 <- as_tibble(emtrends(mmb3hpe_hipp, var = "rt_lag_sc", specs = c("pe_f2_hipp", "last_outcome"), at = list(pe_f2_hipp = c(-1.12, 1.07)), options = list()))
 em2$study = 'Replication'
 em1 <- rbind(em1, em2)
-p1 <- ggplot(em1, aes(last_outcome, rt_lag_sc.trend, lty = as.factor(pe_f2_hipp))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
-  theme_bw() + facet_wrap(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "PH RPE\nresponse") +
-  theme(axis.title.x=element_blank()) + scale_y_reverse(limits = c(.6, 0)) 
+p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(pe_f2_hipp))) + 
+  #shape = as.factor(pe_f2_hipp), 
+#p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
+  #scale_shape_manual(values=c(15,16), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("PH RPE\nresponse", palette="Set1", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("PH RPE\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "PH RPE\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.6, 0)) 
+ggsave("p1.pdf", p1, width=5, height=4)
+
 em3 <- as_tibble(emtrends(mb3hpe_hipp, var = "rt_lag_sc", specs = c("h_HippAntL_neg", "last_outcome"), at = list(h_HippAntL_neg = c(-.1, .37)), options = list()))
 em3$study = 'fMRI'
 em4 <- as_tibble(emtrends(mmb3hpe_hipp, var = "rt_lag_sc", specs = c("h_HippAntL_neg", "last_outcome"), at = list(h_HippAntL_neg = c(-.1, .37)), options = list()))
 em4$study = 'Replication'
 em2 <- rbind(em3, em4)
-p2 <- ggplot(em2, aes(last_outcome, rt_lag_sc.trend, lty = as.factor(h_HippAntL_neg))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
-  theme_bw() + facet_wrap(~study) +  ylab("RT swings (AU)\n Small <---------> Large") + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "AH global max\nresponse") +
-  theme(axis.title.x=element_blank()) + scale_y_reverse(limits = c(.6, 0)) 
+# p2 <- ggplot(em2, aes(last_outcome, rt_lag_sc.trend, lty = as.factor(h_HippAntL_neg))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
+#   theme_bw() + facet_wrap(~study) +  ylab("RT swings (AU)\n Small <---------> Large") + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "AH global max\nresponse") +
+#   theme(axis.title.x=element_blank()) + scale_y_reverse(limits = c(.6, 0)) 
+
+p2 <- ggplot(em2, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(h_HippAntL_neg))) + 
+  #shape = as.factor(h_HippAntL_neg), 
+  #p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
+  #scale_shape_manual(values=c(19,23), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("AH global max\nresponse", palette="Dark2", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("AH global max\nresponse", values=c("#403202", "#e2b407"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "AH global max\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.6, 0)) 
+
 ggarrange(p1,p2)
 
 em5 <- as_tibble(emtrends(mb3hpe_hipp, var = "rt_vmax_lag_sc", specs = c("pe_f2_hipp", "trial_neg_inv_sc"), at = list(pe_f2_hipp = c(-1.12, 1.07), trial_neg_inv_sc = c(-.7, 0.44)), options = list()))
@@ -129,21 +163,61 @@ em5$study = 'fMRI'
 em6 <- as_tibble(emtrends(mmb3hpe_hipp, var = "rt_vmax_lag_sc", specs = c("pe_f2_hipp", "trial_neg_inv_sc"), at = list(pe_f2_hipp = c(-1.12, 1.07), trial_neg_inv_sc = c(-.7, 0.44)), options = list()))
 em6$study = 'Replication'
 em3 <- rbind(em5,em6)
-p3 <- ggplot(em3, aes(as.factor(trial_neg_inv_sc), rt_vmax_lag_sc.trend, lty = as.factor(pe_f2_hipp))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
-  theme_bw() + facet_wrap(~study) +  ylab("Convergence on\nbest RT (AU)") + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "PH RPE\nresponse") +
+# p3 <- ggplot(em3, aes(as.factor(trial_neg_inv_sc), rt_vmax_lag_sc.trend, lty = as.factor(pe_f2_hipp))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
+#   theme_bw() + facet_wrap(~study) +  ylab("Convergence on\nbest RT (AU)") + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "PH RPE\nresponse") +
+#   scale_x_discrete(name ="Trial", labels=c("-0.7" = "5", "0.44" = "50")) + scale_y_continuous(limits = c(.05, .3))
+
+p3 <- ggplot(em3, aes(x=as.factor(trial_neg_inv_sc), y=rt_vmax_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(pe_f2_hipp))) + 
+  #shape = as.factor(pe_f2_hipp), 
+  #p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+ ylab("Convergence on\nbest RT (AU)") +
+  #scale_shape_manual(values=c(15,16), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("PH RPE\nresponse", palette="Set1", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("PH RPE\nresponse", values=c("#1b3840", "#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "PH RPE\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
   scale_x_discrete(name ="Trial", labels=c("-0.7" = "5", "0.44" = "50")) + scale_y_continuous(limits = c(.05, .3))
+
+
+
 em7 <- as_tibble(emtrends(mb3hpe_hipp, var = "rt_vmax_lag_sc", specs = c("h_HippAntL_neg", "trial_neg_inv_sc"), at = list(h_HippAntL_neg = c(-.1, .37), trial_neg_inv_sc = c(-.7, 0.44)), options = list()))
 em7$study = 'fMRI'
 em8 <- as_tibble(emtrends(mmb3hpe_hipp, var = "rt_vmax_lag_sc", specs = c("h_HippAntL_neg", "trial_neg_inv_sc"), at = list(h_HippAntL_neg = c(-.1, .37), trial_neg_inv_sc = c(-.7, 0.44)), options = list()))
 em8$study = 'Replication'
 em4 <- rbind(em7, em8)
-p4 <- ggplot(em4, aes(as.factor(trial_neg_inv_sc), rt_vmax_lag_sc.trend, lty = as.factor(h_HippAntL_neg))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
-  theme_bw() + facet_wrap(~study) + ylab("Convergence on\nbest RT (AU)")  + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "AH global max\nresponse")  +
+# p4 <- ggplot(em4, aes(as.factor(trial_neg_inv_sc), rt_vmax_lag_sc.trend, lty = as.factor(h_HippAntL_neg))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
+#   theme_bw() + facet_wrap(~study) + ylab("Convergence on\nbest RT (AU)")  + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "AH global max\nresponse")  +
+#   scale_x_discrete(name ="Trial", labels=c("-0.7" = "5", "0.44" = "50")) + scale_y_continuous(limits = c(.05, .3))
+
+p4 <- ggplot(em4, aes(x=as.factor(trial_neg_inv_sc), y=rt_vmax_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(h_HippAntL_neg))) + 
+  #shape = as.factor(h_HippAntL_neg), 
+  #p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+  ylab("Convergence on\nbest RT (AU)") +
+  #scale_shape_manual(values=c(19,23), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("AH global max\nresponse", palette="Dark2", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("AH global max\nresponse", values=c("#403202", "#e2b407"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "AH global max\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
   scale_x_discrete(name ="Trial", labels=c("-0.7" = "5", "0.44" = "50")) + scale_y_continuous(limits = c(.05, .3))
+
+
 setwd("~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/")
-pdf("beta_PH_AH_behavior.pdf", height = 4.5, width = 9)
-ggarrange(p1,p2,p3,p4)
-dev.off()
+
+#ggarrange(p1,p2,p3,p4)
+vv <- cowplot::plot_grid(p1, p2, p3, p4, nrow=2, align="hv")
+ggsave("beta_PH_AH_behavior.pdf", vv, height = 4.5, width = 9, useDingbats=FALSE)
+
+#ggsave("beta_PH_AH_behavior_1.pdf", p1, height=3, width=5, useDingbats=FALSE)
 
 
 # PH PE cluster suppresses the win-stay-lose-switch behaviors
@@ -185,7 +259,7 @@ mmb3hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_
                                    rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                                    rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
                                    (1|id/run), mdf)
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/tables/'))
 
 stargazer(mb3hpe_hipp_lme4, mmb3hpe_hipp_lme4, type="html", out="hippo_mb_lab.htm", report = "vcs*",
           digits = 1,single.row=TRUE,omit.stat = "bic",
@@ -444,7 +518,7 @@ mmf3hpe_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_out
                               rt_lag_sc:last_outcome:h_HippAntL_neg + 
                               rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc + (1|id/run), mdf)
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/tables/'))
 # NB: stargazer only runs with lmer, not lmerTest objects
 stargazer(mf3hpe_lme4, mmf3hpe_lme4, type="html", out="hippo_mf.htm", report = "vcs*",
           digits = 1,single.row=TRUE,omit.stat = "bic",
@@ -462,7 +536,7 @@ summary(m0 <-  lme4::lmer(rt_csv_sc ~  rt_lag_sc*last_outcome*pe_f2_hipp +
 summary(mm0 <-  lme4::lmer(rt_csv_sc ~  rt_lag_sc*last_outcome*pe_f2_hipp +
                              rt_vmax_lag_sc*trial_neg_inv_sc*h_HippAntL_neg + 
                              (1|id/run), mdf))
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/tables/'))
 stargazer(m0, mm0, type="html", out="hippo_mb_no_covariates.htm", report = "vcs*",
           digits = 1,single.row=TRUE,omit.stat = "bic",
           column.labels = c("fMRI session", "Out-of-session replication"),
@@ -592,7 +666,7 @@ screen.lmerTest(mmb4hpe_hipp_rl, .05)
 
 ## PH replication plot for mean of R and left
 mterms <- names(fixef(mb3hpe_hipp_rl))
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/plots/'))
 ph <- plot_models(mb3hpe_hipp_rl,mmb3hpe_hipp_rl, rm.terms = mterms[c(-22, -39)], m.labels = c("fMRI", "replication"),
                   show.values = T,  std.est = "std2", legend.title = "Session", vline.color = "slategray3",
                   wrap.labels = 15,  axis.labels = c("Previous RT * Omission * Post. hippocampal PE response","Previous RT * Post. hippocampal PE response"),
@@ -643,7 +717,7 @@ vars <- df %>% select(u_chosen, u_chosen_change, u_chosen_quantile, u_chosen_qua
                       run_trial, magnitude, probability,rt_csv, rt_lag, rt_vmax_lag)
 u_cor <- corr.test(vars,method = 'pearson', adjust = 'none')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/plots'))
 pdf("u_corr_reset.pdf", width=12, height=12)
 corrplot(u_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -756,7 +830,7 @@ screen.lmerTest(mumb3v, .05)
 # summary(mumb3v)
 
 # plot uncertainty change following long vs short RTs
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/plots'))
 p1 <- ggplot(df, aes(rt_lag, u_chosen, color = pe_f2_hipp_resp)) + geom_smooth(method = "gam", formula = y~splines::ns(x,2)) + facet_wrap(~rewFunc)
 p2 <- ggplot(mdf, aes(rt_lag, u_chosen, color = pe_f2_hipp_resp)) + geom_smooth(method = "gam", formula = y~splines::ns(x,2)) + facet_wrap(~rewFunc)
 # pdf('uncertainty_change_prev_RT_by_PH.pdf', height = 6, width = 12)
