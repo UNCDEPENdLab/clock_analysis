@@ -18,17 +18,17 @@ library(car)
 library(data.table)
 library(emmeans)
 library(wesanderson)
-source('~/code/Rhelpers/screen.lmerTest.R')
-source('~/code/Rhelpers/vif.lme.R')
+#source('~/code/Rhelpers/screen.lmerTest.R')
+#source('~/code/Rhelpers/vif.lme.R')
 
 #####################
 reprocess = F
 unsmoothed = F
-newmask = T
-smooth_in_mask = F
+newmask = F
+smooth_in_mask = T
 
-repo_directory <- "~/code/clock_analysis"
-# repo_directory <- "~/Data_Analysis/clock_analysis"
+#repo_directory <- "~/code/clock_analysis"
+repo_directory <- "~/Data_Analysis/clock_analysis"
 
 #load the data, and reprocess if requested
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/load_medusa_data.R"))
@@ -125,14 +125,17 @@ pdf('3a_smoothed_ramps_cobra_percent_anderson.pdf', width = 4, height = 2.5)
 # ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, decon_interp, color = bin_num)) + geom_smooth(method = "loess", se = F) + scale_color_viridis_d() + theme_dark() + facet_wrap(~entropy_lag)
 ggplot(rvdf[!is.na(rvdf$entropy_lag),], aes(evt_time, `Hippocampal response`, color = as.numeric(bin_center_z), group = as.numeric(bin_center_z))) + 
   geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3), se = F, size = .75)  + 
-  facet_wrap(~entropy) + theme(legend.position = "none") + geom_vline(xintercept = 0, lty = 'dashed', color = 'white', size = 1) + xlab('Time') + 
-  scale_x_continuous(breaks = c(-2,0,2)) + ylab('Hippocampal response') + 
-  scale_color_gradientn(colors = pal, guide = 'none') +   scale_color_gradientn(colors = pal, guide = 'none') + 
-  geom_text(aes(x=-.5, y = .485, label = "RT(Vmax)"), angle = 90, color = "white", size = 2) +
+  facet_wrap(~entropy) + theme(legend.position = "none") + geom_vline(xintercept = 0, lty = 'dashed', color = 'white', size = 1) + xlab('Time (seconds)') + 
+  scale_x_continuous(breaks = c(-2,0,2)) + ylab('Hippocampal response (AU)') + 
+  scale_color_gradientn(colors = pal, guide = 'none') + 
+  #geom_text(aes(x=-.5, y = .485, label = "RT(Vmax)"), angle = 90, color = "white", size = 2) + #this mysteriously makes the PDF load super-slowly on my ailing Mac
+  theme_bw(base_size=13) +
   theme(legend.title = element_blank(),
         panel.grid.major = element_line(colour = "grey45"), 
         panel.grid.minor = element_line(colour = "grey45"), 
-        panel.background = element_rect(fill = 'grey40'))
+        panel.background = element_rect(fill = 'grey40'),
+        axis.title.y = element_text(margin=margin(r=6)),
+        axis.title.x = element_text(margin=margin(t=6)))
 dev.off()
 
 # Main Fig. 3B (ramps, linear slice, general time)
@@ -169,12 +172,16 @@ ggplot(em2f, aes(evt_time, `Hippocampal response`, color = bin_center_z, group =
   # geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge(width = .5), size = .5) + 
   geom_line(position = position_dodge(width = .5), size = 1) +  facet_wrap(~entropy) + theme(legend.position = "none") +
   geom_linerange(aes(ymin = emmean - SE, ymax = emmean + SE),position = position_dodge(width = .5),  color = "grey80") + 
-  geom_vline(xintercept = 0, lty = 'dashed', color = 'white', size = 1)+ xlab('Time, seconds') + ylab('Hippocampal response') +
-  scale_color_gradientn(colors = pal, guide = 'none') + geom_text(aes(x=-.5, y = .485, label = "RT(Vmax)"), angle = 90, color = "white", size = 2) +
+  geom_vline(xintercept = 0, lty = 'dashed', color = 'white', size = 1)+ xlab('Time (seconds)') + ylab('Hippocampal response (AU)') +
+  scale_color_gradientn(colors = pal, guide = 'none') + 
+  #geom_text(aes(x=-.5, y = .485, label = "RT(Vmax)"), angle = 90, color = "white", size = 2) +
+  theme_bw(base_size=13) +
   theme(legend.title = element_blank(),
         panel.grid.major = element_line(colour = "grey45"), 
         panel.grid.minor = element_line(colour = "grey45"), 
-        panel.background = element_rect(fill = 'grey40'))
+        panel.background = element_rect(fill = 'grey40'),
+        axis.title.y = element_text(margin=margin(r=6)),
+        axis.title.x = element_text(margin=margin(t=6)))
 dev.off()
 
 
@@ -251,22 +258,27 @@ emt <- emt %>% mutate(`Hippocampal response` = emmean, epoch = case_when(
   trial_f == 5 ~ '41-50',
 ))
 # Fig. 4D
-# pdf("../fig_4/4d_trial_hipp_AH_PH_bin6_f.pdf", width = 3, height = 3)
-pdf("../supp/supp4d_trial_hipp_AH_PH_bin6_f.pdf", width = 3, height = 3)
+#pdf("../supp/supp4d_trial_hipp_AH_PH_bin6_f.pdf", width = 3, height = 3)
 
 # ggplot(rtvmax_comb,aes(run_trial,decon_interp, color = axis_bin, lty = reward)) + geom_smooth(method = "gam", formula = y ~ splines::ns(x,3),  se = F) + scale_color_viridis_d() + theme_dark()
-ggplot(emt, aes(epoch, `Hippocampal response`, color = as.numeric(bin6_f), group = as.numeric(bin6_f))) + 
+fig4d <- ggplot(emt, aes(epoch, `Hippocampal response`, color = as.numeric(bin6_f), group = as.numeric(bin6_f))) + 
   # geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge(width = .5), size = .5) + geom_line(size = 1.5,position = position_dodge(width = .5)) +  theme(legend.position = "none") +
   # geom_linerange(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge(width = .5), size = .5, color = "grey80") +  geom_line(size = 1.5,position = position_dodge(width = .5)) +  theme(legend.position = "none") +
-  geom_linerange(aes(ymin = emmean - SE, ymax = emmean + SE),position = position_dodge(width = .5), size = .5, color = "grey80")  +  geom_line(size = 1,position = position_dodge(width = .5)) +  theme(legend.position = "none") +
-    xlab('Trial') + ylab('Hippocampal response') +
+  geom_line(size = 1,position = position_dodge(width = .5)) +  theme(legend.position = "none") +
+  geom_linerange(aes(ymin = emmean - SE, ymax = emmean + SE), position = position_dodge(width = .5), size = .5, color = "grey80") +
+  geom_point(position = position_dodge(width = .5), size = .5, color = "black", shape=1) +
+  xlab('Trial (binned)') + ylab('Hippocampal response (AU)') +
   scale_color_gradientn(colors = pal, guide = 'none') + 
+  theme_bw(base_size=13) +
   theme(legend.title = element_blank(),
         panel.grid.major = element_line(colour = "grey45"), 
         panel.grid.minor = element_line(colour = "grey45"), 
-        panel.background = element_rect(fill = 'grey40'))
-dev.off()
+        panel.background = element_rect(fill = 'grey40'),
+        axis.title.y = element_text(margin=margin(r=6)),
+        axis.title.x = element_text(margin=margin(t=6)),
+        axis.text.x = element_text(size=10)) #condense further in illustrator
 
+ggsave("../fig_4/4d_trial_hipp_AH_PH_bin6_f.pdf", fig4d, width = 3, height = 3, useDingbats=FALSE)
 
 # post-hoc for trial * bin
 em <- emmeans(tm1,specs = c("trial_f", "bin6_f"))
@@ -277,18 +289,23 @@ CLD = emmeans::CLD(em,
           adjust="tukey")
 
 # Fig. 4C
-# pdf("../fig_4/4c_fb_hipp_AP_trial_anderson.pdf", width = 3, height = 3)
-pdf("../supp/supp4c_fb_hipp_AP_trial_anderson.pdf", width = 3, height = 3)
+pdf("../fig_4/4c_fb_hipp_AP_trial_anderson.pdf", width = 3, height = 3)
+#pdf("../supp/supp4c_fb_hipp_AP_trial_anderson.pdf", width = 3, height = 3)
 
 ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(run_trial, decon_interp, color = bin6, group = bin6)) + 
-  geom_smooth(method = "gam", formula = y~splines::ns(x,3),  se = T, size = 1) + 
+  geom_smooth(method = "gam", formula = y~splines::ns(x,3),  se = F, size = 1.2) + 
   scale_color_gradientn(colors = pal, guide = 'none') + 
-  xlab('Trial') + ylab('Hippocampal response') +
+  xlab('Trial') + ylab('Hippocampal response (AU)') +
+  theme_bw(base_size=13) +
   theme(legend.title = element_blank(),
         panel.grid.major = element_line(colour = "grey45"), 
         panel.grid.minor = element_line(colour = "grey45"), 
-        panel.background = element_rect(fill = 'grey40'))
+        panel.background = element_rect(fill = 'grey40'),
+        axis.title.y = element_text(margin=margin(r=6)),
+        axis.title.x = element_text(margin=margin(t=6))) +
+  scale_y_continuous(breaks=c(0.49, 0.50, 0.51))
 dev.off()
+
 # inspect all data that go into this analysis -- nothing too worrisome, but hard to read.  Some subjects have constricted evt_time ranges (responded mostly early).
 # also, more variability in AH than in PH
 pdf('ind_ramps_cobra_percent.pdf', width = 30, height = 30)
@@ -455,18 +472,22 @@ em6 <- as.data.frame(emmeans(ee6, "bin_center_z", by = c( "evt_time_f", "reward"
 # 
 setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/final/fig_4')
 pal = wes_palette("Zissou1", 24, type = "continuous")
-pdf('4b_ medusa_feedback_ph_ah_reward_anderson.pdf', height = 2.5, width = 4)
-ggplot(em6, aes(as.numeric(evt_time_f), emmean, color = bin_center_z, group = bin_center_z)) + 
+fig4b <- ggplot(em6, aes(as.numeric(evt_time_f), emmean, color = bin_center_z, group = bin_center_z)) + 
   # geom_point(position = position_dodge2(width = 1)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge2(width = .2)) + geom_line(position = position_dodge2(width = 1)) + facet_wrap(.~reward_text) +
-  geom_linerange(aes(ymin = emmean - SE, ymax = emmean + SE),position = position_dodge2(width = 1), color = 'grey80') + geom_line(position = position_dodge2(width = 1), size = 1) + facet_wrap(.~reward_text) +
-  
-    scale_color_gradientn(colors = pal, guide = 'none') + xlab("Time after feedback, seconds") + ylab("Hippocampal response") +
+  geom_line(position = position_dodge2(width = 1), size = 1) + facet_wrap(.~reward_text) +
+  geom_linerange(aes(ymin = emmean - SE, ymax = emmean + SE),position = position_dodge2(width = 1), color = 'grey80') + 
+  geom_point(position = position_dodge(width = 1), size = .5, color = "black", shape=1) +
+  scale_color_gradientn(colors = pal, guide = 'none') + xlab("Time after feedback (seconds)") + ylab("Hippocampal response (AU)") +
+  theme_bw(base_size=13) +
   theme(legend.title = element_blank(),
         panel.grid.major = element_line(colour = "grey45"), 
         panel.grid.minor = element_line(colour = "grey45"), 
-        panel.background = element_rect(fill = 'grey40'))
+        panel.background = element_rect(fill = 'grey40'),
+        axis.title.y = element_text(margin=margin(r=6)),
+        axis.title.x = element_text(margin=margin(t=6))) +
+  scale_x_continuous(breaks=c(0, 2, 4, 6, 8, 10))
 
-dev.off()
+ggsave('4b_medusa_feedback_ph_ah_reward_anderson.pdf', fig4b, height = 3, width = 5, useDingbats=FALSE)
 
 # smoothed raw data
 fb_comb <- fb_comb %>%  mutate(reward_text = case_when(
@@ -477,11 +498,15 @@ fb_comb <- fb_comb %>%  mutate(reward_text = case_when(
 pdf('4a_medusa_feedback_ph_ah_reward_anderson_raw_smoothed.pdf', height = 3, width = 5)
 ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(as.numeric(evt_time_f), decon_interp, group = bin_center_z, color = bin_center_z)) + 
   geom_smooth(method = "gam", formula = y~splines::ns(x,3), se = F, size = .75) +   
-  scale_color_gradientn(colors = pal, guide = 'none') + xlab("Time after feedback, seconds") + ylab("Hippocampal response") +
+  scale_color_gradientn(colors = pal, guide = 'none') + xlab("Time after feedback (seconds)") + ylab("Hippocampal response (AU)") +
+  theme_bw(base_size=13) +
   theme(legend.title = element_blank(),
         panel.grid.major = element_line(colour = "grey45"), 
         panel.grid.minor = element_line(colour = "grey45"), 
-        panel.background = element_rect(fill = 'grey40')) + facet_wrap(~reward_text)
+        panel.background = element_rect(fill = 'grey40'),
+        axis.title.y = element_text(margin=margin(r=6)),
+        axis.title.x = element_text(margin=margin(t=6))) + facet_wrap(~reward_text) +
+  scale_x_continuous(breaks=c(0, 2, 4, 6, 8, 10))
 
 dev.off()
 
