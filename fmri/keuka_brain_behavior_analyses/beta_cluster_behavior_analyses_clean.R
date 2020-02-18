@@ -1131,6 +1131,7 @@ ggplot(sdf, aes(run_trial, rt_csv/1000, color = ev, size = score_csv)) + geom_po
 dev.off()
 #
 save(file = 'vhd_u_meg_models.Rdata', list = ls(all.names = TRUE))
+# load(file = 'vhd_u_meg_models.Rdata')
 
 # # lm to elucidate interactions -- effects very similar to lmer
 # lmf3hpe <-  lm(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
