@@ -1,3 +1,7 @@
+# preprocess voxel-wise fMRI data for brain-to-behavior analyses
+# extracts hippocampal activation coefficients for prediction error and entropy analyses
+# merges with behavioral data from the fMRI and replication (MEG sessions)
+
 library(dplyr)
 library(tidyverse)
 library(psych)
@@ -5,11 +9,13 @@ library(corrplot)
 library(lme4)
 library(stargazer)
 
-#clock_folder <- "~/code/clock_analysis" #alex
-clock_folder <- "~/Data_Analysis/clock_analysis" #michael
+clock_folder <- "~/code/clock_analysis" #alex
+# clock_folder <- "~/Data_Analysis/clock_analysis" #michael
 
-unsmoothed = F
-# get H betas
+
+unsmoothed = F # unsmoothed data used only for sensitivity analyses
+
+# get H (entropy) betas
 sort_names <- function(data) {
   name  <- names(data)
   chars <- keep(name, grepl, pattern = "[^0-9]") %>% sort()
@@ -117,15 +123,13 @@ pe_labeled <- select(pe_labeled,c(1,3,5))
 pe_wide <- spread(pe_labeled,labeled_cluster,cope_value)
 pe_wide_num <- spread(pe_num,cluster_number,cope_value)
 
-# some outliers, let's winsorize for now
-## THIS WAS A MINOR ERROR -- we are no longer winsorizing betas
+## we are no longer winsorizing betas
 # pe_wide <- pe_wide %>% mutate_if(is.double, winsor,trim = .075)
 # pe_wide_num <- pe_wide_num %>% mutate_if(is.double, winsor,trim = .075)
 
 pejust_rois <- pe_wide[,2:ncol(pe_wide)]
 pejust_rois_num <- pe_wide_num[,2:ncol(pe_wide_num)]
 
-# winsorize to deal with beta ouliers
 
 # non-parametric correlations to deal with outliers
 peclust_cor <- corr.test(pejust_rois,method = 'pearson', adjust = 'none')
@@ -146,32 +150,6 @@ dev.off()
 mpe <- nfactors(peclust_cor$r, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
 pe.fa = psych::fa(pejust_rois, nfactors=2, rotate = "varimax", fm = "pa")
 
-# library("lavaan")
-# msyn <- '
-# cort_str =~ 1*`1` + `11` + `2` + `3` +
-#             `4` + `5` +
-#             `6` #putting the 1* here for clarity, but it is the lavaan default
-# hipp =~ 1*`10` + `7`
-# cort_str ~~ 0*hipp #force orthogonal (uncorrelated) factors
-# cort_str ~~ cort_str #explicitly indicate that lavaan should estimate a free parameters for factor variances
-# hipp ~~ hipp
-# '
-# msyn_cor <- '
-# cort_str =~ 1*`1` + `11` + `2` + `3` +
-#             `4` + `5` +
-# `6` #putting the 1* here for clarity, but it is the lavaan default
-# hipp =~ 1*`10` + `7`
-# cort_str ~~ hipp #force orthogonal (uncorrelated) factors
-# cort_str ~~ cort_str #explicitly indicate that lavaan should estimate a free parameters for factor variances
-# hipp ~~ hipp
-# '
-# 
-# 
-# mcfa <- cfa(msyn, pejust_rois_num)
-# summary(mcfa, standardized=TRUE)
-# mcfa_cor <- cfa(msyn_cor, pejust_rois_num)
-# summary(mcfa_cor, standardized=TRUE)
-# anova(mcfa,mcfa_cor)
 
 pe.fa = fa.sort(psych::fa(pejust_rois, nfactors=2))
 pefscores <- factor.scores(pejust_rois, pe.fa)$scores
@@ -252,8 +230,6 @@ colnames(contrasts(df$rewFuncIEVsum)) <- c('CEV','CEVR', 'DEV')
 
 df$learning_epoch <- 'trials 1-10'
 df$learning_epoch[df$run_trial>10] <- 'trials 11-50'
-
-
 
 
 # obtain within-subject v_max and entropy: correlated at -.37
