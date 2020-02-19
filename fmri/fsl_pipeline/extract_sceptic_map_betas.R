@@ -55,8 +55,9 @@ models <- sapply(fsl_model_arguments$group_model_variants, function(x) { paste(x
 
 #whether to extract from beta series (very slow)
 calculate_beta_series <- FALSE
-calculate_l1_betas <- TRUE
+calculate_l1_betas <- FALSE
 beta_series_suffix <- "_feedback_bs" #or "clock_bs"
+pull_from_unsmoothed <- FALSE
 
 for (l1 in 1:n_l1_copes) {
   l1_contrast_name <- l1_cope_names[l1]
@@ -81,6 +82,11 @@ for (l1 in 1:n_l1_copes) {
     design_txt <- readLines(design_fsf)
     subject_inputs <- grep("^\\s*set feat_files\\(\\d+\\).*", design_txt, value=TRUE, perl=TRUE)
     subject_inputs <- sub("\\s*set feat_files\\(\\d+\\)\\s*\"?([^\"]+)\"?", "\\1", subject_inputs, perl=TRUE) #just keep the directory itself
+
+    #switch from smoothed to unsmoothed target
+    if (pull_from_unsmoothed) {
+      subject_inputs <- sub("mni_5mm_aroma", "mni_nosmooth_aroma", subject_inputs, fixed=TRUE)
+    }
     
     l3_ev_txt <- grep("\\s*set fmri\\(evtitle\\d+\\).*", design_txt, value=TRUE, perl=TRUE)
     l3_ev_names <- sub("\\s*set fmri\\(evtitle\\d+\\)\\s*\"?([^\"]+)\"?", "\\1", l3_ev_txt, perl=TRUE)
@@ -212,11 +218,52 @@ for (l1 in 1:n_l1_copes) {
         #generate a matrix of roi averages across subjects
         #this should be subjects x clusters in size
         roimats <- get_cluster_means(roimask, copeconcat)
-        
-        subj_beta_df <- reshape2::melt(roimats, value.name="cope_value", varnames=c("feat_input_id", "cluster_number")) %>%
-          mutate(model=this_model, l1_contrast=l1_contrast_name, l2_contrast=l2_contrast_name, l3_contrast=l3_contrast_name) %>%
-          #full_join(design_df %>% select(subject, !!l3_contrast_name), by="subject") #merge with relevant covariate
-          full_join(design_df, by="feat_input_id") #merge with all covariates
+
+        #for L2 pairwise condition contrast, extract the component betas.
+        if (grepl("_gt_", l2_contrast_name)) {
+          #perhaps in the general case, we would extract the left- and right-hand terms of the contrast
+          #but here, we just want all three emotions
+
+          #this is pretty inefficient in terms of i/o since it re-reads things in a loop
+          fear_cope <- which(l2_contrast_names == "fear")
+          copefiles_tmp <- file.path(subject_inputs, "stats", paste0("cope", fear_cope, ".nii.gz"))
+          fear_copeconcat <- array(0, dim=c(imgdims, length(copefiles_tmp)))
+          for (i in 1:length(copefiles_tmp)) { fear_copeconcat[,,,i] <- readNIfTI(copefiles_tmp[i], reorient=FALSE)@.Data }
+
+          scram_cope <- which(l2_contrast_names == "scram")
+          copefiles_tmp <- file.path(subject_inputs, "stats", paste0("cope", scram_cope, ".nii.gz"))
+          scram_copeconcat <- array(0, dim=c(imgdims, length(copefiles_tmp)))
+          for (i in 1:length(copefiles_tmp)) { scram_copeconcat[,,,i] <- readNIfTI(copefiles_tmp[i], reorient=FALSE)@.Data }
+
+          happy_cope <- which(l2_contrast_names == "happy")
+          copefiles_tmp <- file.path(subject_inputs, "stats", paste0("cope", happy_cope, ".nii.gz"))
+          happy_copeconcat <- array(0, dim=c(imgdims, length(copefiles_tmp)))
+          for (i in 1:length(copefiles_tmp)) { happy_copeconcat[,,,i] <- readNIfTI(copefiles_tmp[i], reorient=FALSE)@.Data }
+
+          fear_mats <- get_cluster_means(roimask, fear_copeconcat)
+          scram_mats <- get_cluster_means(roimask, scram_copeconcat)
+          happy_mats <- get_cluster_means(roimask, happy_copeconcat)
+
+          #bind subject and emotion copes together into one data.frame, replacing the l2 contrast as needed
+          fear_df <- reshape2::melt(fear_mats, value.name="cope_value", varnames=c("feat_input_id", "cluster_number")) %>%
+            mutate(model=this_model, l1_contrast=l1_contrast_name, l2_contrast=paste0(l2_contrast_name, "-fear"), l3_contrast=l3_contrast_name)
+          scram_df <- reshape2::melt(scram_mats, value.name="cope_value", varnames=c("feat_input_id", "cluster_number")) %>%
+            mutate(model=this_model, l1_contrast=l1_contrast_name, l2_contrast=paste0(l2_contrast_name, "-scram"), l3_contrast=l3_contrast_name)
+          happy_df <- reshape2::melt(happy_mats, value.name="cope_value", varnames=c("feat_input_id", "cluster_number")) %>%
+            mutate(model=this_model, l1_contrast=l1_contrast_name, l2_contrast=paste0(l2_contrast_name, "-happy"), l3_contrast=l3_contrast_name)
+
+          subj_beta_df <- reshape2::melt(roimats, value.name="cope_value", varnames=c("feat_input_id", "cluster_number")) %>%
+            mutate(model=this_model, l1_contrast=l1_contrast_name, l2_contrast=l2_contrast_name, l3_contrast=l3_contrast_name) %>%
+            bind_rows(fear_df, scram_df, happy_df) %>%
+            #full_join(design_df %>% select(subject, !!l3_contrast_name), by="subject") #merge with relevant covariate
+            full_join(design_df, by="feat_input_id") #merge with all covariates         
+          
+        } else {
+          subj_beta_df <- reshape2::melt(roimats, value.name="cope_value", varnames=c("feat_input_id", "cluster_number")) %>%
+            mutate(model=this_model, l1_contrast=l1_contrast_name, l2_contrast=l2_contrast_name, l3_contrast=l3_contrast_name) %>%
+            #full_join(design_df %>% select(subject, !!l3_contrast_name), by="subject") #merge with relevant covariate
+            full_join(design_df, by="feat_input_id") #merge with all covariates         
+        }
 
         #handle l1 beta extraction
         if (calculate_l1_betas) {
@@ -286,8 +333,10 @@ for (l1 in 1:n_l1_copes) {
   all_subj_betas <- all_subj_betas %>% arrange(model, l1_contrast, l2_contrast, l3_contrast, cluster_number, feat_input_id)
   all_l1betas <- all_l1betas %>% arrange(model, l1_contrast, l2_contrast, l3_contrast, cluster_number, feat_input_id, run_num)
 
-  readr::write_csv(x=all_metadata, file.path(model_output_dir, paste0(l1_contrast_name, "_cluster_metadata.csv")))
-  readr::write_csv(x=all_subj_betas, file.path(model_output_dir, paste0(l1_contrast_name, "_subj_betas.csv")))
+  unsmooth_suffix <- ifelse(pull_from_unsmoothed, "_unsmoothed", "")
+    
+  readr::write_csv(x=all_metadata, file.path(model_output_dir, paste0(l1_contrast_name, unsmooth_suffix, "_cluster_metadata.csv")))
+  readr::write_csv(x=all_subj_betas, file.path(model_output_dir, paste0(l1_contrast_name, unsmooth_suffix, "_subj_betas.csv")))
 
   if (calculate_l1_betas) { readr::write_csv(x=all_l1betas, file.path(model_output_dir, paste0(l1_contrast_name, "_run_betas.csv.gz"))) }
 

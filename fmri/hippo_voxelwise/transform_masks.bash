@@ -55,3 +55,7 @@ fslmaths harvardoxford-subcortical_prob_Right_Hippocampus_2009c -thr 50 -bin har
 
 fslmaths harvardoxford-subcortical_prob_Left_Hippocampus_2009c_2.3mm -thr 50 -bin harvardoxford-subcortical_prob_Left_Hippocampus_2009c_thr50_2.3mm -odt char
 fslmaths harvardoxford-subcortical_prob_Right_Hippocampus_2009c_2.3mm -thr 50 -bin harvardoxford-subcortical_prob_Right_Hippocampus_2009c_thr50_2.3mm -odt char
+
+#bilat mask for smooth in mask approach
+fslmaths harvardoxford-subcortical_prob_Left_Hippocampus_2009c_thr50_2.3mm -add harvardoxford-subcortical_prob_Right_Hippocampus_2009c_thr50_2.3mm \
+	 harvardoxford-subcortical_prob_Bilateral_Hippocampus_2009c_thr50_2.3mm

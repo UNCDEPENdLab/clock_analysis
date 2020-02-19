@@ -27,7 +27,7 @@ source(file.path(scripts_dir, "functions", "finalize_pipeline_configuration.R"))
 #trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz") %>%
 trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/clock_task/vba_fmri/vba_out/compiled_outputs/mmclock_fmri_decay_factorize_selective_psequate_fixedparams_ffx_trial_statistics.csv.gz") %>%
   mutate(
-    trial_rel=case_when(
+    run_trial=case_when(
     trial >= 1 & trial <= 50 ~ trial,
     trial >= 51 & trial <= 100 ~ trial - 50L, #dplyr/rlang has gotten awfully picky about data types!!
     trial >= 101 & trial <= 150 ~ trial - 100L,
@@ -37,7 +37,7 @@ trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/cl
     trial >= 301 & trial <= 350 ~ trial - 300L,
     trial >= 351 & trial <= 400 ~ trial - 350L,
     TRUE ~ NA_integer_),
-    v_entropy_no5=if_else(trial_rel <= 5, NA_real_, v_entropy),
+    v_entropy_no5=if_else(run_trial <= 5, NA_real_, v_entropy),
     d_auc_sqrt=if_else(d_auc > 0, NA_real_, sqrt(-1*d_auc)), #only compute the sqrt of d_auc for negative (i.e., reasonable) observations
     v_entropy_sqrt=sqrt(v_entropy),
     rew_om=if_else(score_vba > 0, 1, 0)

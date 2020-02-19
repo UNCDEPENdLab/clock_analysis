@@ -347,6 +347,41 @@ populate_sceptic_signals <- function(sceptic_signals, subj_data) {
       value=subj_data %>% select(run, trial, v_chosen) %>% rename(value=v_chosen))
   }
 
+  #uncertainty of chosen action
+  if ("u_chosen" %in% sceptic_signals) {
+    #uncertainty of chosen action, aligned with choice
+    signals[["u_chosen"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, u_chosen) %>% rename(value=u_chosen))
+  }
+
+  #uncertainty of chosen action with sqrt transformation
+  if ("u_chosen_sqrt" %in% sceptic_signals) {
+    #uncertainty of chosen action, aligned with choice
+    signals[["u_chosen_sqrt"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, u_chosen_sqrt) %>% rename(value=u_chosen_sqrt))
+  }
+
+  #uncertainty of chosen action with run-level z-scoring
+  if ("u_chosen_z" %in% sceptic_signals) {
+    #uncertainty of chosen action, aligned with choice, z-scored
+    signals[["u_chosen_z"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, u_chosen_z) %>% rename(value=u_chosen_z))
+  }
+
+  #quantile for uncertainty of chosen action
+  if ("u_chosen_quantile" %in% sceptic_signals) {
+    #uncertainty of chosen action, aligned with choice
+    signals[["u_chosen_quantile"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, u_chosen_quantile) %>% rename(value=u_chosen_quantile))
+  }
+  
+  #change in uncertainty of chosen action
+  if ("u_chosen_change" %in% sceptic_signals) {
+    #uncertainty of chosen action, aligned with choice
+    signals[["u_chosen_change"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, u_chosen_change) %>% rename(value=u_chosen_change))
+  }
+  
   if ("v_trial_fixed" %in% sceptic_signals) {
     #value of trial according to a fixed learning rate of 0.1 (just trial - outcome)
     signals[["v_trial_fixed"]] <- list(event="clock", normalization="evtmax_1",
@@ -412,6 +447,12 @@ populate_sceptic_signals <- function(sceptic_signals, subj_data) {
     #only the negative change in entropy
     signals[["v_entropy_change_neg"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, v_entropy_change_neg) %>% rename(value=v_entropy_change_neg))
+  }
+
+  #ascending trial within run
+  if ("run_trial" %in% sceptic_signals) {
+    signals[["run_trial"]] <- list(event="clock", normalization="none",
+      value=subj_data %>% select(run, trial, run_trial) %>% rename(value=run_trial))
   }
   
   if ("pe_max" %in% sceptic_signals) {
