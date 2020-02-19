@@ -62,29 +62,30 @@ master <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/Schae
 ##18 is L V1
 ##215 is R V1
 
-system(paste0("fslmaths ", master, " -thr 57 -uthr 57 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/l_motor_2.3mm -odt char"))
-system(paste0("fslmaths ", master, " -thr 256 -uthr 256 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/r_motor_2.3mm -odt char"))
-system(paste0("fslmaths ", master, " -thr 18 -uthr 18 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/l_v1_2.3mm -odt char"))
-system(paste0("fslmaths ", master, " -thr 215 -uthr 215 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/r_v1_2.3mm -odt char"))
+system(paste0("fslmaths ", master, " -thr 57 -uthr 57 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/masks/l_motor_2.3mm -odt char"))
+system(paste0("fslmaths ", master, " -thr 256 -uthr 256 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/masks/r_motor_2.3mm -odt char"))
+system(paste0("fslmaths ", master, " -thr 18 -uthr 18 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/masks/l_v1_2.3mm -odt char"))
+system(paste0("fslmaths ", master, " -thr 215 -uthr 215 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/masks/r_v1_2.3mm -odt char"))
 
 hippo_dir <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise"
+mask_dir <- file.path(hippo_dir, "masks")
 
 ## atlas_files <- c(
-##   file.path(hippo_dir, "long_axis_l_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "long_axis_r_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "l_motor_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "r_motor_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "l_v1_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "r_v1_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "harvardoxford-subcortical_prob_Left_Accumbens_2009c_thr20_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "harvardoxford-subcortical_prob_Right_Accumbens_2009c_thr20_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "hippo_dcm/masks/vmpfc_clust1_z5.7_2009c.nii") #add vmPFC from NeuroSynth
+##   file.path(mask_dir, "long_axis_l_2.3mm.nii.gz"),
+##   file.path(mask_dir, "long_axis_r_2.3mm.nii.gz"),
+##   file.path(mask_dir, "l_motor_2.3mm.nii.gz"),
+##   file.path(mask_dir, "r_motor_2.3mm.nii.gz"),
+##   file.path(mask_dir, "l_v1_2.3mm.nii.gz"),
+##   file.path(mask_dir, "r_v1_2.3mm.nii.gz"),
+##   file.path(mask_dir, "harvardoxford-subcortical_prob_Left_Accumbens_2009c_thr20_2.3mm.nii.gz"),
+##   file.path(mask_dir, "harvardoxford-subcortical_prob_Right_Accumbens_2009c_thr20_2.3mm.nii.gz"),
+##   file.path(mask_dir, "hippo_dcm/masks/vmpfc_clust1_z5.7_2009c.nii") #add vmPFC from NeuroSynth
 ## )
 
 #Just the new cobra-based long axis masks
 atlas_files <- c(
-  file.path(hippo_dir, "long_axis_l_cobra_2.3mm.nii.gz"),
-  file.path(hippo_dir, "long_axis_r_cobra_2.3mm.nii.gz")
+  file.path(mask_dir, "long_axis_l_cobra_2.3mm.nii.gz"),
+  file.path(mask_dir, "long_axis_r_cobra_2.3mm.nii.gz")
 )
 
 atlas_imgs <- lapply(atlas_files, readNIfTI, reorient=FALSE)

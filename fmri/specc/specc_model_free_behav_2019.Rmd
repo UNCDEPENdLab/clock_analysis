@@ -1,0 +1,218 @@
+---
+title: "SPECC 2019 Behav"
+author: "Michael Hallquist"
+date: "9/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width=180)
+#entropy change betas
+library(readr)
+library(lme4)
+library(tidyverse)
+library(psych)
+library(emmeans)
+library(ggplot2)
+library(sjPlot)
+
+base_dir <- "/Users/mnh5174/Box/SCEPTIC_fMRI/specc_betas"
+beta_dir <- file.path(base_dir, "sceptic-clock-feedback-v_entropy_change-preconvolve_fse_groupfixed", "v_entropy_change")
+bpq <- read.csv("/Users/mnh5174/Data_Analysis/SPECC/self_reports/data/surveys/baseline/scored/BPQ_scored.csv")
+behav <- trial_df <- read.csv(file.path(base_dir, "specc_decay_factorize_selective_psequate_fixedparams_ffx_trial_statistics.csv.gz")) %>%
+  mutate(
+    run_trial=case_when(
+      trial >= 1 & trial <= 50 ~ trial,
+      trial >= 51 & trial <= 100 ~ trial - 50L, #dplyr/rlang has gotten awfully picky about data types!!
+      trial >= 101 & trial <= 150 ~ trial - 100L,
+      trial >= 151 & trial <= 200 ~ trial - 150L,
+      trial >= 201 & trial <= 250 ~ trial - 200L,
+      trial >= 251 & trial <= 300 ~ trial - 250L,
+      trial >= 301 & trial <= 350 ~ trial - 300L,
+      trial >= 351 & trial <= 400 ~ trial - 350L,
+      TRUE ~ NA_integer_),
+    v_entropy_no5=if_else(run_trial <= 5, NA_real_, v_entropy),
+    d_auc_sqrt=if_else(d_auc > 0, NA_real_, sqrt(-1*d_auc)), #only compute the sqrt of d_auc for negative (i.e., reasonable) observations
+    v_entropy_sqrt=sqrt(v_entropy),
+    rew_om=if_else(score_vba > 0, 1, 0)
+  ) %>% #for win/loss maps
+  group_by(id, run) %>%
+  dplyr::mutate(   #compute rt_swing within run and subject
+    rt_csv=rt_csv/1000, #rescale for ease in lmer
+    rt_lag = dplyr::lag(rt_csv, 1, order_by=trial),
+    rt_vmax_lag = dplyr::lag(rt_vmax, 1, order_by=trial),
+    rt_vmax_change = abs(rt_vmax - rt_vmax_lag),
+    omission = factor(as.numeric(score_csv > 0), levels=c(0,1), labels=c("Omission", "Reward")),
+    omission_lag = lag(omission, order_by=trial),
+    v_entropy_lag = dplyr::lag(v_entropy, 1, order_by=trial),
+    v_entropy_change = v_entropy - v_entropy_lag, #change in entropy
+    v_entropy_change_pos = v_entropy_change*(v_entropy_change > 0),
+    v_entropy_change_neg = abs(v_entropy_change*(v_entropy_change < 0)),
+    vmax_lag = dplyr::lag(v_max, 1, order_by=trial),
+    pe_lag = dplyr::lag(pe_max, 1, order_by=trial),
+    ppe_lag = if_else(pe_lag > 0, pe_lag, 0),
+    npe_lag = if_else(pe_lag < 0, abs(pe_lag), 0),
+    rt_swing = abs( c(NA, diff(rt_csv))),
+    rt_swing_sqrt=sqrt(rt_swing)) %>%
+  ungroup() %>% select(-dataset, -rt_next, -score_next, -clock_onset, -isi_onset, -feedback_onset, -iti_onset, -image) %>%
+  rename(entropy=v_entropy, score=score_csv) %>%
+  mutate(emotion=recode(emotion, scram="Scrambled", fear="Fear", happy="Happy"))
+
+design <- read.table(file.path(beta_dir, "v_entropy_change-Intercept-Age_c-BPD_c-BPD_Age_design.txt"), header=TRUE) %>%
+  select(feat_input_id, id, SPECC_ID, BPD, Age, Female, Age_c, Age_c, BPD_Age) %>%
+  mutate(group=factor(BPD, levels=c(0,1), labels=c("HC", "BPD")),
+         Female=factor(Female, levels=c(0,1), labels=c("Male", "Female")))
+
+behav <- behav %>% inner_join(design)
+
+names(bpq)
+bpq$SPECC_ID <- sub("_", "", as.character(bpq$SPECC_ID), fixed=TRUE) %>% dplyr::recode("144DB"="144DH")
+behav <- behav %>% left_join(bpq %>% select(SPECC_ID, BPQ_total), by="SPECC_ID")
+```
+
+## performance by run/condition
+
+```{r}
+behav_by_run <- behav %>% group_by(id, run) %>% summarize(
+  earnings = sum(score),
+  rewFunc=rewFunc[1],
+  emotion=emotion[1],
+  BPQ_total=BPQ_total[1],
+  group=group[1],
+  avg_ev = mean(ev),
+  entropy = mean(entropy),
+  Age_c = Age_c[1]
+) %>% ungroup() %>%
+  mutate(BPQ_total = BPQ_total - mean(BPQ_total, na.rm=TRUE))
+
+summary(m1 <- lmer(earnings ~ run + rewFunc*emotion*BPQ_total + (1|id), behav_by_run))
+car::Anova(m1, type=3)
+plot_model(m1, type="pred", terms=c("BPQ_total", "rewFunc", "emotion"))
+
+summary(m2 <- lmer(earnings ~ run + rewFunc*emotion*BPQ_total + (1|id), behav_by_run %>% filter(rewFunc %in% c("IEV", "DEV"))))
+car::Anova(m2, type=3)
+plot_model(m2, type="pred", terms=c("BPQ_total", "rewFunc", "emotion"))
+
+summary(m3 <- lmer(earnings ~ run + rewFunc*emotion*group + (1|id), behav_by_run %>% filter(rewFunc %in% c("IEV", "DEV"))))
+car::Anova(m3, type=3)
+plot_model(m3, type="pred", terms=c("group", "rewFunc", "emotion"))
+
+```
+
+Whether we treat BPD as a dimension or a two-level factor, there is no evidence that earnings differ systematically by group
+
+The earlier analyses hold, with Happy hurting IEV learning, but helping DEV learning.
+
+What about choice quality (mean EV)?
+```{r}
+
+summary(m4 <- lmer(avg_ev ~ run + rewFunc*emotion*BPQ_total + (1|id), behav_by_run))
+car::Anova(m4, type=3)
+plot_model(m4, type="pred", terms=c("BPQ_total", "rewFunc", "emotion"))
+
+summary(m5 <- lmer(avg_ev ~ run + rewFunc*emotion*BPQ_total + (1|id), behav_by_run %>% filter(rewFunc %in% c("IEV", "DEV"))))
+car::Anova(m5, type=3)
+plot_model(m5, type="pred", terms=c("BPQ_total", "rewFunc", "emotion"))
+
+summary(m6 <- lmer(avg_ev ~ run + rewFunc*emotion*group + (1|id), behav_by_run %>% filter(rewFunc %in% c("IEV", "DEV"))))
+car::Anova(m6, type=3)
+plot_model(m6, type="pred", terms=c("group", "rewFunc", "emotion"))
+```
+
+Also no evidence that average choice quality is worse in BPD
+
+Any evidence of age-related effects?
+
+```{r}
+summary(m7 <- lmer(earnings ~ run + rewFunc*emotion*BPQ_total*Age_c + (1|id), behav_by_run))
+car::Anova(m7, type=3)
+plot_model(m7, type="pred", terms=c("BPQ_total", "rewFunc", "emotion"))
+
+summary(m8 <- lmer(earnings ~ run + rewFunc*emotion*BPQ_total*Age_c + (1|id), behav_by_run %>% filter(rewFunc %in% c("IEV", "DEV"))))
+car::Anova(m8, type=3)
+plot_model(m8, type="pred", terms=c("BPQ_total", "rewFunc", "emotion"))
+
+summary(m9 <- lmer(earnings ~ run + rewFunc*emotion*group*Age_c + (1|id), behav_by_run %>% filter(rewFunc %in% c("IEV", "DEV"))))
+car::Anova(m9, type=3)
+plot_model(m9, type="pred", terms=c("group", "rewFunc", "emotion"))
+```
+
+Absolutely no evidence of age-related differences
+
+
+## descriptive visualizations
+
+```{r}
+ggplot(behav, aes(x=run_trial, y=entropy, color=group)) + facet_grid(emotion~rewFunc) + stat_smooth(method="loess")
+```
+
+## entropy curvature differences
+
+No evidence of group differences in overall entropy in the run
+```{r}
+summary(mmm <- lmer(entropy ~ emotion*rewFunc*group + (1 | id/run), 
+                    behav %>% filter(rewFunc %in% c("IEV", "DEV")), REML=FALSE))
+car::Anova(mmm)
+
+```
+
+What if we account for trial? It has a massive effect, but not obvious relationship to group
+
+```{r}
+behav$i_trial <- -100/behav$asc_trial
+summary(mmm <- lmer(entropy ~ emotion*rewFunc*group + i_trial*group + (1 | id/run), 
+                    behav %>% filter(rewFunc %in% c("IEV", "DEV")), REML=FALSE))
+car::Anova(mmm)
+
+```
+
+## performance
+
+What about basic RT sticking?
+
+
+```{r}
+summary(mmm <- lmer(rt_csv ~ (rt_lag + i_trial + BPQ_total + emotion + omission_lag + rewFunc)^3 + (1 | id/run), 
+                    behav %>% filter(rewFunc %in% c("IEV", "DEV")), REML=FALSE))
+car::Anova(mmm, type=3)
+```
+
+rew_om x group x rt_lag?
+
+Looks like using BPQ_total gives a stronger signal and basically shows an impatience effect: those with BPD are less willing to wait after a reward.
+
+```{r}
+summary(mmm <- lmer(rt_csv ~ i_trial + rt_lag * BPQ_total * omission_lag + emotion + rewFunc + (1 | id/run), 
+                    behav %>% filter(rewFunc %in% c("IEV", "DEV")), REML=FALSE))
+car::Anova(mmm, type=3)
+
+summary(mmm <- lmer(rt_csv ~ i_trial + rt_lag * BPQ_total * omission_lag + emotion + rewFunc + (1 | id/run), 
+                    behav, REML=FALSE))
+car::Anova(mmm, type=3)
+
+#rt_lag:BPQ_total:omission_lag
+plot_model(mmm, type="pred", terms=c("rt_lag", "BPQ_total", "omission_lag"))
+
+```
+
+```{r}
+summary(mmm <- lmer(rt_csv ~ i_trial + (rt_lag + BPQ_total + omission_lag + emotion + rewFunc)^3 + (1 | id/run), 
+                    behav %>% filter(rewFunc %in% c("IEV", "DEV")), REML=FALSE))
+car::Anova(mmm, type=3)
+
+summary(mmm <- lmer(rt_csv ~ i_trial + rt_lag*BPQ_total*emotion + omission_lag + rewFunc + (1 | id/run), 
+                    behav %>% filter(rewFunc %in% c("IEV", "DEV")), REML=FALSE))
+
+plot_model(mmm, type = "std")#, terms=c("rt_lag", "BPQ_total", "emotion"))
+emtrends(mmm, ~emotion, var = "BPQ_total", data=behav)
+```
+
+## model-based analyses
+
+```{r}
+mmm <- lmer(rt_csv ~ (scale(-1/run_trial) + scale(rt_lag) + scale(rt_vmax_lag) + vmax_lag + rt_vmax_change + entropy + BPQ_total)^3 + (1|id/run), behav)
+summary(mmm)
+car::Anova(mmm, type=3)
+```
+

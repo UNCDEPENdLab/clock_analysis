@@ -1,0 +1,106 @@
+%WITHIN%
+! indicator factor definitions
+fh1_t00 BY lh1_t00@1;
+lh1_t00@0; !no resid var
+
+fh1_t01 BY lh1_t01@1;
+lh1_t01@0; !no resid var
+
+fh1_t02 BY lh1_t02@1;
+lh1_t02@0; !no resid var
+
+fh1_t03 BY lh1_t03@1;
+lh1_t03@0; !no resid var
+
+fh1_t04 BY lh1_t04@1;
+lh1_t04@0; !no resid var
+
+
+fh2_t00 BY lh2_t00@1;
+lh2_t00@0; !no resid var
+
+fh2_t01 BY lh2_t01@1;
+lh2_t01@0; !no resid var
+
+fh2_t02 BY lh2_t02@1;
+lh2_t02@0; !no resid var
+
+fh2_t03 BY lh2_t03@1;
+lh2_t03@0; !no resid var
+
+fh2_t04 BY lh2_t04@1;
+lh2_t04@0; !no resid var
+
+
+! between-trial correlation using unit-weighted factor with lag
+fh1trial BY lh1_t00-lh1_t04@1 (&1);
+fh2trial BY lh2_t00-lh2_t04@1 (&1);
+
+! setup trial AR
+fh1trial ON fh1trial&1;
+fh2trial ON fh2trial&1;
+
+! slice 1 time 01 regressed on time 00
+fh1_t01 ON fh1_t00 (a11);
+fh1_t01 ON fh2_t00 (a12);
+
+! slice 1 time 02 regressed on time 01
+fh1_t02 ON fh1_t01 (a11);
+fh1_t02 ON fh2_t01 (a12);
+
+! slice 1 time 03 regressed on time 02
+fh1_t03 ON fh1_t02 (a11);
+fh1_t03 ON fh2_t02 (a12);
+
+! slice 1 time 04 regressed on time 03
+fh1_t04 ON fh1_t03 (a11);
+fh1_t04 ON fh2_t03 (a12);
+
+fh1trial WITH fh1_t04@0; !no corr between within trial and bw trial factors
+fh1trial WITH fh2_t04@0; !no corr between within trial and bw trial factors
+
+! slice 2 time 01 regressed on time 00
+fh2_t01 ON fh1_t00 (a21);
+fh2_t01 ON fh2_t00 (a22);
+
+! slice 2 time 02 regressed on time 01
+fh2_t02 ON fh1_t01 (a21);
+fh2_t02 ON fh2_t01 (a22);
+
+! slice 2 time 03 regressed on time 02
+fh2_t03 ON fh1_t02 (a21);
+fh2_t03 ON fh2_t02 (a22);
+
+! slice 2 time 04 regressed on time 03
+fh2_t04 ON fh1_t03 (a21);
+fh2_t04 ON fh2_t03 (a22);
+
+fh2trial WITH fh1_t04@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh2_t04@0; !no corr between within trial and bw trial factors
+
+
+! time 00 contemp correlations
+fh1_t00 WITH fh2_t00;
+
+! time 01 contemp correlations
+fh1_t01 WITH fh2_t01;
+
+! time 02 contemp correlations
+fh1_t02 WITH fh2_t02;
+
+! time 03 contemp correlations
+fh1_t03 WITH fh2_t03;
+
+! time 04 contemp correlations
+fh1_t04 WITH fh2_t04;
+
+
+%BETWEEN%
+! BW subjects correlations
+bh1 BY lh1_t00-lh1_t04@1;
+bh2 BY lh2_t00-lh2_t04@1;
+
+! zero means
+[lh1_t00-lh1_t04@0];
+[lh2_t00-lh2_t04@0];
+

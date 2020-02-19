@@ -1,0 +1,1253 @@
+Mplus VERSION 8.3 (Mac)
+MUTHEN & MUTHEN
+04/30/2019   9:06 PM
+
+INPUT INSTRUCTIONS
+
+
+  TITLE: Automated mlVAR input file
+  DATA:	FILE = mlVAR.dat;
+  VARIABLE:	NAMES = V1 V2 V3 ID;
+  USEVARIABLES = V1 V2 V3 ID;
+  MISSING = .;
+  CLUSTER = ID;
+  LAGGED = V1(1) V2(1) V3(1);
+  ANALYSIS:	TYPE = TWOLEVEL RANDOM;
+  ESTIMATOR = BAYES;
+  PROCESSORS = 4;
+  BITERATIONS = (2000);
+  CHAINS = 2;
+  MODEL:	
+
+  %WITHIN%
+
+  par1 | V1 ON V1&1;
+  par2 | V2 ON V1&1;
+  par3 | V3 ON V1&1;
+  par4 | V1 ON V2&1;
+  par5 | V2 ON V2&1;
+  par6 | V3 ON V2&1;
+  par7 | V1 ON V3&1;
+  par8 | V2 ON V3&1;
+  par9 | V3 ON V3&1;
+  par10 | V1;
+  par11 | V2;
+  par12 | V3;
+  Fac1 BY V1@1 V2@-1;
+  Fac2 BY V1@1 V3@1;
+  Fac3 BY V2@1 V3@-1;
+  par13 | Fac1;
+  par14 | Fac2;
+  par15 | Fac3;
+   GDUMMY@1;
+  GDUMMY BY Fac1@0;
+  GDUMMY BY Fac2@0;
+  GDUMMY BY Fac3@0;
+
+  %BETWEEN%
+  V1  -  V3  WITH  V1  -  V3;
+  par1 WITH par1;
+  par2 WITH par2;
+  par3 WITH par3;
+  par4 WITH par4;
+  par5 WITH par5;
+  par6 WITH par6;
+  par7 WITH par7;
+  par8 WITH par8;
+  par9 WITH par9;
+  par10 WITH par10;
+  par11 WITH par11;
+  par12 WITH par12;
+  par13 WITH par13;
+  par14 WITH par14;
+  par15 WITH par15;
+  par10 WITH par11;
+  par10 WITH par12;
+  par10 WITH par13;
+  par10 WITH par14;
+  par10 WITH par15;
+  par11 WITH par12;
+  par11 WITH par13;
+  par11 WITH par14;
+  par11 WITH par15;
+  par12 WITH par13;
+  par12 WITH par14;
+  par12 WITH par15;
+  par13 WITH par14;
+  par13 WITH par15;
+  par14 WITH par15;
+
+  OUTPUT:	TECH1 TECH4 (CLUSTER) TECH8;
+  SAVEDATA: BPARAMETERS IS mlVAR.txt;
+
+
+
+
+INPUT READING TERMINATED NORMALLY
+
+
+
+Automated mlVAR input file
+
+SUMMARY OF ANALYSIS
+
+Number of groups                                                 1
+Number of observations                                        2500
+
+Number of dependent variables                                    3
+Number of independent variables                                  3
+Number of continuous latent variables                           19
+
+Observed dependent variables
+
+  Continuous
+   V1          V2          V3
+
+Observed independent variables
+   V1&1        V2&1        V3&1
+
+Continuous latent variables
+   FAC1        FAC2        FAC3        GDUMMY      PAR1        PAR2
+   PAR3        PAR4        PAR5        PAR6        PAR7        PAR8
+   PAR9        PAR10       PAR11       PAR12       PAR13       PAR14
+   PAR15
+
+Variables with special functions
+
+  Cluster variable      ID
+
+  Within variables
+   V1&1        V2&1        V3&1
+
+
+Estimator                                                    BAYES
+Specifications for Bayesian Estimation
+  Point estimate                                            MEDIAN
+  Number of Markov chain Monte Carlo (MCMC) chains               2
+  Random seed for the first chain                                0
+  Starting value information                           UNPERTURBED
+  Algorithm used for Markov chain Monte Carlo           GIBBS(PX1)
+  Convergence criterion                                  0.500D-01
+  Maximum number of iterations                               50000
+  K-th iteration used for thinning                               1
+
+Input data file(s)
+  mlVAR.dat
+Input data format  FREE
+
+
+SUMMARY OF DATA
+
+     Number of clusters                         50
+
+       Size (s)    Cluster ID with Size s
+
+         50        1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
+                   22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39
+                   40 41 42 43 44 45 46 47 48 49 50
+
+
+
+COVARIANCE COVERAGE OF DATA
+
+Minimum covariance coverage value   0.100
+
+     Number of missing data patterns             2
+
+
+     PROPORTION OF DATA PRESENT
+
+
+           Covariance Coverage
+              V1            V2            V3
+              ________      ________      ________
+ V1             1.000
+ V2             1.000         1.000
+ V3             1.000         1.000         1.000
+
+
+
+UNIVARIATE SAMPLE STATISTICS
+
+
+     UNIVARIATE HIGHER-ORDER MOMENT DESCRIPTIVE STATISTICS
+
+         Variable/         Mean/     Skewness/   Minimum/ % with                Percentiles
+        Sample Size      Variance    Kurtosis    Maximum  Min/Max      20%/60%    40%/80%    Median
+
+     V1                    0.000      -0.250      -3.330    0.04%      -0.800     -0.194      0.073
+            2500.000       1.000       0.228       3.690    0.04%       0.325      0.816
+     V2                    0.000      -0.395      -5.402    0.04%      -0.740     -0.179      0.027
+            2500.000       1.000       1.825       3.558    0.04%       0.247      0.782
+     V3                    0.000      -0.184      -4.474    0.04%      -0.777     -0.165      0.064
+            2500.000       1.000       1.696       5.702    0.04%       0.296      0.763
+
+     THE MODEL ESTIMATION DID NOT TERMINATE NORMALLY.
+     THE ESTIMATED VARIANCE COVARIANCE MATRIX IS NOT
+     POSITIVE DEFINITE AS IT SHOULD BE.
+
+     THE PROBLEM OCCURRED IN CHAIN 3.
+
+     THE PROBLEM OCCURRED ON THE BETWEEN LEVEL.
+
+
+
+
+
+
+MODEL RESULTS
+
+                    Estimate
+
+Within Level
+
+ FAC1     BY
+    V1                 1.000
+    V2                -1.000
+
+ FAC2     BY
+    V1                 1.000
+    V3                 1.000
+
+ FAC3     BY
+    V2                 1.000
+    V3                -1.000
+
+ GDUMMY   BY
+    FAC1               0.000
+    FAC2               0.000
+    FAC3               0.000
+
+ Variances
+    GDUMMY             1.000
+
+Between Level
+
+ PAR10    WITH
+    PAR11             -0.530
+    PAR12              0.051
+    PAR13             -0.235
+    PAR14             -1.002
+    PAR15              0.628
+
+ PAR11    WITH
+    PAR12             -0.099
+    PAR13             -0.776
+    PAR14              0.839
+    PAR15             -2.141
+
+ PAR12    WITH
+    PAR13             -0.072
+    PAR14             -0.123
+    PAR15              0.054
+
+ PAR13    WITH
+    PAR14              0.469
+    PAR15              0.933
+
+ PAR14    WITH
+    PAR15             -0.515
+
+ V1       WITH
+    V2                 0.327
+    V3                 0.350
+
+ V2       WITH
+    V3                 0.293
+
+ Means
+    V1                 0.013
+    V2                -0.117
+    V3                 0.035
+    PAR1               0.084
+    PAR2               0.000
+    PAR3              -0.003
+    PAR4              -0.292
+    PAR5               0.132
+    PAR6              -0.393
+    PAR7              -0.023
+    PAR8              -0.230
+    PAR9               0.089
+    PAR10             -5.204
+    PAR11             -4.377
+    PAR12             -6.173
+    PAR13             -2.269
+    PAR14             -2.168
+    PAR15             -3.049
+
+ Variances
+    V1                 0.406
+    V2                 0.413
+    V3                 0.352
+    PAR1               0.001
+    PAR2               0.006
+    PAR3               0.001
+    PAR4               0.076
+    PAR5               0.058
+    PAR6               0.080
+    PAR7               0.045
+    PAR8               0.050
+    PAR9               0.025
+    PAR10              1.530
+    PAR11              3.202
+    PAR12              0.058
+    PAR13              1.091
+    PAR14              1.176
+    PAR15              2.790
+
+
+MODEL COMMAND WITH FINAL ESTIMATES USED AS STARTING VALUES
+
+     %WITHIN%
+
+     par1 | v1 ON v1&1;
+     par2 | v2 ON v1&1;
+     par3 | v3 ON v1&1;
+     par4 | v1 ON v2&1;
+     par5 | v2 ON v2&1;
+     par6 | v3 ON v2&1;
+     par7 | v1 ON v3&1;
+     par8 | v2 ON v3&1;
+     par9 | v3 ON v3&1;
+     par10 | v1;
+     par11 | v2;
+     par12 | v3;
+     par13 | fac1;
+     par14 | fac2;
+     par15 | fac3;
+
+     fac1 BY v1@1;
+     fac1 BY v2@-1;
+     fac2 BY v1@1;
+     fac2 BY v3@1;
+     fac3 BY v2@1;
+     fac3 BY v3@-1;
+
+     gdummy BY fac1@0;
+     gdummy BY fac2@0;
+     gdummy BY fac3@0;
+
+     gdummy@1;
+
+     %BETWEEN%
+
+     v1 WITH v2*0.32744;
+     v1 WITH v3*0.35048;
+     v2 WITH v3*0.29297;
+     par10 WITH par11*-0.53004;
+     par10 WITH par12*0.05095;
+     par10 WITH par13*-0.23549;
+     par10 WITH par14*-1.00153;
+     par10 WITH par15*0.62812;
+     par11 WITH par12*-0.09877;
+     par11 WITH par13*-0.77643;
+     par11 WITH par14*0.83866;
+     par11 WITH par15*-2.14066;
+     par12 WITH par13*-0.07158;
+     par12 WITH par14*-0.12302;
+     par12 WITH par15*0.05384;
+     par13 WITH par14*0.46861;
+     par13 WITH par15*0.93270;
+     par14 WITH par15*-0.51506;
+
+     [ v1*0.01291 ];
+     [ v2*-0.11748 ];
+     [ v3*0.03550 ];
+     [ par1*0.08375 ];
+     [ par2*0.00048 ];
+     [ par3*-0.00284 ];
+     [ par4*-0.29213 ];
+     [ par5*0.13200 ];
+     [ par6*-0.39268 ];
+     [ par7*-0.02266 ];
+     [ par8*-0.23039 ];
+     [ par9*0.08914 ];
+     [ par10*-5.20356 ];
+     [ par11*-4.37711 ];
+     [ par12*-6.17329 ];
+     [ par13*-2.26913 ];
+     [ par14*-2.16806 ];
+     [ par15*-3.04937 ];
+
+     v1*0.40568;
+     v2*0.41349;
+     v3*0.35239;
+     par1*0.00127;
+     par2*0.00624;
+     par3*0.00080;
+     par4*0.07563;
+     par5*0.05833;
+     par6*0.08013;
+     par7*0.04472;
+     par8*0.05021;
+     par9*0.02503;
+     par10*1.52993;
+     par11*3.20240;
+     par12*0.05776;
+     par13*1.09149;
+     par14*1.17643;
+     par15*2.79026;
+
+
+
+TECHNICAL 1 OUTPUT
+
+
+     PARAMETER SPECIFICATION FOR WITHIN
+
+
+           NU
+              V1            V2            V3            V1&1          V2&1
+              ________      ________      ________      ________      ________
+                    0             0             0             0             0
+
+
+           NU
+              V3&1
+              ________
+                    0
+
+
+           LAMBDA
+              FAC1          FAC2          FAC3          GDUMMY        V1
+              ________      ________      ________      ________      ________
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+ V1&1               0             0             0             0             0
+ V2&1               0             0             0             0             0
+ V3&1               0             0             0             0             0
+
+
+           LAMBDA
+              V2            V3            V1&1          V2&1          V3&1
+              ________      ________      ________      ________      ________
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+ V1&1               0             0             0             0             0
+ V2&1               0             0             0             0             0
+ V3&1               0             0             0             0             0
+
+
+           THETA
+              V1            V2            V3            V1&1          V2&1
+              ________      ________      ________      ________      ________
+ V1                 0
+ V2                 0             0
+ V3                 0             0             0
+ V1&1               0             0             0             0
+ V2&1               0             0             0             0             0
+ V3&1               0             0             0             0             0
+
+
+           THETA
+              V3&1
+              ________
+ V3&1               0
+
+
+           ALPHA
+              FAC1          FAC2          FAC3          GDUMMY        V1
+              ________      ________      ________      ________      ________
+                    0             0             0             0             0
+
+
+           ALPHA
+              V2            V3            V1&1          V2&1          V3&1
+              ________      ________      ________      ________      ________
+                    0             0             0             0             0
+
+
+           BETA
+              FAC1          FAC2          FAC3          GDUMMY        V1
+              ________      ________      ________      ________      ________
+ FAC1               0             0             0             0             0
+ FAC2               0             0             0             0             0
+ FAC3               0             0             0             0             0
+ GDUMMY             0             0             0             0             0
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+ V1&1               0             0             0             0             0
+ V2&1               0             0             0             0             0
+ V3&1               0             0             0             0             0
+
+
+           BETA
+              V2            V3            V1&1          V2&1          V3&1
+              ________      ________      ________      ________      ________
+ FAC1               0             0             0             0             0
+ FAC2               0             0             0             0             0
+ FAC3               0             0             0             0             0
+ GDUMMY             0             0             0             0             0
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+ V1&1               0             0             0             0             0
+ V2&1               0             0             0             0             0
+ V3&1               0             0             0             0             0
+
+
+           PSI
+              FAC1          FAC2          FAC3          GDUMMY        V1
+              ________      ________      ________      ________      ________
+ FAC1               0
+ FAC2               0             0
+ FAC3               0             0             0
+ GDUMMY             0             0             0             0
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+ V1&1               0             0             0             0             0
+ V2&1               0             0             0             0             0
+ V3&1               0             0             0             0             0
+
+
+           PSI
+              V2            V3            V1&1          V2&1          V3&1
+              ________      ________      ________      ________      ________
+ V2                 0
+ V3                 0             0
+ V1&1               0             0             0
+ V2&1               0             0             0             0
+ V3&1               0             0             0             0             0
+
+
+     PARAMETER SPECIFICATION FOR BETWEEN
+
+
+           NU
+              V1            V2            V3
+              ________      ________      ________
+                    0             0             0
+
+
+           LAMBDA
+              PAR1          PAR2          PAR3          PAR4          PAR5
+              ________      ________      ________      ________      ________
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+
+
+           LAMBDA
+              PAR6          PAR7          PAR8          PAR9          PAR10
+              ________      ________      ________      ________      ________
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+
+
+           LAMBDA
+              PAR11         PAR12         PAR13         PAR14         PAR15
+              ________      ________      ________      ________      ________
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+
+
+           LAMBDA
+              V1            V2            V3
+              ________      ________      ________
+ V1                 0             0             0
+ V2                 0             0             0
+ V3                 0             0             0
+
+
+           THETA
+              V1            V2            V3
+              ________      ________      ________
+ V1                 0
+ V2                 0             0
+ V3                 0             0             0
+
+
+           ALPHA
+              PAR1          PAR2          PAR3          PAR4          PAR5
+              ________      ________      ________      ________      ________
+                    1             2             3             4             5
+
+
+           ALPHA
+              PAR6          PAR7          PAR8          PAR9          PAR10
+              ________      ________      ________      ________      ________
+                    6             7             8             9            10
+
+
+           ALPHA
+              PAR11         PAR12         PAR13         PAR14         PAR15
+              ________      ________      ________      ________      ________
+                   11            12            13            14            15
+
+
+           ALPHA
+              V1            V2            V3
+              ________      ________      ________
+                   16            17            18
+
+
+           BETA
+              PAR1          PAR2          PAR3          PAR4          PAR5
+              ________      ________      ________      ________      ________
+ PAR1               0             0             0             0             0
+ PAR2               0             0             0             0             0
+ PAR3               0             0             0             0             0
+ PAR4               0             0             0             0             0
+ PAR5               0             0             0             0             0
+ PAR6               0             0             0             0             0
+ PAR7               0             0             0             0             0
+ PAR8               0             0             0             0             0
+ PAR9               0             0             0             0             0
+ PAR10              0             0             0             0             0
+ PAR11              0             0             0             0             0
+ PAR12              0             0             0             0             0
+ PAR13              0             0             0             0             0
+ PAR14              0             0             0             0             0
+ PAR15              0             0             0             0             0
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+
+
+           BETA
+              PAR6          PAR7          PAR8          PAR9          PAR10
+              ________      ________      ________      ________      ________
+ PAR1               0             0             0             0             0
+ PAR2               0             0             0             0             0
+ PAR3               0             0             0             0             0
+ PAR4               0             0             0             0             0
+ PAR5               0             0             0             0             0
+ PAR6               0             0             0             0             0
+ PAR7               0             0             0             0             0
+ PAR8               0             0             0             0             0
+ PAR9               0             0             0             0             0
+ PAR10              0             0             0             0             0
+ PAR11              0             0             0             0             0
+ PAR12              0             0             0             0             0
+ PAR13              0             0             0             0             0
+ PAR14              0             0             0             0             0
+ PAR15              0             0             0             0             0
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+
+
+           BETA
+              PAR11         PAR12         PAR13         PAR14         PAR15
+              ________      ________      ________      ________      ________
+ PAR1               0             0             0             0             0
+ PAR2               0             0             0             0             0
+ PAR3               0             0             0             0             0
+ PAR4               0             0             0             0             0
+ PAR5               0             0             0             0             0
+ PAR6               0             0             0             0             0
+ PAR7               0             0             0             0             0
+ PAR8               0             0             0             0             0
+ PAR9               0             0             0             0             0
+ PAR10              0             0             0             0             0
+ PAR11              0             0             0             0             0
+ PAR12              0             0             0             0             0
+ PAR13              0             0             0             0             0
+ PAR14              0             0             0             0             0
+ PAR15              0             0             0             0             0
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+
+
+           BETA
+              V1            V2            V3
+              ________      ________      ________
+ PAR1               0             0             0
+ PAR2               0             0             0
+ PAR3               0             0             0
+ PAR4               0             0             0
+ PAR5               0             0             0
+ PAR6               0             0             0
+ PAR7               0             0             0
+ PAR8               0             0             0
+ PAR9               0             0             0
+ PAR10              0             0             0
+ PAR11              0             0             0
+ PAR12              0             0             0
+ PAR13              0             0             0
+ PAR14              0             0             0
+ PAR15              0             0             0
+ V1                 0             0             0
+ V2                 0             0             0
+ V3                 0             0             0
+
+
+           PSI
+              PAR1          PAR2          PAR3          PAR4          PAR5
+              ________      ________      ________      ________      ________
+ PAR1              19
+ PAR2               0            20
+ PAR3               0             0            21
+ PAR4               0             0             0            22
+ PAR5               0             0             0             0            23
+ PAR6               0             0             0             0             0
+ PAR7               0             0             0             0             0
+ PAR8               0             0             0             0             0
+ PAR9               0             0             0             0             0
+ PAR10              0             0             0             0             0
+ PAR11              0             0             0             0             0
+ PAR12              0             0             0             0             0
+ PAR13              0             0             0             0             0
+ PAR14              0             0             0             0             0
+ PAR15              0             0             0             0             0
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+
+
+           PSI
+              PAR6          PAR7          PAR8          PAR9          PAR10
+              ________      ________      ________      ________      ________
+ PAR6              24
+ PAR7               0            25
+ PAR8               0             0            26
+ PAR9               0             0             0            27
+ PAR10              0             0             0             0            28
+ PAR11              0             0             0             0            29
+ PAR12              0             0             0             0            31
+ PAR13              0             0             0             0            34
+ PAR14              0             0             0             0            38
+ PAR15              0             0             0             0            43
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+
+
+           PSI
+              PAR11         PAR12         PAR13         PAR14         PAR15
+              ________      ________      ________      ________      ________
+ PAR11             30
+ PAR12             32            33
+ PAR13             35            36            37
+ PAR14             39            40            41            42
+ PAR15             44            45            46            47            48
+ V1                 0             0             0             0             0
+ V2                 0             0             0             0             0
+ V3                 0             0             0             0             0
+
+
+           PSI
+              V1            V2            V3
+              ________      ________      ________
+ V1                49
+ V2                50            51
+ V3                52            53            54
+
+
+     STARTING VALUES FOR WITHIN
+
+
+           NU
+              V1            V2            V3            V1&1          V2&1
+              ________      ________      ________      ________      ________
+                0.000         0.000         0.000         0.000         0.000
+
+
+           NU
+              V3&1
+              ________
+                0.000
+
+
+           LAMBDA
+              FAC1          FAC2          FAC3          GDUMMY        V1
+              ________      ________      ________      ________      ________
+ V1             0.000         0.000         0.000         0.000         1.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+ V1&1           0.000         0.000         0.000         0.000         0.000
+ V2&1           0.000         0.000         0.000         0.000         0.000
+ V3&1           0.000         0.000         0.000         0.000         0.000
+
+
+           LAMBDA
+              V2            V3            V1&1          V2&1          V3&1
+              ________      ________      ________      ________      ________
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             1.000         0.000         0.000         0.000         0.000
+ V3             0.000         1.000         0.000         0.000         0.000
+ V1&1           0.000         0.000         1.000         0.000         0.000
+ V2&1           0.000         0.000         0.000         1.000         0.000
+ V3&1           0.000         0.000         0.000         0.000         1.000
+
+
+           THETA
+              V1            V2            V3            V1&1          V2&1
+              ________      ________      ________      ________      ________
+ V1             0.000
+ V2             0.000         0.000
+ V3             0.000         0.000         0.000
+ V1&1           0.000         0.000         0.000         0.000
+ V2&1           0.000         0.000         0.000         0.000         0.000
+ V3&1           0.000         0.000         0.000         0.000         0.000
+
+
+           THETA
+              V3&1
+              ________
+ V3&1           0.000
+
+
+           ALPHA
+              FAC1          FAC2          FAC3          GDUMMY        V1
+              ________      ________      ________      ________      ________
+                0.000         0.000         0.000         0.000         0.000
+
+
+           ALPHA
+              V2            V3            V1&1          V2&1          V3&1
+              ________      ________      ________      ________      ________
+                0.000         0.000         0.000         0.000         0.000
+
+
+           BETA
+              FAC1          FAC2          FAC3          GDUMMY        V1
+              ________      ________      ________      ________      ________
+ FAC1           0.000         0.000         0.000         0.000         0.000
+ FAC2           0.000         0.000         0.000         0.000         0.000
+ FAC3           0.000         0.000         0.000         0.000         0.000
+ GDUMMY         0.000         0.000         0.000         0.000         0.000
+ V1             1.000         1.000         0.000         0.000         0.000
+ V2            -1.000         0.000         1.000         0.000         0.000
+ V3             0.000         1.000        -1.000         0.000         0.000
+ V1&1           0.000         0.000         0.000         0.000         0.000
+ V2&1           0.000         0.000         0.000         0.000         0.000
+ V3&1           0.000         0.000         0.000         0.000         0.000
+
+
+           BETA
+              V2            V3            V1&1          V2&1          V3&1
+              ________      ________      ________      ________      ________
+ FAC1           0.000         0.000         0.000         0.000         0.000
+ FAC2           0.000         0.000         0.000         0.000         0.000
+ FAC3           0.000         0.000         0.000         0.000         0.000
+ GDUMMY         0.000         0.000         0.000         0.000         0.000
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+ V1&1           0.000         0.000         0.000         0.000         0.000
+ V2&1           0.000         0.000         0.000         0.000         0.000
+ V3&1           0.000         0.000         0.000         0.000         0.000
+
+
+           PSI
+              FAC1          FAC2          FAC3          GDUMMY        V1
+              ________      ________      ________      ________      ________
+ FAC1           0.000
+ FAC2           0.000         0.000
+ FAC3           0.000         0.000         0.000
+ GDUMMY         0.000         0.000         0.000         1.000
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+ V1&1           0.000         0.000         0.000         0.000         0.000
+ V2&1           0.000         0.000         0.000         0.000         0.000
+ V3&1           0.000         0.000         0.000         0.000         0.000
+
+
+           PSI
+              V2            V3            V1&1          V2&1          V3&1
+              ________      ________      ________      ________      ________
+ V2             0.000
+ V3             0.000         0.000
+ V1&1           0.000         0.000         0.497
+ V2&1           0.000         0.000         0.000         0.499
+ V3&1           0.000         0.000         0.000         0.000         0.498
+
+
+     STARTING VALUES FOR BETWEEN
+
+
+           NU
+              V1            V2            V3
+              ________      ________      ________
+                0.000         0.000         0.000
+
+
+           LAMBDA
+              PAR1          PAR2          PAR3          PAR4          PAR5
+              ________      ________      ________      ________      ________
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+
+
+           LAMBDA
+              PAR6          PAR7          PAR8          PAR9          PAR10
+              ________      ________      ________      ________      ________
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+
+
+           LAMBDA
+              PAR11         PAR12         PAR13         PAR14         PAR15
+              ________      ________      ________      ________      ________
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+
+
+           LAMBDA
+              V1            V2            V3
+              ________      ________      ________
+ V1             1.000         0.000         0.000
+ V2             0.000         1.000         0.000
+ V3             0.000         0.000         1.000
+
+
+           THETA
+              V1            V2            V3
+              ________      ________      ________
+ V1             0.000
+ V2             0.000         0.000
+ V3             0.000         0.000         0.000
+
+
+           ALPHA
+              PAR1          PAR2          PAR3          PAR4          PAR5
+              ________      ________      ________      ________      ________
+                0.000         0.000         0.000         0.000         0.000
+
+
+           ALPHA
+              PAR6          PAR7          PAR8          PAR9          PAR10
+              ________      ________      ________      ________      ________
+                0.000         0.000         0.000         0.000         0.000
+
+
+           ALPHA
+              PAR11         PAR12         PAR13         PAR14         PAR15
+              ________      ________      ________      ________      ________
+                0.000         0.000         0.000         0.000         0.000
+
+
+           ALPHA
+              V1            V2            V3
+              ________      ________      ________
+                0.000         0.000         0.000
+
+
+           BETA
+              PAR1          PAR2          PAR3          PAR4          PAR5
+              ________      ________      ________      ________      ________
+ PAR1           0.000         0.000         0.000         0.000         0.000
+ PAR2           0.000         0.000         0.000         0.000         0.000
+ PAR3           0.000         0.000         0.000         0.000         0.000
+ PAR4           0.000         0.000         0.000         0.000         0.000
+ PAR5           0.000         0.000         0.000         0.000         0.000
+ PAR6           0.000         0.000         0.000         0.000         0.000
+ PAR7           0.000         0.000         0.000         0.000         0.000
+ PAR8           0.000         0.000         0.000         0.000         0.000
+ PAR9           0.000         0.000         0.000         0.000         0.000
+ PAR10          0.000         0.000         0.000         0.000         0.000
+ PAR11          0.000         0.000         0.000         0.000         0.000
+ PAR12          0.000         0.000         0.000         0.000         0.000
+ PAR13          0.000         0.000         0.000         0.000         0.000
+ PAR14          0.000         0.000         0.000         0.000         0.000
+ PAR15          0.000         0.000         0.000         0.000         0.000
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+
+
+           BETA
+              PAR6          PAR7          PAR8          PAR9          PAR10
+              ________      ________      ________      ________      ________
+ PAR1           0.000         0.000         0.000         0.000         0.000
+ PAR2           0.000         0.000         0.000         0.000         0.000
+ PAR3           0.000         0.000         0.000         0.000         0.000
+ PAR4           0.000         0.000         0.000         0.000         0.000
+ PAR5           0.000         0.000         0.000         0.000         0.000
+ PAR6           0.000         0.000         0.000         0.000         0.000
+ PAR7           0.000         0.000         0.000         0.000         0.000
+ PAR8           0.000         0.000         0.000         0.000         0.000
+ PAR9           0.000         0.000         0.000         0.000         0.000
+ PAR10          0.000         0.000         0.000         0.000         0.000
+ PAR11          0.000         0.000         0.000         0.000         0.000
+ PAR12          0.000         0.000         0.000         0.000         0.000
+ PAR13          0.000         0.000         0.000         0.000         0.000
+ PAR14          0.000         0.000         0.000         0.000         0.000
+ PAR15          0.000         0.000         0.000         0.000         0.000
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+
+
+           BETA
+              PAR11         PAR12         PAR13         PAR14         PAR15
+              ________      ________      ________      ________      ________
+ PAR1           0.000         0.000         0.000         0.000         0.000
+ PAR2           0.000         0.000         0.000         0.000         0.000
+ PAR3           0.000         0.000         0.000         0.000         0.000
+ PAR4           0.000         0.000         0.000         0.000         0.000
+ PAR5           0.000         0.000         0.000         0.000         0.000
+ PAR6           0.000         0.000         0.000         0.000         0.000
+ PAR7           0.000         0.000         0.000         0.000         0.000
+ PAR8           0.000         0.000         0.000         0.000         0.000
+ PAR9           0.000         0.000         0.000         0.000         0.000
+ PAR10          0.000         0.000         0.000         0.000         0.000
+ PAR11          0.000         0.000         0.000         0.000         0.000
+ PAR12          0.000         0.000         0.000         0.000         0.000
+ PAR13          0.000         0.000         0.000         0.000         0.000
+ PAR14          0.000         0.000         0.000         0.000         0.000
+ PAR15          0.000         0.000         0.000         0.000         0.000
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+
+
+           BETA
+              V1            V2            V3
+              ________      ________      ________
+ PAR1           0.000         0.000         0.000
+ PAR2           0.000         0.000         0.000
+ PAR3           0.000         0.000         0.000
+ PAR4           0.000         0.000         0.000
+ PAR5           0.000         0.000         0.000
+ PAR6           0.000         0.000         0.000
+ PAR7           0.000         0.000         0.000
+ PAR8           0.000         0.000         0.000
+ PAR9           0.000         0.000         0.000
+ PAR10          0.000         0.000         0.000
+ PAR11          0.000         0.000         0.000
+ PAR12          0.000         0.000         0.000
+ PAR13          0.000         0.000         0.000
+ PAR14          0.000         0.000         0.000
+ PAR15          0.000         0.000         0.000
+ V1             0.000         0.000         0.000
+ V2             0.000         0.000         0.000
+ V3             0.000         0.000         0.000
+
+
+           PSI
+              PAR1          PAR2          PAR3          PAR4          PAR5
+              ________      ________      ________      ________      ________
+ PAR1           1.000
+ PAR2           0.000         1.000
+ PAR3           0.000         0.000         1.000
+ PAR4           0.000         0.000         0.000         1.000
+ PAR5           0.000         0.000         0.000         0.000         1.000
+ PAR6           0.000         0.000         0.000         0.000         0.000
+ PAR7           0.000         0.000         0.000         0.000         0.000
+ PAR8           0.000         0.000         0.000         0.000         0.000
+ PAR9           0.000         0.000         0.000         0.000         0.000
+ PAR10          0.000         0.000         0.000         0.000         0.000
+ PAR11          0.000         0.000         0.000         0.000         0.000
+ PAR12          0.000         0.000         0.000         0.000         0.000
+ PAR13          0.000         0.000         0.000         0.000         0.000
+ PAR14          0.000         0.000         0.000         0.000         0.000
+ PAR15          0.000         0.000         0.000         0.000         0.000
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+
+
+           PSI
+              PAR6          PAR7          PAR8          PAR9          PAR10
+              ________      ________      ________      ________      ________
+ PAR6           1.000
+ PAR7           0.000         1.000
+ PAR8           0.000         0.000         1.000
+ PAR9           0.000         0.000         0.000         1.000
+ PAR10          0.000         0.000         0.000         0.000         1.000
+ PAR11          0.000         0.000         0.000         0.000         0.000
+ PAR12          0.000         0.000         0.000         0.000         0.000
+ PAR13          0.000         0.000         0.000         0.000         0.000
+ PAR14          0.000         0.000         0.000         0.000         0.000
+ PAR15          0.000         0.000         0.000         0.000         0.000
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+
+
+           PSI
+              PAR11         PAR12         PAR13         PAR14         PAR15
+              ________      ________      ________      ________      ________
+ PAR11          1.000
+ PAR12          0.000         1.000
+ PAR13          0.000         0.000         1.000
+ PAR14          0.000         0.000         0.000         1.000
+ PAR15          0.000         0.000         0.000         0.000         1.000
+ V1             0.000         0.000         0.000         0.000         0.000
+ V2             0.000         0.000         0.000         0.000         0.000
+ V3             0.000         0.000         0.000         0.000         0.000
+
+
+           PSI
+              V1            V2            V3
+              ________      ________      ________
+ V1             0.500
+ V2             0.000         0.500
+ V3             0.000         0.000         0.500
+
+
+
+     PRIORS FOR ALL PARAMETERS            PRIOR MEAN      PRIOR VARIANCE     PRIOR STD. DEV.
+
+     Parameter 1~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 2~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 3~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 4~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 5~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 6~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 7~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 8~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 9~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 10~N(0.000,infinity)          0.0000            infinity            infinity
+     Parameter 11~N(0.000,infinity)          0.0000            infinity            infinity
+     Parameter 12~N(0.000,infinity)          0.0000            infinity            infinity
+     Parameter 13~N(0.000,infinity)          0.0000            infinity            infinity
+     Parameter 14~N(0.000,infinity)          0.0000            infinity            infinity
+     Parameter 15~N(0.000,infinity)          0.0000            infinity            infinity
+     Parameter 16~N(0.000,infinity)          0.0000            infinity            infinity
+     Parameter 17~N(0.000,infinity)          0.0000            infinity            infinity
+     Parameter 18~N(0.000,infinity)          0.0000            infinity            infinity
+     Parameter 19~IG(-1.000,0.000)         infinity            infinity            infinity
+     Parameter 20~IG(-1.000,0.000)         infinity            infinity            infinity
+     Parameter 21~IG(-1.000,0.000)         infinity            infinity            infinity
+     Parameter 22~IG(-1.000,0.000)         infinity            infinity            infinity
+     Parameter 23~IG(-1.000,0.000)         infinity            infinity            infinity
+     Parameter 24~IG(-1.000,0.000)         infinity            infinity            infinity
+     Parameter 25~IG(-1.000,0.000)         infinity            infinity            infinity
+     Parameter 26~IG(-1.000,0.000)         infinity            infinity            infinity
+     Parameter 27~IG(-1.000,0.000)         infinity            infinity            infinity
+     Parameter 28~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 29~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 30~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 31~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 32~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 33~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 34~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 35~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 36~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 37~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 38~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 39~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 40~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 41~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 42~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 43~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 44~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 45~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 46~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 47~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 48~IW(0.000,-7)             infinity            infinity            infinity
+     Parameter 49~IW(0.000,-4)             infinity            infinity            infinity
+     Parameter 50~IW(0.000,-4)             infinity            infinity            infinity
+     Parameter 51~IW(0.000,-4)             infinity            infinity            infinity
+     Parameter 52~IW(0.000,-4)             infinity            infinity            infinity
+     Parameter 53~IW(0.000,-4)             infinity            infinity            infinity
+     Parameter 54~IW(0.000,-4)             infinity            infinity            infinity
+
+
+TECHNICAL 8 OUTPUT
+
+
+   TECHNICAL 8 OUTPUT FOR BAYES ESTIMATION
+
+     CHAIN    BSEED
+     1        0
+     2        285380
+     3        253358
+     4        93468
+
+                     POTENTIAL       PARAMETER WITH
+     ITERATION    SCALE REDUCTION      HIGHEST PSR
+     100              2.293               27
+     200              1.649               32
+     300              2.700               32
+     400              1.590               29
+
+
+SAVEDATA INFORMATION
+
+
+  Bayesian Parameters
+
+  Save file
+    mlVAR.txt
+  Save format      Free
+
+  Order of parameters saved
+
+    Chain number
+    Iteration number
+    Parameter 1, %BETWEEN%: [ PAR1 ]
+    Parameter 2, %BETWEEN%: [ PAR2 ]
+    Parameter 3, %BETWEEN%: [ PAR3 ]
+    Parameter 4, %BETWEEN%: [ PAR4 ]
+    Parameter 5, %BETWEEN%: [ PAR5 ]
+    Parameter 6, %BETWEEN%: [ PAR6 ]
+    Parameter 7, %BETWEEN%: [ PAR7 ]
+    Parameter 8, %BETWEEN%: [ PAR8 ]
+    Parameter 9, %BETWEEN%: [ PAR9 ]
+    Parameter 10, %BETWEEN%: [ PAR10 ]
+    Parameter 11, %BETWEEN%: [ PAR11 ]
+    Parameter 12, %BETWEEN%: [ PAR12 ]
+    Parameter 13, %BETWEEN%: [ PAR13 ]
+    Parameter 14, %BETWEEN%: [ PAR14 ]
+    Parameter 15, %BETWEEN%: [ PAR15 ]
+    Parameter 16, %BETWEEN%: [ V1 ]
+    Parameter 17, %BETWEEN%: [ V2 ]
+    Parameter 18, %BETWEEN%: [ V3 ]
+    Parameter 19, %BETWEEN%: PAR1
+    Parameter 20, %BETWEEN%: PAR2
+    Parameter 21, %BETWEEN%: PAR3
+    Parameter 22, %BETWEEN%: PAR4
+    Parameter 23, %BETWEEN%: PAR5
+    Parameter 24, %BETWEEN%: PAR6
+    Parameter 25, %BETWEEN%: PAR7
+    Parameter 26, %BETWEEN%: PAR8
+    Parameter 27, %BETWEEN%: PAR9
+    Parameter 28, %BETWEEN%: PAR10
+    Parameter 29, %BETWEEN%: PAR11 WITH PAR10
+    Parameter 30, %BETWEEN%: PAR11
+    Parameter 31, %BETWEEN%: PAR12 WITH PAR10
+    Parameter 32, %BETWEEN%: PAR12 WITH PAR11
+    Parameter 33, %BETWEEN%: PAR12
+    Parameter 34, %BETWEEN%: PAR13 WITH PAR10
+    Parameter 35, %BETWEEN%: PAR13 WITH PAR11
+    Parameter 36, %BETWEEN%: PAR13 WITH PAR12
+    Parameter 37, %BETWEEN%: PAR13
+    Parameter 38, %BETWEEN%: PAR14 WITH PAR10
+    Parameter 39, %BETWEEN%: PAR14 WITH PAR11
+    Parameter 40, %BETWEEN%: PAR14 WITH PAR12
+    Parameter 41, %BETWEEN%: PAR14 WITH PAR13
+    Parameter 42, %BETWEEN%: PAR14
+    Parameter 43, %BETWEEN%: PAR15 WITH PAR10
+    Parameter 44, %BETWEEN%: PAR15 WITH PAR11
+    Parameter 45, %BETWEEN%: PAR15 WITH PAR12
+    Parameter 46, %BETWEEN%: PAR15 WITH PAR13
+    Parameter 47, %BETWEEN%: PAR15 WITH PAR14
+    Parameter 48, %BETWEEN%: PAR15
+    Parameter 49, %BETWEEN%: V1
+    Parameter 50, %BETWEEN%: V2 WITH V1
+    Parameter 51, %BETWEEN%: V2
+    Parameter 52, %BETWEEN%: V3 WITH V1
+    Parameter 53, %BETWEEN%: V3 WITH V2
+    Parameter 54, %BETWEEN%: V3
+
+     Beginning Time:  21:06:43
+        Ending Time:  21:06:53
+       Elapsed Time:  00:00:10
+
+
+
+MUTHEN & MUTHEN
+3463 Stoner Ave.
+Los Angeles, CA  90066
+
+Tel: (310) 391-9971
+Fax: (310) 391-8971
+Web: www.StatModel.com
+Support: Support@StatModel.com
+
+Copyright (c) 1998-2019 Muthen & Muthen
