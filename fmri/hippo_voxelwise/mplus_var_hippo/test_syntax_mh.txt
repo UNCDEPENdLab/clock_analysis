@@ -18,7 +18,6 @@ lh1_t04@0; !no resid var
 fh1_t05 BY lh1_t05@1;
 lh1_t05@0; !no resid var
 
-
 fh2_t00 BY lh2_t00@1;
 lh2_t00@0; !no resid var
 
@@ -36,7 +35,6 @@ lh2_t04@0; !no resid var
 
 fh2_t05 BY lh2_t05@1;
 lh2_t05@0; !no resid var
-
 
 fh3_t00 BY lh3_t00@1;
 lh3_t00@0; !no resid var
@@ -56,7 +54,6 @@ lh3_t04@0; !no resid var
 fh3_t05 BY lh3_t05@1;
 lh3_t05@0; !no resid var
 
-
 fh4_t00 BY lh4_t00@1;
 lh4_t00@0; !no resid var
 
@@ -74,7 +71,6 @@ lh4_t04@0; !no resid var
 
 fh4_t05 BY lh4_t05@1;
 lh4_t05@0; !no resid var
-
 
 fh5_t00 BY lh5_t00@1;
 lh5_t00@0; !no resid var
@@ -362,3 +358,30 @@ bh5 BY lh5_t00-lh5_t05@1;
 [lh4_t00-lh4_t05@0];
 [lh5_t00-lh5_t05@0];
 
+fh2trial WITH fh1_t04@0; !no corr between within trial and bw trial factors
+fh2trial WITH fh2_t04@0; !no corr between within trial and bw trial factors
+
+! time 00 contemp correlations
+fh1_t00 WITH fh2_t00;
+
+! time 01 contemp correlations
+fh1_t01 WITH fh2_t01;
+
+! time 02 contemp correlations
+fh1_t02 WITH fh2_t02;
+
+! time 03 contemp correlations
+fh1_t03 WITH fh2_t03;
+
+! time 04 contemp correlations
+fh1_t04 WITH fh2_t04;
+
+
+%BETWEEN%
+! BW subjects correlations
+bh1 BY lh1_t00-lh1_t04@1;
+bh2 BY lh2_t00-lh2_t04@1;
+
+! zero means
+[lh1_t00-lh1_t04@0];
+[lh2_t00-lh2_t04@0];

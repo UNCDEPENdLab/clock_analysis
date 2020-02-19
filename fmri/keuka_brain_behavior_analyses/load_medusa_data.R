@@ -2,13 +2,14 @@
 
 if (unsmoothed) {
   medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_unsmoothed"
-} else {
-  medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked"}
-
-if (unsmoothed) {
   cache_dir="~/Box/SCEPTIC_fMRI/var/unsmoothed"
-} else {
+} else if (smooth_in_mask) {
+  medusa_dir = "~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_smooth_in_mask_harvardoxford/"
+  cache_dir = "~/Box/SCEPTIC_fMRI/var/smooth_in_mask"
+  } else {
+  medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked"
   cache_dir="~/Box/SCEPTIC_fMRI/var"}
+
 if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
 
 if (newmask) {
@@ -75,7 +76,7 @@ if (!reprocess) {
   # # load M1 fb
   # m1L_fb <- read_csv("l_motor_2.3mm_feedback_onset_decon_locked.csv.gz")
 
-  
+  message("Loading trial-level data")
   trial_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")) %>%
     mutate(trial=as.numeric(trial)) %>%
     group_by(id, run) %>%  
@@ -140,7 +141,7 @@ if (!reprocess) {
   levels(trial_df$rewFunc) <- c("DEV", "IEV", "CEV", "CEVR")
   
 
-  u_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_ureset_mfx_trial_statistics.csv.gz")
+  u_df <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_fmri_fixed_uv_ureset_mfx_trial_statistics.csv.gz")
   u_df <- u_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change)
   
   trial_df <- inner_join(trial_df,u_df)
@@ -150,6 +151,8 @@ if (!reprocess) {
   params <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv"))
   
   trial_df <- inner_join(trial_df, params, by = "id")
+  
+  message("Transforming for MEDUSA")
   
   clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
                                     swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, gamma, total_earnings, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
@@ -340,14 +343,21 @@ if (!reprocess) {
   names(fb_wide6)[5:length(names(fb_wide6))] <- paste("hipp", names(fb_wide6)[5:length(names(fb_wide6))], sep = "_")
   fb_wide6_ex <- inner_join(fb_wide6, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi")], by = c("id", "run", "run_trial"))
   
+# make wide fb df with side as observation to examine laterality
+  fb_wide_bl <- fb_comb %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% pivot_wider(names_from = c(bin_num, evt_time), values_from = decon_interp)
+  names(fb_wide_bl)[5:148] <- paste("hipp", names(fb_wide_bl)[5:148], sep = "_")
+  
+  
   # save fb responses for trial-wise prediction analyses
   
   slices <- names(fb_wide)[5:28]
-  fb_wide_t <- dcast(setDT(fb_wide), id + run + run_trial ~ evt_time, value.var = slices)
+  # fb_wide_t <- dcast(setDT(fb_wide), id + run + run_trial ~ evt_time, value.var = slices)
+  fb_wide_t <- fb_wide %>% pivot_wider(names_from = evt_time, values_from = slices)
   
-  save(fb_wide, fb_wide_ex, fb_wide6, fb_wide6_ex, file = file.path(cache_dir, "feedback_hipp_wide_ts.Rdata"))
+  message("Saving to cache")
+  save(fb_wide, fb_wide_ex, fb_wide6, fb_wide6_ex, fb_wide_bl, file = file.path(cache_dir, "feedback_hipp_wide_ts.Rdata"))
   save(fb_comb, file = file.path(cache_dir, "feedback_hipp_tall_ts.Rdata"))
-  save(fb_wide_t, file = file.path(cache_dir, 'feedback_hipp_widest_by_timepoint_decon.Rdata'))
+  save(fb_wide_t, fb_wide_bl, file = file.path(cache_dir, 'feedback_hipp_widest_by_timepoint_decon.Rdata'))
   rtvmax_comb <- rtvmax_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
   
   save(rtvmax_comb, file = file.path(cache_dir, "rtvmax_hipp_tall_ts.Rdata"))
@@ -357,11 +367,11 @@ if (!reprocess) {
   # take only online event times
   clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
   names(clock_wide)[5:28] <- paste("hipp", names(clock_wide)[5:28], sep = "_")
-  fb_wide_t <- dcast(setDT(clock_wide), id + run + run_trial ~ evt_time, value.var = slices)
-  
+  clock_wide_t <- clock_wide %>% pivot_wider(names_from = evt_time, values_from = slices)
   clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
   
   save(clock_wide, clock_wide_ex, file = file.path(cache_dir, "clock_hipp_wide_ts.Rdata"))
+  save(clock_comb,clock_wide_t, file = file.path(cache_dir, "clock_hipp_tall_ts.Rdata"))
   
   save(trial_df, file=file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))
 }
