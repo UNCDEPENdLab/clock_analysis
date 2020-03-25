@@ -52,6 +52,8 @@ fslmaths r_hipp_cobra_con_2.3mm -fillh r_hipp_cobra_con_2.3mm
 fslmaths l_hipp_cobra_con -fillh l_hipp_cobra_con
 fslmaths r_hipp_cobra_con -fillh r_hipp_cobra_con
 
+fslmaths l_hipp_cobra_con_2.3mm -add r_hipp_cobra_con_2.3mm -bin bilat_hipp_cobra_con_2.3mm
+fslmaths l_hipp_cobra_con -add r_hipp_cobra_con -bin bilat_hipp_cobra_con
 
 #Even though flirt does the weird RPI/LPI R-L extent transform to match the template, its NN algorithm is slightly poorer by eye
 #fsleyes $MRI_STDDIR/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_2.3mm

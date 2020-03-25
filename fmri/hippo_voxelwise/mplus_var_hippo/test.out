@@ -1,0 +1,504 @@
+Mplus VERSION 8.2 (Mac)
+MUTHEN & MUTHEN
+04/29/2019   4:09 PM
+
+INPUT INSTRUCTIONS
+
+  TITLE: ML Var 1
+  DATA: FILE = "fb_l.dat";
+  VARIABLE:
+  NAMES = id block run_trial hipp_1_l hipp_10_l hipp_11_l hipp_12_l hipp_2_l hipp_3_l
+       hipp_4_l hipp_5_l hipp_6_l hipp_7_l hipp_8_l hipp_9_l;
+  MISSING=.;
+  !CLUSTER = id block;
+  CLUSTER = block;
+
+  USEVARIABLES ARE hipp_1_l hipp_8_l;
+  !WITHIN = hipp_1_l hipp_10_l hipp_11_l hipp_12_l hipp_2_l hipp_3_l
+  !     hipp_4_l hipp_5_l hipp_6_l hipp_7_l hipp_8_l hipp_9_l;
+  !LAGGED = hipp_1_l(1) hipp_10_l(1) hipp_11_l(1) hipp_12_l(1) hipp_2_l(1) hipp_3_l(1)
+  !     hipp_4_l(1) hipp_5_l(1) hipp_6_l(1) hipp_7_l(1) hipp_8_l(1) hipp_9_l(1);
+  LAGGED = hipp_1_l(1) hipp_8_l(1);
+  ANALYSIS: TYPE = TWOLEVEL;
+     ESTIMATOR=BAYES;
+     PROCESSORS=2;
+     BITERATION=(2000);
+  MODEL:
+  %WITHIN%
+  !hipp_1_l ON hipp_10_l&1 hipp_11_l&1 hipp_12_l&1 hipp_2_l&1 hipp_3_l&1
+  !     hipp_4_l&1 hipp_5_l&1 hipp_6_l&1 hipp_7_l&1 hipp_8_l&1 hipp_9_l&1;
+
+  hipp_1_l ON hipp_1_l&1 hipp_8_l&1;
+  hipp_8_l ON hipp_8_l&1 hipp_1_l&1;
+
+  %BETWEEN%
+
+  !%BETWEEN id%
+
+  !%BETWEEN block%
+
+  OUTPUT: TECH1 TECH8;
+
+
+
+*** WARNING in VARIABLE command
+  Note that only the first 8 characters of variable names are used in the output.
+  Shorten variable names to avoid any confusion.
+*** WARNING in MODEL command
+  A y-variable has been declared on the within level but not referred to on
+  the between level.  Please check that this is what is intended.  If this is not intended,
+  specify the variable as a within variable.  Problem with:  HIPP_1_L
+*** WARNING in MODEL command
+  A y-variable has been declared on the within level but not referred to on
+  the between level.  Please check that this is what is intended.  If this is not intended,
+  specify the variable as a within variable.  Problem with:  HIPP_8_L
+*** WARNING
+  Data set contains cases with missing on all variables.  Cases that appeared before the first
+  case with observed data and that appeared after the last case with observed data were not
+  included in the analysis.  Number of deleted cases:  180
+   4 WARNING(S) FOUND IN THE INPUT INSTRUCTIONS
+
+
+
+ML Var 1
+
+SUMMARY OF ANALYSIS
+
+Number of groups                                                 1
+Number of observations                                      332664
+
+Number of dependent variables                                    2
+Number of independent variables                                  2
+Number of continuous latent variables                            0
+
+Observed dependent variables
+
+  Continuous
+   HIPP_1_L    HIPP_8_L
+
+Observed independent variables
+   HIPP_1_L    HIPP_8_L
+
+Variables with special functions
+
+  Cluster variable      BLOCK
+
+  Within variables
+   HIPP_1_L    HIPP_8_L
+
+
+Estimator                                                    BAYES
+Specifications for Bayesian Estimation
+  Point estimate                                            MEDIAN
+  Number of Markov chain Monte Carlo (MCMC) chains               2
+  Random seed for the first chain                                0
+  Starting value information                           UNPERTURBED
+  Algorithm used for Markov chain Monte Carlo           GIBBS(PX1)
+  Convergence criterion                                  0.500D-01
+  Maximum number of iterations                               50000
+  K-th iteration used for thinning                               1
+
+Input data file(s)
+  fb_l.dat
+Input data format  FREE
+
+
+SUMMARY OF DATA
+
+     Number of clusters                        555
+
+       Size (s)    Cluster ID with Size s
+
+        450        413
+        582        430
+        589        64 333
+        590        522
+        591        23 382 427 82
+        592        4 1 9 379
+        593        215
+        594        127 52 327
+        595        503
+        596        409 131 336 98 81
+        597        335 21 273
+        598        6 24 523
+        599        372 216 126
+        600        33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50
+                   51 5 53 54 55 56 57 58 59 60 61 62 63 10 65 66 67 68
+                   69 70 71 72 73 74 75 76 77 78 79 80 11 12 83 84 85 86
+                   87 88 89 90 91 92 93 94 95 96 97 13 99 100 101 102 103
+                   104 105 106 107 108 109 110 111 112 113 114 115 116
+                   117 118 119 120 121 122 123 124 125 14 15 128 129 130
+                   16 132 133 134 135 136 137 138 139 140 141 142 143 144
+                   145 146 147 148 149 150 151 152 153 154 155 156 157
+                   158 159 160 161 162 163 164 165 166 167 168 169 170
+                   171 172 173 174 175 176 177 178 179 180 181 182 183
+                   184 185 186 187 188 189 190 191 192 193 194 195 196
+                   197 198 199 200 201 202 203 204 205 206 207 208 209
+                   210 211 212 213 214 17 18 217 218 219 220 221 222 223
+                   224 225 226 227 228 229 230 231 232 233 234 235 236
+                   237 238 239 240 241 242 243 244 245 246 247 248 249
+                   250 251 252 253 254 255 256 257 258 259 260 261 262
+                   263 264 265 266 267 268 269 270 271 272 19 274 275 276
+                   277 278 279 280 281 282 283 284 285 286 287 288 289
+                   290 291 292 293 294 295 296 297 298 299 300 301 302
+                   303 304 305 306 307 308 309 310 311 312 313 314 315
+                   316 317 318 319 320 321 322 323 324 325 326 20 328 329
+                   330 331 332 3 334 22 7 337 338 339 340 341 342 343 344
+                   345 346 347 348 349 350 351 352 353 354 355 356 357
+                   358 359 360 361 362 363 364 365 366 367 368 369 370
+                   371 8 373 374 375 376 377 378 25 380 381 26 383 384
+                   385 386 387 388 389 390 391 392 393 394 395 396 397
+                   398 399 400 401 402 403 404 405 406 407 408 27 410 411
+                   412 28 414 415 416 417 418 419 420 421 422 423 424 425
+                   426 29 428 429 2 431 432 433 434 435 436 437 438 439
+                   440 441 442 443 444 445 446 447 448 449 450 451 452
+                   453 454 455 456 457 458 459 460 461 462 463 464 465
+                   466 467 468 469 470 471 472 473 474 475 476 477 478
+                   479 480 481 482 483 484 485 486 487 488 489 490 491
+                   492 493 494 495 496 497 498 499 500 501 502 30 504 505
+                   506 507 508 509 510 511 512 513 514 515 516 517 518
+                   519 520 521 31 32 524 525 526 527 528 529 530 531 532
+                   533 534 535 536 537 538 539 540 541 542 543 544 545
+                   546 547 548 549 550 551 552 553 554 555
+
+
+
+COVARIANCE COVERAGE OF DATA
+
+Minimum covariance coverage value   0.100
+
+     Number of missing data patterns             4
+
+
+     PROPORTION OF DATA PRESENT
+
+
+           Covariance Coverage
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+ HIPP_1_L       0.368
+ HIPP_8_L       0.368         0.368
+
+
+
+UNIVARIATE SAMPLE STATISTICS
+
+
+     UNIVARIATE HIGHER-ORDER MOMENT DESCRIPTIVE STATISTICS
+
+         Variable/         Mean/     Skewness/   Minimum/ % with                Percentiles
+        Sample Size      Variance    Kurtosis    Maximum  Min/Max      20%/60%    40%/80%    Median
+
+     HIPP_1_L              0.502      -0.021       0.002    0.00%       0.322      0.448      0.503
+          122384.000       0.038      -0.706       0.996    0.00%       0.558      0.683
+     HIPP_8_L              0.498       0.018       0.010    0.00%       0.328      0.444      0.496
+          122384.000       0.034      -0.654       0.986    0.00%       0.548      0.669
+
+
+THE MODEL ESTIMATION TERMINATED NORMALLY
+
+     USE THE FBITERATIONS OPTION TO INCREASE THE NUMBER OF ITERATIONS BY A FACTOR
+     OF AT LEAST TWO TO CHECK CONVERGENCE AND THAT THE PSR VALUE DOES NOT INCREASE.
+
+
+
+MODEL FIT INFORMATION
+
+Number of Free Parameters                              11
+
+Information Criteria
+
+          Deviance (DIC)                      -979830.679
+          Estimated Number of Parameters (pD)  420805.783
+
+
+
+MODEL RESULTS
+
+                                Posterior  One-Tailed         95% C.I.
+                    Estimate       S.D.      P-Value   Lower 2.5%  Upper 2.5%  Significance
+
+Within Level
+
+ HIPP_1_L   ON
+    HIPP_1_L&1         0.872       0.001      0.000       0.870       0.874      *
+    HIPP_8_L&1         0.033       0.001      0.000       0.031       0.036      *
+
+ HIPP_8_L   ON
+    HIPP_8_L&1         0.896       0.001      0.000       0.894       0.898      *
+    HIPP_1_L&1         0.024       0.001      0.000       0.023       0.026      *
+
+ HIPP_8_L WITH
+    HIPP_1_L           0.002       0.000      0.000       0.002       0.002      *
+
+ Residual Variances
+    HIPP_1_L           0.009       0.000      0.000       0.008       0.009      *
+    HIPP_8_L           0.006       0.000      0.000       0.006       0.006      *
+
+Between Level
+
+ Means
+    HIPP_1_L           0.499       0.002      0.000       0.496       0.503      *
+    HIPP_8_L           0.492       0.002      0.000       0.489       0.496      *
+
+ Variances
+    HIPP_1_L           0.001       0.000      0.000       0.001       0.001      *
+    HIPP_8_L           0.001       0.000      0.000       0.001       0.001      *
+
+
+TECHNICAL 1 OUTPUT
+
+
+     PARAMETER SPECIFICATION FOR WITHIN
+
+
+           NU
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+                    0             0             0             0
+
+
+           LAMBDA
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+ HIPP_1_L           0             0             0             0
+ HIPP_8_L           0             0             0             0
+ HIPP_1_L           0             0             0             0
+ HIPP_8_L           0             0             0             0
+
+
+           THETA
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+ HIPP_1_L           0
+ HIPP_8_L           0             0
+ HIPP_1_L           0             0             0
+ HIPP_8_L           0             0             0             0
+
+
+           ALPHA
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+                    0             0             0             0
+
+
+           BETA
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+ HIPP_1_L           0             0             1             2
+ HIPP_8_L           0             0             3             4
+ HIPP_1_L           0             0             0             0
+ HIPP_8_L           0             0             0             0
+
+
+           PSI
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+ HIPP_1_L           5
+ HIPP_8_L           6             7
+ HIPP_1_L           0             0             0
+ HIPP_8_L           0             0             0             0
+
+
+     PARAMETER SPECIFICATION FOR BETWEEN
+
+
+           NU
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+                    0             0
+
+
+           LAMBDA
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+ HIPP_1_L           0             0
+ HIPP_8_L           0             0
+
+
+           THETA
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+ HIPP_1_L           0
+ HIPP_8_L           0             0
+
+
+           ALPHA
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+                    8             9
+
+
+           BETA
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+ HIPP_1_L           0             0
+ HIPP_8_L           0             0
+
+
+           PSI
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+ HIPP_1_L          10
+ HIPP_8_L           0            11
+
+
+     STARTING VALUES FOR WITHIN
+
+
+           NU
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+                0.000         0.000         0.000         0.000
+
+
+           LAMBDA
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+ HIPP_1_L       1.000         0.000         0.000         0.000
+ HIPP_8_L       0.000         1.000         0.000         0.000
+ HIPP_1_L       0.000         0.000         1.000         0.000
+ HIPP_8_L       0.000         0.000         0.000         1.000
+
+
+           THETA
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+ HIPP_1_L       0.000
+ HIPP_8_L       0.000         0.000
+ HIPP_1_L       0.000         0.000         0.000
+ HIPP_8_L       0.000         0.000         0.000         0.000
+
+
+           ALPHA
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+                0.000         0.000         0.000         0.000
+
+
+           BETA
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+ HIPP_1_L       0.000         0.000         0.000         0.000
+ HIPP_8_L       0.000         0.000         0.000         0.000
+ HIPP_1_L       0.000         0.000         0.000         0.000
+ HIPP_8_L       0.000         0.000         0.000         0.000
+
+
+           PSI
+              HIPP_1_L      HIPP_8_L      HIPP_1_L      HIPP_8_L
+              ________      ________      ________      ________
+ HIPP_1_L       0.019
+ HIPP_8_L       0.000         0.017
+ HIPP_1_L       0.000         0.000         0.019
+ HIPP_8_L       0.000         0.000         0.000         0.017
+
+
+     STARTING VALUES FOR BETWEEN
+
+
+           NU
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+                0.000         0.000
+
+
+           LAMBDA
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+ HIPP_1_L       1.000         0.000
+ HIPP_8_L       0.000         1.000
+
+
+           THETA
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+ HIPP_1_L       0.000
+ HIPP_8_L       0.000         0.000
+
+
+           ALPHA
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+                0.502         0.498
+
+
+           BETA
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+ HIPP_1_L       0.000         0.000
+ HIPP_8_L       0.000         0.000
+
+
+           PSI
+              HIPP_1_L      HIPP_8_L
+              ________      ________
+ HIPP_1_L       0.019
+ HIPP_8_L       0.000         0.017
+
+
+
+     PRIORS FOR ALL PARAMETERS            PRIOR MEAN      PRIOR VARIANCE     PRIOR STD. DEV.
+
+     Parameter 1~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 2~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 3~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 4~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 5~IW(0.000,-3)              infinity            infinity            infinity
+     Parameter 6~IW(0.000,-3)              infinity            infinity            infinity
+     Parameter 7~IW(0.000,-3)              infinity            infinity            infinity
+     Parameter 8~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 9~N(0.000,infinity)           0.0000            infinity            infinity
+     Parameter 10~IG(-1.000,0.000)         infinity            infinity            infinity
+     Parameter 11~IG(-1.000,0.000)         infinity            infinity            infinity
+
+
+TECHNICAL 8 OUTPUT
+
+
+   TECHNICAL 8 OUTPUT FOR BAYES ESTIMATION
+
+     CHAIN    BSEED
+     1        0
+     2        285380
+
+                     POTENTIAL       PARAMETER WITH
+     ITERATION    SCALE REDUCTION      HIGHEST PSR
+     100              1.000               1
+     200              1.000               1
+     300              1.000               1
+     400              1.000               1
+     500              1.000               1
+     600              1.000               1
+     700              1.000               1
+     800              1.000               1
+     900              1.000               1
+     1000             1.000               1
+     1100             1.000               1
+     1200             1.000               1
+     1300             1.000               1
+     1400             1.000               1
+     1500             1.000               1
+     1600             1.000               1
+     1700             1.000               1
+     1800             1.000               1
+     1900             1.000               1
+     2000             1.000               1
+
+
+     Beginning Time:  16:09:32
+        Ending Time:  16:15:54
+       Elapsed Time:  00:06:22
+
+
+
+MUTHEN & MUTHEN
+3463 Stoner Ave.
+Los Angeles, CA  90066
+
+Tel: (310) 391-9971
+Fax: (310) 391-8971
+Web: www.StatModel.com
+Support: Support@StatModel.com
+
+Copyright (c) 1998-2018 Muthen & Muthen

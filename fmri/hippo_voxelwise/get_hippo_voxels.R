@@ -3,16 +3,16 @@ library(oro.nifti)
 library(dplyr)
 
 #harvard-oxford
-#l_hippo <- readNIfTI("harvardoxford-subcortical_prob_Left_Hippocampus_2009c_thr50.nii.gz", reorient=FALSE)
-#r_hippo <- readNIfTI("harvardoxford-subcortical_prob_Right_Hippocampus_2009c_thr50.nii.gz", reorient=FALSE)
-#l_hippo_downsamp <- readNIfTI("harvardoxford-subcortical_prob_Left_Hippocampus_2009c_thr50_2.3mm.nii.gz", reorient=FALSE)
-#r_hippo_downsamp <- readNIfTI("harvardoxford-subcortical_prob_Right_Hippocampus_2009c_thr50_2.3mm.nii.gz", reorient=FALSE)
+l_hippo <- readNIfTI("harvardoxford-subcortical_prob_Left_Hippocampus_2009c_thr50.nii.gz", reorient=FALSE)
+r_hippo <- readNIfTI("harvardoxford-subcortical_prob_Right_Hippocampus_2009c_thr50.nii.gz", reorient=FALSE)
+l_hippo_downsamp <- readNIfTI("harvardoxford-subcortical_prob_Left_Hippocampus_2009c_thr50_2.3mm.nii.gz", reorient=FALSE)
+r_hippo_downsamp <- readNIfTI("harvardoxford-subcortical_prob_Right_Hippocampus_2009c_thr50_2.3mm.nii.gz", reorient=FALSE)
 
 #cobra atlas approach
-l_hippo <- readNIfTI("l_hipp_cobra_con.nii.gz", reorient=FALSE)
-r_hippo <- readNIfTI("r_hipp_cobra_con.nii.gz", reorient=FALSE)
-l_hippo_downsamp <- readNIfTI("l_hipp_cobra_con_2.3mm.nii.gz", reorient=FALSE)
-r_hippo_downsamp <- readNIfTI("r_hipp_cobra_con_2.3mm.nii.gz", reorient=FALSE)
+#l_hippo <- readNIfTI("l_hipp_cobra_con.nii.gz", reorient=FALSE)
+#r_hippo <- readNIfTI("r_hipp_cobra_con.nii.gz", reorient=FALSE)
+#l_hippo_downsamp <- readNIfTI("l_hipp_cobra_con_2.3mm.nii.gz", reorient=FALSE)
+#r_hippo_downsamp <- readNIfTI("r_hipp_cobra_con_2.3mm.nii.gz", reorient=FALSE)
 
 #verified coordinate lookup against fsleyes
 #note that the matrix position here is 1-based, but fsleyes is 0-based (i.e., fsleyes is one less)
@@ -66,8 +66,13 @@ r_vox %>% arrange(sum_pct_ai) %>% head(n=5)
 r_vox %>% arrange(sum_pct_ps) %>% head(n=5)
 
 #find the extremes on the 1mm R mask
-top_r <- r_vox %>% arrange(sum_pct_ps) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
-bottom_r <- r_vox %>% arrange(sum_pct_ai) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
+#top_r <- r_vox %>% arrange(sum_pct_ps) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
+
+#slightly new approach -- center of top 10 voxels
+top_r <- r_vox %>% arrange(sum_pct_ps) %>% head(n=10) %>% select(LR, AP, SI) %>% summarize_all(mean) %>% as.vector()
+
+#bottom_r <- r_vox %>% arrange(sum_pct_ai) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
+bottom_r <- r_vox %>% arrange(sum_pct_ai) %>% head(n=10) %>% select(LR, AP, SI) %>% summarize_all(mean) %>% as.vector()
 
 #NB. I'm computing this with a sagittal view in mind. So the X axis of the equation is A-P; Y axis is S-I.
 slope_r <- (top_r$SI - bottom_r$SI)/(top_r$AP - bottom_r$AP)
@@ -78,8 +83,11 @@ slope_r <- (top_r$SI - bottom_r$SI)/(top_r$AP - bottom_r$AP)
 intercept_r <- top_r$SI - slope_r * top_r$AP
 
 #find the extremes on the 1mm L mask
-top_l <- l_vox %>% arrange(sum_pct_ps) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
-bottom_l <- l_vox %>% arrange(sum_pct_ai) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
+#top_l <- l_vox %>% arrange(sum_pct_ps) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
+top_l <- l_vox %>% arrange(sum_pct_ps) %>% head(n=10) %>% select(LR, AP, SI) %>% summarize_all(mean) %>% as.vector()
+
+#bottom_l <- l_vox %>% arrange(sum_pct_ai) %>% head(n=1) %>% select(LR, AP, SI) %>% as.vector()
+bottom_l <- l_vox %>% arrange(sum_pct_ai) %>% head(n=10) %>% select(LR, AP, SI) %>% summarize_all(mean) %>% as.vector()
 
 #NB. I'm computing this with a sagittal view in mind. So the X axis of the equation is A-P; Y axis is S-I.
 slope_l <- (top_l$SI - bottom_l$SI)/(top_l$AP - bottom_l$AP)
@@ -140,10 +148,16 @@ r_vox %>% arrange(long_axis) %>% select(LR,AP,SI,long_axis) %>% filter(long_axis
 #r_vox %>% arrange(long_axis) %>% select(LR,AP,SI,long_axis) %>% filter(long_axis > .3 & long_axis < .31)
 #r_vox %>% arrange(long_axis) %>% select(LR,AP,SI,long_axis) %>% filter(long_axis > .9 & long_axis < .91)
 
-write_long_axis(r_hippo, r_vox, "long_axis_r_cobra_1mm")
-write_long_axis(l_hippo, l_vox, "long_axis_l_cobra_1mm")
-write_long_axis(r_hippo_downsamp, r_vox_downsamp, "long_axis_r_cobra_2.3mm")
-write_long_axis(l_hippo_downsamp, l_vox_downsamp, "long_axis_l_cobra_2.3mm")
+## write_long_axis(r_hippo, r_vox, "long_axis_r_cobra_1mm")
+## write_long_axis(l_hippo, l_vox, "long_axis_l_cobra_1mm")
+## write_long_axis(r_hippo_downsamp, r_vox_downsamp, "long_axis_r_cobra_2.3mm")
+## write_long_axis(l_hippo_downsamp, l_vox_downsamp, "long_axis_l_cobra_2.3mm")
+
+write_long_axis(r_hippo, r_vox, "long_axis_r_1mm")
+write_long_axis(l_hippo, l_vox, "long_axis_l_1mm")
+write_long_axis(r_hippo_downsamp, r_vox_downsamp, "long_axis_r_2.3mm")
+write_long_axis(l_hippo_downsamp, l_vox_downsamp, "long_axis_l_2.3mm")
+
 
 ##TESTING AND VALIDATION
 ##whole image test to verify angle of rotation

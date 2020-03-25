@@ -94,6 +94,8 @@ for (s in 1:nrow(subinfo)) {
   }
 }
 
+extract_z <- TRUE #whether to grab copes or zstats
+
 mdf <- merge(subinfo, copedf, by="id", all.y=TRUE)
 
 #remove bad ids
@@ -136,7 +138,12 @@ for (l1 in 1:n_l1_copes) {
     l2_loop_bs <- list()
     
     l2_contrast_name <- l2_contrast_names[l2] #current l2 contrast
-    copefiles <- file.path(subject_inputs, "stats", paste0("cope", l2, ".nii.gz"))
+    if (extract_z) {
+      copefiles <- file.path(subject_inputs, "stats", paste0("zstat", l2, ".nii.gz"))
+    } else {
+      copefiles <- file.path(subject_inputs, "stats", paste0("cope", l2, ".nii.gz"))
+    }
+    
     imgdims <- dim(oro.nifti::readNIfTI(copefiles[1], read_data=FALSE))
     
     #generate concatenated cope file image of l2 images (one per subject)
@@ -158,7 +165,11 @@ for (l1 in 1:n_l1_copes) {
       beta_mat <- apply(a_coordinates[,c("i", "j", "k")], 1, function(r) { copeconcat[r["i"], r["j"], r["k"], ] })
       
       #reshape into data.frame with beta, numeric numid, and vnum
-      beta_df <- reshape2::melt(beta_mat, varnames=c("numid", "vnum"), value.name="beta")
+      if (extract_z) {
+        beta_df <- reshape2::melt(beta_mat, varnames=c("numid", "vnum"), value.name="zstat")
+      } else {
+        beta_df <- reshape2::melt(beta_mat, varnames=c("numid", "vnum"), value.name="beta")
+      }
       beta_df <- beta_df %>% inner_join(a_coordinates, by="vnum") %>% select(-i, -j, -k) %>% inner_join(l1_subinfo %>% select(numid, id, fsldir), by="numid")
       
       atlas_df[[ai]] <- beta_df
@@ -194,7 +205,12 @@ for (l1 in 1:n_l1_copes) {
 #organize models intelligently
 all_rois <- all_rois %>% arrange(l1_contrast, l2_contrast)
 
-readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_betas.csv.gz")))
+#readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_betas.csv.gz")))
+if (extract_z) {
+  readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_zstats.csv.gz")))
+} else {
+  readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_betas.csv.gz")))
+}
 
 if (calculate_beta_series) {
   all_beta_series <- all_beta_series %>% arrange(l1_contrast, l2_contrast, run, trial)

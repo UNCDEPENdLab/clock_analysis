@@ -37,7 +37,7 @@ feat_lvl3_outdir <- file.path(fsl_model_arguments$group_output_dir, feat_run_out
 load(file.path(fsl_model_arguments$pipeline_home, "configuration_files", "MMClock_aroma_preconvolve_fse_groupfixed_sceptic-clock-feedback-pe_max-preconvolve_fse_groupfixed_lvl2_inputs.RData"))
 
 #registerDoSEQ()
-cl <- makeCluster(40) #hard code for now
+cl <- makeCluster(20) #hard code for now
 registerDoParallel(cl)
 #clusterExport(cl, c("sigmoid", "spm_hrf", "generate_feature", "dsigmoid", "deconvolve_nlreg", "deconvolve_nlreg_resample")) #make sure functions are available
 
@@ -62,29 +62,30 @@ master <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/Schae
 ##18 is L V1
 ##215 is R V1
 
-system(paste0("fslmaths ", master, " -thr 57 -uthr 57 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/l_motor_2.3mm -odt char"))
-system(paste0("fslmaths ", master, " -thr 256 -uthr 256 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/r_motor_2.3mm -odt char"))
-system(paste0("fslmaths ", master, " -thr 18 -uthr 18 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/l_v1_2.3mm -odt char"))
-system(paste0("fslmaths ", master, " -thr 215 -uthr 215 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/r_v1_2.3mm -odt char"))
+#system(paste0("fslmaths ", master, " -thr 57 -uthr 57 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/masks/l_motor_2.3mm -odt char"))
+#system(paste0("fslmaths ", master, " -thr 256 -uthr 256 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/masks/r_motor_2.3mm -odt char"))
+#system(paste0("fslmaths ", master, " -thr 18 -uthr 18 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/masks/l_v1_2.3mm -odt char"))
+#system(paste0("fslmaths ", master, " -thr 215 -uthr 215 -bin /gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/masks/r_v1_2.3mm -odt char"))
 
 hippo_dir <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise"
+mask_dir <- file.path(hippo_dir, "masks")
 
 ## atlas_files <- c(
-##   file.path(hippo_dir, "long_axis_l_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "long_axis_r_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "l_motor_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "r_motor_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "l_v1_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "r_v1_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "harvardoxford-subcortical_prob_Left_Accumbens_2009c_thr20_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "harvardoxford-subcortical_prob_Right_Accumbens_2009c_thr20_2.3mm.nii.gz"),
-##   file.path(hippo_dir, "hippo_dcm/masks/vmpfc_clust1_z5.7_2009c.nii") #add vmPFC from NeuroSynth
+##   file.path(mask_dir, "long_axis_l_2.3mm.nii.gz"),
+##   file.path(mask_dir, "long_axis_r_2.3mm.nii.gz"),
+##   file.path(mask_dir, "l_motor_2.3mm.nii.gz"),
+##   file.path(mask_dir, "r_motor_2.3mm.nii.gz"),
+##   file.path(mask_dir, "l_v1_2.3mm.nii.gz"),
+##   file.path(mask_dir, "r_v1_2.3mm.nii.gz"),
+##   file.path(mask_dir, "harvardoxford-subcortical_prob_Left_Accumbens_2009c_thr20_2.3mm.nii.gz"),
+##   file.path(mask_dir, "harvardoxford-subcortical_prob_Right_Accumbens_2009c_thr20_2.3mm.nii.gz"),
+##   file.path(mask_dir, "hippo_dcm/masks/vmpfc_clust1_z5.7_2009c.nii") #add vmPFC from NeuroSynth
 ## )
 
 #Just the new cobra-based long axis masks
 atlas_files <- c(
-  file.path(hippo_dir, "long_axis_l_cobra_2.3mm.nii.gz"),
-  file.path(hippo_dir, "long_axis_r_cobra_2.3mm.nii.gz")
+  file.path(mask_dir, "long_axis_l_cobra_2.3mm.nii.gz"),
+  file.path(mask_dir, "long_axis_r_cobra_2.3mm.nii.gz")
 )
 
 atlas_imgs <- lapply(atlas_files, readNIfTI, reorient=FALSE)
@@ -117,7 +118,8 @@ if (data_type != "smoothed") {
   if (data_type == "unsmoothed") {
     l1_niftis <- sub("nfaswuktm", "nfawuktm", l1_niftis)
   } else if (data_type=="smooth_in_mask") {
-    l1_niftis <- sub("nfaswuktm_(.*)\\.nii\\.gz", "fawuktm_\\1_hippblur.nii.gz", l1_niftis)
+    #l1_niftis <- sub("nfaswuktm_(.*)\\.nii\\.gz", "fawuktm_\\1_hippblur.nii.gz", l1_niftis) #this is cobra
+    l1_niftis <- sub("nfaswuktm_(.*)\\.nii\\.gz", "fawuktm_\\1_hippblur_harvardoxford.nii.gz", l1_niftis) #this is harvard-oxford
   }
 
   #strip smoothing suffix
@@ -197,9 +199,9 @@ for (ai in 1:length(atlas_files)) {
     #to_deconvolve is a voxels x time matrix
     to_deconvolve <- as.matrix(ts_out[, -1:-3]) #remove ijk
 
-    #to_deconvolve <- t(apply(to_deconvolve, 1, scale)) #need to unit normalize for algorithm not to choke on near-constant 100-normed data
+    to_deconvolve <- t(apply(to_deconvolve, 1, scale)) #need to unit normalize for algorithm not to choke on near-constant 100-normed data
     #to_deconvolve <- t(apply(to_deconvolve, 1, function(x) { scale(x, scale=FALSE) })) #just demean, which will rescale to percent signal change around 0 (this matches Bush 2015)
-    to_deconvolve <- t(apply(to_deconvolve, 1, function(x) { x/mean(x)*100 - 100 })) #pct signal change around 0
+    #to_deconvolve <- t(apply(to_deconvolve, 1, function(x) { x/mean(x)*100 - 100 })) #pct signal change around 0
 
     temp_i <- tempfile()
     temp_o <- tempfile()
@@ -272,7 +274,6 @@ for (ai in 1:length(atlas_files)) {
     #trip hrf end-padding for both C++ and R variants
     deconv_mat <- deconv_mat[,c(seq(-ncol(deconv_mat), -ncol(deconv_mat)+hrf_pad-1))] #trim trailing padding added above
 
-    
     #to_deconvolve_augment <- cbind(matrix(0, nrow=nrow(to_deconvolve), ncol=hrf_pad), to_deconvolve)
     #deconv_mat <- foreach(vox_ts=iter(to_deconvolve_augment[1:10,], by="row"), .combine="rbind") %dopar% {
     #  reg <- tryCatch(deconvolve_nlreg(as.vector(vox_ts), kernel=kernel, nev_lr=nev_lr, epsilon=epsilon),

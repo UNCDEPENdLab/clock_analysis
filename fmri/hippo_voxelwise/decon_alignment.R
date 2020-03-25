@@ -80,11 +80,13 @@ trial_df <- trial_df %>%
       mutate(rt_vmax_cum=clock_onset + rt_vmax)
     
 
-base_dir <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise"
+base_dir <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/deconvolved_timeseries"
+out_dir <- file.path(base_dir, "smooth_in_mask")
+if (!dir.exists(out_dir)) { dir.create(out_dir) }
 
-atlas_dirs <- list.dirs(file.path(base_dir, "deconvolved_timeseries_unsmoothed"), recursive=FALSE)
+atlas_dirs <- list.dirs(file.path(base_dir, "smooth_in_mask"), recursive=FALSE)
 
-cl <- makeCluster(40)
+cl <- makeCluster(20)
 registerDoParallel(cl)
 on.exit(stopCluster(cl))
 
@@ -120,7 +122,7 @@ for (a in atlas_dirs) {
       time_after=3
     }
 
-    out_name <- file.path("deconvolved_evt_locked_unsmoothed", paste0(aname, "_", e, "_decon_locked.csv.gz"))
+    out_name <- file.path(out_dir, paste0(aname, "_", e, "_decon_locked.csv.gz"))
     if (file.exists(out_name)) {
       message("Output file already exists: ", out_name)
       next

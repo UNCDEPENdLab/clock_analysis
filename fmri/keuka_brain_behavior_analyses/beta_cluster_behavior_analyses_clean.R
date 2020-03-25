@@ -1,4 +1,4 @@
-# brain-to-behavior analyses with anterior and posterior hippocampal cluster betas
+# brain-to-behavior analyses with anterior (low entropy) and posterior (PE) hippocampal cluster betas
 # first run beta_cluster_import_pca_clean.R if not run once already
 
 library(dplyr)
@@ -14,12 +14,15 @@ library(sjstats)
 library(sjPlot)
 library(emmeans)
 library(cowplot)
-source('~/code/Rhelpers/screen.lmerTest.R')
-source('~/code/Rhelpers/vif.lme.R')
+#source('~/code/Rhelpers/screen.lmerTest.R')
+#source('~/code/Rhelpers/vif.lme.R')
 # library(stringi)
 
+clock_folder <- "~/Data_Analysis/clock_analysis" #michael
+#clock_folder <- "~/code/clock_analysis" #alex
+
 # source('~/code/Rhelpers/')
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
 
 ### load data
 # load('trial_df_and_vhdkfpe_clusters.Rdata')
@@ -28,30 +31,6 @@ unsmoothed = F
 if (unsmoothed) {
   load('trial_df_and_vh_pe_clusters_u_unsmoothed.Rdata')
 } else { load('trial_df_and_vh_pe_clusters_u.Rdata') }
-
-# vif.lme <- function (fit) {
-#   ## adapted from rms::vif
-#   v <- vcov(fit)
-#   nam <- names(fixef(fit))
-#   ## exclude intercepts
-#   ns <- sum(1 * (nam == "Intercept" | nam == "(Intercept)"))
-#   if (ns > 0) {
-#     v <- v[-(1:ns), -(1:ns), drop = FALSE]
-#     nam <- nam[-(1:ns)] }
-#   d <- diag(v)^0.5
-#   v <- diag(solve(v/(d %o% d)))
-#   names(v) <- nam
-#   v }
-# 
-# # check VIFs of significant effects
-# screen.lmerTest <- function (mod,p=NULL) {
-#   if (is.null(p)) {p <- .05}
-#   c1 <- as.data.frame(coef(summary(mod))[,4:5])
-#   dd <- cbind(c1[2:nrow(c1),],as.data.frame(vif.lme(mod)))
-#   names(dd)[3] <- 'VIF'
-#   dd$`Pr(>|t|)` <- as.numeric(dd$`Pr(>|t|)`)
-#   print(dd[dd$`Pr(>|t|)`<p,c(1,3)], digits = 3)}
-
 
 
 ###############
@@ -94,7 +73,7 @@ ah
 dev.off()
 
 ## PH replication plot
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/plots/'))
 ph <- plot_models(mb3hpe_hipp,mmb3hpe_hipp, rm.terms = mterms[c(-22, -39)], m.labels = c("fMRI", "replication"),
                   show.values = T,  std.est = "std2", legend.title = "Session", vline.color = "slategray3",
                   wrap.labels = 15,  axis.labels = c("Previous RT * Omission * Post. hippocampal PE response","Previous RT * Post. hippocampal PE response"),
@@ -111,17 +90,48 @@ em1$study = 'fMRI'
 em2 <- as_tibble(emtrends(mmb3hpe_hipp, var = "rt_lag_sc", specs = c("pe_f2_hipp", "last_outcome"), at = list(pe_f2_hipp = c(-1.12, 1.07)), options = list()))
 em2$study = 'Replication'
 em1 <- rbind(em1, em2)
-p1 <- ggplot(em1, aes(last_outcome, rt_lag_sc.trend, lty = as.factor(pe_f2_hipp))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
-  theme_bw() + facet_wrap(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "PH RPE\nresponse") +
-  theme(axis.title.x=element_blank()) + scale_y_reverse(limits = c(.6, 0)) 
+p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(pe_f2_hipp))) + 
+  #shape = as.factor(pe_f2_hipp), 
+#p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
+  #scale_shape_manual(values=c(15,16), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("PH RPE\nresponse", palette="Set1", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("PH RPE\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "PH RPE\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.6, 0)) 
+ggsave("p1.pdf", p1, width=5, height=4)
+
 em3 <- as_tibble(emtrends(mb3hpe_hipp, var = "rt_lag_sc", specs = c("h_HippAntL_neg", "last_outcome"), at = list(h_HippAntL_neg = c(-.1, .37)), options = list()))
 em3$study = 'fMRI'
 em4 <- as_tibble(emtrends(mmb3hpe_hipp, var = "rt_lag_sc", specs = c("h_HippAntL_neg", "last_outcome"), at = list(h_HippAntL_neg = c(-.1, .37)), options = list()))
 em4$study = 'Replication'
 em2 <- rbind(em3, em4)
-p2 <- ggplot(em2, aes(last_outcome, rt_lag_sc.trend, lty = as.factor(h_HippAntL_neg))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
-  theme_bw() + facet_wrap(~study) +  ylab("RT swings (AU)\n Small <---------> Large") + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "AH global max\nresponse") +
-  theme(axis.title.x=element_blank()) + scale_y_reverse(limits = c(.6, 0)) 
+# p2 <- ggplot(em2, aes(last_outcome, rt_lag_sc.trend, lty = as.factor(h_HippAntL_neg))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
+#   theme_bw() + facet_wrap(~study) +  ylab("RT swings (AU)\n Small <---------> Large") + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "AH global max\nresponse") +
+#   theme(axis.title.x=element_blank()) + scale_y_reverse(limits = c(.6, 0)) 
+
+p2 <- ggplot(em2, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(h_HippAntL_neg))) + 
+  #shape = as.factor(h_HippAntL_neg), 
+  #p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
+  #scale_shape_manual(values=c(19,23), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("AH global max\nresponse", palette="Dark2", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("AH global max\nresponse", values=c("#403202", "#e2b407"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "AH global max\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.6, 0)) 
+
 ggarrange(p1,p2)
 
 em5 <- as_tibble(emtrends(mb3hpe_hipp, var = "rt_vmax_lag_sc", specs = c("pe_f2_hipp", "trial_neg_inv_sc"), at = list(pe_f2_hipp = c(-1.12, 1.07), trial_neg_inv_sc = c(-.7, 0.44)), options = list()))
@@ -129,21 +139,61 @@ em5$study = 'fMRI'
 em6 <- as_tibble(emtrends(mmb3hpe_hipp, var = "rt_vmax_lag_sc", specs = c("pe_f2_hipp", "trial_neg_inv_sc"), at = list(pe_f2_hipp = c(-1.12, 1.07), trial_neg_inv_sc = c(-.7, 0.44)), options = list()))
 em6$study = 'Replication'
 em3 <- rbind(em5,em6)
-p3 <- ggplot(em3, aes(as.factor(trial_neg_inv_sc), rt_vmax_lag_sc.trend, lty = as.factor(pe_f2_hipp))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
-  theme_bw() + facet_wrap(~study) +  ylab("Convergence on\nbest RT (AU)") + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "PH RPE\nresponse") +
+# p3 <- ggplot(em3, aes(as.factor(trial_neg_inv_sc), rt_vmax_lag_sc.trend, lty = as.factor(pe_f2_hipp))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
+#   theme_bw() + facet_wrap(~study) +  ylab("Convergence on\nbest RT (AU)") + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "PH RPE\nresponse") +
+#   scale_x_discrete(name ="Trial", labels=c("-0.7" = "5", "0.44" = "50")) + scale_y_continuous(limits = c(.05, .3))
+
+p3 <- ggplot(em3, aes(x=as.factor(trial_neg_inv_sc), y=rt_vmax_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(pe_f2_hipp))) + 
+  #shape = as.factor(pe_f2_hipp), 
+  #p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+ ylab("Convergence on\nbest RT (AU)") +
+  #scale_shape_manual(values=c(15,16), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("PH RPE\nresponse", palette="Set1", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("PH RPE\nresponse", values=c("#1b3840", "#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "PH RPE\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
   scale_x_discrete(name ="Trial", labels=c("-0.7" = "5", "0.44" = "50")) + scale_y_continuous(limits = c(.05, .3))
+
+
+
 em7 <- as_tibble(emtrends(mb3hpe_hipp, var = "rt_vmax_lag_sc", specs = c("h_HippAntL_neg", "trial_neg_inv_sc"), at = list(h_HippAntL_neg = c(-.1, .37), trial_neg_inv_sc = c(-.7, 0.44)), options = list()))
 em7$study = 'fMRI'
 em8 <- as_tibble(emtrends(mmb3hpe_hipp, var = "rt_vmax_lag_sc", specs = c("h_HippAntL_neg", "trial_neg_inv_sc"), at = list(h_HippAntL_neg = c(-.1, .37), trial_neg_inv_sc = c(-.7, 0.44)), options = list()))
 em8$study = 'Replication'
 em4 <- rbind(em7, em8)
-p4 <- ggplot(em4, aes(as.factor(trial_neg_inv_sc), rt_vmax_lag_sc.trend, lty = as.factor(h_HippAntL_neg))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
-  theme_bw() + facet_wrap(~study) + ylab("Convergence on\nbest RT (AU)")  + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "AH global max\nresponse")  +
+# p4 <- ggplot(em4, aes(as.factor(trial_neg_inv_sc), rt_vmax_lag_sc.trend, lty = as.factor(h_HippAntL_neg))) + geom_point(position = position_dodge2(width = .9)) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2()) + 
+#   theme_bw() + facet_wrap(~study) + ylab("Convergence on\nbest RT (AU)")  + scale_linetype(labels = c("10th %ile", "90th %ile")) + labs(lty = "AH global max\nresponse")  +
+#   scale_x_discrete(name ="Trial", labels=c("-0.7" = "5", "0.44" = "50")) + scale_y_continuous(limits = c(.05, .3))
+
+p4 <- ggplot(em4, aes(x=as.factor(trial_neg_inv_sc), y=rt_vmax_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(h_HippAntL_neg))) + 
+  #shape = as.factor(h_HippAntL_neg), 
+  #p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+  ylab("Convergence on\nbest RT (AU)") +
+  #scale_shape_manual(values=c(19,23), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("AH global max\nresponse", palette="Dark2", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("AH global max\nresponse", values=c("#403202", "#e2b407"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "AH global max\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
   scale_x_discrete(name ="Trial", labels=c("-0.7" = "5", "0.44" = "50")) + scale_y_continuous(limits = c(.05, .3))
+
+
 setwd("~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/")
-pdf("beta_PH_AH_behavior.pdf", height = 4.5, width = 9)
-ggarrange(p1,p2,p3,p4)
-dev.off()
+
+#ggarrange(p1,p2,p3,p4)
+vv <- cowplot::plot_grid(p1, p2, p3, p4, nrow=2, align="hv")
+ggsave("beta_PH_AH_behavior.pdf", vv, height = 4.5, width = 9, useDingbats=FALSE)
+
+#ggsave("beta_PH_AH_behavior_1.pdf", p1, height=3, width=5, useDingbats=FALSE)
 
 
 # PH PE cluster suppresses the win-stay-lose-switch behaviors
@@ -185,7 +235,7 @@ mmb3hpe_hipp_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_
                                    rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                                    rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
                                    (1|id/run), mdf)
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/tables/'))
 
 stargazer(mb3hpe_hipp_lme4, mmb3hpe_hipp_lme4, type="html", out="hippo_mb_lab.htm", report = "vcs*",
           digits = 1,single.row=TRUE,omit.stat = "bic",
@@ -504,6 +554,7 @@ mf3hpe_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outc
                              rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc + (1|id/run), df)
 # summary(mf3hpe)
 screen.lmerTest(mf3hpe)
+
 ###############
 # compare performance in fMRI and MEG sessions: better in MEG, particularly in IEV
 p1 <- ggplot(df, aes(run_trial, rt_csv, color = rewFunc)) + geom_smooth(method = "gam", formula = y~splines::ns(x,4)) +  coord_cartesian(ylim=c(1300,2300))
@@ -516,7 +567,7 @@ mmf3hpe_lme4 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_out
                               rt_lag_sc:last_outcome:h_HippAntL_neg + 
                               rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc + (1|id/run), mdf)
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/tables/'))
 # NB: stargazer only runs with lmer, not lmerTest objects
 stargazer(mf3hpe_lme4, mmf3hpe_lme4, type="html", out="hippo_mf.htm", report = "vcs*",
           digits = 1,single.row=TRUE,omit.stat = "bic",
@@ -525,6 +576,7 @@ stargazer(mf3hpe_lme4, mmf3hpe_lme4, type="html", out="hippo_mf.htm", report = "
           star.cutoffs = c(0.05, 0.01, 0.001),
           notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
           notes.append = F)
+
 ##############
 # Sensitivity analyses (cont.):
 # without covariates: effects are unchanged
@@ -534,7 +586,7 @@ summary(m0 <-  lme4::lmer(rt_csv_sc ~  rt_lag_sc*last_outcome*pe_f2_hipp +
 summary(mm0 <-  lme4::lmer(rt_csv_sc ~  rt_lag_sc*last_outcome*pe_f2_hipp +
                              rt_vmax_lag_sc*trial_neg_inv_sc*h_HippAntL_neg + 
                              (1|id/run), mdf))
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/tables/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/tables/'))
 stargazer(m0, mm0, type="html", out="hippo_mb_no_covariates.htm", report = "vcs*",
           digits = 1,single.row=TRUE,omit.stat = "bic",
           column.labels = c("fMRI session", "Out-of-session replication"),
@@ -542,10 +594,10 @@ stargazer(m0, mm0, type="html", out="hippo_mb_no_covariates.htm", report = "vcs*
           star.cutoffs = c(0.05, 0.01, 0.001),
           notes = c("* p<0.05; ** p<0.01; *** p<0.001"),
           notes.append = F)
-#
+
 
 ##############
-# controlling for uncertainty
+# sensitivity analyses (cont.): controlling for uncertainty
 mf3hpe_u <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + scale(u_chosen_lag) +
                                  h_HippAntL_neg + pe_f2_hipp)^2 + 
                     rt_lag_sc:last_outcome:h_HippAntL_neg + 
@@ -644,8 +696,8 @@ Anova(mmb3hpe_hipp_r, '3')
 # bump refinement vs. more global search -- add rt_lag*rt_vmax interactions
 mb4hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
                                        v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH)^2 + 
-                          rt_lag_sc:last_outcome:rt_vmax_lag_sc:h_HippAntL_neg + 
-                          rt_lag_sc:last_outcome:rt_vmax_lag_sc:pe_PH +
+                          rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                          rt_lag_sc:last_outcome:pe_PH +
                           rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                           rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
                           (1|id/run), df)
@@ -655,8 +707,8 @@ screen.lmerTest(mb4hpe_hipp_rl, .05)
 
 mmb4hpe_hipp_rl <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
                                         v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH)^2 + 
-                           rt_lag_sc:last_outcome:rt_vmax_lag_sc:h_HippAntL_neg + 
-                           rt_lag_sc:last_outcome:rt_vmax_lag_sc:pe_PH +
+                           rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                           rt_lag_sc:last_outcome:pe_PH +
                            rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                            rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
                            (1|id/run), mdf)
@@ -664,7 +716,7 @@ screen.lmerTest(mmb4hpe_hipp_rl, .05)
 
 ## PH replication plot for mean of R and left
 mterms <- names(fixef(mb3hpe_hipp_rl))
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots/')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/plots/'))
 ph <- plot_models(mb3hpe_hipp_rl,mmb3hpe_hipp_rl, rm.terms = mterms[c(-22, -39)], m.labels = c("fMRI", "replication"),
                   show.values = T,  std.est = "std2", legend.title = "Session", vline.color = "slategray3",
                   wrap.labels = 15,  axis.labels = c("Previous RT * Omission * Post. hippocampal PE response","Previous RT * Post. hippocampal PE response"),
@@ -737,12 +789,17 @@ mmn1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_
 summary(mmn1)
 Anova(mmn1, '3')
 
+# supplementary figure illustrating v_chosen by PH response to prove that PH explorers were rewarded.
 
-
+ggplot(df, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,4))
+setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/final/supp')
+pdf('score_by_PH.pdf', height = 3, width = 3)
+ggplot(df , aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'loess')
+dev.off()
 ######################
 # Uncertainty models #
 ######################
-
+# archival: these questions are now better addressed in coxme analyses
 # Sanity checks
 # ggplot(df, aes(run_trial, u_chosen, group = interaction(rewFunc, rt_lag>2000), color = rewFunc, lty = rt_lag>2000)) + geom_smooth()
 # ggplot(df, aes(run_trial, u_chosen, group = rewFunc, color = rewFunc)) + geom_smooth()
@@ -754,7 +811,7 @@ vars <- df %>% select(u_chosen, u_chosen_change, u_chosen_quantile, u_chosen_qua
                       run_trial, magnitude, probability,rt_csv, rt_lag, rt_vmax_lag)
 u_cor <- corr.test(vars,method = 'pearson', adjust = 'none')
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/plots'))
 pdf("u_corr_reset.pdf", width=12, height=12)
 corrplot(u_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -830,43 +887,7 @@ pdf('v_chosen_by_PH_AH.pdf', width = 9, height = 8)
 ggarrange(p1,p2, p3, p4, ncol = 2, nrow = 2, labels = c("fMRI", "replication","fMRI", "replication"))
 dev.off()
 
-# 
-# 
-# ## try cumulative reward sums instead
-# ldf <- ldf %>% group_by(ID, run) %>% mutate(cum_score = cumsum(score_csv)) %>% ungroup()
-# lmdf <- lmdf %>% group_by(ID, run) %>% mutate(cum_score = cumsum(score_csv))
-# # p1 <- ggplot(ldf, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3))+ facet_wrap(~rewFunc)
-# # p2 <- ggplot(lmdf, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x,3))+ facet_wrap(~rewFunc)
-# p1 <- ggplot(ldf, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'loess')+ facet_wrap(~rewFunc)
-# p2 <- ggplot(lmdf, aes(run_trial, score_csv, color = pe_f2_hipp_resp)) + geom_smooth(method = 'loess')+ facet_wrap(~rewFunc)
-# setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/beta_uncertainty/')
-# pdf('score_by_PH.pdf', width = 6, height = 6)
-# ggarrange(p1,p2, ncol = 1, labels = c("fMRI",  "replication"))
-# dev.off()
-# 
-# p1 <- ggplot(ldf, aes(run_trial, score_csv, color = h_HippAntL_resp)) + geom_smooth(method = 'loess')+ facet_wrap(~rewFunc)
-# p2 <- ggplot(lmdf, aes(run_trial, score_csv, color = h_HippAntL_resp)) + geom_smooth(method = 'loess')+ facet_wrap(~rewFunc)
-# setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/figs/beta_uncertainty/')
-# pdf('score_by_AH.pdf', width = 6, height = 6)
-# ggarrange(p1,p2, ncol = 1, labels = c("fMRI",  "replication"))
-# dev.off()
-# 
-# # is this significant?
-# summary(vm1 <- lmer(v_chosen ~ (trial_neg_inv_sc + pe_f2_hipp + h_HippAntL_neg + rewFunc + v_chosen_lag)^3 + (1|ID), ldf))
-# summary(mvm1 <- lmer(v_chosen ~ (trial_neg_inv_sc + pe_f2_hipp + h_HippAntL_neg + rewFunc+ v_chosen_lag)^3 + (1|ID), lmdf))
-# 
-# 
-# # totals
-# sdf <- ldf %>% ungroup() %>%  filter(run_trial == 50) %>% group_by(ID) %>% summarise(earnings_learnable = mean(cum_score) ) %>% merge(unique(select(ldf, ID,pe_f2_hipp, h_HippAntL_neg)))
-# smdf <- lmdf %>% ungroup() %>%  filter(run_trial == 50) %>% group_by(ID) %>% summarise(earnings_learnable = mean(cum_score) ) %>% merge(unique(select(ldf, ID,pe_f2_hipp, h_HippAntL_neg)))
-# ggplot(sdf, aes(pe_f2_hipp, earnings_learnable)) + geom_point() + geom_smooth(method = 'glm')
-# ggplot(smdf, aes(pe_f2_hipp, earnings_learnable)) + geom_point() + geom_smooth(method = 'glm')
-# ggplot(sdf, aes(h_HippAntL_neg, earnings_learnable)) + geom_point() + geom_smooth(method = 'glm')
-# ggplot(smdf, aes(h_HippAntL_neg, earnings_learnable)) + geom_point() + geom_smooth(method = 'glm')
-# tidy((lm(earnings_learnable ~ pe_f2_hipp + h_HippAntL_neg, sdf)))
-# tidy(lm(earnings_learnable ~ pe_f2_hipp + h_HippAntL_neg, smdf))
-
-# most interpretable set of models
+# most interpretable set of uncertainty models
 umb1 <- lmer(u_chosen_quantile ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + h_HippAntL_neg)^2 +
                (trial_neg_inv_sc + rt_lag_sc + last_outcome + v_entropy_wi + pe_f2_hipp)^2 +
                scale(u_chosen_quantile_lag) + rt_lag_sc*rewFunc + (1|id/run), df)
@@ -925,9 +946,10 @@ screen.lmerTest(mumb3v, .05)
 # summary(mumb3v)
 
 # plot uncertainty change following long vs short RTs
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/plots')
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/plots'))
 p1 <- ggplot(df, aes(rt_lag, u_chosen_quantile, color = pe_f2_hipp_resp)) + geom_smooth(method = 'loess') #+ facet_wrap(~rewFunc)
 p2 <- ggplot(mdf, aes(rt_lag, u_chosen_quantile, color = pe_f2_hipp_resp)) + geom_smooth(method = 'loess')
+
 # pdf('uncertainty_change_prev_RT_by_PH.pdf', height = 6, width = 12)
 ggarrange(p1,p2, labels = c("fMRI", "MEG"))
 # dev.off()
@@ -969,23 +991,7 @@ ggplot(df %>% filter(!is.na(v_entropy_wi)), aes(run_trial, u_chosen_quantile, lt
 dev.off()
 
 
-# more comprehensive models evaluated and rejected because of excessive complexity
-# ub3a <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + h_f1_fp)^3 +
-#                (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + h_HippAntL_neg)^3 +
-#                (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str)^3 +
-#                (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + pe_f2_hipp)^3 +
-#                v_max_b + v_entropy_b + rt_lag_sc*scale(u_chosen_quantile_lag) + trial_neg_inv_sc*scale(run) + (1|id/run), df)
-# screen.lmerTest(ub3a, .01)
-# 
-# ub3e <- lmer(u_chosen_quantile ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + h_f1_fp)^3 +
-#               (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + I(-h_f2_neg_paralimb))^3 +
-#               (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + pe_f1_cort_str)^3 +
-#               (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + v_max_wi_lag + v_entropy_wi + pe_f2_hipp)^3 +
-#               v_max_b + v_entropy_b + rt_lag_sc*scale(u_chosen_quantile_lag) + trial_neg_inv_sc*scale(run) + 
-#               h_f1_fp*scale(u_chosen_quantile_lag) + I(-h_f2_neg_paralimb)*scale(u_chosen_quantile_lag) +pe_f1_cort_str*scale(u_chosen_quantile_lag) +pe_f2_hipp*scale(u_chosen_quantile_lag) + (1|id/run), edf)
-# screen.lmerTest(ub3e, .01)
-
-# plot the striking effect of HIPP on uncertainty sensitivity
+# plot the effect of HIPP on uncertainty sensitivity
 p1 <- ggplot(df, aes(run_trial, v_chosen, lty = pe_f2_hipp_resp, group = pe_f2_hipp_resp)) + geom_smooth() + facet_wrap(~rewFunc)
 p2 <- ggplot(df, aes(run_trial, u_chosen_quantile, lty = pe_f2_hipp_resp, group = (pe_f2_hipp_resp))) + geom_smooth() + facet_wrap(~rewFunc)
 p3 <- ggplot(df, aes(run_trial, v_chosen, lty = h_HippAntL_resp, group = h_HippAntL_resp)) + geom_smooth()+ facet_wrap(~rewFunc)
@@ -1003,139 +1009,6 @@ pdf("clusters_u_sensitivity_reward.pdf", height = 4, width = 8)
 ggarrange(p1,p2,p3, p4, ncol = 2, nrow = 2)
 dev.off()
 
-
-# # simple models: do they swing in the direction of greater uncertainty?
-# us1 <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + last_outcome)^2 + 
-#               trial_neg_inv_sc*rewFunc + (1|id/run), df)
-# 
-# # incorporate rt swings -- hard to interpret...
-# us1r <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + last_outcome )^2 + rt_csv_sc * rt_lag_sc +
-#               trial_neg_inv_sc*rewFunc + (1|id/run), df)
-# screen.lmerTest(us1r)
-# us1v <- lmer(u_chosen_quantile_change ~ (trial_neg_inv_sc + last_outcome)^2 + 
-#               trial_neg_inv_sc*rewFunc + scale(v_chosen) + (1|id), df)
-# screen.lmerTest(us1v)
-# # residualize u_chosen_quantile for v_chosen
-# uv1 <- lm(u_chosen_quantile ~ 1 + v_chosen + (1|id), df)
-# df$u_chosen_quantile_resid <- resid(uv1)
-# uvc1 <- lm(u_chosen_quantile_change ~ 1 + v_chosen + (1|id), df)
-# df$u_chosen_quantile_change_resid <- NA
-# df$u_chosen_quantile_change_resid[df$trial>1] <- resid(uvc1)
-# 
-# ggplot(df, aes(run_trial, u_chosen_quantile_resid, color = rewFunc)) + geom_smooth()
-# ggplot(df, aes(run_trial, u_chosen_quantile_change_resid, color = rewFunc)) + geom_smooth()
-# 
-# screen.lmerTest(us1)
-# us2 <- lmer(u_chosen_quantile_change_resid ~ (trial_neg_inv_sc + last_outcome + h_f1_fp)^2 +
-#               (trial_neg_inv_sc + last_outcome+ h_HippAntL_neg)^2 +
-#               (trial_neg_inv_sc+ last_outcome + pe_f1_cort_str)^2 +
-#             (trial_neg_inv_sc+ last_outcome + pe_f2_hipp)^2 +
-#               trial_neg_inv_sc*rewFunc + u_chosen_quantile_resid + (1|id), df)
-# screen.lmerTest(us2, .01)
-# vs2 <- lmer(v_chosen ~ (trial_neg_inv_sc + last_outcome + h_f1_fp)^2 +
-#               (trial_neg_inv_sc + last_outcome+ h_HippAntL_neg)^2 +
-#               (trial_neg_inv_sc+ last_outcome + pe_f1_cort_str)^2 +
-#               (trial_neg_inv_sc+ last_outcome + pe_f2_hipp)^2 +
-#               trial_neg_inv_sc*rewFunc + scale(v_chosen_lag) + (1|id), df)
-# screen.lmerTest(vs2, .01)
-# 
-# us2r <- lmer(u_chosen_quantile_resid ~ (trial_neg_inv_sc + last_outcome + h_f1_fp)^2 +
-#               (trial_neg_inv_sc + last_outcome+ h_HippAntL_neg)^2 +
-#               (trial_neg_inv_sc+ last_outcome + pe_f1_cort_str)^2 +
-#               (trial_neg_inv_sc+ last_outcome + pe_f2_hipp)^2 +
-#               trial_neg_inv_sc*rewFunc + scale(u_chosen_quantile_lag) + (1|id), df)
-# screen.lmerTest(us2r, .01)
-# summary(us2r)
-# Anova(us2r, '3')
-# understand the time course of uncertainty residualized for value
-ggplot(df, aes(run_trial, u_chosen_quantile_resid, color = pe_f2_hipp_resp, lty = last_outcome)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,3))
-ggplot(df, aes(run_trial, u_chosen_quantile, color = rewFunc, lty = last_outcome)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,3))
-ggplot(df, aes(run_trial, v_chosen, color = rewFunc, lty = last_outcome)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,3))
-
-p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f2_hipp, u_chosen_quantile_change, color = last_outcome)) + geom_smooth(method = 'gam') #+ 
-geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)
-p2 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f1_cort_str, u_chosen_quantile_change, color = last_outcome)) + geom_smooth(method = 'gam') #+ 
-geom_hline(yintercept = 1437.59)#+ facet_wrap(~run)
-pdf("pe_clusters_u_reward.pdf", height = 4, width = 8)
-ggarrange(p1,p2, ncol = 2, nrow = 1)
-dev.off()
-# # control for value: this changes results
-# us3 <- lmer(u_chosen_quantile ~ (trial_neg_inv_sc + last_outcome + h_f1_fp)^2 +
-#               (trial_neg_inv_sc + last_outcome + h_HippAntL_neg)^2 +
-#               (trial_neg_inv_sc + last_outcome + pe_f1_cort_str)^2 +
-#               (trial_neg_inv_sc + last_outcome + pe_f2_hipp)^2 +
-#               trial_neg_inv_sc*rewFunc + scale(v_chosen) + (1|id), df)
-# screen.lmerTest(us3, .05)
-# Anova(us3, '3')
-# anova(us1,us2,us3)
-
-p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f2_hipp, v_chosen, color = last_outcome)) + geom_smooth(method = 'gam') + 
-  geom_hline(yintercept = 27.62)#+ facet_wrap(~run)
-p2 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f1_cort_str, v_chosen, color = last_outcome)) + geom_smooth(method = 'gam') + 
-  geom_hline(yintercept = 27.62)#+ facet_wrap(~run)
-pdf("pe_clusters_v_reward.pdf", height = 4, width = 8)
-ggarrange(p1,p2, ncol = 2, nrow = 1)
-dev.off()
-
-p1 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f2_hipp, rt_csv, color = last_outcome)) + geom_smooth(method = 'gam') 
-p2 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(pe_f1_cort_str, rt_csv, color = last_outcome)) + geom_smooth(method = 'gam')
-p3 <- ggplot(df %>% filter(!is.na(last_outcome)), aes(-h_HippAntL, rt_csv, color = last_outcome)) + geom_smooth(method = 'gam') 
-pdf("pe_ah_clusters_rt_reward.pdf", height = 8, width = 20)
-ggarrange(p1,p2, p3, ncol = 3, nrow = 1)
-dev.off()
-
-
-# do the PH PE people RT-swing more post rewards?!!!
-
-# predict RT with u_chosen_quantile and HIPP
-urs1 <- lmer(rt_csv ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + u_chosen_quantile)^2 + 
-               trial_neg_inv_sc * rewFunc +  (1|id/run), df)
-screen.lmerTest(urs1, .01)
-vif(urs1)
-Anova(urs1)
-urs2 <- lmer(rt_csv ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + u_chosen_quantile + h_f1_fp)^3 +
-               (trial_neg_inv_sc + rt_lag_sc + last_outcome + u_chosen_quantile + h_HippAntL_neg)^3 + 
-               (trial_neg_inv_sc + rt_lag_sc + last_outcome + u_chosen_quantile + pe_f1_cort_str)^3 + 
-               (trial_neg_inv_sc + rt_lag_sc + last_outcome + u_chosen_quantile + pe_f2_hipp)^3 + 
-               trial_neg_inv_sc * rewFunc +
-               (1|id/run), df)
-screen.lmerTest(urs2, .01)
-Anova(urs2)
-# unpack PH*u_chosen_quantile
-ggplot(df, aes(rt_lag, rt_csv, lty = last_outcome, color = pe_f2_hipp_resp)) + geom_smooth(method = "gam",
-                                                                                           formula = y ~ splines::ns(x,2))
-ggplot(df, aes(rt_lag, rt_csv, lty = last_outcome, color = h_f1_fp>0)) + geom_smooth(method = "gam",
-                                                                                     formula = y ~ splines::ns(x,2))
-
-# ideas for improving uncertainty analyses:
-# try ML Cox survival with time-varying within-trial U
-# look at relative rather than absolute uncertainty of the choice
-
-### plot single subject
-sdf <- df[df$id==10811 & df$emotion == "scram" & (df$rewFunc=="IEV" | df$rewFunc=="DEV"),] %>% filter(run_trial>1)
-pdf("single_subject_swings_10811.pdf", height = 3, width = 5)
-ggplot(sdf, aes(run_trial, rt_csv/1000, color = ev, size = score_csv)) + geom_point() + facet_wrap(~rewFunc) + 
-  xlab("Trial") + ylab("Response time, s") + scale_color_viridis_c(option = "plasma", name = "Expected value") + theme_dark()
-dev.off()
 #
 save(file = 'vhd_u_meg_models.Rdata', list = ls(all.names = TRUE))
-
-# # lm to elucidate interactions -- effects very similar to lmer
-# lmf3hpe <-  lm(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
-#                                h_HippAntL_neg + pe_f2_hipp)^2 + 
-#                   rt_lag_sc:last_outcome:h_HippAntL_neg + 
-#                   rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc, df)
-# lmfa <- as_tibble(emtrends(lmf3hpe, var = "rt_lag_sc", specs = c("last_outcome", "h_HippAntL_neg"), at = list(h_HippAntL_neg = c(-2,2), rt_lag_sc = c(-1,2))))
-# lmfp <- as_tibble(emtrends(lmf3hpe,var = "rt_lag_sc", specs = c("last_outcome", "pe_f2_hipp"), at = list(pe_f2_hipp = c(-2,2))))
-# lmmf3hpe <- lm(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + last_outcome + 
-#                                h_HippAntL_neg + pe_f2_hipp)^2 + 
-#                   rt_lag_sc:last_outcome:h_HippAntL_neg + 
-#                   rt_lag_sc:last_outcome:pe_f2_hipp + trial_neg_inv_sc*rewFunc, mdf)
-# lmmfa <- as_tibble(emtrends(lmmf3hpe,var = "rt_lag_sc", specs = c("last_outcome", "h_HippAntL_neg"), at = list(h_HippAntL_neg = c(-2,2))))
-# lmmfp <- as_tibble(emtrends(lmmf3hpe,var = "rt_lag_sc", specs = c("last_outcome", "pe_f2_hipp"), at = list(pe_f2_hipp = c(-2,2))))
-# 
-# # PH increases exploration post-reward, AH increases stickiness post-omission
-# p1 <- ggplot(lmfa, aes(last_outcome, rt_lag_sc.trend, group = h_HippAntL_neg, color = h_HippAntL_neg)) + geom_line() + geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL))
-# p2 <- ggplot(lmmfa, aes(last_outcome, rt_lag_sc.trend, group = h_HippAntL_neg, color = h_HippAntL_neg)) + geom_line() + geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL))
-# p3 <- ggplot(lmfp, aes(last_outcome, rt_lag_sc.trend, group = pe_f2_hipp, color = pe_f2_hipp)) + geom_line() + geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL))
-# p4 <- ggplot(lmmfp, aes(last_outcome, rt_lag_sc.trend, group = pe_f2_hipp, color = pe_f2_hipp)) + geom_line() + geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL))
+# load(file = 'vhd_u_meg_models.Rdata')
