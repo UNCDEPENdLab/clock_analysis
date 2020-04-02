@@ -18,8 +18,8 @@ library(cowplot)
 #source('~/code/Rhelpers/vif.lme.R')
 # library(stringi)
 
-clock_folder <- "~/Data_Analysis/clock_analysis" #michael
-#clock_folder <- "~/code/clock_analysis" #alex
+# clock_folder <- "~/Data_Analysis/clock_analysis" #michael
+clock_folder <- "~/code/clock_analysis" #alex
 
 # source('~/code/Rhelpers/')
 setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
@@ -1009,6 +1009,15 @@ pdf("clusters_u_sensitivity_reward.pdf", height = 4, width = 8)
 ggarrange(p1,p2,p3, p4, ncol = 2, nrow = 2)
 dev.off()
 
+####### Nat Comm R1: timecourses of PE and H
+# p1 <- ggplot(df, aes(run_trial, pe_max, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3))
+# p2 <- ggplot(df, aes(run_trial, v_entropy_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y ~ splines::ns(x, 3))
+p1 <- ggplot(df, aes(run_trial, pe_max, color = rewFunc)) + geom_smooth(method = 'loess')
+p2 <- ggplot(df, aes(run_trial, v_entropy_wi, color = rewFunc)) + geom_smooth(method = 'loess')
+
+pdf("timecourses_of_pe_h_by_cond.pdf", height = 6, width = 4)
+ggarrange(p1, p2, ncol = 1, nrow = 2)
+dev.off()
 #
 save(file = 'vhd_u_meg_models.Rdata', list = ls(all.names = TRUE))
 # load(file = 'vhd_u_meg_models.Rdata')

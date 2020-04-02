@@ -23,3 +23,4 @@ fmri/keuka_brain_behavior_analyses/clusters_and_beta_series.Rdata
 #Mac stuff
 .DS_Store
 fmri/keuka_brain_behavior_analyses/vhd_u_meg_models.Rdata
+fmri/clinical/bs_models.Rdata
