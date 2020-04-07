@@ -42,6 +42,15 @@ trial_df <- trial_df %>% select(-run, -run_trial) %>%  group_by(id, rewFunc, emo
 ) %>% ungroup()
 }
 
+if (explore) {
+  trial_df <- trial_df %>% select(-run, -run_trial) %>% mutate(
+  run = floor((trial-1)/40) + 1
+  )
+trial_df <- trial_df %>% group_by(id, run) %>% 
+  mutate(run_trial = 1:n())
+  }
+
+
 # diagnostics for an incorrect contingency
 # ins <- trial_df %>% filter(trial_df$run_trial>50)
 
@@ -95,7 +104,7 @@ df <- inner_join(trial_df, subject_df) %>% filter(id!=219757 & !is.na(groupLeth)
 # merge
 if (explore) {
   df <- inner_join(trial_df, subject_df) %>% filter(GroupATT !='88')
-  betas$id <- as.character(betas$ID)
+  # betas$id <- as.character(betas$ID)
   df <- inner_join(df, betas)
   # lost 2 from subject_df and 4 from trial_df
 }
@@ -129,7 +138,8 @@ if (explore) {
                                            v_entropy_cluster_17_3mm + v_entropy_cluster_18_3mm + v_entropy_cluster_19_3mm + 
                                            v_entropy_cluster_1_3mm + v_entropy_cluster_2_3mm + v_entropy_cluster_3_3mm + 
                                            v_entropy_cluster_4_3mm + v_entropy_cluster_5_3mm + v_entropy_cluster_6_3mm + 
-                                           v_entropy_cluster_7_3mm + v_entropy_cluster_8_3mm + v_entropy_cluster_9_3mm, asdf)))
+                                           v_entropy_cluster_7_3mm + v_entropy_cluster_8_3mm + v_entropy_cluster_9_3mm + 
+                                          v_entropy_cluster_9_3mm_overlap, asdf)))
   # differences in clusters 8 (R inf. parietal supramarginal gyrus) and 10 (left fusiform/parahippocampal g.)
   export2html(h1, "explore_clock_h_clusters_by_group.html")
   
@@ -138,9 +148,10 @@ if (explore) {
 ######### compare clusters across groups
 
 
-chars <- sdf %>% select(c(PH_pe, AH_h_neg, age, contains("total"), contains("raw")))
+chars <- sdf %>% select(c(PH_pe, AH_h_neg,AH_h_neg_o, age, contains("total"), contains("raw")))
 summary(lm(PH_pe ~ GroupATT, sdf))
 summary(lm(AH_h_neg ~ GroupATT, sdf))
+summary(lm(AH_h_neg_o ~ GroupATT, sdf))
 
 # careful with the missing data
 clust_cor <- corr.test(chars,method = 'pearson', use = "complete.obs")
@@ -167,8 +178,8 @@ library(VIM)
 df_aggr = aggr(sdf, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(sdf), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
 
 # sanity check on modeling
-ggplot(df, aes(run_trial, rt_vmax, lty = rewFunc, color = groupLeth)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,4))
-ggplot(df, aes(run_trial, rt_vmax, lty = rewFunc, color = groupLeth)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,4))
+ggplot(df, aes(run_trial, rt_vmax, lty = rewFunc)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3))
+ggplot(df, aes(run_trial, rt_swing_lr, lty = rewFunc)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3))
 
 ggplot(df, aes(run_trial, pe_max, lty = rewFunc)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3))
 ggplot(df, aes(run_trial, v_entropy_wi, lty = rewFunc)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,4))
@@ -180,7 +191,7 @@ ggplot(df, aes(run_trial, v_entropy_wi, lty = rewFunc)) + geom_smooth(method = '
 # ggplot(df, aes(run_trial, score_csv, color = groupLeth)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) + 
 #   facet_wrap(~rewFunc)
 
-ggplot(df, aes(trial, rt_csv, lty = rewFunc, color = GroupATT)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3))
+ggplot(df, aes(trial_neg_inv_sc, rt_csv, lty = rewFunc, color = GroupATT)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3))
 ggplot(df, aes(run_trial, rt_swing_lr, color = GroupATT)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) + 
   facet_wrap(~rewFunc)
 ggplot(df, aes(run_trial, score_csv, color = GroupATT)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) + 
@@ -199,34 +210,44 @@ dev.off()
 # model-free analyses
 
 # preliminary model for Explore
-emf1 <- lmer(rt_csv_sc ~ (rt_lag_sc + rewFunc +  omission_lag) ^2 +
+emf1 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc +  omission_lag) ^2 +
               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(emf1)
 vif(emf1)
-emf2 <- lmer(rt_csv_sc ~ (rt_lag_sc + rewFunc +  omission_lag + PH_pe) ^3 +
+emf2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc +  omission_lag + PH_pe) ^3 +
                (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(emf2)
-vif(emf1)
+anova(emf2)
 
 
-# -1/trial does not capture the learning curve well
+# -1/trial does not capture the learning curve perfectly
 mf1 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc +  omission_lag) ^2 +
               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(mf1)
 vif(mf1)
-mf2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + groupLeth)^3 +
+mf2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + GroupATT)^3 +
               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(mf2)
+anova(mf2, '3')
 screen.lmerTest(mf2)
 vif(mf2)
 anova(mf1, mf2)
 # control for wtar and age
-mf2aw <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + groupLeth)^3 +
+mf2aw <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + GroupATT)^3 +
                 (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + scale(age))^3 +
                 (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + scale(wtar_raw))^3 +
                 (1|id/run), df)
+anova(mf2aw, '3')
 summary(mf2aw)
 screen.lmerTest(mf2aw)
+
+# EXIT and age
+mf2ae <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + GroupATT)^3 +
+                (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + scale(age))^3 +
+                (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + scale(exit_raw))^3 +
+                (1|id/run), df)
+anova(mf2ae, '3')
+summary(mf2ae)
 
 
 # Model-based analyses -- no need to include 3-way interactions between design variables
@@ -235,10 +256,23 @@ emb1 <- lmer(rt_csv_sc ~ (rt_lag_sc + rt_vmax_lag2_sc + omission_lag) ^2 +
               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(emb1)
 
-emb2 <- lmer(rt_csv_sc ~ (rt_lag_sc + rt_vmax_lag2_sc + omission_lag + PH_pe) ^3 +
-               (rt_lag_sc + rt_vmax_lag2_sc + omission_lag + AH_h_neg) ^3 +
-               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
-summary(emb2)
+# emb2 <- lmer(rt_csv_sc ~ (rt_lag_sc + rt_vmax_lag_sc + omission_lag + PH_pe) ^2 +
+#                (rt_lag_sc + rt_vmax_lag_sc + omission_lag + AH_h_neg) ^2 +
+#                rt_lag_sc:omission_lag:PH_pe +
+#                rt_lag_sc:omission_lag:PH_pe +
+#                (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
+# summary(emb2)
+
+embo2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag + PH_pe) ^2 +
+               (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag + AH_h_neg_o) ^2 +
+                rt_lag_sc:omission_lag:PH_pe +
+                rt_lag_sc:omission_lag:AH_h_neg_o +
+                rt_vmax_lag_sc:trial_neg_inv_sc:AH_h_neg_o +
+                rt_vmax_lag_sc:trial_neg_inv_sc:PH_pe + 
+                (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
+summary(embo2)
+Anova(embo2)
+anova(emb2, embo2)
 
 ###########
 mb1 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag2_sc + omission_lag) ^2 +

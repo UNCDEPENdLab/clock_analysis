@@ -40,9 +40,6 @@ if (unsmoothed) {
 betas <- as_tibble(extracted_roi_df)
 # AH entropy cluster: #9
 # PH PE clusters: #7 and #10
-ggplot(betas,aes(scale(pe_max_cluster_7_3mm))) + geom_histogram()
-ggplot(betas,aes(scale(pe_max_cluster_10_3mm))) + geom_histogram()
-ggplot(betas,aes(scale(v_entropy_cluster_9_3mm))) + geom_histogram()
 
 
 just_rois <- betas %>% select(-c(ID, pe_max_left_hipp_3mm,pe_max_right_hipp_3mm,v_entropy_left_hipp_3mm,v_entropy_right_hipp_3mm))
@@ -75,8 +72,15 @@ betas <- betas %>% rename(id = ID)
 allbetas <- betas
 betas <- betas %>% mutate(
   PH_pe = (pe_max_cluster_7_3mm + pe_max_cluster_10_3mm)/2,
-  AH_h_neg = - v_entropy_cluster_9_3mm) %>%  
-  select(PH_pe, AH_h_neg, id)
+  AH_h_neg = - v_entropy_cluster_9_3mm,
+  AH_h_neg_o = - v_entropy_cluster_9_3mm_overlap) %>%  
+  select(PH_pe, AH_h_neg, AH_h_neg_o, id)
+
+ggplot(allbetas,aes(scale(pe_max_cluster_7_3mm))) + geom_histogram()
+ggplot(allbetas,aes(scale(pe_max_cluster_10_3mm))) + geom_histogram()
+p1 <- ggplot(allbetas,aes(scale(v_entropy_cluster_9_3mm))) + geom_histogram()
+p2 <- ggplot(allbetas,aes(scale(v_entropy_cluster_9_3mm_overlap))) + geom_histogram()
+ggarrange(p1,p2, ncol = 1, nrow = 2)
 
 save(betas, file = "~/Box/skinner/data/MRI/clock_explore/explore_betas.rdata")
 save(allbetas, file = "~/Box/skinner/data/MRI/clock_explore/explore_allbetas.rdata")
@@ -84,9 +88,9 @@ save(allbetas, file = "~/Box/skinner/data/MRI/clock_explore/explore_allbetas.rda
 #########
 
 
-hwide <- betas %>% select(contains('v_entropy_clu'))
+hwide <- allbetas %>% select(contains('v_entropy_clu')) %>% select(-v_entropy_cluster_9_3mm)
 # not really recovering the factor structure from Nat Comm
-h.fa = fa.sort(psych::fa(hwide, nfactors=3, rotate = "varimax", fm = "pa"))
+h.fa = fa.sort(psych::fa(hwide, nfactors=2, rotate = "varimax", fm = "pa"))
 # fscores <- factor.scores(just_rois, h.fa)$scores
 # h_wide$h_f1_fp <- fscores[,1]
 # h_wide$h_f2_neg_paralimb <- fscores[,2]
