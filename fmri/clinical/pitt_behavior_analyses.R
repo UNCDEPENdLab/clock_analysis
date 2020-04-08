@@ -104,7 +104,6 @@ subject_df <- subject_df %>% mutate(   # recode group
 )
 df <- inner_join(trial_df, subject_df) %>% filter(id!=219757 & !is.na(groupLeth) & GroupATT !='89')
 df <- inner_join(df, betas)
-
 }
 # merge
 if (explore) {
@@ -199,7 +198,7 @@ if (explore) {
   print(c1 <- createTable(compareGroups(GroupATT ~ age + female + wtar_raw + exit_raw, sdf)))
   export2html(c1, "explore_clock_group_characteristics.html")
   # need education
-}  
+}
 # check missingness - a lot in Explore!
 library(VIM)
 df_aggr = aggr(sdf, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(sdf), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
@@ -224,20 +223,23 @@ ggplot(df, aes(run_trial, rt_swing_lr, color = GroupATT)) + geom_smooth(method =
 ggplot(df, aes(run_trial, score_csv, color = GroupATT)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) + 
   facet_wrap(~rewFunc)
 
+
 pdf('inspect_rts_ind.pdf', height = 20, width = 20)
-ggplot(df, aes(run_trial, rt_csv, color = groupLeth)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) + 
+# ggplot(df, aes(run_trial, rt_csv, color = run)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) + 
+#   facet_wrap(id~rewFunc)
+ggplot(df, aes(run_trial, rt_csv, color = as.factor(run))) + geom_line() +
   facet_wrap(id~rewFunc)
 dev.off()
 
 pdf('inspect_rt_swings_ind.pdf', height = 20, width = 20)
-ggplot(df, aes(run_trial, rt_swing_lr, color = groupLeth)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) + 
+ggplot(df, aes(run_trial, rt_swing_lr)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) + 
   facet_wrap(id~rewFunc)
 dev.off()
 ###############
 # model-free analyses
 
 # preliminary model for Explore
-emf1 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc +  omission_lag) ^2 +
+emf1 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag) ^2 +
               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(emf1)
 vif(emf1)
@@ -279,7 +281,7 @@ summary(mf2ae)
 
 # Model-based analyses -- no need to include 3-way interactions between design variables
 # preliminary models for Explore
-emb1 <- lmer(rt_csv_sc ~ (rt_lag_sc + rt_vmax_lag2_sc + omission_lag) ^2 +
+emb1 <- lmer(rt_csv_sc ~ (rt_lag_sc + rt_vmax_lag_sc + omission_lag) ^2 +
               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(emb1)
 
