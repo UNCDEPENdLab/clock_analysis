@@ -22,8 +22,8 @@ source('~/code/Rhelpers/vif.lme.R')
 # source('~/code/Rhelpers/')
 setwd('~/code/clock_analysis/fmri/clinical/')
 
-explore = T
-bsocial = F
+explore = F
+bsocial = T
 ### load data
  if (explore) {
    load('~/Box/skinner/data/MRI/clock_explore/vba_explore_fixedpara_out.rdata')
@@ -33,6 +33,9 @@ bsocial = F
 if (bsocial) { 
 load('~/Box/skinner/data/MRI/clock_bsocial/vba_bsocial_mfx_out.rdata')
 load('~/Box/skinner/data/MRI/clock_bsocial/bsocial_subj_df.rdata')
+load('~/Box/skinner/data/MRI/clock_bsocial/bsocial_betas.rdata')
+load('~/Box/skinner/data/MRI/clock_bsocial/bsocial_allbetas.rdata')
+
 }
 # recode run and run_trial
 if (bsocial) {
@@ -100,6 +103,8 @@ subject_df <- subject_df %>% mutate(   # recode group
   )
 )
 df <- inner_join(trial_df, subject_df) %>% filter(id!=219757 & !is.na(groupLeth) & GroupATT !='89')
+df <- inner_join(df, betas)
+
 }
 # merge
 if (explore) {
@@ -115,6 +120,28 @@ sdf <- inner_join(sum_df, subject_df) %>% filter(id!=219757 & !is.na(GroupATT) &
 ggplot(sdf, aes(groupLeth, total_earnings)) + geom_boxplot()
 summary(lm(total_earnings ~ groupLeth + wtar_raw, sdf))
 anova(lm(total_earnings ~ groupLeth, sdf))
+sdf <- inner_join(sdf, betas)
+asdf <- inner_join(sdf, allbetas)
+# no group differences in total earnings
+print(pe1 <- createTable(compareGroups(groupLeth ~ pe_max_cluster_1_3mm +
+                                         pe_max_cluster_10_3mm + pe_max_cluster_11_3mm + pe_max_cluster_12_3mm + 
+                                         pe_max_cluster_13_3mm + pe_max_cluster_14_3mm + pe_max_cluster_15_3mm +
+                                         pe_max_cluster_17_3mm + pe_max_cluster_18_3mm + pe_max_cluster_19_3mm + 
+                                         pe_max_cluster_1_3mm + pe_max_cluster_2_3mm + pe_max_cluster_3_3mm + 
+                                         pe_max_cluster_4_3mm + pe_max_cluster_5_3mm + pe_max_cluster_6_3mm + 
+                                         pe_max_cluster_7_3mm + pe_max_cluster_8_3mm + pe_max_cluster_9_3mm, asdf)))
+export2html(pe1, "bsocial_clock_pe_clusters_by_group.html")
+print(h1 <- createTable(compareGroups(groupLeth ~ v_entropy_cluster_1_3mm +
+                                        v_entropy_cluster_10_3mm + v_entropy_cluster_11_3mm + v_entropy_cluster_12_3mm + 
+                                        v_entropy_cluster_13_3mm + v_entropy_cluster_14_3mm + v_entropy_cluster_15_3mm +
+                                        v_entropy_cluster_17_3mm + v_entropy_cluster_18_3mm + v_entropy_cluster_19_3mm + 
+                                        v_entropy_cluster_1_3mm + v_entropy_cluster_2_3mm + v_entropy_cluster_3_3mm + 
+                                        v_entropy_cluster_4_3mm + v_entropy_cluster_5_3mm + v_entropy_cluster_6_3mm + 
+                                        v_entropy_cluster_7_3mm + v_entropy_cluster_8_3mm + v_entropy_cluster_9_3mm + 
+                                        v_entropy_cluster_9_3mm_overlap, asdf)))
+# differences in clusters 8 (R inf. parietal supramarginal gyrus) and 10 (left fusiform/parahippocampal g.)
+export2html(h1, "bsocial_clock_h_clusters_by_group.html")
+
 }
 if (explore) {
   sdf <- inner_join(sum_df, subject_df) %>% filter(GroupATT !='88')
