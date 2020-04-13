@@ -94,7 +94,7 @@ for (s in 1:nrow(subinfo)) {
   }
 }
 
-extract_z <- TRUE #whether to grab copes or zstats
+extract_z <- FALSE #whether to grab copes or zstats
 
 mdf <- merge(subinfo, copedf, by="id", all.y=TRUE)
 
@@ -110,6 +110,7 @@ for (l1 in 1:n_l1_copes) {
 
   l1_subinfo <- mdf %>% filter(cope==l1) %>% mutate(numid=1:n())
   subject_inputs <- l1_subinfo$fsldir
+  
   #generate separate files for each l1 contrast (reset here)
   all_rois <- list()
   all_beta_series <- list()
@@ -131,9 +132,11 @@ for (l1 in 1:n_l1_copes) {
     ")/.*"), "\\1/sceptic-clock_bs-feedback-preconvolve_fse_groupfixed", subject_inputs)
   
   #loop over l2 contrasts
-  #l2_loop_outputs <- foreach(l2=iter(1:n_l2_contrasts), .packages=c("oro.nifti", "dplyr")) %do% {
-  l2_loop_outputs <- list()
-  for (l2 in 1:n_l2_contrasts) {
+  #l2_loop_outputs <- list()
+  #for (l2 in 1:n_l2_contrasts) {
+
+  #parallel version
+  l2_loop_outputs <- foreach(l2=iter(1:n_l2_contrasts), .packages=c("oro.nifti", "dplyr")) %dopar% {
     l2_loop_rois <- list()
     l2_loop_bs <- list()
     
@@ -194,28 +197,31 @@ for (l1 in 1:n_l1_copes) {
     l2_loop_rois[[paste(l1, l2, sep=".")]] <- atlas_df
     l2_loop_bs[[paste(l1, l2, sep=".")]] <- beta_series_df
 
-    l2_loop_outputs[[l2]] <- list(rois=l2_loop_rois, beta_series=l2_loop_bs)
+    #l2_loop_outputs[[l2]] <- list(rois=l2_loop_rois, beta_series=l2_loop_bs) #serial version
+    return(list(rois=l2_loop_rois, beta_series=l2_loop_bs))
   }
-  
+
   #tack on roi betas from this l2 contrast to the broader set
-  all_rois <- bind_rows(all_rois, rlang::flatten(lapply(l2_loop_outputs, "[[", "rois")))
-  all_beta_series <- bind_rows(all_beta_series, rlang::flatten(lapply(l2_loop_outputs, "[[", "beta_series")))
+  all_rois <- bind_rows(rlang::flatten(lapply(l2_loop_outputs, "[[", "rois")))
+  all_beta_series <- bind_rows(rlang::flatten(lapply(l2_loop_outputs, "[[", "beta_series")))
+  
+  #organize models intelligently
+  all_rois <- all_rois %>% arrange(l1_contrast, l2_contrast)
+
+  #readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_betas.csv.gz")))
+  if (extract_z) {
+    readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_zstats.csv.gz")))
+  } else {
+    readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_betas.csv.gz")))
+  }
+
+  if (calculate_beta_series) {
+    all_beta_series <- all_beta_series %>% arrange(l1_contrast, l2_contrast, run, trial)
+    readr::write_csv(x=all_beta_series, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_beta_series.csv.gz")))
+  }
+
 }
 
-#organize models intelligently
-all_rois <- all_rois %>% arrange(l1_contrast, l2_contrast)
-
-#readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_betas.csv.gz")))
-if (extract_z) {
-  readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_zstats.csv.gz")))
-} else {
-  readr::write_csv(x=all_rois, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_betas.csv.gz")))
-}
-
-if (calculate_beta_series) {
-  all_beta_series <- all_beta_series %>% arrange(l1_contrast, l2_contrast, run, trial)
-  readr::write_csv(x=all_beta_series, file.path(model_output_dir, paste0(l1_contrast_name, "_atlas_beta_series.csv.gz")))
-}
 
 #not uniquely useful at present (CSVs have it all)
 #save(all_rois, dmat, file=file.path(model_output_dir, "sceptic_clusters.RData"))
