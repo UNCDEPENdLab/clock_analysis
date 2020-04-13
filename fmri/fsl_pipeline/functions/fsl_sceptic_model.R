@@ -1,6 +1,6 @@
 #note: this is a small adapation from the original fslSCEPTICModel to avoid use of the clockfit objects and to move to the
 #simpler build_design_matrix approach and the use of the trial_statistics csv files from vba_fmri
-fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, mrrunnums, execute_feat=FALSE, force=FALSE,
+fsl_sceptic_model <- function(subj_data, sceptic_signals, l1_contrasts=NULL, mrfiles, runlengths, mrrunnums, execute_feat=FALSE, force=FALSE,
                               drop_volumes=0, outdir=NULL, usepreconvolve=FALSE, spikeregressors=FALSE, model_suffix="", ...) {
 
   # subj_data is the trial-level data for one subject, as produced by parse_sceptic_outputs
@@ -78,6 +78,8 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   #      durations[v] <- NA #not relevant
   #      normalizations[v] <- "none" #should not try to normalize the within-trial regressor since this starts to confused within/between trial variation
 
+  #save(file=file.path(fsl_run_output_dir, "bdm_call.RData"), events, signals, timingdir, drop_volumes, mrfiles, mrrunnums)
+  
   #NB. The tr argument should be passed in as part of ...
   d <- build_design_matrix(events=events, signals=signals, baseline_coef_order=2, write_timing_files = c("convolved"), #, "FSL"),
     center_values=TRUE, plot=FALSE, convolve_wi_run=TRUE, output_directory=timingdir, drop_volumes=drop_volumes,
@@ -167,9 +169,31 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
 
       #generate a diagonal matrix of contrasts
       cmat <- diag(length(regressors))
-      rownames(cmat) <- sapply(regressors, "[[", "name")
-      cmat_syn <- dependlab::generate_fsf_contrast_syntax(cmat)
+      rownames(cmat) <- colnames(cmat) <- sapply(regressors, "[[", "name")
 
+      #l1_contrasts should be a list of named vectors
+      #each element of the list is a new contrast to be added to the current l1 model
+      #the names of the elements become the contrast names
+      #the names of each vector refer to the non-zero elements of the contrast
+      #the values of each vector are the contrast values to be set
+      # for example:
+      #   list(
+      #    pe1h_gt_pe2h=c(pe_1h=1, pe_2h=-1),
+      #    entropy1h_gt_entropy2h=c(v_entropy_1h=1, v_entropy_2h=-1)
+      #   )
+      # will generate two contrasts named pe1h_gt_pe2h and entropy1h_gt_entropy2h
+      # the values of first contrast will be 1 for the EV pe_1h and -1 for pe_2h EV
+      if (!is.null(l1_contrasts)) { #add custom l1 contrasts, if requested
+        add_contrasts <- matrix(0, nrow=length(l1_contrasts), ncol=ncol(cmat), dimnames=list(names(l1_contrasts), colnames(cmat)))
+        
+        for(con in 1:length(l1_contrasts)) {
+          add_contrasts[con,names(l1_contrasts[[con]])] <- l1_contrasts[[con]]
+        }
+
+        cmat <- rbind(cmat, add_contrasts)
+      }
+      cmat_syn <- dependlab::generate_fsf_contrast_syntax(cmat)
+      
       thisTemplate <- c(thisTemplate, ev_syn, cmat_syn)      
     } else {
       if (usepreconvolve) {

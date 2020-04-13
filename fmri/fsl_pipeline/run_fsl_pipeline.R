@@ -62,7 +62,16 @@ trial_df <- read.csv("/gpfs/group/mnh5174/default/temporal_instrumental_agent/cl
     v_entropy_change_pos = v_entropy_change*(v_entropy_change > 0),
     v_entropy_change_neg = abs(v_entropy_change*(v_entropy_change < 0)),
     rt_swing = abs( c(NA, diff(rt_csv)))/1000,
-    rt_swing_sqrt=sqrt(rt_swing)) %>%
+    rt_swing_sqrt=sqrt(rt_swing),
+    #pe_1h=if_else(run_trial <= 25, pe_max, NA_real_), #first-half, second-half split for pe and entropy
+    #pe_2h=if_else(run_trial > 25, pe_max, NA_real_),
+    #v_entropy_1h=if_else(run_trial <= 25, v_entropy, NA_real_),
+    #v_entropy_2h=if_else(run_trial > 25, v_entropy, NA_real_)) %>%
+
+    pe_1h=if_else(run_trial <= 25, pe_max, 0), #first-half, second-half split for pe and entropy
+    pe_2h=if_else(run_trial > 25, pe_max, 0),
+    v_entropy_1h=if_else(run_trial <= 25, v_entropy, 0),
+    v_entropy_2h=if_else(run_trial > 25, v_entropy, 0)) %>%
   ungroup()
 
 #verify the within-run z-scoring
@@ -128,12 +137,12 @@ fsl_model_arguments <- list(
 #    c("clock", "feedback", "v_chosen", "v_entropy", "d_auc", "pe_max"), #all signals with entropy of weights
 #    c("clock", "feedback", "v_chosen", "v_entropy_func", "d_auc", "pe_max"), #all signals with entropy of evaluated function
 #    c("clock", "feedback", "v_chosen"), #individual regressors
-    c("clock", "feedback", "v_entropy"), #clock-aligned
+#    c("clock", "feedback", "v_entropy"), #clock-aligned
 #    c("clock", "feedback", "v_entropy_feedback"), #feedback-aligned
 #    c("clock", "feedback", "v_entropy_func"),
 #    c("clock", "feedback", "d_auc"), #feedback-aligned
 #    c("clock", "feedback", "d_auc_clock"), #clock-aligned
-    c("clock", "feedback", "pe_max")
+#    c("clock", "feedback", "pe_max")
 #    c("clock", "feedback", "v_entropy_no5"),
 #    c("clock", "feedback", "v_auc"),
 #    c("clock", "feedback", "d_auc_sqrt"),
@@ -153,6 +162,8 @@ fsl_model_arguments <- list(
 #    c("clock", "feedback", "v_entropy_change_neg")
 #    c("clock", "feedback", "rew_om"),
 #    c("clock", "feedback", "pe_max", "rew_om")
+    m1=c("clock", "feedback", "pe_1h", "pe_2h"),
+    m2=c("clock", "feedback", "v_entropy_1h", "v_entropy_2h")
   ),
   group_model_variants=list(
     c("Intercept"),
@@ -160,7 +171,17 @@ fsl_model_arguments <- list(
 #    c("Intercept", "Age", "Female"),
 #    c("Intercept", "I_Age"),
 #    c("Intercept", "I_Age", "Female")
-  ),    
+  ),
+  l1_contrasts=list( #these are always in addition to the diagonal matrix of contrasts for each regressor
+    m1=list(
+      pe1h_gt_pe2h=c(pe_1h=1, pe_2h=-1),
+      peavg=c(pe_1h=0.5, pe_2h=0.5) #closest to earlier whole-run analysis
+    ),
+    m2=list(
+      entropy1h_gt_entropy2h=c(v_entropy_1h=1, v_entropy_2h=-1),
+      entropyavg=c(v_entropy_1h=0.5, v_entropy_2h=0.5)
+    )
+  ),
   execute_feat=FALSE, #passed through to fsl_sceptic_model to create fsf, but not run the model
   #model_suffix="_fse", #factorized, selective, equal generalization width
   model_suffix="_fse_groupfixed", #factorized, selective, equal generalization width
