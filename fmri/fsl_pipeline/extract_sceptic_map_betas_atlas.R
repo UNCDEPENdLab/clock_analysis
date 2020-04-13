@@ -4,6 +4,7 @@
 #Sys.setenv(fsl_pipeline_file="/gpfs/group/mnh5174/default/clock_analysis/fmri/fsl_pipeline/configuration_files/MMClock_aroma_preconvolve_fse_groupfixed.RData")
 #Sys.setenv(run_model_index=1)
 
+
 #load the master configuration file
 
 to_run <- Sys.getenv("fsl_pipeline_file")
@@ -12,6 +13,17 @@ run_model_index <- as.numeric(Sys.getenv("run_model_index")) #which variant to e
 if (nchar(to_run) == 0L) { stop("Cannot locate environment variable fsl_pipeline_file") }
 if (!file.exists(to_run)) { stop("Cannot locate configuration file", to_run) }
 if (is.na(run_model_index)) { stop("Couldn't identify usable run_model_index variable.") }
+
+extract_z <- Sys.getenv("extract_z") #whether to grab copes or zstats
+if (nchar(extract_z) == 0L) {
+  extract_z <- FALSE #default to betas
+} else {
+  if (extract_z %in% c("1", "TRUE", "true")) {
+    extract_z <- TRUE
+  } else {
+    extract_z <- FALSE
+  }
+} 
 
 load(to_run)
 
@@ -57,8 +69,8 @@ feat_lvl2_dirname <- "FEAT_LVL2_runtrend.gfeat" #should populate this to the str
 #whether to extract from beta series (very slow)
 calculate_beta_series <- FALSE
 
-atlas_files <- c("/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/long_axis_l_2.3mm.nii.gz",
-  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/long_axis_r_2.3mm.nii.gz")
+atlas_files <- c("/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/masks/long_axis_l_2.3mm.nii.gz",
+  "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/masks/long_axis_r_2.3mm.nii.gz")
 
 atlas_imgs <- lapply(atlas_files, readNIfTI, reorient=FALSE)
 
@@ -93,8 +105,6 @@ for (s in 1:nrow(subinfo)) {
     }
   }
 }
-
-extract_z <- FALSE #whether to grab copes or zstats
 
 mdf <- merge(subinfo, copedf, by="id", all.y=TRUE)
 
