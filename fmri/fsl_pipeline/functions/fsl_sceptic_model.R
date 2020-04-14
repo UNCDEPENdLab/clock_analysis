@@ -167,32 +167,9 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, l1_contrasts=NULL, mrf
 
       ev_syn <- dependlab::generate_fsf_lvl1_ev_syntax(regressors)
 
-      #generate a diagonal matrix of contrasts
-      cmat <- diag(length(regressors))
-      rownames(cmat) <- colnames(cmat) <- sapply(regressors, "[[", "name")
-
-      #l1_contrasts should be a list of named vectors
-      #each element of the list is a new contrast to be added to the current l1 model
-      #the names of the elements become the contrast names
-      #the names of each vector refer to the non-zero elements of the contrast
-      #the values of each vector are the contrast values to be set
-      # for example:
-      #   list(
-      #    pe1h_gt_pe2h=c(pe_1h=1, pe_2h=-1),
-      #    entropy1h_gt_entropy2h=c(v_entropy_1h=1, v_entropy_2h=-1)
-      #   )
-      # will generate two contrasts named pe1h_gt_pe2h and entropy1h_gt_entropy2h
-      # the values of first contrast will be 1 for the EV pe_1h and -1 for pe_2h EV
-      if (!is.null(l1_contrasts)) { #add custom l1 contrasts, if requested
-        add_contrasts <- matrix(0, nrow=length(l1_contrasts), ncol=ncol(cmat), dimnames=list(names(l1_contrasts), colnames(cmat)))
-        
-        for(con in 1:length(l1_contrasts)) {
-          add_contrasts[con,names(l1_contrasts[[con]])] <- l1_contrasts[[con]]
-        }
-
-        cmat <- rbind(cmat, add_contrasts)
-      }
-      cmat_syn <- dependlab::generate_fsf_contrast_syntax(cmat)
+      #creation of l1 contrast matrices, including the diagonal contrasts, now abstracted to finalize_pipeline_configuration.R
+      #thus, l1_contrasts is already a contrast matrix ready to be passed to the generate_fsf_contrast_syntax function
+      cmat_syn <- dependlab::generate_fsf_contrast_syntax(l1_contrasts)
       
       thisTemplate <- c(thisTemplate, ev_syn, cmat_syn)      
     } else {
