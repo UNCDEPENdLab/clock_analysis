@@ -90,13 +90,13 @@ fsl_model_arguments <- list(
 #    c("clock", "feedback", "v_entropy_change_neg")
 #    c("clock", "feedback", "rew_om"),
 #    c("clock", "feedback", "pe_max", "rew_om")
-    m1=c("clock", "feedback", "pe_1h", "pe_2h"), #use model names to cross-reference in add'l l1_contrasts
-    m2=c("clock", "feedback", "v_entropy_1h", "v_entropy_2h"),
-    c("clock", "feedback", "v_entropy", "pe_max"), #simultaneous model
-    c("clock", "feedback", "pe_trial_fixed_p05"), #fixed lr v .05
-    c("clock", "feedback", "pe_trial_fixed_p1"), #fixed lr v .1
-    c("clock", "feedback", "pe_trial_fixed_p15"), #fixed lr v .15
-    c("clock", "feedback", "pe_trial_fixed_p2") #fixed lr v .2
+#    m1=c("clock", "feedback", "pe_1h", "pe_2h"), #use model names to cross-reference in add'l l1_contrasts
+#    m2=c("clock", "feedback", "v_entropy_1h", "v_entropy_2h"),
+#    c("clock", "feedback", "v_entropy", "pe_max"), #simultaneous model
+#    c("clock", "feedback", "pe_trial_fixed_p05"), #fixed lr v .05
+    c("clock", "feedback", "pe_trial_fixed_p10"), #fixed lr v .1
+#    c("clock", "feedback", "pe_trial_fixed_p15"), #fixed lr v .15
+    c("clock", "feedback", "pe_trial_fixed_p20") #fixed lr v .2
   ),
   group_model_variants=list(
     c("Intercept"),

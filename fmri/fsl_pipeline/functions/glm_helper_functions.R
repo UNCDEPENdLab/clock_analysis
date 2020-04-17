@@ -498,9 +498,9 @@ populate_sceptic_signals <- function(sceptic_signals, subj_data) {
       value=subj_data %>% select(run, trial, pe_trial_fixed_p05) %>% rename(value=pe_trial_fixed_p05))
   }
 
-  if ("pe_trial_fixed_p1" %in% sceptic_signals) {
-    signals[["pe_trial_fixed_p1"]] <- list(event="feedback", normalization="evtmax_1",
-      value=subj_data %>% select(run, trial, pe_trial_fixed_p1) %>% rename(value=pe_trial_fixed_p1))
+  if ("pe_trial_fixed_p10" %in% sceptic_signals) {
+    signals[["pe_trial_fixed_p10"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, pe_trial_fixed_p10) %>% rename(value=pe_trial_fixed_p10))
   }
 
   if ("pe_trial_fixed_p15" %in% sceptic_signals) {
@@ -508,9 +508,9 @@ populate_sceptic_signals <- function(sceptic_signals, subj_data) {
       value=subj_data %>% select(run, trial, pe_trial_fixed_p15) %>% rename(value=pe_trial_fixed_p15))
   }
 
-  if ("pe_trial_fixed_p2" %in% sceptic_signals) {
-    signals[["pe_trial_fixed_p2"]] <- list(event="feedback", normalization="evtmax_1",
-      value=subj_data %>% select(run, trial, pe_trial_fixed_p2) %>% rename(value=pe_trial_fixed_p2))
+  if ("pe_trial_fixed_p20" %in% sceptic_signals) {
+    signals[["pe_trial_fixed_p20"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, pe_trial_fixed_p20) %>% rename(value=pe_trial_fixed_p20))
   }
   
   if ("rew_om" %in% sceptic_signals) {
