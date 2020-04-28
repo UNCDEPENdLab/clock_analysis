@@ -417,6 +417,18 @@ populate_sceptic_signals <- function(sceptic_signals, subj_data) {
     signals[["v_entropy"]] <- list(event="clock", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, v_entropy) %>% rename(value=v_entropy))
   }
+
+  if ("v_entropy_1h" %in% sceptic_signals) {
+    #first half entropy of values, computed on normalized basis weights, aligned with choice
+    signals[["v_entropy_1h"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy_1h) %>% rename(value=v_entropy_1h))
+  }
+
+  if ("v_entropy_2h" %in% sceptic_signals) {
+    #second half entropy of values, computed on normalized basis weights, aligned with choice
+    signals[["v_entropy_2h"]] <- list(event="clock", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, v_entropy_2h) %>% rename(value=v_entropy_2h))
+  }
   
   #drop first 5 trials
   if ("v_entropy_no5" %in% sceptic_signals) {
@@ -461,11 +473,44 @@ populate_sceptic_signals <- function(sceptic_signals, subj_data) {
       value=subj_data %>% select(run, trial, pe_max) %>% rename(value=pe_max))
   }
 
+  # first half PE, aligned with outcome
+  if ("pe_1h" %in% sceptic_signals) {
+    signals[["pe_1h"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, pe_1h) %>% rename(value=pe_1h))
+  }
+
+  # second half PE, aligned with outcome
+  if ("pe_2h" %in% sceptic_signals) {
+    signals[["pe_2h"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, pe_2h) %>% rename(value=pe_2h))
+  }
+  
   #PEs from fixed learning rate analysis
   if ("pe_trial_fixed" %in% sceptic_signals) {
     # PE from fixed 0.1 learning rate, non-SCEPTIC representation (just trial - outcome)
     signals[["pe_trial_fixed"]] <- list(event="feedback", normalization="evtmax_1",
       value=subj_data %>% select(run, trial, pe_trial_fixed) %>% rename(value=pe_trial_fixed))
+  }
+
+  #clunky copy-paste for different learning rates -- don't feel like refactoring
+  if ("pe_trial_fixed_p05" %in% sceptic_signals) {
+    signals[["pe_trial_fixed_p05"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, pe_trial_fixed_p05) %>% rename(value=pe_trial_fixed_p05))
+  }
+
+  if ("pe_trial_fixed_p10" %in% sceptic_signals) {
+    signals[["pe_trial_fixed_p10"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, pe_trial_fixed_p10) %>% rename(value=pe_trial_fixed_p10))
+  }
+
+  if ("pe_trial_fixed_p15" %in% sceptic_signals) {
+    signals[["pe_trial_fixed_p15"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, pe_trial_fixed_p15) %>% rename(value=pe_trial_fixed_p15))
+  }
+
+  if ("pe_trial_fixed_p20" %in% sceptic_signals) {
+    signals[["pe_trial_fixed_p20"]] <- list(event="feedback", normalization="evtmax_1",
+      value=subj_data %>% select(run, trial, pe_trial_fixed_p20) %>% rename(value=pe_trial_fixed_p20))
   }
   
   if ("rew_om" %in% sceptic_signals) {

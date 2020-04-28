@@ -4,6 +4,7 @@
 model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covariates=NULL, drop_volumes=6, ncpus=1,
                                   expectdir="mni_5mm_aroma", expectfile = "nfaswuktm_clock[0-9]_5.nii.gz",
                                   sceptic_run_signals=c("v_chosen", "v_entropy", "d_auc", "pe_max"), #which signals to model jointly in LVL1
+                                  l1_contrasts=NULL,
                                   outdir=NULL, glm_software="fsl", ...) {
 
   stopifnot(is.numeric(ncpus) && ncpus >= 1)
@@ -84,7 +85,7 @@ model_clock_fmri_lvl1 <- function(trial_statistics, id_col=NULL, subject_covaria
 
       if (glm_software == "fsl") {
         #Setup FSL SCEPTIC run-level models for each combination of signals
-        tryCatch(fsl_sceptic_model(b, sceptic_run_signals, mrfiles, runlengths, mrrunnums, drop_volumes=drop_volumes, outdir=outdir, ...),
+        tryCatch(fsl_sceptic_model(b, sceptic_run_signals, l1_contrasts, mrfiles, runlengths, mrrunnums, drop_volumes=drop_volumes, outdir=outdir, ...),
           error=function(e) {
             cat("Subject: ", b[[id_col]][1], ", run variant: ", paste(sceptic_run_signals, collapse="-"), " failed with mrfiles: \n",
               paste(mrfiles, collapse="\n"), "\n", "error: ", as.character(e), "\n\n", file="lvl1_crashlog.txt", append=TRUE)

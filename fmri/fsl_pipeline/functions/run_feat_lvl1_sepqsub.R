@@ -71,10 +71,8 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
   #  "#PBS -M michael.hallquist@psu.edu",
   
   preamble <- c(
-    #"#PBS -A m5m_a_g_sc_default",
-    #paste0("#PBS -l nodes=1:ppn=", cpusperjob),
-    "#PBS -A mnh5174_a_g_hc_default",
-    paste0("#PBS -l nodes=1:ppn=", cpusperjob, ":himem"),
+    "#PBS -A mnh5174_c_g_sc_default",
+    paste0("#PBS -l nodes=1:ppn=", cpusperjob),
     paste0("#PBS -l pmem=8gb"),
     ifelse(wait_for != "", paste0("#PBS -W depend=afterok:", wait_for), ""), #allow job dependency on upstream setup
     "#PBS -l walltime=14:00:00",
@@ -84,7 +82,6 @@ run_feat_lvl1_sepqsub <- function(fsl_model_arguments, run_model_index, rerun=FA
     "",
     "",
     "source /gpfs/group/mnh5174/default/lab_resources/ni_path.bash",
-    "#module load \"fsl/5.0.11\" >/dev/null 2>&1",
     "module unload fsl", #make sure that the ni_path version of FSL is unloaded
     "#module load \"openblas/0.2.20\" >/dev/null 2>&1",
     "module load \"fsl/6.0.1\" >/dev/null 2>&1",

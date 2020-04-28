@@ -1,7 +1,6 @@
 #!/usr/bin/env sh
 
-#-A mnh5174_a_g_hc_default
-#PBS -A m5m_a_g_sc_default
+#PBS -A mnh5174_c_g_sc_default
 #PBS -l nodes=1:ppn=20
 #PBS -l pmem=8gb
 #PBS -l walltime=10:00:00

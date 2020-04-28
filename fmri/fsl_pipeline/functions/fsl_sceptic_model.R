@@ -1,6 +1,6 @@
 #note: this is a small adapation from the original fslSCEPTICModel to avoid use of the clockfit objects and to move to the
 #simpler build_design_matrix approach and the use of the trial_statistics csv files from vba_fmri
-fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, mrrunnums, execute_feat=FALSE, force=FALSE,
+fsl_sceptic_model <- function(subj_data, sceptic_signals, l1_contrasts=NULL, mrfiles, runlengths, mrrunnums, execute_feat=FALSE, force=FALSE,
                               drop_volumes=0, outdir=NULL, usepreconvolve=FALSE, spikeregressors=FALSE, model_suffix="", ...) {
 
   # subj_data is the trial-level data for one subject, as produced by parse_sceptic_outputs
@@ -78,6 +78,8 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
   #      durations[v] <- NA #not relevant
   #      normalizations[v] <- "none" #should not try to normalize the within-trial regressor since this starts to confused within/between trial variation
 
+  #save(file=file.path(fsl_run_output_dir, "bdm_call.RData"), events, signals, timingdir, drop_volumes, mrfiles, mrrunnums)
+  
   #NB. The tr argument should be passed in as part of ...
   d <- build_design_matrix(events=events, signals=signals, baseline_coef_order=2, write_timing_files = c("convolved"), #, "FSL"),
     center_values=TRUE, plot=FALSE, convolve_wi_run=TRUE, output_directory=timingdir, drop_volumes=drop_volumes,
@@ -165,11 +167,10 @@ fsl_sceptic_model <- function(subj_data, sceptic_signals, mrfiles, runlengths, m
 
       ev_syn <- dependlab::generate_fsf_lvl1_ev_syntax(regressors)
 
-      #generate a diagonal matrix of contrasts
-      cmat <- diag(length(regressors))
-      rownames(cmat) <- sapply(regressors, "[[", "name")
-      cmat_syn <- dependlab::generate_fsf_contrast_syntax(cmat)
-
+      #creation of l1 contrast matrices, including the diagonal contrasts, now abstracted to finalize_pipeline_configuration.R
+      #thus, l1_contrasts is already a contrast matrix ready to be passed to the generate_fsf_contrast_syntax function
+      cmat_syn <- dependlab::generate_fsf_contrast_syntax(l1_contrasts)
+      
       thisTemplate <- c(thisTemplate, ev_syn, cmat_syn)      
     } else {
       if (usepreconvolve) {
