@@ -40,7 +40,13 @@ if (unsmoothed) {
 betas <- as_tibble(extracted_roi_df)
 # AH entropy cluster: #9
 # PH PE clusters: #7 and #10
+betas <- as_tibble(extracted_roi_df) %>% select(-contains("12")) %>% 
+  select(-contains("13")) %>% select(-contains("16")) %>% 
+  select(-contains("14")) %>% select(-contains("17")) %>% 
+  select(-contains("15")) %>% select(-contains("18")) %>% 
+  select(-contains("19")) %>% select(-contains("20")) 
 
+betas <- betas %>% mutate_if(is.double, winsor,trim = .075)
 
 just_rois <- betas %>% select(-c(ID, pe_max_left_hipp_3mm,pe_max_right_hipp_3mm,v_entropy_left_hipp_3mm,v_entropy_right_hipp_3mm))
 # winsorize to deal with beta ouliers
@@ -57,7 +63,7 @@ setwd(file.path(clock_folder, 'fmri/clinical/'))
 if (unsmoothed) {
   pdf("h_cluster_corr_fixed_unsmoothed.pdf", width=12, height=12)  
 } else {
-  pdf("cluster_corr_fixed.pdf", width=24, height=24)  
+  pdf("explore_cluster_corr_fixed.pdf", width=24, height=24)  
 }
 corrplot(clust_cor, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -86,6 +92,23 @@ save(betas, file = "~/Box/skinner/data/MRI/clock_explore/explore_betas.rdata")
 save(allbetas, file = "~/Box/skinner/data/MRI/clock_explore/explore_allbetas.rdata")
 
 #########
+pejust_rois <- allbetas %>% select(contains('pe_max_cluster')) #%>% select(-contains('8')) %>% select(-contains('9'))
+peclust_cor <- corr.test(pejust_rois,method = 'pearson', adjust = 'none')
+# parametric correlations on winsorised betas
+# clust_cor <- cor(just_rois_w,method = 'pearson')
+
+# in Explore we see a visual cortex factor vs. all other clusters including the PH
+pdf("explore_pe_cluster_corr_fixed.pdf", width=12, height=12)
+corrplot(peclust_cor$r, cl.lim=c(-1,1),
+         method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+         order = "hclust", diag = FALSE,
+         addCoef.col="black", addCoefasPercent = FALSE,
+         p.mat = peclust_cor$p, sig.level=0.05, insig = "blank")
+dev.off()
+
+mpe <- nfactors(peclust_cor$r, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
+pe.fa = psych::fa(pejust_rois, nfactors=2, rotate = "varimax", fm = "pa")
+
 
 
 hwide <- allbetas %>% select(contains('v_entropy_clu')) %>% select(-v_entropy_cluster_9_3mm)
