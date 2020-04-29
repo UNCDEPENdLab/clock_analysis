@@ -19,11 +19,11 @@ unsmoothed = F # unsmoothed data used only for sensitivity analyses
 sort_names <- function(data) {
   name  <- names(data)
   chars <- keep(name, grepl, pattern = "[^0-9]") %>% sort()
-  nums  <- discard(name, grepl, pattern = "[^0-9]") %>% 
-    as.numeric() %>% 
-    sort() %>% 
+  nums  <- discard(name, grepl, pattern = "[^0-9]") %>%
+    as.numeric() %>%
+    sort() %>%
     sprintf("`%s`", .)
-  
+
   select_(data, .dots = c(chars, nums))
 }
 
@@ -40,11 +40,11 @@ if (unsmoothed) {
 betas <- as_tibble(extracted_roi_df)
 # AH entropy cluster: #9
 # PH PE clusters: #7 and #10
-betas <- as_tibble(extracted_roi_df) %>% select(-contains("12")) %>% 
-  select(-contains("13")) %>% select(-contains("16")) %>% 
-  select(-contains("14")) %>% select(-contains("17")) %>% 
-  select(-contains("15")) %>% select(-contains("18")) %>% 
-  select(-contains("19")) %>% select(-contains("20")) 
+betas <- as_tibble(extracted_roi_df) %>% select(-contains("12")) %>%
+  select(-contains("13")) %>% select(-contains("16")) %>%
+  select(-contains("14")) %>% select(-contains("17")) %>%
+  select(-contains("15")) %>% select(-contains("18")) %>%
+  select(-contains("19")) %>% select(-contains("20"))
 
 betas <- betas %>% mutate_if(is.double, winsor,trim = .075)
 
@@ -61,9 +61,9 @@ clust_cor <- cor(just_rois,method = 'pearson', use = "complete.obs")
 
 setwd(file.path(clock_folder, 'fmri/clinical/'))
 if (unsmoothed) {
-  pdf("h_cluster_corr_fixed_unsmoothed.pdf", width=12, height=12)  
+  pdf("h_cluster_corr_fixed_unsmoothed.pdf", width=12, height=12)
 } else {
-  pdf("explore_cluster_corr_fixed.pdf", width=24, height=24)  
+  pdf("explore_cluster_corr_fixed.pdf", width=24, height=24)
 }
 corrplot(clust_cor, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
@@ -75,11 +75,15 @@ dev.off()
 ###########
 # go for the jugular and replicate the brain-behavior effects from Nat Comm paper
 betas <- betas %>% rename(id = ID)
+
+# add scaling
+betas <- betas %>% mutate_if(is.double, scale, center = F)
+
 allbetas <- betas
 betas <- betas %>% mutate(
   PH_pe = (pe_max_cluster_7_3mm + pe_max_cluster_10_3mm)/2,
   AH_h_neg = - v_entropy_cluster_9_3mm,
-  AH_h_neg_o = - v_entropy_cluster_9_3mm_overlap) %>%  
+  AH_h_neg_o = - v_entropy_cluster_9_3mm_overlap) %>%
   select(PH_pe, AH_h_neg, AH_h_neg_o, id)
 
 ggplot(allbetas,aes(scale(pe_max_cluster_7_3mm))) + geom_histogram()
@@ -121,7 +125,7 @@ h.fa = fa.sort(psych::fa(hwide, nfactors=2, rotate = "varimax", fm = "pa"))
 # if (unsmoothed) {
 #   h_wide$h_vmPFC <- h_wide$`5 Left Mid Orbital Gyrus`
 # } else {h_wide$h_vmPFC <- h_wide$`6`}
-# hf <- as_tibble(cbind(rownames(unclass(round(h.fa$Structure, digits = 3))),unclass(round(h.fa$Structure, digits = 3)))) %>% arrange(desc(PA1) ) %>%  
+# hf <- as_tibble(cbind(rownames(unclass(round(h.fa$Structure, digits = 3))),unclass(round(h.fa$Structure, digits = 3)))) %>% arrange(desc(PA1) ) %>%
 #   rename(region = V1, `Factor 1` = PA1, `Factor 2` = PA2)
 # hf$region <- gsub('[0-9;]+', '', hf$region)
 # stargazer(hf, type = 'html', out = '~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/supp/h_fa_structure.html', summary = F)
@@ -198,7 +202,7 @@ pe_wide$pe_PH_r <- scale(pe_wide$`7 Right Hippocampus`)
 
 # save loadings
 setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/supp')
-pf <- as_tibble(cbind(rownames(unclass(round(pe.fa$Structure, digits = 3))),unclass(round(pe.fa$Structure, digits = 3)))) %>% arrange(desc(MR1) ) %>%  
+pf <- as_tibble(cbind(rownames(unclass(round(pe.fa$Structure, digits = 3))),unclass(round(pe.fa$Structure, digits = 3)))) %>% arrange(desc(MR1) ) %>%
   rename(region = V1, `Factor 1` = MR1, `Factor 2` = MR2)
 pf$region <- gsub('[0-9;]+', '', pf$region)
 stargazer(pf, type = 'html', out = 'pe_fa_structure.html', summary = F)
@@ -232,7 +236,7 @@ trial_df <- trial_df %>%
                                        rt_vmax_lag = lag(rt_vmax),
                                        v_chosen_lag = lag(v_chosen),
                                        run_trial=1:50) %>% ungroup() #compute rt_swing within run and subject
-u_df <- u_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change, 
+u_df <- u_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change,
                         u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change,
                         v_chosen_quantile, v_chosen_quantile_lag, v_chosen_quantile_change)
 
@@ -277,11 +281,11 @@ df <- df %>% group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
                                          v_max_b = mean(na.omit(v_max)),
                                          v_entropy_b = mean(na.omit(v_entropy)),
                                          rt_change = rt_csv - rt_lag,
-                                         pe_max_lag = lag(pe_max), 
-                                         abs_pe_max_lag = abs(pe_max_lag), 
+                                         pe_max_lag = lag(pe_max),
+                                         abs_pe_max_lag = abs(pe_max_lag),
                                          rt_vmax_change = rt_vmax - rt_vmax_lag,
                                          trial_neg_inv_sc = scale(-1/run_trial),
-                                         v_chosen_change = v_chosen - lag(v_chosen)) %>% ungroup() %>% 
+                                         v_chosen_change = v_chosen - lag(v_chosen)) %>% ungroup() %>%
   mutate(rt_lag_sc = scale(rt_lag),
          rt_csv_sc = scale(rt_csv),
          rt_vmax_lag_sc = scale(rt_vmax_lag))
@@ -294,7 +298,7 @@ sub_df <- inner_join(sub_df, b_df, by = 'id')
 if (unsmoothed) {
   bdf <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb",
                    "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
-                   "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]  
+                   "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]
 } else {
 bdf <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb",
                  "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
@@ -329,7 +333,7 @@ df$last_outcome <- relevel(as.factor(df$last_outcome), ref = "Reward")
 # # I think this means again that H estimates are more precise for high-paralimbic people, esp. late in learning
 # ggplot(df, aes( v_entropy_wi,log(rt_swing), color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "gam") + facet_wrap(~learning_epoch)
 # ggplot(df, aes( v_max_wi,log(rt_swing), color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "gam") + facet_wrap(~run_trial > 10)
-# 
+#
 # Okay, some behavioral relevance of KLD
 # ggplot(df, aes(run_trial, v_entropy_wi, color = k_f1_all_pos_resp)) + geom_smooth(method = "loess")
 
@@ -343,18 +347,18 @@ mtdf <- mtdf %>%
                                        rt_swing_lag = lag(rt_swing),
                                        omission_lag = lag(score_csv==0),
                                        rt_vmax_lag = lag(rt_vmax),
-                                       run_trial=1:63, 
+                                       run_trial=1:63,
                                        v_max_wi = scale(v_max),
                                        v_max_wi_lag = lag(v_max_wi),
                                        v_entropy_wi = scale(v_entropy),
                                        v_max_b = mean(na.omit(v_max)),
                                        v_entropy_b = mean(na.omit(v_entropy)),
                                        rt_change = rt_csv - rt_lag,
-                                       pe_max_lag = lag(pe_max), 
-                                       abs_pe_max_lag = abs(pe_max_lag), 
+                                       pe_max_lag = lag(pe_max),
+                                       abs_pe_max_lag = abs(pe_max_lag),
                                        rt_vmax_change = rt_vmax - rt_vmax_lag,
                                        v_chosen_change = v_chosen - lag(v_chosen),
-                                       trial_neg_inv_sc = scale(-1/run_trial)) %>% ungroup() %>% 
+                                       trial_neg_inv_sc = scale(-1/run_trial)) %>% ungroup() %>%
   mutate(rt_lag_sc = scale(rt_lag),
          rt_csv_sc = scale(rt_csv),
          rt_vmax_lag_sc = scale(rt_vmax_lag),
@@ -386,7 +390,7 @@ mu_df <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_meg_fixed_uv_ur
 mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change,
                         u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change) %>% mutate(id = as.integer(substr(id, 1, 5)))
 # mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(
-#     id = as.integer(substr(id, 1, 5))) 
+#     id = as.integer(substr(id, 1, 5)))
 
 mdf <- inner_join(mdf,mu_df, by = c("id", "run", "trial"))
 

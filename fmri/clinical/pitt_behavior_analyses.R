@@ -22,8 +22,8 @@ source('~/code/Rhelpers/vif.lme.R')
 # source('~/code/Rhelpers/')
 setwd('~/code/clock_analysis/fmri/clinical/')
 
-explore = F
-bsocial = T
+explore = T
+bsocial = F
 plots = F
 ### load data
  if (explore) {
@@ -135,22 +135,19 @@ anova(lm(total_earnings ~ groupLeth, sdf))
 sdf <- inner_join(sdf, betas)
 asdf <- inner_join(sdf, allbetas)
 # no group differences in total earnings
-print(pe1 <- createTable(compareGroups(groupLeth ~ pe_max_cluster_1_3mm +
-                                         pe_max_cluster_10_3mm + pe_max_cluster_11_3mm + pe_max_cluster_12_3mm +
-                                         pe_max_cluster_13_3mm + pe_max_cluster_14_3mm + pe_max_cluster_15_3mm +
-                                         pe_max_cluster_17_3mm + pe_max_cluster_18_3mm + pe_max_cluster_19_3mm +
-                                         pe_max_cluster_1_3mm + pe_max_cluster_2_3mm + pe_max_cluster_3_3mm +
-                                         pe_max_cluster_4_3mm + pe_max_cluster_5_3mm + pe_max_cluster_6_3mm +
-                                         pe_max_cluster_7_3mm + pe_max_cluster_8_3mm + pe_max_cluster_9_3mm, asdf)))
+print(pe1 <- createTable(compareGroups(groupLeth ~ pe_max_z_cluster_1  +  pe_max_z_cluster_2 +
+                                         pe_max_z_cluster_3   +  pe_max_z_cluster_4   +
+                                         pe_max_z_cluster_5 +    pe_max_z_cluster_6 +
+                                         pe_max_z_cluster_7   +  pe_max_z_cluster_8   +
+                                         pe_max_z_cluster_9 +  pe_max_z_cluster_10  +
+                                         pe_max_z_cluster_11, asdf)))
 export2html(pe1, "bsocial_clock_pe_clusters_by_group.html")
-print(h1 <- createTable(compareGroups(groupLeth ~ v_entropy_cluster_1_3mm +
-                                        v_entropy_cluster_10_3mm + v_entropy_cluster_11_3mm + v_entropy_cluster_12_3mm +
-                                        v_entropy_cluster_13_3mm + v_entropy_cluster_14_3mm + v_entropy_cluster_15_3mm +
-                                        v_entropy_cluster_17_3mm + v_entropy_cluster_18_3mm + v_entropy_cluster_19_3mm +
-                                        v_entropy_cluster_1_3mm + v_entropy_cluster_2_3mm + v_entropy_cluster_3_3mm +
-                                        v_entropy_cluster_4_3mm + v_entropy_cluster_5_3mm + v_entropy_cluster_6_3mm +
-                                        v_entropy_cluster_7_3mm + v_entropy_cluster_8_3mm + v_entropy_cluster_9_3mm +
-                                        v_entropy_cluster_9_3mm_overlap, asdf)))
+print(h1 <- createTable(compareGroups(groupLeth ~ v_entropy_z_cluster_1 +
+                                        v_entropy_z_cluster_1 + v_entropy_z_cluster_2 + v_entropy_z_cluster_3 +
+                                        v_entropy_z_cluster_4 + v_entropy_z_cluster_5 + v_entropy_z_cluster_6 +
+                                        v_entropy_z_cluster_7 + v_entropy_z_cluster_8 + v_entropy_z_cluster_9 +
+                                        v_entropy_z_cluster_9_overlap +
+                                        v_entropy_z_cluster_10 + v_entropy_z_cluster_11, asdf)))
 # differences in clusters 8 (R inf. parietal supramarginal gyrus) and 10 (left fusiform/parahippocampal g.)
 export2html(h1, "bsocial_clock_h_clusters_by_group.html")
 
@@ -158,7 +155,7 @@ export2html(h1, "bsocial_clock_h_clusters_by_group.html")
 if (explore) {
   sdf <- inner_join(sum_df, subject_df) #%>% filter(GroupATT !='88')
   ggplot(sdf, aes(Group, total_earnings)) + geom_boxplot()
-  summary(lm(total_earnings ~ GroupNEW + wtar_raw + exit_raw, sdf))
+  summary(lm(total_earnings ~ GroupNEW + wtar_s + exit_total, sdf))
   sdf <- inner_join(sdf, betas)
   asdf <- inner_join(sdf, allbetas)
   # no group differences in total earnings
@@ -177,11 +174,16 @@ if (explore) {
   # differences in clusters 8 (R inf. parietal supramarginal gyrus) and 10 (left fusiform/parahippocampal g.)
   export2html(h1, "explore_clock_h_clusters_by_group.html")
 
+  # plot betas by group
+  pdf("explore_ph_betas_by_group.pdf", height = 4, width = 4)
+  ggplot(sdf, aes(GroupNEW, PH_pe)) + geom_boxplot() + geom_jitter() + ylab("Post. hipp. RPE signal") + xlab("")
+  dev.off()
+  pdf("explore_ah_betas_by_group.pdf", height = 4, width = 4)
+  ggplot(sdf, aes(GroupNEW, AH_h_neg_o)) + geom_boxplot() + geom_jitter()+ ylab("Ant. hipp. global max signal") + xlab("")
+  dev.off()
   }
 
-######### compare clusters across groups
-
-
+if (explore) {
 chars <- sdf %>% select(c(PH_pe, AH_h_neg,AH_h_neg_o, age, contains("total"), contains("raw")))
 # careful with the missing data
 clust_cor <- corr.test(chars,method = 'pearson', use = "complete.obs")
@@ -192,10 +194,33 @@ corrplot(clust_cor$r, cl.lim=c(-1,1),
          addCoef.col="black", addCoefasPercent = FALSE,
          p.mat = clust_cor$p, sig.level=0.05, insig = "blank")
 dev.off()
+}
+if (bsocial) {
+  # only BPD
+  # chars <- sdf  %>% filter(groupLeth!="HC") %>% select(c(PH_pe, AH_h_neg, age, contains("total"), contains("raw"),
+                                                         # contains("ipip"), contains("score"), contains("ipde")))
+  chars <- sdf %>% select(c(PH_pe, AH_h_neg, age, contains("total"), contains("raw"), contains("ipip"), contains("score")))
+
+    # temporary: delete implausible IPIP_NEO values
+  outlier <- function(x) {
+    x[x < quantile(x,0.25, na.rm = T) - 6 * IQR(x, na.rm = T) | x > quantile(x,0.75, na.rm = T) + 6 * IQR(x, na.rm = T)] <- NA
+    x
+  }
+  # chars <- chars %>% mutate_if(is.numeric, outlier)
+  clust_cor <- corr.test(chars,method = 'pearson', use = "complete.obs")
+  pdf("bs_hipp_chars_corr.pdf", width=24, height=24)
+  corrplot(clust_cor$r, cl.lim=c(-1,1),
+           method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+           order = "hclust", diag = FALSE,
+           addCoef.col="black", addCoefasPercent = FALSE,
+           p.mat = clust_cor$p, sig.level=0.05, insig = "blank")
+  dev.off()
+}
 # ggplot(sdf %>% filter(sdf$GroupNEW!='HC'), aes(age, PH_pe, color = GroupNEW)) + geom_jitter() + geom_smooth(method = 'gam')
 # preliminary group characteristics table
 if (bsocial) {
-print(c1 <- createTable(compareGroups(groupLeth ~ age + female + edu + wtar_raw + exit_raw + ipde_cm + spsi_imp_sub, sdf)))
+print(c1 <- createTable(compareGroups(groupLeth ~ age + female + edu + wtar_s + exit_total + ipde_cm + spsi_imp_sub +
+                                        ipipneo120_o + ipipneo120_c + ipipneo120_e + ipipneo120_a + ipipneo120_n + bis_total, sdf)))
 export2html(c1, "bsocial_clock_group_characteristics.html")
 }
 if (explore) {
@@ -256,14 +281,24 @@ mf1 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc +  omission_lag)
               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(mf1)
 vif(mf1)
+# mf2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + groupLeth)^3 +
 mf2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + GroupNEW)^3 +
               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(mf2)
 anova(mf2, '3')
 vif(mf2)
 anova(mf1, mf2)
+
+em <- as_tibble(emtrends(mf2,var = "rt_lag_sc", specs = c("GroupNEW", "omission_lag")), data = df %>% filter(!is.na(rt_vmax_lag_sc)))
+em$RT_swing = -em$rt_lag_sc.trend
+em$reward <- "Reward"
+em$reward[em$omission_lag] <- "Omission"
+pdf("explore_rt_swings_group.pdf", height = 4, width = 5)
+ggplot(em, aes(GroupNEW, RT_swing, color = GroupNEW, lty = reward)) + geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point()
+dev.off()
 # control for exit and age
-mf2ae <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + GroupNEW)^3 +
+mf2ae <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + groupLeth)^3 +
+# mf2ae <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + GroupNEW)^3 +
                 (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + scale(age))^3 +
                 (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + scale(exit_raw))^3 +
                 (1|id/run), df)
@@ -272,6 +307,9 @@ summary(mf2ae)
 screen.lmerTest(mf2ae)
 ggplot(df, aes(run_trial, rt_swing_lr, color = GroupNEW, lty = rewFunc)) + geom_smooth()
 ggplot(df, aes(run_trial, rt_swing, color = GroupNEW, lty = rewFunc)) + geom_smooth()
+ggplot(df, aes(run_trial, rt_swing_lr, color = groupLeth)) + geom_smooth(method = "gam") + facet_wrap(~rewFunc)
+ggplot(df, aes(run_trial, rt_swing, color = groupLeth)) + geom_smooth(method = "gam")  + facet_wrap(~rewFunc)
+ggplot(df, aes(run_trial, rt_csv, color = groupLeth)) + geom_smooth(method = "gam") + facet_wrap(~rewFunc)
 
 
 # Model-based analyses -- no need to include 3-way interactions between design variables
@@ -296,8 +334,19 @@ embo2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omiss
                 (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(embo2)
 Anova(embo2, '3')
-
-# odd result in bsocial, is it group?
+#
+# # odd result in bsocial, is it group?
+# embo3 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag + PH_pe + groupLeth) ^3 +
+#                 (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag + AH_h_neg + groupLeth) ^3 +
+#                 rt_lag_sc:omission_lag:PH_pe +
+#                 # rt_lag_sc:omission_lag:AH_h_neg_o +
+#                 rt_vmax_lag_sc:trial_neg_inv_sc:AH_h_neg +
+#                 # rt_vmax_lag_sc:trial_neg_inv_sc:PH_pe +
+#                 rt_lag_sc:omission_lag:PH_pe:groupLeth +
+#                 # rt_lag_sc:omission_lag:AH_h_neg_o:groupLeth +
+#                 rt_vmax_lag_sc:AH_h_neg:groupLeth +
+#                 # rt_vmax_lag_sc:trial_neg_inv_sc:PH_pe:groupLeth +
+#                 (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 embo3 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag + PH_pe + GroupNEW) ^3 +
                 (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag + AH_h_neg_o + GroupNEW) ^3 +
                 rt_lag_sc:omission_lag:PH_pe +
@@ -309,17 +358,42 @@ embo3 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omiss
                 rt_vmax_lag_sc:AH_h_neg_o:GroupNEW +
                 # rt_vmax_lag_sc:trial_neg_inv_sc:PH_pe:GroupNEW +
                 (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
+
+
 summary(embo3)
 screen.lmerTest(embo3, .01)
 Anova(embo3, '3')
 vif(embo3)
+anova(embo2, embo3)
+
+# bsocial verions
+# em <- as_tibble(emtrends(embo3,var = "rt_lag_sc", specs = c("groupLeth", "PH_pe", "omission_lag"), at = list(PH_pe = c(-2,0,2))))
+# em$RT_swing = -em$rt_lag_sc.trend
+# ggplot(em, aes(PH_pe, RT_swing, color = omission_lag)) + geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point() + facet_wrap(~groupLeth )
+#
+# em <- as_tibble(emtrends(embo3,var = "rt_lag_sc", specs = c("groupLeth", "AH_h_neg", "omission_lag"), at = list(AH_h_neg = c(-2,0,2))))
+# em$RT_swing = -em$rt_lag_sc.trend
+# ggplot(em, aes(AH_h_neg, RT_swing, color = omission_lag)) + geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point() + facet_wrap(~groupLeth )
+
+# explore versions
+em <- as_tibble(emtrends(embo3,var = "rt_lag_sc", specs = c("GroupNEW", "PH_pe", "omission_lag"), at = list(PH_pe = c(-1.21,0.43,2.07)), data = df %>% filter(!is.na(rt_vmax_lag_sc))))
+em$RT_swing = -em$rt_lag_sc.trend
+em$reward <- "Reward"
+em$reward[em$omission_lag] <- "Omission"
+ggplot(em, aes(PH_pe, RT_swing, color = GroupNEW, lty = reward)) + geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point() +
+  facet_wrap(~GroupNEW )
+
+em <- as_tibble(emtrends(embo3,var = "rt_vmax_lag_sc", specs = c("GroupNEW", "AH_h_neg_o"), at = list(AH_h_neg_o = c(-1.68,0.24,2.16)), data = df %>% filter(!is.na(rt_vmax_lag_sc))))
+em$RTvmax_effect = em$rt_vmax_lag_sc.trend
+ggplot(em, aes(AH_h_neg_o, RTvmax_effect, color = GroupNEW)) + geom_errorbar(aes( ymin = asymp.LCL, ymax = asymp.UCL)) + geom_point() + facet_wrap(~GroupNEW )
+
+
 # just group
 embo4 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag + v_entropy_wi  + GroupNEW) ^3 +
                 (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(embo4)
 screen.lmerTest(embo4)
 Anova(embo4, '3')
-vif(embo3)
 
 
 # compare entropy timecourses across groups

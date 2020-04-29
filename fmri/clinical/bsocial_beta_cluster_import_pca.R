@@ -47,7 +47,9 @@ betas <- as_tibble(extracted_roi_df) %>% select(-contains("12")) %>%
 # PH PE clusters: #7 and #10
 
 
-just_rois <- betas %>% select(-c(ID, pe_max_left_hipp_3mm,pe_max_right_hipp_3mm,v_entropy_left_hipp_3mm,v_entropy_right_hipp_3mm))
+# just_rois <- betas %>% select(-c(ID, pe_max_left_hipp_3mm,pe_max_right_hipp_3mm,v_entropy_left_hipp_3mm,v_entropy_right_hipp_3mm))
+just_rois <- betas %>% select(-c(ID))
+
 # winsorize to deal with beta ouliers
 # check missingness
 library(mice)
@@ -74,24 +76,36 @@ dev.off()
 ###########
 # go for the jugular and replicate the brain-behavior effects from Nat Comm paper
 betas <- betas %>% rename(id = ID)
-ggplot(betas,aes(scale(pe_max_cluster_7_3mm))) + geom_histogram()
-ggplot(betas,aes(scale(pe_max_cluster_10_3mm))) + geom_histogram()
+ggplot(betas,aes(pe_max_z_cluster_7)) + geom_histogram()
 
-# winsorize outliers
+ggplot(betas,aes(scale(pe_max_z_cluster_10))) + geom_histogram()
+ggplot(betas, aes(scale(v_entropy_z_cluster_9))) + geom_histogram()
+
+# winsorize outliers?  That seems too violent, forego
 betas <- betas %>% mutate_if(is.double, winsor,trim = .075)
+# scale betas
+betas <- betas %>% mutate_if(is.double, scale, center = F)
+describe(betas$pe_max_z_cluster_7)
+describe(betas$pe_max_z_cluster_10)
 
 allbetas <- betas
 betas <- betas %>% mutate(
-  PH_pe = (pe_max_cluster_7_3mm + pe_max_cluster_10_3mm)/2,
-  AH_h_neg = - v_entropy_cluster_9_3mm,
-  AH_h_neg_o = - v_entropy_cluster_9_3mm_overlap) %>%
-  select(PH_pe, AH_h_neg, AH_h_neg_o, id)
+  PH_pe = (pe_max_z_cluster_7 + pe_max_z_cluster_10)/2,
+  AH_h_neg = - v_entropy_z_cluster_9
+  ,AH_h_neg_o = - v_entropy_z_cluster_9_overlap
+  ) %>%
+  select(PH_pe, AH_h_neg,AH_h_neg_o, id)
 
-p1 <- ggplot(allbetas,aes(scale(v_entropy_cluster_9_3mm))) + geom_histogram()
-p2 <- ggplot(allbetas,aes(scale(v_entropy_cluster_9_3mm_overlap))) + geom_histogram()
-ggarrange(p1,p2, ncol = 1, nrow = 2)
+ggplot(allbetas,aes(scale(pe_max_z_cluster_7))) + geom_histogram()
+ggplot(allbetas,aes(scale(pe_max_z_cluster_10))) + geom_histogram()
+
+# p2 <- ggplot(allbetas,aes(scale(v_entropy_cluster_9_3mm_overlap))) + geom_histogram()
+# ggarrange(p1,p2, ncol = 1, nrow = 2)
 
 # check beta stats
+t.test(allbetas$pe_max_z_cluster_7)
+t.test(allbetas$pe_max_z_cluster_10)
+
 t.test(betas$PH_pe)
 t.test(betas$AH_h_neg)
 t.test(betas$AH_h_neg_o)
