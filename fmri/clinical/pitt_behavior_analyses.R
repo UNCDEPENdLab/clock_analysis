@@ -176,10 +176,12 @@ if (explore) {
 
   # plot betas by group
   pdf("explore_ph_betas_by_group.pdf", height = 4, width = 4)
-  ggplot(sdf, aes(GroupNEW, PH_pe)) + geom_boxplot() + geom_jitter() + ylab("Post. hipp. RPE signal") + xlab("")
+  ggplot(sdf, aes(GroupNEW, PH_pe, color = GroupNEW)) + geom_boxplot() + geom_jitter() +
+    ylab("Post. hipp. RPE signal") + xlab("") + theme(legend.position = "none")
   dev.off()
   pdf("explore_ah_betas_by_group.pdf", height = 4, width = 4)
-  ggplot(sdf, aes(GroupNEW, AH_h_neg_o)) + geom_boxplot() + geom_jitter()+ ylab("Ant. hipp. global max signal") + xlab("")
+  ggplot(sdf, aes(GroupNEW, AH_h_neg_o, color = GroupNEW)) + geom_boxplot() + geom_jitter()+
+    ylab("Ant. hipp. global max signal") + xlab("") + theme(legend.position = "none")
   dev.off()
   }
 
@@ -285,16 +287,25 @@ vif(mf1)
 mf2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + GroupNEW)^3 +
               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(mf2)
-anova(mf2, '3')
+Anova(mf2, '3')
 vif(mf2)
 anova(mf1, mf2)
 
-em <- as_tibble(emtrends(mf2,var = "rt_lag_sc", specs = c("GroupNEW", "omission_lag")), data = df %>% filter(!is.na(rt_vmax_lag_sc)))
+# just 2-way RTlag*grp interaction
+em <- as_tibble(emtrends(mf2,var = "rt_lag_sc", specs = c("GroupNEW", "rewFunc")), data = df %>% filter(!is.na(rt_vmax_lag_sc)))
+em$RT_swing = -em$rt_lag_sc.trend
+pdf("explore_rt_swings_group_3way.pdf", height = 4, width = 5)
+ggplot(em, aes(GroupNEW, RT_swing, color = GroupNEW, lty = rewFunc)) + xlab("") +
+  geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point()
+dev.off()
+
+em <- as_tibble(emtrends(mf2,var = "rt_lag_sc", specs = c("GroupNEW", "omission_lag", "rewFunc")), data = df %>% filter(!is.na(rt_vmax_lag_sc)))
 em$RT_swing = -em$rt_lag_sc.trend
 em$reward <- "Reward"
 em$reward[em$omission_lag] <- "Omission"
-pdf("explore_rt_swings_group.pdf", height = 4, width = 5)
-ggplot(em, aes(GroupNEW, RT_swing, color = GroupNEW, lty = reward)) + geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point()
+pdf("explore_rt_swings_group_rewFunc.pdf", height = 4, width = 8)
+ggplot(em, aes(GroupNEW, RT_swing, color = GroupNEW, lty = reward)) + xlab("") +
+  geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point() + facet_wrap(~rewFunc)
 dev.off()
 # control for exit and age
 mf2ae <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + groupLeth)^3 +
@@ -376,14 +387,15 @@ anova(embo2, embo3)
 # ggplot(em, aes(AH_h_neg, RT_swing, color = omission_lag)) + geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point() + facet_wrap(~groupLeth )
 
 # explore versions
-em <- as_tibble(emtrends(embo3,var = "rt_lag_sc", specs = c("GroupNEW", "PH_pe", "omission_lag"), at = list(PH_pe = c(-1.21,0.43,2.07)), data = df %>% filter(!is.na(rt_vmax_lag_sc))))
+em <- as_tibble(emtrends(embo3,var = "rt_lag_sc", specs = c("GroupNEW", "PH_pe", "omission_lag"), at = list(PH_pe = c(-1.21,2.07)), data = df %>% filter(!is.na(rt_vmax_lag_sc))))
 em$RT_swing = -em$rt_lag_sc.trend
 em$reward <- "Reward"
 em$reward[em$omission_lag] <- "Omission"
+pdf("explore_PH_RTswings_group.pdf", height = 6, width = 6)
 ggplot(em, aes(PH_pe, RT_swing, color = GroupNEW, lty = reward)) + geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point() +
   facet_wrap(~GroupNEW )
-
-em <- as_tibble(emtrends(embo3,var = "rt_vmax_lag_sc", specs = c("GroupNEW", "AH_h_neg_o"), at = list(AH_h_neg_o = c(-1.68,0.24,2.16)), data = df %>% filter(!is.na(rt_vmax_lag_sc))))
+dev.off()
+em <- as_tibble(emtrends(embo3,var = "rt_vmax_lag_sc", specs = c("GroupNEW", "AH_h_neg_o"), at = list(AH_h_neg_o = c(-1.68,2.16)), data = df %>% filter(!is.na(rt_vmax_lag_sc))))
 em$RTvmax_effect = em$rt_vmax_lag_sc.trend
 ggplot(em, aes(AH_h_neg_o, RTvmax_effect, color = GroupNEW)) + geom_errorbar(aes( ymin = asymp.LCL, ymax = asymp.UCL)) + geom_point() + facet_wrap(~GroupNEW )
 
