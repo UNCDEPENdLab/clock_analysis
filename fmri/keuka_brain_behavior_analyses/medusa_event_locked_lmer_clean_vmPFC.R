@@ -56,9 +56,9 @@ Anova(rm1, '3')
 vif(rm1)
 
 # add entropy modulation
-rm2 <- lmer(decon_interp ~ (evt_time + bin_center_z + entropy_lag) ^3 + (evt_time_sq + bin_center_z + entropy_lag) ^3 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
+rm2 <- lmer(decon_interp ~ (scale(evt_time) + bin_center_z + entropy_lag) ^2 + (scale(evt_time_sq) + bin_center_z + entropy_lag) ^2 + reward_lag + scale(rt_csv) + (1 | id/run), rvdf)
 summary(rm2)
-vif.lme(rm2)
+vif(rm2)
 Anova(rm2, '3')
 anova(rm1,rm2)
 
