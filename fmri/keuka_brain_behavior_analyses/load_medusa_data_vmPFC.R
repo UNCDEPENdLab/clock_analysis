@@ -12,8 +12,8 @@
   repo_directory = "~/code/clock_analysis/"
 
   
-# if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
-reprocess = T
+if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
+# reprocess = T
 diag_plots = T
 # if (newmask) {
 #   medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_smooth_in_mask_pct_change"
@@ -353,10 +353,8 @@ dev.off()
     names(clock_wide)[5:length(names(clock_wide))] <- paste("vmPFC", names(clock_wide)[5:length(names(clock_wide))], sep = "_")
   clock_wide_t <- clock_wide %>% pivot_wider(names_from = evt_time, values_from = slices)
   clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
-  
   save(clock_wide, clock_wide_ex, file = file.path(cache_dir, "clock_vmPFC_wide_ts.Rdata"))
   save(clock_comb,clock_wide_t, file = file.path(cache_dir, "clock_vmPFC_tall_ts.Rdata"))
-  
   save(trial_df, file=file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))
 # }
 
