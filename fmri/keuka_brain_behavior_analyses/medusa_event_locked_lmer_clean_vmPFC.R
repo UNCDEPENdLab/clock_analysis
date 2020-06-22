@@ -27,7 +27,7 @@ library(wesanderson)
 smooth_in_mask = T  # main analysis: data smoothed within mask
 unsmoothed = F      # no smoothing whatsoever
 newmask = F         # sensivitivy analysis: restrictive COBRA mask (default: Harvard-Oxford)
-reprocess = F
+reprocess = T
 
 repo_directory <- "~/code/clock_analysis"
 #repo_directory <- "~/Data_Analysis/clock_analysis"
@@ -35,7 +35,7 @@ repo_directory <- "~/code/clock_analysis"
 #load the data, and reprocess if requested
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/load_medusa_data_vmPFC.R"))
 
-
+plots = F
 #######
 # RAMPS 
 # filter by ITI, RT, and evt_time <3 to focus on online periods for longer-ITI trials (to minimize cross-trial contamination)
@@ -85,6 +85,8 @@ em2 <- em2 %>% mutate(`vmPFC response` = emmean, `Time, squared` = as.numeric(as
 # wesanderson palette for better visualization of the long-axis gradient
 library(wesanderson)
 pal = wes_palette("Zissou1", 12, type = "continuous")
+
+if (plots) {
 pdf("ramps_in_vmPFC_lin_quad_anderson.pdf", width = 6, height = 3)
 ggplot(em2, aes(time, `vmPFC response`, group = bin_center_z, color = bin_center_z)) + 
   geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL),position = position_dodge(width = .5), size = .5) + geom_line(size = 1.5, position = position_dodge(width = .5)) + facet_wrap(~entropy) + theme(legend.position = "none") +
@@ -109,6 +111,7 @@ Anova(rm2binf, '3')
 #############
 # FINAL MODELS
 # Fig. 3A
+if (plots) {
 setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/vmPFC/figs/')
 pdf('3a_smoothed_ramps_vmPFC_cobra_percent_anderson.pdf', width = 4, height = 2.5)
 
@@ -170,7 +173,7 @@ ggplot(em2f, aes(evt_time, `Hippocampal response`, color = bin_center_z, group =
         axis.title.y = element_text(margin=margin(r=6)),
         axis.title.x = element_text(margin=margin(t=6)))
 dev.off()
-
+}
 
 
 ##############################
@@ -327,5 +330,5 @@ ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(as.nume
   scale_x_continuous(breaks=c(0, 2, 4, 6, 8, 10))
 
 dev.off()
-
+}
 

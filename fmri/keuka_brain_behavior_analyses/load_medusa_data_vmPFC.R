@@ -14,7 +14,7 @@
   
 if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
 # reprocess = T
-diag_plots = T
+diag_plots = F
 # if (newmask) {
 #   medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_smooth_in_mask_pct_change"
 #   # medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_smooth_in_mask_demean_only"  
