@@ -35,6 +35,7 @@ if (unsmoothed) {
 
 ###############
 # Effect of DAN on exploration
+# tried  adding RT(t-1)*trial interaction -- no
 mb_dan1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
                                 v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp + DAN)^2 + 
                    rt_lag_sc:last_outcome:h_HippAntL_neg + 
