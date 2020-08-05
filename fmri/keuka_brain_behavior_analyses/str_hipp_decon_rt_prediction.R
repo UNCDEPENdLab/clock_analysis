@@ -160,8 +160,8 @@ if (decode) {
 
 #########
 # Diagnose multicollinearity
-ivs <- dbl %>% select(rt_csv, rt_vmax, abs_pe_sc, outcome)
-
+ivs <- dbl %>% select(rt_csv, rt_vmax, abs_pe_sc, outcome) %>% mutate(outcome = as.numeric(outcome))
+psych::corr.test(ivs)
 if (rt) {
   newlist <- list()
   for (slice in 1:12) {print(paste("Processing slice", slice, sep = " "))
