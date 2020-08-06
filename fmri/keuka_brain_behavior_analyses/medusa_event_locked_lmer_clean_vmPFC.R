@@ -27,7 +27,7 @@ library(wesanderson)
 smooth_in_mask = T  # main analysis: data smoothed within mask
 unsmoothed = F      # no smoothing whatsoever
 newmask = F         # sensivitivy analysis: restrictive COBRA mask (default: Harvard-Oxford)
-reprocess = T
+reprocess = F
 
 repo_directory <- "~/code/clock_analysis"
 #repo_directory <- "~/Data_Analysis/clock_analysis"
