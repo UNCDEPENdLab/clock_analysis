@@ -2,8 +2,9 @@
 title: "Code for brain-to-behavior analyses"
 output: html_document
 ---
-Dombrovski, Luna & Hallquist, Nature Communications, 2020 \
+This folder contains most of the key inferential analyses from the paper.
 
+Dombrovski, Luna & Hallquist, Nature Communications, 2020 \
 
 Scripts as ordered in the paper:
 
@@ -11,7 +12,7 @@ Scripts as ordered in the paper:
 - contrast prediction error and entropy signals along the hippocampal \
 long axis as presented in Fig. 2b, d
 
-# beta_cluster_import_pca_clean.R 
+# beta_cluster_import_pca_clean.R
 - import fMRI hippocampal cluster data (regression coefficients, "betas") from \
 conventional whole-brain analyses \
 - perform PCA on cluster betas \
@@ -40,5 +41,3 @@ subject's performance
 - with 'decode = T', main analysis for Fig. 4 e-g
 - with 'u = T', exploratory analysis attempting to predict the uncertainty of the next choice \
 with hippocampal activity
-
-
