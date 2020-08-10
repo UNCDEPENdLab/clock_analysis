@@ -1,5 +1,0 @@
-#Subj:	11287
-#Run:	8
-#Age:	26
-#Gender:	female
-#22-May-2014
