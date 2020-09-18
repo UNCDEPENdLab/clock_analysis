@@ -1,5 +1,6 @@
 library(oro.nifti)
 library(dplyr)
+library(tidyr)
 
 ## The FSL MNI-space Schaefer originals look the best and are what were released by the group. I've messed with using Fonov 2009c from the get-go, but the results are less optimal (with their normalization code)
 ## Thus, warp the 200-parcel FSL space to fonov using our in-lab warp coefficients and NN interpolation. This yields a good result by eye. It's a little precious on region boundaries (speckled at points, but defensibly so),
@@ -21,13 +22,13 @@ labels <- read.table("original_masks/Schaefer2018_200Parcels_7Networks_order.txt
     mutate(hemi=if_else(grepl("_LH_", network), "L", "R"),
                     network=sub("7Networks_[LR]H_", "", network)) %>%
     extract(col="network", into=c("network", "region"), regex="([^_]+)_(.*)") %>%
-    filter(! network %in% c("Vis", "SomMot"))
+    filter(! network %in% c("Vis", "SomMot")) #drop visual and somatomotor networks
 
 mod <- orig
 bad_mi <- which(!orig %in% unique(labels$roinum))
 mod[bad_mi] <- 0 #dump
 
-writeNIfTI(mod, filename="masks/Schaefer_136_2.3mm.nii.gz")
+writeNIfTI(mod, filename="masks/Schaefer_136_2.3mm")
 
 
-#drop visual and somatomotor networks
+
