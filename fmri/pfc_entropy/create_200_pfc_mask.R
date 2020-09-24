@@ -31,4 +31,19 @@ mod[bad_mi] <- 0 #dump
 writeNIfTI(mod, filename="masks/Schaefer_136_2.3mm")
 
 
+#dan only
+orig <- readNIfTI("original_masks/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants.nii.gz", reorient=FALSE)
+labels <- read.table("original_masks/Schaefer2018_200Parcels_7Networks_order.txt") %>% select(1:2) %>%
+  setNames(c("roinum", "network")) %>%
+  mutate(hemi=if_else(grepl("_LH_", network), "L", "R"),
+         network=sub("7Networks_[LR]H_", "", network)) %>%
+  extract(col="network", into=c("network", "region"), regex="([^_]+)_(.*)") %>%
+  filter(network == "DorsAttn") #drop visual and somatomotor networks
+
+mod <- orig
+bad_mi <- which(!orig %in% unique(labels$roinum))
+mod[bad_mi] <- 0 #dump
+
+writeNIfTI(mod, filename="masks/Schaefer_DAN_2.3mm")
+
 

@@ -1,4 +1,6 @@
-Choi 2012 2.3mm redux
+## Choi 2012 2.3mm labels
+
+File is: masks/bilateral_striatum_tight_7Networks_2.3mm.nii.gz
 
 1. l posterior putamen (somatomotor)
 2. l anterior putamen (ventral attention)
@@ -10,3 +12,28 @@ Choi 2012 2.3mm redux
 8. r limbic (VS)
 9. r mid-anterior putamen and caudate (frontoparietal)
 10. r mid-caudate/putamen (default)
+
+## Pauli 2018 2.3mm labels
+
+masks/pauli_combined_integermask_2.3mm.nii.gz
+
+1. Pu (Putamen)
+2. Ca (Caudate nucleus)
+3. Nacc (Nucleus accumbens)
+4. EXA (Extended amygdala)
+5. GPe (Globus pallidus externa)
+6. GPi (Globus pallidus interna)
+7. SNc (Substantia nigra pars compacta)
+8. RN (Red nucleus)
+9. SNr (Substantia nigra pars reticulata)
+10. PBP (Parabrachial Pigmented Nucleus)
+11. VTA (Ventral tegmental area)
+12. VeP (Ventral pallidum)
+13. HN (Habenular nucleus)
+14. HTH (Hypothalamus)
+15. MN (Mammillary nucleus)
+16. STn (Subthalamic nucleus)
+
+## Pauli 0/1 DA midbrain mask
+
+masks/pauli_da_midbrain_2.3mm.nii.gz

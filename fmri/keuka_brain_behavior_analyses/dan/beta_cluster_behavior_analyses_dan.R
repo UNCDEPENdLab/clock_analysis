@@ -14,12 +14,12 @@ library(sjstats)
 library(sjPlot)
 library(emmeans)
 library(cowplot)
-source('~/code/Rhelpers/screen.lmerTest.R')
-source('~/code/Rhelpers/vif.lme.R')
+# source('~/code/Rhelpers/screen.lmerTest.R')
+# source('~/code/Rhelpers/vif.lme.R')
 # library(stringi)
 
-# clock_folder <- "~/Data_Analysis/clock_analysis" #michael
-clock_folder <- "~/code/clock_analysis" #alex
+clock_folder <- "~/Data_Analysis/clock_analysis" #michael
+# clock_folder <- "~/code/clock_analysis" #alex
 
 # source('~/code/Rhelpers/')
 setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
@@ -48,6 +48,29 @@ mb_dan1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + la
 screen.lmerTest(mb_dan1, .05)
 summary(mb_dan1)
 Anova(mb_dan1, '3')
+
+#diagnostic model
+mb_dan1 <-  lmer(rt_csv_sc ~ trial_neg_inv_sc + rt_lag_sc + rewFunc + rt_vmax_lag_sc + last_outcome + 
+                                v_max_wi_lag + v_entropy_wi + (1|id/run), df)
+car::vif(mb_dan1)
+rr <- resid(mb_dan1)
+ff <- fitted(mb_dan1)
+dfr <- data.frame(fitted=ff, resid=rr)
+ggplot(dfr, aes(x=fitted, y=resid)) + geom_point(alpha=0.01) + geom_smooth()
+hist(resid(mb_dan1))
+qqnorm(resid(mb_dan1))
+plot(mb_dan1)
+
+plot(mb_dan1,sqrt(abs(residuals(.))) ~ fitted(.),type=c("smooth"))
+
+df <- df %>% filter(rt_csv > 80) %>% mutate(rt_csv=if_else(rt_csv > 4000, 4000L, rt_csv))
+
+mb_dan1_cens <- censReg::censReg(rt_csv ~ trial_neg_inv_sc + rt_lag_sc + rewFunc + rt_vmax_lag_sc +
+                                   last_outcome + v_max_wi_lag + v_entropy_wi, data=df,
+                                 method="BHHH", left=0, right=4000,  nGHQ = 8L)
+
+fm.censReg <- censReg::censReg(Reaction3 ~ as.numeric(Days), left = REACT_L3, right = REACT_R3,
+                               start = unlist(rev(paramSL)),data = sleepstudy2.cr)
 
 # compare with the high-entropy factor, which includes DAN + cerebellum + rlPFC/dlPFC
 mb_dan2 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
