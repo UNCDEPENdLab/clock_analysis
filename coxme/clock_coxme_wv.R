@@ -38,6 +38,18 @@ sdf <- sdf %>% inner_join(hdf, by = "ID")
 # mark events (responses)
 sdf$response <- round(sdf$rt/1000, digits = 1)==sdf$t2
 
+# KS across conditions
+
+ks.test(df$rt_csv[df$rewFunc=='CEV'], "punif", 1, 4000)
+ks.test(df$rt_csv[df$rewFunc=='CEVR'], "punif", 1, 4000)
+ks.test(df$rt_csv[df$rewFunc=='IEV'], "punif", 1, 4000)
+ks.test(df$rt_csv[df$rewFunc=='DEV'], "punif", 1, 4000)
+
+hist(df$rt_csv[df$rewFunc=='CEV'])
+hist(df$rt_csv[df$rewFunc=='CEVR'])
+hist(df$rt_csv[df$rewFunc=='IEV'])
+hist(df$rt_csv[df$rewFunc=='DEV'])
+
 
 # # inspect piecewize hazard functions
 # library(muhaz)
