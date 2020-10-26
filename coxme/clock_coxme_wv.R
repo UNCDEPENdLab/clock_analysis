@@ -51,12 +51,13 @@ hist(df$rt_csv[df$rewFunc=='CEVR'])
 hist(df$rt_csv[df$rewFunc=='IEV'])
 hist(df$rt_csv[df$rewFunc=='DEV'])
 library(texmex)
+attach(mtcars)
+par(mfrow=c(2,2))
 plot(df$rt_csv[df$rewFunc=='DEV'], edf(df$rt_csv[df$rewFunc=='DEV']))
 plot(df$rt_csv[df$rewFunc=='IEV'], edf(df$rt_csv[df$rewFunc=='IEV']))
 plot(df$rt_csv[df$rewFunc=='CEV'], edf(df$rt_csv[df$rewFunc=='CEV']))
 plot(df$rt_csv[df$rewFunc=='CEVR'], edf(df$rt_csv[df$rewFunc=='CEVR']))
-u <- runif(1000, 1,4000)
-plot(u, edf(u))
+uniform <- runif(1000, 1,4000)
 # because IEV has the most uniform EDF of RTs overall
 
 # # inspect piecewize hazard functions
