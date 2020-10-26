@@ -1,7 +1,8 @@
 # runs mixed-effects Cox models on clock data
 # when running the first time, first run compute_sceptic_fmri_statistics.R
-
-setwd("~/code/clock_analysis/coxme")
+basedir <- "~/Data_Analysis"
+#basedir <- "~/code"
+setwd(file.path(basedir, "clock_analysis/coxme"))
 library(readr)
 library(ggplot2)
 library(tidyr)
@@ -30,7 +31,7 @@ load(file="clock_for_coxme_value_only_070518.RData")
 # sanity checks on within-trial matrices
 
 # add hippocampal betas
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd(file.path(basedir, 'clock_analysis/fmri/keuka_brain_behavior_analyses/'))
 load('trial_df_and_vh_pe_clusters_u.Rdata')
 hdf <- df %>% select (ID, pe_f2_hipp, h_HippAntL_neg) %>% unique()
 sdf <- sdf %>% inner_join(hdf, by = "ID")
@@ -83,11 +84,76 @@ fdf <- sdf %>% filter(bin >10 & bin <35)
 
 # diagnostics on uncertainty and value distributions
 
-ggplot(sdf %>% filter(bin >10 & bin <35), aes(time, value_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
-ggplot(sdf %>% filter(bin >10 & bin <35), aes(time, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2))
-corr.test(fdf$value_wi, fdf$uncertainty_wi)
-corr.test(fdf$value, fdf$uncertainty)
+# ggplot(sdf %>% filter(bin >10 & bin <35), aes(time, value_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
+# ggplot(sdf %>% filter(bin >10 & bin <35), aes(time, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2))
+# corr.test(fdf$value_wi, fdf$uncertainty_wi)
+# corr.test(fdf$value, fdf$uncertainty)
+# 
 
+
+##Build 0/1 WV smiles (selection history with different buffer sizes)
+sdf <- sdf %>% select(ID, run, trial, bin, everything())
+
+#use trial-wise data frame for getting lagged timesteps
+trialwise <- sdf %>% filter(bin==1) %>% 
+  group_by(ID, run) %>%
+  mutate(timesteplag1=dplyr::lag(timestep, n=1, order_by=trial),
+         timesteplag2=dplyr::lag(timestep, n=2, order_by=trial),
+         timesteplag3=dplyr::lag(timestep, n=3, order_by=trial),
+         timesteplag4=dplyr::lag(timestep, n=4, order_by=trial)) %>%
+  ungroup() %>% select(ID, run, trial, timesteplag1, timesteplag2, timesteplag3, timesteplag4)
+
+sdf <- sdf %>% select(-timesteplag) %>% left_join(trialwise, by=c("ID", "run", "trial"))
+
+
+get_wv_smile <- function(microdf, nlags=3, nbefore=0, nafter=1) {
+  smile <- rep(0, nrow(microdf))
+  lcols <- paste0("timesteplag", 1:nlags)
+  vv <- microdf[1,lcols] #just first row (bin) of this trial is needed
+  if (nrow(vv) > 0L) {
+    allpos <- lapply(vv, function(x) {
+      if (is.na(x)) {
+        return(NULL)
+      } else {
+        return(seq.int(x-nbefore, x+nafter))
+      }
+    })
+    
+    topopulate <- unname(unlist(allpos))
+    smile[topopulate[topopulate <= nrow(microdf)]] <- 1
+  }
+  microdf[[paste0("wv", nlags, "b", nbefore, "a", nafter)]] <- smile
+  return(microdf)
+}
+
+sdf$splitbasis <- with(sdf, paste(ID, run, trial, sep="."))
+
+splitdf <- split(sdf, sdf$splitbasis)
+splitdf <- lapply(splitdf, function(microdf) {
+  microdf %>% get_wv_smile(n=3, nbefore=0, nafter=1) %>%
+    get_wv_smile(n=3, nbefore=1, nafter=1) %>%
+    get_wv_smile(n=3, nbefore=1, nafter=2) %>%
+    get_wv_smile(n=4, nbefore=0, nafter=1) %>%
+    get_wv_smile(n=4, nbefore=1, nafter=1) %>%
+    get_wv_smile(n=4, nbefore=1, nafter=2)
+})
+
+bb <- bind_rows(splitdf)
+
+#spot check
+bb %>% filter(trial > 5) %>% select(bin, timestep, timesteplag1, timesteplag2, wv3b0a1)
+
+
+### end wv smiles
+
+df <- df %>% group_by(ID, run) %>% arrange(ID, run, run_trial) %>% mutate(
+  rt_lag2 = lag(rt_lag),
+  rt_lag3 = lag(rt_lag2),
+  rt_lag4 = lag(rt_lag3),
+  rt_lag5 = lag(rt_lag4)) %>% ungroup() %>%
+  rowwise() %>% mutate(
+    kld4 = get_kldsum(c(rt_lag4, rt_lag3, rt_lag2, rt_lag), c(rt_lag5, rt_lag4, rt_lag3, rt_lag2))
+  ) %>% ungroup()
 
 # 
 # # main analysis
