@@ -14,12 +14,12 @@ library(sjstats)
 library(sjPlot)
 library(emmeans)
 library(cowplot)
-# source('~/code/Rhelpers/screen.lmerTest.R')
-# source('~/code/Rhelpers/vif.lme.R')
+source('~/code/Rhelpers/screen.lmerTest.R')
+source('~/code/Rhelpers/vif.lme.R')
 # library(stringi)
 
-clock_folder <- "~/Data_Analysis/clock_analysis" #michael
-# clock_folder <- "~/code/clock_analysis" #alex
+# clock_folder <- "~/Data_Analysis/clock_analysis" #michael
+clock_folder <- "~/code/clock_analysis" #alex
 
 # source('~/code/Rhelpers/')
 setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
@@ -32,87 +32,265 @@ if (unsmoothed) {
   load('trial_df_and_vh_pe_clusters_u_unsmoothed.Rdata')
 } else { load('trial_df_and_vh_pe_clusters_u.Rdata') }
 
+############# Main analysis using Schaeffer-based betas
 
-###############
+############# fMRI
 # Effect of DAN on exploration
-# tried  adding RT(t-1)*trial interaction -- no
 mb_dan1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp + DAN)^2 + 
-                   rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                   rt_lag_sc:last_outcome:pe_f2_hipp +
-                   rt_lag_sc:last_outcome:DAN +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
-                   rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:DAN  +
+                                v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef)^2 + 
+                   rt_lag_sc:last_outcome:general_entropy + 
+                   rt_lag_sc:last_outcome:med_par +
+                   rt_lag_sc:last_outcome:fef +
+                   rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
+                   rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
+                   rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
                    (1|id/run), df)
 screen.lmerTest(mb_dan1, .05)
 summary(mb_dan1)
 Anova(mb_dan1, '3')
 
-#diagnostic model
-mb_dan1 <-  lmer(rt_csv_sc ~ trial_neg_inv_sc + rt_lag_sc + rewFunc + rt_vmax_lag_sc + last_outcome + 
-                                v_max_wi_lag + v_entropy_wi + (1|id/run), df)
-car::vif(mb_dan1)
-rr <- resid(mb_dan1)
-ff <- fitted(mb_dan1)
-dfr <- data.frame(fitted=ff, resid=rr)
-ggplot(dfr, aes(x=fitted, y=resid)) + geom_point(alpha=0.01) + geom_smooth()
-hist(resid(mb_dan1))
-qqnorm(resid(mb_dan1))
-plot(mb_dan1)
-
-plot(mb_dan1,sqrt(abs(residuals(.))) ~ fitted(.),type=c("smooth"))
-
-df <- df %>% filter(rt_csv > 80) %>% mutate(rt_csv=if_else(rt_csv > 4000, 4000L, rt_csv))
-
-mb_dan1_cens <- censReg::censReg(rt_csv ~ trial_neg_inv_sc + rt_lag_sc + rewFunc + rt_vmax_lag_sc +
-                                   last_outcome + v_max_wi_lag + v_entropy_wi, data=df,
-                                 method="BHHH", left=0, right=4000,  nGHQ = 8L)
-
-fm.censReg <- censReg::censReg(Reaction3 ~ as.numeric(Days), left = REACT_L3, right = REACT_R3,
-                               start = unlist(rev(paramSL)),data = sleepstudy2.cr)
-
-# compare with the high-entropy factor, which includes DAN + cerebellum + rlPFC/dlPFC
+# add vlPFC entropy region
 mb_dan2 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp + h_f1_fp)^2 + 
-                   rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                   rt_lag_sc:last_outcome:pe_f2_hipp +
-                   rt_lag_sc:last_outcome:h_f1_fp +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
-                   rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:h_f1_fp  +
+                                v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef + entropy_vlPFC)^2 + 
+                   rt_lag_sc:last_outcome:general_entropy + 
+                   rt_lag_sc:last_outcome:med_par +
+                   rt_lag_sc:last_outcome:fef +
+                   rt_lag_sc:last_outcome:entropy_vlPFC + 
+                   rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
+                   rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
+                   rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
+                   rt_vmax_lag_sc:trial_neg_inv_sc:entropy_vlPFC + 
                    (1|id/run), df)
 screen.lmerTest(mb_dan2, .05)
 summary(mb_dan2)
 Anova(mb_dan2, '3')
 anova(mb_dan1, mb_dan2)
-# interestingly, the purely DAN model predicts much better, 189 AIC point difference
-# there may be something wrong with the high-entropy factor score exctraction, CHECK
+
 
 ################
 # replication
-mmb_dan1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp + DAN)^2 + 
-                   rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                   rt_lag_sc:last_outcome:pe_f2_hipp +
-                   rt_lag_sc:last_outcome:DAN +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
-                   rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:DAN  +
+mmb_dan1 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef)^2 + 
+                   rt_lag_sc:last_outcome:general_entropy + 
+                   rt_lag_sc:last_outcome:med_par +
+                   rt_lag_sc:last_outcome:fef +
+                   rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
+                   rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
+                   rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
                    (1|id/run), mdf)
 screen.lmerTest(mmb_dan1, .05)
 summary(mmb_dan1)
 Anova(mmb_dan1, '3')
 
+# add vlPFC entropy region
+mmb_dan2 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                 v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef + entropy_vlPFC)^2 + 
+                    rt_lag_sc:last_outcome:general_entropy + 
+                    rt_lag_sc:last_outcome:med_par +
+                    rt_lag_sc:last_outcome:fef +
+                    rt_lag_sc:last_outcome:entropy_vlPFC + 
+                    rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
+                    rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
+                    rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
+                    rt_vmax_lag_sc:trial_neg_inv_sc:entropy_vlPFC + 
+                    (1|id/run), mdf)
+screen.lmerTest(mmb_dan2, .05)
+summary(mmb_dan2)
+Anova(mmb_dan2, '3')
+anova(mmb_dan1, mmb_dan2)
+
+# selection history analyses
+mb_dan_lag3 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_lag2_sc + rt_lag3_sc + rt_vmax_lag_sc + last_outcome + 
+                                   v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef)^2 + 
+                      rt_lag_sc:last_outcome:general_entropy + 
+                      rt_lag_sc:last_outcome:med_par +
+                      rt_lag_sc:last_outcome:fef +
+                      rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
+                      rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
+                      rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
+                      (1|id/run), df)
+screen.lmerTest(mb_dan_lag3, .05)
+summary(mb_dan_lag3)
+Anova(mb_dan_lag3, '3')
+
+
+mmb_dan_lag3 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_lag2_sc + rt_lag3_sc + rt_vmax_lag_sc + last_outcome + 
+                                    v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef)^2 + 
+                       rt_lag_sc:last_outcome:general_entropy + 
+                       rt_lag_sc:last_outcome:med_par +
+                       rt_lag_sc:last_outcome:fef +
+                       rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
+                       rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
+                       rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
+                       (1|id/run), mdf)
+screen.lmerTest(mmb_dan_lag3, .05)
+summary(mmb_dan1)
+Anova(mmb_dan1, '3')
+
+# see if the last three outcomes are held in the FEF buffer
+
+mb_dan_lag3_rew <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_lag2_sc + rt_lag3_sc + rt_vmax_lag_sc + last_outcome + 
+                                       last_outcome_lag2 + last_outcome_lag3 + v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef)^2 + 
+                           rt_lag_sc:last_outcome:general_entropy + 
+                           rt_lag_sc:last_outcome:med_par +
+                           rt_lag_sc:last_outcome:fef +
+                           rt_lag2_sc:last_outcome_lag2:general_entropy + 
+                           rt_lag2_sc:last_outcome_lag2:med_par +
+                           rt_lag2_sc:last_outcome_lag2:fef +
+                           rt_lag3_sc:last_outcome_lag3:general_entropy + 
+                           rt_lag3_sc:last_outcome_lag3:med_par +
+                           rt_lag3_sc:last_outcome_lag3:fef +
+                           rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
+                           rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
+                           rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
+                           (1|id/run), df)
+screen.lmerTest(mb_dan_lag3_rew, .05)
+summary(mb_dan_lag3_rew)
+Anova(mb_dan_lag3_rew, '3')
+
+
+
+mmb_dan_lag3_rew <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_lag2_sc + rt_lag3_sc + rt_vmax_lag_sc + last_outcome + 
+                                        last_outcome_lag2 + last_outcome_lag3 +  v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef)^2 + 
+                           rt_lag_sc:last_outcome:general_entropy + 
+                           rt_lag_sc:last_outcome:med_par +
+                           rt_lag_sc:last_outcome:fef +
+                           rt_lag2_sc:last_outcome_lag2:general_entropy + 
+                           rt_lag2_sc:last_outcome_lag2:med_par +
+                           rt_lag2_sc:last_outcome_lag2:fef +
+                           rt_lag3_sc:last_outcome_lag3:general_entropy + 
+                           rt_lag3_sc:last_outcome_lag3:med_par +
+                           rt_lag3_sc:last_outcome_lag3:fef +
+                           rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
+                           rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
+                           rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
+                           (1|id/run), mdf)
+screen.lmerTest(mmb_dan_lag3_rew, .05)
+summary(mmb_dan_lag3_rew)
+Anova(mmb_dan_lag3_rew, '3')
+
+#### model-predicted effects for buffer models
+
+em1 <- as_tibble(emtrends(mb_dan_lag3_rew, var = "rt_lag_sc", specs = c("fef", "last_outcome"), at = list(fef = c(-1.5, 1.17)), options = list()))
+em1$study = 'fMRI'
+em2 <- as_tibble(emtrends(mmb_dan_lag3_rew, var = "rt_lag_sc", specs = c("fef", "last_outcome"), at = list(fef = c(-1.5, 1.17)), options = list()))
+em2$study = 'Replication'
+em1 <- rbind(em1, em2)
+p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(fef))) + 
+  #shape = as.factor(pe_f2_hipp), 
+  #p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
+  #scale_shape_manual(values=c(15,16), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("PH RPE\nresponse", palette="Set1", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("FEF\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "FEF\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.7, -.1)) 
+em12 <- as_tibble(emtrends(mb_dan_lag3_rew, var = "rt_lag2_sc", specs = c("fef", "last_outcome_lag2"), at = list(fef = c(-1.5, 1.17)), options = list()))
+em12$study = 'fMRI'
+em22 <- as_tibble(emtrends(mmb_dan_lag3_rew, var = "rt_lag2_sc", specs = c("fef", "last_outcome_lag2"), at = list(fef = c(-1.5, 1.17)), options = list()))
+em22$study = 'Replication'
+em12 <- rbind(em12, em22)
+p2 <- ggplot(em12, aes(x=last_outcome_lag2, y=rt_lag2_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(fef))) + 
+  #shape = as.factor(pe_f2_hipp), 
+  #p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag2_sc, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
+  #scale_shape_manual(values=c(15,16), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("PH RPE\nresponse", palette="Set1", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("FEF\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "FEF\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.7, -.1)) 
+
+em13 <- as_tibble(emtrends(mb_dan_lag3_rew, var = "rt_lag3_sc", specs = c("fef", "last_outcome_lag3"), at = list(fef = c(-1.5, 1.17)), options = list()))
+em13$study = 'fMRI'
+em23 <- as_tibble(emtrends(mmb_dan_lag3_rew, var = "rt_lag3_sc", specs = c("fef", "last_outcome_lag3"), at = list(fef = c(-1.5, 1.17)), options = list()))
+em23$study = 'Replication'
+em13 <- rbind(em13, em23)
+p3 <- ggplot(em13, aes(x=last_outcome_lag3, y=rt_lag3_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(fef))) + 
+  #shape = as.factor(pe_f2_hipp), 
+  #p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
+  #scale_shape_manual(values=c(15,16), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("PH RPE\nresponse", palette="Set1", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("FEF\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "FEF\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.7, -.1)) 
+
+
+ggsave("fef1.pdf", p1, width=5, height=4)
+
+
+
+# model diagnostics
+
+#residuals plots
+
+plot(mb_dan1)
+plot(mmb_dan1)
+
+# try lm
+
+lm_fmri_dan1 <-  lm(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                   v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp + DAN)^2 + 
+                      rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                      rt_lag_sc:last_outcome:pe_f2_hipp +
+                      rt_lag_sc:last_outcome:DAN +
+                      rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                      rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
+                      rt_vmax_lag_sc:trial_neg_inv_sc:DAN, df, na.action = na.exclude)
+plot(lm_fmri_dan1)
+# adding contingency does not capture structure
+
+rlm <- resid(lm_fmri_dan1)
+rdf <- cbind(df, rlm)
+ggplot(rdf, aes(rt_csv, rlm)) + geom_smooth()
+
+# covary out distance from the edge
+lm_fmri_dan_sqrt <-  lm(rt_csv^.5 ~ (trial_neg_inv_sc + I(rt_lag^.5) + rt_vmax_lag_sc + last_outcome + 
+                                       v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp + DAN)^2 + 
+                          I(rt_lag^.5):last_outcome:h_HippAntL_neg + 
+                          I(rt_lag^.5):last_outcome:pe_f2_hipp +
+                          I(rt_lag^.5):last_outcome:DAN +
+                          rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
+                          rt_vmax_lag_sc:trial_neg_inv_sc:DAN, df, na.action = na.exclude)
+plot(lm_fmri_dan_sqrt)
+
+
+#### PLOTS #######
+
+ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = fef>0)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
+ggplot(df, aes(run_trial, rt_csv, color = rewFunc, lty = general_entropy>0)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
+
+
+ggplot(df, aes(run_trial, rt_swing, color = rewFunc, lty = fef>0)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
+ggplot(df, aes(run_trial, rt_swing, color = rewFunc, lty = general_entropy>0)) + geom_smooth(method = 'loess') + facet_wrap(~rewFunc)
 
 
 ## DAN replication forest plot
 mterms <- names(fixef(mb_dan1))
 setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/')
 dan <- plot_models(mb_dan1,mmb_dan1, rm.terms = mterms[c(-25, -31)], m.labels = c("fMRI", "replication"),
-                  show.values = T, std.est = "std2", legend.title = "Session", vline.color = "slategray3",
-                  wrap.labels = 20, axis.labels = c("RT(t-1) * DAN high entropy response", "RT(Vmax) * DAN high entropy response"), 
-                  axis.title = "Less convergence <==> Better convergence")
+                   show.values = T, std.est = "std2", legend.title = "Session", vline.color = "slategray3",
+                   wrap.labels = 20, axis.labels = c("RT(t-1) * DAN high entropy response", "RT(Vmax) * DAN high entropy response"), 
+                   axis.title = "Less convergence <==> Better convergence")
 dan <- dan + ylim(-.01,.6) + geom_hline(yintercept = 0, color = "slategray3")
 pdf("dan_beta_models_replication.pdf", height = 3, width = 5)
 dan
@@ -138,7 +316,7 @@ em2$study = 'Replication'
 em1 <- rbind(em1, em2)
 p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(pe_f2_hipp))) + 
   #shape = as.factor(pe_f2_hipp), 
-#p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  #p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
   geom_point(position = position_dodge(width = .6), size=2.5) + 
   #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
@@ -151,7 +329,12 @@ p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=as
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) + 
   scale_y_reverse(limits = c(.6, 0)) 
-ggsave("p1.pdf", p1, width=5, height=4)
+
+p <- ggarrange(p1,p2,p3, ncol = 3, labels = c("Lag1", "Lag2", "Lag3"))
+pdf("fef_lags.pdf", width = 12, height = 4)
+p
+dev.off()
+ggsave("p1.pdf", p, width=10, height=4)
 
 em3 <- as_tibble(emtrends(mb3hpe_hipp, var = "rt_lag_sc", specs = c("h_HippAntL_neg", "last_outcome"), at = list(h_HippAntL_neg = c(-.1, .37)), options = list()))
 em3$study = 'fMRI'
@@ -569,17 +752,17 @@ Anova(mmf4hpe,'3')
 # include RTvmax without outcome
 
 mf2ahpe <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + 
-                               h_HippAntL_neg + pe_f2_hipp)^2 + 
-                  rt_vmax_lag_sc*trial_neg_inv_sc*h_HippAntL_neg + 
-                  rt_vmax_lag_sc*trial_neg_inv_sc*pe_f2_hipp  + 
-                  (1|id/run), df)
-summary(mf2ahpe)
-anova(mf2ahpe)
-mmf2ahpe <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + 
                                 h_HippAntL_neg + pe_f2_hipp)^2 + 
                    rt_vmax_lag_sc*trial_neg_inv_sc*h_HippAntL_neg + 
                    rt_vmax_lag_sc*trial_neg_inv_sc*pe_f2_hipp  + 
-                   (1|id/run), mdf)
+                   (1|id/run), df)
+summary(mf2ahpe)
+anova(mf2ahpe)
+mmf2ahpe <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + 
+                                 h_HippAntL_neg + pe_f2_hipp)^2 + 
+                    rt_vmax_lag_sc*trial_neg_inv_sc*h_HippAntL_neg + 
+                    rt_vmax_lag_sc*trial_neg_inv_sc*pe_f2_hipp  + 
+                    (1|id/run), mdf)
 summary(mmf2ahpe)
 anova(mmf2ahpe)
 
