@@ -126,9 +126,10 @@ trialwise <- sdf %>% filter(bin==1) %>%
 sdf <- sdf %>% select(-timesteplag) %>% left_join(trialwise, by=c("ID", "run", "trial"))
 
 
-get_wv_smile <- function(microdf, nlags=3, nbefore=0, nafter=1) {
+get_wv_smile <- function(microdf, nlags=3, nbefore=0, nafter=1, spec=FALSE) {
   smile <- rep(0, nrow(microdf))
-  lcols <- paste0("timesteplag", 1:nlags)
+  lcols <- ifelse(isTRUE(spec), paste0("timesteplag", nlags), paste0("timesteplag", 1:nlags))
+  wvprefix <- ifelse(isTRUE(spec), "wvs", "wv")
   vv <- microdf[1,lcols] #just first row (bin) of this trial is needed
   if (nrow(vv) > 0L) {
     allpos <- lapply(vv, function(x) {
@@ -142,7 +143,7 @@ get_wv_smile <- function(microdf, nlags=3, nbefore=0, nafter=1) {
     topopulate <- unname(unlist(allpos))
     smile[topopulate[topopulate <= nrow(microdf)]] <- 1
   }
-  microdf[[paste0("wv", nlags, "b", nbefore, "a", nafter)]] <- smile
+  microdf[[paste0(wvprefix, nlags, "b", nbefore, "a", nafter)]] <- smile
   return(microdf)
 }
 
@@ -155,14 +156,19 @@ splitdf <- lapply(splitdf, function(microdf) {
     get_wv_smile(n=3, nbefore=1, nafter=2) %>%
     get_wv_smile(n=4, nbefore=0, nafter=1) %>%
     get_wv_smile(n=4, nbefore=1, nafter=1) %>%
-    get_wv_smile(n=4, nbefore=1, nafter=2)
+    get_wv_smile(n=4, nbefore=1, nafter=2) %>%
+    get_wv_smile(n=1, nbefore=1, nafter=1, spec=TRUE) %>%
+    get_wv_smile(n=2, nbefore=1, nafter=1, spec=TRUE) %>%
+    get_wv_smile(n=3, nbefore=1, nafter=1, spec=TRUE) %>%
+    get_wv_smile(n=4, nbefore=1, nafter=1, spec=TRUE)
 })
 
 bb <- bind_rows(splitdf)
 
 #spot check
 bb %>% filter(trial > 5) %>% select(bin, timestep, timesteplag1, timesteplag2, wv3b0a1)
-
+table(bb$wv3b0a1)
+table(bb$wv4b0a1)
 
 ### end wv smiles
 
