@@ -1,7 +1,7 @@
 # runs mixed-effects Cox models on clock data
 # when running the first time, first run compute_sceptic_fmri_statistics.R
-basedir <- "~/Data_Analysis"
-#basedir <- "~/code"
+# basedir <- "~/Data_Analysis"
+basedir <- "~/code"
 setwd(file.path(basedir, "clock_analysis/coxme"))
 library(readr)
 library(ggplot2)
@@ -52,12 +52,13 @@ hist(df$rt_csv[df$rewFunc=='CEVR'])
 hist(df$rt_csv[df$rewFunc=='IEV'])
 hist(df$rt_csv[df$rewFunc=='DEV'])
 library(texmex)
+attach(mtcars)
+par(mfrow=c(2,2))
 plot(df$rt_csv[df$rewFunc=='DEV'], edf(df$rt_csv[df$rewFunc=='DEV']))
 plot(df$rt_csv[df$rewFunc=='IEV'], edf(df$rt_csv[df$rewFunc=='IEV']))
 plot(df$rt_csv[df$rewFunc=='CEV'], edf(df$rt_csv[df$rewFunc=='CEV']))
 plot(df$rt_csv[df$rewFunc=='CEVR'], edf(df$rt_csv[df$rewFunc=='CEVR']))
-u <- runif(1000, 1,4000)
-plot(u, edf(u))
+uniform <- runif(1000, 1,4000)
 # because IEV has the most uniform EDF of RTs overall
 
 # # inspect piecewize hazard functions
@@ -172,14 +173,18 @@ table(bb$wv4b0a1)
 
 ### end wv smiles
 
-df <- df %>% group_by(ID, run) %>% arrange(ID, run, run_trial) %>% mutate(
-  rt_lag2 = lag(rt_lag),
-  rt_lag3 = lag(rt_lag2),
-  rt_lag4 = lag(rt_lag3),
-  rt_lag5 = lag(rt_lag4)) %>% ungroup() %>%
-  rowwise() %>% mutate(
-    kld4 = get_kldsum(c(rt_lag4, rt_lag3, rt_lag2, rt_lag), c(rt_lag5, rt_lag4, rt_lag3, rt_lag2))
-  ) %>% ungroup()
+
+# coxme on wv smiles
+summary(cox_wv1 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b0a1 + trial_neg_inv_sc*rewFunc + 
+                          value_wi + uncertainty_wi + 
+                           (1|ID), bb))
+summary(cox_wv2 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b1a1 + trial_neg_inv_sc*rewFunc + 
+                           value_wi + uncertainty_wi + 
+                           (1|ID), bb))
+summary(cox_wv3 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b1a2 + trial_neg_inv_sc*rewFunc + 
+                           value_wi + uncertainty_wi + 
+                           (1|ID), bb))
+
 
 # 
 # # main analysis
