@@ -45,11 +45,19 @@ ks.test(df$rt_csv[df$rewFunc=='CEVR'], "punif", 1, 4000)
 ks.test(df$rt_csv[df$rewFunc=='IEV'], "punif", 1, 4000)
 ks.test(df$rt_csv[df$rewFunc=='DEV'], "punif", 1, 4000)
 
+# Why is this happening?
 hist(df$rt_csv[df$rewFunc=='CEV'])
 hist(df$rt_csv[df$rewFunc=='CEVR'])
 hist(df$rt_csv[df$rewFunc=='IEV'])
 hist(df$rt_csv[df$rewFunc=='DEV'])
-
+library(texmex)
+plot(df$rt_csv[df$rewFunc=='DEV'], edf(df$rt_csv[df$rewFunc=='DEV']))
+plot(df$rt_csv[df$rewFunc=='IEV'], edf(df$rt_csv[df$rewFunc=='IEV']))
+plot(df$rt_csv[df$rewFunc=='CEV'], edf(df$rt_csv[df$rewFunc=='CEV']))
+plot(df$rt_csv[df$rewFunc=='CEVR'], edf(df$rt_csv[df$rewFunc=='CEVR']))
+u <- runif(1000, 1,4000)
+plot(u, edf(u))
+# because IEV has the most uniform EDF of RTs overall
 
 # # inspect piecewize hazard functions
 # library(muhaz)
