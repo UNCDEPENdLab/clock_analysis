@@ -77,14 +77,14 @@ Anova(m5)
 m6 <- lmer(rt_csv_sc ~ rt_lag_sc*omission_lag + rt_swing_lag_sc*rt_lag_sc + rt_lag_sc*kld3 + rt_vmax_lag_sc*kld3 + 
              rt_lag_sc*v_entropy_wi +  rt_vmax_lag_sc*v_entropy_wi + rt_vmax_lag_sc*rt_swing_lag_sc + (1|ID), df )
 summary(m6)
-Anova(m6)
+Anova(m6, '3')
 
 # cumulative KLD of the last two updates, first vs. rt_swing_lag
 # check correlations: 
 mc1 <- lmer(rt_csv_sc ~ rt_lag_sc*omission_lag + rt_swing_lag_sc*rt_lag_sc + rt_lag_sc*kld3_cum2 + rt_vmax_lag_sc*kld3_cum2 + 
               rt_lag_sc*v_entropy_wi +  rt_vmax_lag_sc*v_entropy_wi + rt_vmax_lag_sc*rt_swing_lag_sc + (1|ID), df )
 summary(mc1)
-Anova(mc1)
+Anova(mc1, '3')
 # add rt_swing_lag2 -- a lot to ask!
 # r(kld_cum2, rt_swing_lag) = .39
 # r(kld_cum2, rt_swing_lag2) = .61
@@ -93,5 +93,5 @@ summary(mk)
 mc2 <- lmer(rt_csv_sc ~ rt_lag_sc*omission_lag + rt_swing_lag_sc*rt_lag_sc + rt_swing_lag2_sc*rt_lag_sc + rt_lag_sc*kld3_cum2 + rt_vmax_lag_sc*kld3_cum2 + 
               rt_lag_sc*v_entropy_wi +  rt_vmax_lag_sc*v_entropy_wi + rt_vmax_lag_sc*rt_swing_lag_sc + (1|ID), df )
 summary(mc2)
-Anova(mc1)
+Anova(mc2, '3')
 
