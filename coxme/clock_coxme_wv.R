@@ -33,24 +33,25 @@ load(file="clock_for_coxme_value_only_070518.RData")
 # add hippocampal betas
 setwd(file.path(basedir, 'clock_analysis/fmri/keuka_brain_behavior_analyses/'))
 load('trial_df_and_vh_pe_clusters_u.Rdata')
-hdf <- df %>% select (ID, pe_f2_hipp, h_HippAntL_neg) %>% unique()
+hdf <- df %>% select (ID, DAN, dan_parietal, dan_l_sfg, dan_r_sfg, general_entropy,
+med_par, fef, entropy_vlPFC) %>% unique()
 sdf <- sdf %>% inner_join(hdf, by = "ID")
 
 # mark events (responses)
 sdf$response <- round(sdf$rt/1000, digits = 1)==sdf$t2
 
-# KS across conditions
-
-ks.test(df$rt_csv[df$rewFunc=='CEV'], "punif", 1, 4000)
-ks.test(df$rt_csv[df$rewFunc=='CEVR'], "punif", 1, 4000)
-ks.test(df$rt_csv[df$rewFunc=='IEV'], "punif", 1, 4000)
-ks.test(df$rt_csv[df$rewFunc=='DEV'], "punif", 1, 4000)
-
-# Why is this happening?
-hist(df$rt_csv[df$rewFunc=='CEV'])
-hist(df$rt_csv[df$rewFunc=='CEVR'])
-hist(df$rt_csv[df$rewFunc=='IEV'])
-hist(df$rt_csv[df$rewFunc=='DEV'])
+# # KS across conditions
+# 
+# ks.test(df$rt_csv[df$rewFunc=='CEV'], "punif", 1, 4000)
+# ks.test(df$rt_csv[df$rewFunc=='CEVR'], "punif", 1, 4000)
+# ks.test(df$rt_csv[df$rewFunc=='IEV'], "punif", 1, 4000)
+# ks.test(df$rt_csv[df$rewFunc=='DEV'], "punif", 1, 4000)
+# 
+# # Why is this happening?
+# hist(df$rt_csv[df$rewFunc=='CEV'])
+# hist(df$rt_csv[df$rewFunc=='CEVR'])
+# hist(df$rt_csv[df$rewFunc=='IEV'])
+# hist(df$rt_csv[df$rewFunc=='DEV'])
 library(texmex)
 attach(mtcars)
 par(mfrow=c(2,2))
@@ -97,9 +98,7 @@ sdf <- sdf %>% group_by(ID, run, trial) %>% mutate(bin = 1:n(), time = bin/10) %
                           uncertainty_wi = scale(uncertainty),
                           value_b = mean(value),
                           uncertainty_b = mean(uncertainty), 
-                          trial_neg_inv_sc = scale(-1/trial)) %>% ungroup() %>% 
-  mutate(rtlag_sc = scale(rtlag),
-         AH_sc = scale(h_HippAntL_neg))
+                          trial_neg_inv_sc = scale(-1/trial)) %>% ungroup() 
 # filter out no-go zones at the edges
 fdf <- sdf %>% filter(bin >10 & bin <35)
 
@@ -169,13 +168,16 @@ bb %>% filter(trial > 5) #%>% select(bin, timestep, timesteplag1, timesteplag2, 
 summary(cox_wv1 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b0a1 + trial_neg_inv_sc*rewFunc + 
                           value_wi + uncertainty_wi + 
                            (1|ID), bb))
-summary(cox_wv2 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b1a1 + trial_neg_inv_sc*rewFunc + 
-                           value_wi + uncertainty_wi + 
-                           (1|ID), bb))
-summary(cox_wv3 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b1a2 + trial_neg_inv_sc*rewFunc + 
-                           value_wi + uncertainty_wi + 
-                           (1|ID), bb))
+# summary(cox_wv2 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b1a1 + trial_neg_inv_sc*rewFunc + 
+#                            value_wi + uncertainty_wi + 
+#                            (1|ID), bb))
+# summary(cox_wv3 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b1a2 + trial_neg_inv_sc*rewFunc + 
+#                            value_wi + uncertainty_wi + 
+#                            (1|ID), bb))
 
+summary(wv_dan1 <- coxme(Surv(t1,t2,response) ~ scale(rtlag) + wv3b0a1*DAN + trial_neg_inv_sc*rewFunc + 
+                   value_wi + uncertainty_wi + 
+                   (1|ID), bb))
 # 
 # # main analysis
 # summary(cox_hipp1a <- coxme(Surv(t1,t2,response) ~ rtlag_sc*pe_f2_hipp + rtlag_sc*AH_sc + trial_neg_inv_sc*rewFunc + trial_neg_inv_sc*uncertainty_wi + trial_neg_inv_sc*value_wi +
