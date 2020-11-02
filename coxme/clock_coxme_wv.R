@@ -177,6 +177,7 @@ table(bb$wv4b0a1)
 summary(cox_wv1 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b0a1 + trial_neg_inv_sc*rewFunc + 
                           value_wi + uncertainty_wi + 
                            (1|ID), bb))
+
 # summary(cox_wv2 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b1a1 + trial_neg_inv_sc*rewFunc + 
 #                            value_wi + uncertainty_wi + 
 #                            (1|ID), bb))
@@ -187,6 +188,55 @@ summary(cox_wv1 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b0a1 + trial_neg_i
 summary(wv_dan1 <- coxme(Surv(t1,t2,response) ~ scale(rtlag) + wv3b0a1*DAN + trial_neg_inv_sc*rewFunc + 
                    value_wi + uncertainty_wi + 
                    (1|ID), bb))
+
+summary(wv_dan2 <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*DAN + wvs2b1a1*DAN + wvs3b1a1*DAN +
+                           value_wi*DAN + uncertainty_wi*DAN + 
+                           (1|ID), bb))
+Anova(wv_dan2, '3')
+summary(wv_fef <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*fef + wvs2b1a1*fef + wvs3b1a1*fef + 
+                           value_wi*fef + uncertainty_wi*fef + 
+                           (1|ID), bb))
+Anova(wv_fef, '3')
+
+summary(wv_med_par <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*med_par + wvs2b1a1*med_par + wvs3b1a1*med_par + 
+                          value_wi*fef + uncertainty_wi*med_par + 
+                          (1|ID), bb))
+Anova(wv_med_par, '3')
+
+summary(wv_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
+                          value_wi*general_entropy + uncertainty_wi*general_entropy + 
+                          (1|ID), bb))
+Anova(wv_ge, '3')
+
+summary(wv_vlpfc <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*entropy_vlPFC + wvs2b1a1*entropy_vlPFC + wvs3b1a1*entropy_vlPFC + 
+                         value_wi*entropy_vlPFC + trial_neg_inv_sc*uncertainty_wi*entropy_vlPFC + 
+                         (1|ID), bb))
+Anova(wv_vlpfc, '3')
+
+
+# sensitivity analysis: filter the ends
+fbb <- bb %>% filter(bin >10 & bin <35)
+summary(wv_ge_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
+                         value_wi*general_entropy + uncertainty_wi*general_entropy + 
+                         (1|ID), fbb))
+Anova(wv_ge_middle, '3')
+
+summary(wv_vlpfc_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*entropy_vlPFC + wvs2b1a1*entropy_vlPFC + wvs3b1a1*entropy_vlPFC + 
+                            value_wi*entropy_vlPFC + uncertainty_wi*entropy_vlPFC + 
+                            (1|ID), fbb))
+Anova(wv_vlpfc_middle, '3')
+
+# just the SFG blobs
+summary(wv_sfgl_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*dan_l_sfg + wvs2b1a1*dan_l_sfg + wvs3b1a1*dan_l_sfg + 
+                                   value_wi*dan_l_sfg + uncertainty_wi*dan_l_sfg + 
+                                   (1|ID), fbb))
+Anova(wv_sfgl_middle, '3')
+
+summary(wv_sfgr_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*dan_r_sfg + wvs2b1a1*dan_r_sfg + wvs3b1a1*dan_r_sfg + 
+                                  value_wi*dan_r_sfg + uncertainty_wi*dan_r_sfg + 
+                                  (1|ID), fbb))
+Anova(wv_sfgr_middle, '3')
+# try interaction with trials
 
 # summary(cox_wv2 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b1a1 + trial_neg_inv_sc*rewFunc + 
 #                            value_wi + uncertainty_wi + 
