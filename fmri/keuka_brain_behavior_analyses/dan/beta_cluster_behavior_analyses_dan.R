@@ -129,45 +129,64 @@ Anova(mmb_dan1, '3')
 
 # see if the last three outcomes are held in the FEF buffer
 
-mb_dan_lag3_rew <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_lag2_sc + rt_lag3_sc + rt_vmax_lag_sc + last_outcome + 
-                                       last_outcome_lag2 + last_outcome_lag3 + v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef)^2 + 
-                           rt_lag_sc:last_outcome:general_entropy + 
-                           rt_lag_sc:last_outcome:med_par +
-                           rt_lag_sc:last_outcome:fef +
-                           rt_lag2_sc:last_outcome_lag2:general_entropy + 
-                           rt_lag2_sc:last_outcome_lag2:med_par +
-                           rt_lag2_sc:last_outcome_lag2:fef +
-                           rt_lag3_sc:last_outcome_lag3:general_entropy + 
-                           rt_lag3_sc:last_outcome_lag3:med_par +
-                           rt_lag3_sc:last_outcome_lag3:fef +
-                           rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
-                           rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
-                           rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
+mb_dan_lag3_rew <- lmer(rt_csv_sc ~  rt_lag_sc*v_entropy_wi*trial_neg_inv_sc +
+                           rt_lag_sc*last_outcome*general_entropy + 
+                           rt_lag_sc*last_outcome*med_par +
+                           rt_lag_sc*last_outcome*fef +
+                           rt_lag2_sc*last_outcome_lag2*general_entropy + 
+                           rt_lag2_sc*last_outcome_lag2*med_par +
+                           rt_lag2_sc*last_outcome_lag2*fef +
+                           rt_lag3_sc*last_outcome_lag3*general_entropy + 
+                           rt_lag3_sc*last_outcome_lag3*med_par +
+                           rt_lag3_sc*last_outcome_lag3*fef +
+                           rt_vmax_lag_sc*trial_neg_inv_sc*general_entropy + 
+                           rt_vmax_lag_sc*trial_neg_inv_sc*med_par  +
+                           rt_vmax_lag_sc*trial_neg_inv_sc*fef  +
                            (1|id/run), df)
-screen.lmerTest(mb_dan_lag3_rew, .05)
+screen.lmerTest(mb_dan_lag3_rew, .01)
 summary(mb_dan_lag3_rew)
 Anova(mb_dan_lag3_rew, '3')
 
 
 
-mmb_dan_lag3_rew <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_lag2_sc + rt_lag3_sc + rt_vmax_lag_sc + last_outcome + 
-                                        last_outcome_lag2 + last_outcome_lag3 +  v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef)^2 + 
-                           rt_lag_sc:last_outcome:general_entropy + 
-                           rt_lag_sc:last_outcome:med_par +
-                           rt_lag_sc:last_outcome:fef +
-                           rt_lag2_sc:last_outcome_lag2:general_entropy + 
-                           rt_lag2_sc:last_outcome_lag2:med_par +
-                           rt_lag2_sc:last_outcome_lag2:fef +
-                           rt_lag3_sc:last_outcome_lag3:general_entropy + 
-                           rt_lag3_sc:last_outcome_lag3:med_par +
-                           rt_lag3_sc:last_outcome_lag3:fef +
-                           rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
-                           rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
-                           rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
-                           (1|id/run), mdf)
-screen.lmerTest(mmb_dan_lag3_rew, .05)
+mmb_dan_lag3_rew <- lmer(rt_csv_sc ~  rt_lag_sc*v_entropy_wi*trial_neg_inv_sc +
+                          rt_lag_sc*last_outcome*general_entropy + 
+                          rt_lag_sc*last_outcome*med_par +
+                          rt_lag_sc*last_outcome*fef +
+                          rt_lag2_sc*last_outcome_lag2*general_entropy + 
+                          rt_lag2_sc*last_outcome_lag2*med_par +
+                          rt_lag2_sc*last_outcome_lag2*fef +
+                          rt_lag3_sc*last_outcome_lag3*general_entropy + 
+                          rt_lag3_sc*last_outcome_lag3*med_par +
+                          rt_lag3_sc*last_outcome_lag3*fef +
+                          rt_vmax_lag_sc*trial_neg_inv_sc*general_entropy + 
+                          rt_vmax_lag_sc*trial_neg_inv_sc*med_par  +
+                          rt_vmax_lag_sc*trial_neg_inv_sc*fef  +
+                          (1|id/run), mdf)
+screen.lmerTest(mmb_dan_lag3_rew, .01)
 summary(mmb_dan_lag3_rew)
 Anova(mmb_dan_lag3_rew, '3')
+
+# TEST CONDITION EFFECTS - NONE, WHICH IS A GOOD THING
+mb_dan_lag3_cond <- lmer(rt_csv_sc ~  rt_lag_sc*trial_neg_inv_sc*rewFunc*general_entropy +
+                           rt_lag_sc*trial_neg_inv_sc*rewFunc*med_par +
+                           rt_lag_sc*trial_neg_inv_sc*rewFunc*fef +
+                          rt_lag_sc*last_outcome*general_entropy + 
+                          rt_lag_sc*last_outcome*med_par +
+                          rt_lag_sc*last_outcome*fef +
+                          rt_lag2_sc*last_outcome_lag2*general_entropy + 
+                          rt_lag2_sc*last_outcome_lag2*med_par +
+                          rt_lag2_sc*last_outcome_lag2*fef +
+                          rt_lag3_sc*last_outcome_lag3*general_entropy + 
+                          rt_lag3_sc*last_outcome_lag3*med_par +
+                          rt_lag3_sc*last_outcome_lag3*fef +
+                          rt_vmax_lag_sc*trial_neg_inv_sc*general_entropy + 
+                          rt_vmax_lag_sc*trial_neg_inv_sc*med_par  +
+                          rt_vmax_lag_sc*trial_neg_inv_sc*fef  +
+                          (1|id/run), df)
+screen.lmerTest(mb_dan_lag3_cond, .01)
+summary(mb_dan_lag3_rew)
+Anova(mb_dan_lag3_rew, '3')
 
 #### model-predicted effects for buffer models
 

@@ -9,15 +9,6 @@ library(tidyr)
 library(tibble)
 library(reshape2)
 library(emmeans)
-# library(factoextra)
-# library(ggfortify)
-# library(RColorBrewer)
-# library(MASS)
-# library(readr)
-# library(VIM)
-# library(mice)
-# library(multcompView)
-# library(stargazer)
 library(dplyr)
 library(lme4)
 library(survival)
@@ -25,7 +16,11 @@ library(coxme)
 library(survminer)
 # library(OIsurv)
 library(ggpubr)
-
+# devtools::install_github('junkka/ehahelper') # requires gfortran, $ brew cask install gfortran
+library(ehahelper)
+library(broom)
+library(broom.mixed)
+library(car)
 load(file="clock_for_coxme_value_only_070518.RData")
 
 # sanity checks on within-trial matrices
@@ -52,14 +47,14 @@ sdf$response <- round(sdf$rt/1000, digits = 1)==sdf$t2
 # hist(df$rt_csv[df$rewFunc=='CEVR'])
 # hist(df$rt_csv[df$rewFunc=='IEV'])
 # hist(df$rt_csv[df$rewFunc=='DEV'])
-library(texmex)
-attach(mtcars)
-par(mfrow=c(2,2))
-plot(df$rt_csv[df$rewFunc=='DEV'], edf(df$rt_csv[df$rewFunc=='DEV']))
-plot(df$rt_csv[df$rewFunc=='IEV'], edf(df$rt_csv[df$rewFunc=='IEV']))
-plot(df$rt_csv[df$rewFunc=='CEV'], edf(df$rt_csv[df$rewFunc=='CEV']))
-plot(df$rt_csv[df$rewFunc=='CEVR'], edf(df$rt_csv[df$rewFunc=='CEVR']))
-uniform <- runif(1000, 1,4000)
+# library(texmex)
+# attach(mtcars)
+# par(mfrow=c(2,2))
+# plot(df$rt_csv[df$rewFunc=='DEV'], edf(df$rt_csv[df$rewFunc=='DEV']))
+# plot(df$rt_csv[df$rewFunc=='IEV'], edf(df$rt_csv[df$rewFunc=='IEV']))
+# plot(df$rt_csv[df$rewFunc=='CEV'], edf(df$rt_csv[df$rewFunc=='CEV']))
+# plot(df$rt_csv[df$rewFunc=='CEVR'], edf(df$rt_csv[df$rewFunc=='CEVR']))
+# uniform <- runif(1000, 1,4000)
 # because IEV has the most uniform EDF of RTs overall
 
 # # inspect piecewize hazard functions
@@ -93,7 +88,7 @@ uniform <- runif(1000, 1,4000)
 #        lty=1:4, bty='n')
 
 # number bins
-sdf <- sdf %>% group_by(ID, run, trial) %>% mutate(bin = 1:n(), time = bin/10) %>% ungroup() %>% 
+sdf <- sdf %>% group_by(ID, run, trial) %>% dplyr::mutate(bin = 1:n(), time = bin/10) %>% ungroup() %>% 
   group_by(ID) %>% mutate(value_wi = scale(value),
                           uncertainty_wi = scale(uncertainty),
                           value_b = mean(value),
@@ -185,14 +180,12 @@ summary(cox_wv1 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b0a1 + trial_neg_i
 #                            value_wi + uncertainty_wi + 
 #                            (1|ID), bb))
 
-summary(wv_dan1 <- coxme(Surv(t1,t2,response) ~ scale(rtlag) + wv3b0a1*DAN + trial_neg_inv_sc*rewFunc + 
-                   value_wi + uncertainty_wi + 
-                   (1|ID), bb))
-
-summary(wv_dan2 <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*DAN + wvs2b1a1*DAN + wvs3b1a1*DAN +
+wv_dan1 <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*DAN + wvs2b1a1*DAN + wvs3b1a1*DAN +
                            value_wi*DAN + uncertainty_wi*DAN + 
-                           (1|ID), bb))
-Anova(wv_dan2, '3')
+                           (1|ID), bb)
+summary(wv_dan1)
+Anova(wv_dan1, '3')
+
 summary(wv_fef <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*fef + wvs2b1a1*fef + wvs3b1a1*fef + 
                            value_wi*fef + uncertainty_wi*fef + 
                            (1|ID), bb))
@@ -224,7 +217,20 @@ Anova(wv_ge_middle, '3')
 summary(wv_vlpfc_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*entropy_vlPFC + wvs2b1a1*entropy_vlPFC + wvs3b1a1*entropy_vlPFC + 
                             value_wi*entropy_vlPFC + uncertainty_wi*entropy_vlPFC + 
                             (1|ID), fbb))
+summary(wv_vlpfc_middle)
 Anova(wv_vlpfc_middle, '3')
+
+# add the fef and med_par factors with general entropy, God bless us!
+# _c will stand for circumcised
+summary(wv_ge_fef_par_c <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy +
+                                 wvs1b1a1*fef + wvs2b1a1*fef + wvs3b1a1*fef +
+                                 wvs1b1a1*med_par + wvs2b1a1*med_par + wvs3b1a1*med_par +
+                                value_wi*general_entropy + uncertainty_wi*general_entropy + 
+                                 value_wi*fef + uncertainty_wi*fef + 
+                                 value_wi*med_par + uncertainty_wi*med_par + 
+                                (1|ID), fbb))
+Anova(wv_ge_fef_par_c, '3')
+
 
 # just the SFG blobs
 summary(wv_sfgl_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*dan_l_sfg + wvs2b1a1*dan_l_sfg + wvs3b1a1*dan_l_sfg + 
@@ -262,7 +268,7 @@ Anova(wv_sfgr_middle, '3')
 #                               value_wi*pe_f2_hipp + value_wi*AH_sc + uncertainty_wi*AH_sc +uncertainty_wi*pe_f2_hipp + (1|ID), sdf))
 # 
 # 
-# # devtools::install_github('junkka/ehahelper')
+# devtools::install_github('junkka/ehahelper')
 # library(ehahelper)
 # library(broom)
 # library(broom.mixed)
