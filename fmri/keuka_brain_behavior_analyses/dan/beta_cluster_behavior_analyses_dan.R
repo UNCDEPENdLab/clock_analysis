@@ -105,6 +105,15 @@ mb_dan_lag3 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_lag2_sc + rt_
                       rt_lag_sc:last_outcome:general_entropy + 
                       rt_lag_sc:last_outcome:med_par +
                       rt_lag_sc:last_outcome:fef +
+                      rt_lag_sc:trial_neg_inv_sc:general_entropy + 
+                      rt_lag_sc:trial_neg_inv_sc:med_par +
+                      rt_lag_sc:trial_neg_inv_sc:fef +
+                      rt_lag2_sc:trial_neg_inv_sc:general_entropy + 
+                      rt_lag2_sc:trial_neg_inv_sc:med_par +
+                      rt_lag2_sc:trial_neg_inv_sc:fef +
+                      rt_lag3_sc:trial_neg_inv_sc:general_entropy + 
+                      rt_lag3_sc:trial_neg_inv_sc:med_par +
+                      rt_lag3_sc:trial_neg_inv_sc:fef +
                       rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
                       rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
                       rt_vmax_lag_sc:trial_neg_inv_sc:fef  +

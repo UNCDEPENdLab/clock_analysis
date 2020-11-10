@@ -160,18 +160,20 @@ splitdf <- lapply(splitdf, function(microdf) {
 
 bb <- bind_rows(splitdf)
 
+fbb <- bb %>% filter(bin >10 & bin <35)
+
 #spot check
 bb %>% filter(trial > 5) %>% select(bin, timestep, timesteplag1, timesteplag2, wv3b0a1)
-table(bb$wv3b0a1)
-table(bb$wv4b0a1)
+# table(bb$wv3b0a1)
+# table(bb$wv4b0a1)
 
 ### end wv smiles
 
 
 # coxme on wv smiles
-summary(cox_wv1 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b0a1 + trial_neg_inv_sc*rewFunc + 
-                          value_wi + uncertainty_wi + 
-                           (1|ID), bb))
+# summary(cox_wv1 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b0a1 + trial_neg_inv_sc*rewFunc + 
+#                           value_wi + uncertainty_wi + 
+#                            (1|ID), bb))
 
 # summary(cox_wv2 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b1a1 + trial_neg_inv_sc*rewFunc + 
 #                            value_wi + uncertainty_wi + 
@@ -180,35 +182,45 @@ summary(cox_wv1 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b0a1 + trial_neg_i
 #                            value_wi + uncertainty_wi + 
 #                            (1|ID), bb))
 
+###########
+# simple models 
+# with single factors
+###########
+
+# DAN mean beta
 wv_dan1 <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*DAN + wvs2b1a1*DAN + wvs3b1a1*DAN +
                            value_wi*DAN + uncertainty_wi*DAN + 
                            (1|ID), bb)
 summary(wv_dan1)
 Anova(wv_dan1, '3')
 
+# fef from bifactor model
 summary(wv_fef <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*fef + wvs2b1a1*fef + wvs3b1a1*fef + 
                            value_wi*fef + uncertainty_wi*fef + 
                            (1|ID), bb))
 Anova(wv_fef, '3')
 
+# parietal from bifactor model
 summary(wv_med_par <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*med_par + wvs2b1a1*med_par + wvs3b1a1*med_par + 
-                          value_wi*fef + uncertainty_wi*med_par + 
+                          value_wi*med_par + uncertainty_wi*med_par + 
                           (1|ID), bb))
 Anova(wv_med_par, '3')
 
+# general DAN from bifactor model
 summary(wv_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
                           value_wi*general_entropy + uncertainty_wi*general_entropy + 
                           (1|ID), bb))
 Anova(wv_ge, '3')
 
+# vlPFC mean
 summary(wv_vlpfc <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*entropy_vlPFC + wvs2b1a1*entropy_vlPFC + wvs3b1a1*entropy_vlPFC + 
                          value_wi*entropy_vlPFC + trial_neg_inv_sc*uncertainty_wi*entropy_vlPFC + 
                          (1|ID), bb))
 Anova(wv_vlpfc, '3')
 
-
-# sensitivity analysis: filter the ends
-fbb <- bb %>% filter(bin >10 & bin <35)
+###################
+# 
+# Main analysis: filter the ends
 summary(wv_ge_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
                          value_wi*general_entropy + uncertainty_wi*general_entropy + 
                          (1|ID), fbb))
@@ -220,6 +232,12 @@ summary(wv_vlpfc_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*entropy_vlPFC +
 summary(wv_vlpfc_middle)
 Anova(wv_vlpfc_middle, '3')
 
+summary(wv_med_par_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*med_par + wvs2b1a1*med_par + wvs3b1a1*med_par + 
+                              value_wi*med_par + uncertainty_wi*med_par + 
+                              (1|ID), fbb))
+Anova(wv_med_par_middle, '3')
+
+
 # add the fef and med_par factors with general entropy, God bless us!
 # _c will stand for circumcised
 summary(wv_ge_fef_par_c <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy +
@@ -230,6 +248,43 @@ summary(wv_ge_fef_par_c <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy
                                  value_wi*med_par + uncertainty_wi*med_par + 
                                 (1|ID), fbb))
 Anova(wv_ge_fef_par_c, '3')
+
+# interactions with trial
+summary(wv_ge_middle_trial <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy*trial + wvs2b1a1*general_entropy*trial + wvs3b1a1*general_entropy*trial + 
+                                value_wi*general_entropy + uncertainty_wi*general_entropy*trial + 
+                                (1|ID), fbb))
+Anova(wv_ge_middle_trial, '3')
+
+# add specific factors
+
+summary(wv_alldan_middle_trial <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy*trial + 
+                                          wvs2b1a1*general_entropy*trial + 
+                                          wvs3b1a1*general_entropy*trial + 
+                                          value_wi*general_entropy + 
+                                          uncertainty_wi*general_entropy*trial + 
+                                          wvs1b1a1*fef*trial + 
+                                          wvs2b1a1*fef*trial + 
+                                          wvs3b1a1*fef*trial + 
+                                          value_wi*fef + 
+                                          uncertainty_wi*fef*trial + 
+                                          wvs1b1a1*med_par*trial + 
+                                          wvs2b1a1*med_par*trial + 
+                                          wvs3b1a1*med_par*trial + 
+                                          value_wi*med_par + 
+                                          uncertainty_wi*med_par*trial + 
+                                      (1|ID), fbb))
+Anova(wv_alldan_middle_trial, '3')
+# curious effect of med_par on uncertainty-seeking 
+# this also holds in a simple model above (wv_med_par, z=6.65)
+# check w/o other factors:
+summary(wv_medpar_middle_trial <- coxme(Surv(t1,t2,response) ~ 
+                                          wvs1b1a1*med_par*trial + 
+                                          wvs2b1a1*med_par*trial + 
+                                          wvs3b1a1*med_par*trial + 
+                                          value_wi*med_par + 
+                                          uncertainty_wi*med_par*trial + 
+                                          (1|ID), fbb))
+Anova(wv_medpar_middle_trial, '3')
 
 
 # just the SFG blobs
