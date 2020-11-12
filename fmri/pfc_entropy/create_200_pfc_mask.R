@@ -31,7 +31,6 @@ mod[bad_mi] <- 0 #dump
 
 writeNIfTI(mod, filename="masks/Schaefer_136_2.3mm")
 
-
 #for parallel speed, divide parcellation into one mask per network
 for (nn in unique(labels$network)) {
   thisnet <- labels %>% filter(network == nn)

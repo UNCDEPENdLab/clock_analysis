@@ -49,7 +49,7 @@ hrois <- inner_join(h,meta_overall)
 hrois$labeled_cluster <- paste(hrois$cluster_number,hrois$label)
 hrois <- hrois %>% select(-c(model, l1_contrast, l2_contrast, l3_contrast, cluster_size, cluster_number, cluster_threshold,
                              z_threshold, x, y, z, label))
- # ggplot(hrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
+# ggplot(hrois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
 h_wide <- spread(hrois,labeled_cluster,cope_value) 
 # head(h_wide)
 # with group-fixed parameters we don't seem to need the winsorization step!!!
@@ -98,8 +98,14 @@ hf$region <- gsub('[0-9;]+', '', hf$region)
 stargazer(hf, type = 'html', out = '~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/supp/h_fa_structure.html', summary = F)
 
 
-h_wide <- subset(h_wide, select = c("feat_input_id","h_f1_fp","h_f2_neg_paralimb", "h_HippAntL", "DAN", "dan_parietal", "dan_l_sfg", "dan_r_sfg"))
+h_wide <- subset(h_wide, select = c("feat_input_id","h_f1_fp","h_f2_neg_paralimb", "h_HippAntL", "DAN", "dan_parietal", "dan_l_sfg", "dan_r_sfg", "7 Right Middle Frontal Gyrus"))
 
+
+#####
+# add Schaefer parcel-based DAN entropy betas
+schaefer <- as_tibble(read.csv('~/Box/SCEPTIC_fMRI/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/entropy_beta_bifactor_fscores.csv'))
+schaefer$feat_input_id <- schaefer$numid
+h_wide <- inner_join(h_wide, schaefer %>% select(-numid)) %>% mutate(entropy_vlPFC = `7 Right Middle Frontal Gyrus`) %>% dplyr::select(-`7 Right Middle Frontal Gyrus`)
 #####
 # add PE
 if (unsmoothed) {
@@ -175,7 +181,7 @@ pf <- as_tibble(cbind(rownames(unclass(round(pe.fa$Structure, digits = 3))),uncl
 pf$region <- gsub('[0-9;]+', '', pf$region)
 stargazer(pf, type = 'html', out = 'pe_fa_structure.html', summary = F)
 
- if (unsmoothed) {
+if (unsmoothed) {
   pe_wide$pe_PH <- (pe_wide$`7 Right Hippocampus` + pe_wide$`10 Left Hippocampus`)/2
   hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH")])
 } else {  hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r")])  }
@@ -198,12 +204,19 @@ u_df <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_fmri_fixed_uv_ur
 trial_df <- trial_df %>%
   group_by(id, run) %>%  dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))),
                                        rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
-                                       rt_lag = lag(rt_csv) ,
+                                       rt_lag = lag(rt_csv),
+                                       rt_lag2 = lag(rt_csv,2),
+                                       rt_lag3 = lag(rt_csv,3),
                                        rt_swing_lag = lag(rt_swing),
                                        omission_lag = lag(score_csv==0),
+                                       omission_lag2 = lag(score_csv==0, 2),
+                                       omission_lag3 = lag(score_csv==0, 3),
                                        rt_vmax_lag = lag(rt_vmax),
                                        v_chosen_lag = lag(v_chosen),
-                                       run_trial=1:50) %>% ungroup() #compute rt_swing within run and subject
+                                       run_trial=1:50) %>% ungroup() %>%
+  dplyr::mutate(rt_lag2_sc = scale(rt_lag2),
+                rt_lag3_sc = scale(rt_lag3))
+#compute rt_swing within run and subject
 u_df <- u_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change, 
                         u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change,
                         v_chosen_quantile, v_chosen_quantile_lag, v_chosen_quantile_change)
@@ -224,10 +237,10 @@ if (unsmoothed) {
                            "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
                            "total_earnings", "LL", "alpha", "gamma", "beta")]
 } else {
-params_beta <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb","h_HippAntL",
-                         "DAN", "dan_r_sfg", "dan_l_sfg", "dan_parietal",
-                         "pe_f1_cort_str", "pe_f2_hipp", "pe_PH",
-                         "total_earnings", "LL", "alpha", "gamma", "beta")]}
+  params_beta <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb","h_HippAntL",
+                           "DAN", "dan_r_sfg", "dan_l_sfg", "dan_parietal",
+                           "pe_f1_cort_str", "pe_f2_hipp", "pe_PH",
+                           "total_earnings", "LL", "alpha", "gamma", "beta")]}
 param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
 setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
@@ -271,10 +284,10 @@ if (unsmoothed) {
                    "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
                    "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]  
 } else {
-bdf <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb",
-                 "DAN", "dan_r_sfg", "dan_l_sfg", "dan_parietal",
-                 "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
-                 "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]}
+  bdf <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb",
+                   "DAN", "dan_r_sfg", "dan_l_sfg", "dan_parietal",
+                   "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
+                   "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]}
 b_cor <- corr.test(bdf,method = 'pearson', adjust = 'none')
 
 setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
@@ -299,6 +312,8 @@ df$last_outcome <- NA
 df$last_outcome[df$omission_lag] <- 'Omission'
 df$last_outcome[!df$omission_lag] <- 'Reward'
 df$last_outcome <- relevel(as.factor(df$last_outcome), ref = "Reward")
+df <- df %>% group_by(id, run) %>%  dplyr::mutate(last_outcome_lag2 = lag(last_outcome),
+                                           last_outcome_lag3 = lag(last_outcome,2)) %>% ungroup()
 
 # circular, but just check to what extent each area conforms to SCEPTIC-SM: looks like there is an interaction, both need to be involved again
 # ggplot(df, aes(run_trial, v_entropy_wi, color = low_h_paralimbic, lty = h_fp)) + geom_smooth(method = "loess") #+ facet_wrap(~gamma>0)
@@ -316,8 +331,12 @@ mtdf <- mtdf %>%
   group_by(id, run) %>%  dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))),
                                        rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
                                        rt_lag = lag(rt_csv) ,
+                                       rt_lag2 = lag(rt_csv,2),
+                                       rt_lag3 = lag(rt_csv,3),
                                        rt_swing_lag = lag(rt_swing),
                                        omission_lag = lag(score_csv==0),
+                                       omission_lag2 = lag(score_csv==0, 2),
+                                       omission_lag3 = lag(score_csv==0, 3),
                                        rt_vmax_lag = lag(rt_vmax),
                                        run_trial=1:63, 
                                        v_max_wi = scale(v_max),
@@ -334,7 +353,9 @@ mtdf <- mtdf %>%
   mutate(rt_lag_sc = scale(rt_lag),
          rt_csv_sc = scale(rt_csv),
          rt_vmax_lag_sc = scale(rt_vmax_lag),
-         id = as.integer(substr(id, 1, 5)))#compute rt_swing within run and subject
+         id = as.integer(substr(id, 1, 5)),
+         rt_lag2_sc = scale(rt_lag2),
+         rt_lag3_sc = scale(rt_lag3))#compute rt_swing within run and subject
 # add fMRI betas
 mdf <- inner_join(mtdf,sub_df, by = "id")
 mdf$rewFunc <- relevel(as.factor(mdf$rewFunc),ref = "CEV")
@@ -353,6 +374,8 @@ mdf$last_outcome <- NA
 mdf$last_outcome[mdf$omission_lag] <- 'Omission'
 mdf$last_outcome[!mdf$omission_lag] <- 'Reward'
 mdf$last_outcome <- relevel(as.factor(mdf$last_outcome), ref = "Reward")
+mdf <- mdf %>% group_by(id, run) %>%  dplyr::mutate(last_outcome_lag2 = lag(last_outcome),
+                                            last_outcome_lag3 = lag(last_outcome,2)) %>% ungroup()
 
 mdf$learning_epoch <- 'trials 1-10'
 mdf$learning_epoch[df$run_trial>10] <- 'trials 11-50'
@@ -360,7 +383,7 @@ mdf$h_HippAntL_neg <- -mdf$h_HippAntL
 
 mu_df <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_meg_fixed_uv_ureset_fixedparams_meg_ffx_trial_statistics.csv.gz")
 mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change,
-                        u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change) %>% mutate(id = as.integer(substr(id, 1, 5)))
+                          u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change) %>% mutate(id = as.integer(substr(id, 1, 5)))
 # mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(
 #     id = as.integer(substr(id, 1, 5))) 
 

@@ -7,20 +7,20 @@ library(reshape2)
 library(entropy)
 options(dplyr.print_max = 1000)
 options(max.print = 1000)
-# setwd("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri")
-setwd("~/code/temporal_instrumental_agent/clock_task/vba_fmri")
+setwd("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri")
+#setwd("~/code/temporal_instrumental_agent/clock_task/vba_fmri")
 
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession.mat")
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_constrain0p025.mat")
 #fit <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_constrain0p0125_niv.mat")
-# fit <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
-fit <- readMat("~/code/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
+fit <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
+# fit <- readMat("~/code/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_psfixed0p0125_k24.mat") #24 basis pre-niv (PLoS Comp Bio submission)
 
 #fit <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/posterior_states_decay_nomultisession_specc_decay_psfixed0p0125_k24.mat") #specc n=94 dataset
 
 #basis <- readMat("/Users/michael/Data_Analysis/temporal_instrumental_agent/clock_task/vba_fmri/sceptic_fmri_basis_setup.mat")
-# basis <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
-basis <- readMat("~/code/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
+basis <- readMat("~/Data_Analysis/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
+# basis <- readMat("~/code/temporal_instrumental_agent/clock_task/sceptic_fmri_basis_setup_k24_p0125.mat")
 
 source("clock_functions.R")
 
@@ -31,13 +31,12 @@ source("clock_functions.R")
 #this one should be correct for resetting U at run boundaries
 #udata <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/uncertainty_results/updated_multisession_u_matrix.mat"))
 
-udata <- readMat("~/Box Sync/skinner/projects_analyses/SCEPTIC/subject_fitting/uncertainty_results/multisession_uncertainty_fixed_uv_kalman_uv_sum.mat")
+#udata <- readMat("~/Box Sync/skinner/projects_analyses/SCEPTIC/subject_fitting/uncertainty_results/multisession_uncertainty_fixed_uv_kalman_uv_sum.mat")
 
 # read in U
+#udata <- readMat("~/code/temporal_instrumental_agent/clock_task/updated_multisession_u_matrix.mat")
 
-udata <- readMat("~/code/temporal_instrumental_agent/clock_task/updated_multisession_u_matrix.mat")
-
-sigtrials <- udata[[1]]["kalman.uv.sum",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
+#sigtrials <- udata[[1]]["kalman.uv.sum",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
 #sigtrials <- udata[[1]]["fixed.uv",,][[1]]["sigma.all.trials",,][[1]] #hideous syntax, but that's how we get it from the .mat!
 #the other data in the fit objects tend to be subjects x runs x basis functions x trials
 # sigtrials <- aperm(sigtrials, c(3,2,1))
@@ -66,7 +65,7 @@ allData$timestep <- plyr::round_any(allData$rt, 100)/100 #1:40 coding
 #newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/val_based_shannon_H.mat"))
 #newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/H_values_decay_and_fixed_multisession.mat"))
 #newEntropy <- readMat(file.path(GoogleDriveDir(), "skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/unisession_decay_and_fixed_rand_priors.mat"))
-newEntropy <- readMat("~/Box Sync/skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/unisession_decay_and_fixed_rand_priors_full.mat")
+#newEntropy <- readMat("~/Box Sync/skinner/projects_analyses/SCEPTIC/subject_fitting/entropy_analysis/unisession_decay_and_fixed_rand_priors_full.mat")
 
 #value distribution entropy under decay and fixed LR V 
 ventropy_decay_matlab <- melt(newEntropy$decay.H, varnames=c("rowID", "trial"), value.name="entropyH")
