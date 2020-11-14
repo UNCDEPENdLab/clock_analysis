@@ -3,7 +3,13 @@ library(foreach)
 library(iterators)
 library(parallel)
 library(doParallel)
+
+getMainDir <- function() {
+  return("/gpfs/group/mnh5174/default")
+}
+
 setwd(file.path(getMainDir(), "clock_analysis", "fmri", "hippo_voxelwise"))
+
 
 #function to get interpolated event locked data
 event_lock_decon <- function(d_by_bin, trial_df, event="feedback_onset", time_before=-3, time_after=3) {
@@ -28,7 +34,7 @@ event_lock_decon <- function(d_by_bin, trial_df, event="feedback_onset", time_be
 
       #rare, but if we have no data at tail end of run, we may not be able to interpolate
       if (nrow(to_interpolate) < 2) {
-        cat("For subject: ", subj_df$id[1], ", insufficient interpolation data for run: ", subj_df$run[1], ", trial: ", t, "\n", file="evtlockerrors.txt", append=TRUE, sep="")
+        cat("For subject:", subj_df$id[1], ", insufficient interpolation data for run:", subj_df$run[1], ", trial:", t, "\n", file="evtlockerrors.txt", append=TRUE)
         next
       }
       
@@ -80,13 +86,13 @@ trial_df <- trial_df %>%
       mutate(rt_vmax_cum=clock_onset + rt_vmax)
     
 
-base_dir <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise/deconvolved_timeseries"
-out_dir <- file.path(base_dir, "smooth_in_mask")
-if (!dir.exists(out_dir)) { dir.create(out_dir) }
+base_dir <- "/gpfs/group/mnh5174/default/clock_analysis/fmri/hippo_voxelwise"
 
-atlas_dirs <- list.dirs(file.path(base_dir, "smooth_in_mask"), recursive=FALSE)
+atlas_dirs <- list.dirs(file.path(base_dir, "deconvolved_timeseries","smooth_in_mask_b2015"), recursive=FALSE)
+#atlas_dirs <- c(file.path(base_dir, "deconvolved_timeseries", "long_axis_l_2.3mm"),
+#                file.path(base_dir, "deconvolved_timeseries", "long_axis_r_2.3mm"))
 
-cl <- makeCluster(20)
+cl <- makeCluster(30)
 registerDoParallel(cl)
 on.exit(stopCluster(cl))
 
@@ -96,7 +102,7 @@ nbins <- 12 #splits along axis
 for (a in atlas_dirs) {
   aname <- basename(a)
 
-  mask <- oro.nifti::readNIfTI(file.path(getMainDir(), "clock_analysis/fmri/hippo_voxelwise", aname), reorient=FALSE)
+  mask <- oro.nifti::readNIfTI(file.path(getMainDir(), "clock_analysis/fmri/hippo_voxelwise", paste0(aname,".nii.gz")), reorient=FALSE)
   mi <- which(mask > 0, arr.ind = TRUE)
   
   if (length(unique(mask[mi])) == 1L) {
@@ -122,7 +128,7 @@ for (a in atlas_dirs) {
       time_after=3
     }
 
-    out_name <- file.path(out_dir, paste0(aname, "_", e, "_decon_locked.csv.gz"))
+    out_name <- paste0(aname, "_", e, "_decon_locked.csv.gz")
     if (file.exists(out_name)) {
       message("Output file already exists: ", out_name)
       next
