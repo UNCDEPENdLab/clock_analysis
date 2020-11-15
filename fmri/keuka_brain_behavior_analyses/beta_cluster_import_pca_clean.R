@@ -8,7 +8,8 @@ library(psych)
 library(corrplot)
 library(lme4)
 library(stargazer)
-
+# detach(package:MASS)
+# detach(package:plyr)
 clock_folder <- "~/code/clock_analysis" #alex
 # clock_folder <- "~/Data_Analysis/clock_analysis" #michael
 
@@ -91,7 +92,7 @@ h_wide <- h_wide %>% mutate(DAN =
                             dan_l_sfg = `6 Left Precentral Gyrus`)
 if (unsmoothed) {
   h_wide$h_vmPFC <- h_wide$`5 Left Mid Orbital Gyrus`
-} else {h_wide$h_vmPFC <- h_wide$`6`}
+} else {h_wide$h_vmPFC <- h_wide$`5 Left Mid Orbital Gyrus`}
 hf <- as_tibble(cbind(rownames(unclass(round(h.fa$Structure, digits = 3))),unclass(round(h.fa$Structure, digits = 3)))) %>% arrange(desc(PA1) ) %>%  
   rename(region = V1, `Factor 1` = PA1, `Factor 2` = PA2)
 hf$region <- gsub('[0-9;]+', '', hf$region)
@@ -114,36 +115,50 @@ if (unsmoothed) {
   pebetas <- read_csv("pe_max_unsmoothed_subj_betas.csv")
 } else {
   setwd('~/Box/SCEPTIC_fMRI/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-pe_max-preconvolve_fse_groupfixed/pe_max/')
-  pemeta <- read_csv("pe_max_cluster_metadata.csv")
-  pebetas <- read_csv("pe_max_roi_betas.csv")
+  # pemeta <- read_csv("pe_max_cluster_metadata.csv")
+  pemeta <- read_delim("pe_clusters_z4p41_labels.txt", 
+                                         "\t", escape_double = FALSE, trim_ws = TRUE)
+  pebetas <- read_csv("pe_max_betas.csv.gz")
 }
-pemeta$label <- substr(pemeta$label,22,100)
-pemeta_overall <- pemeta[pemeta$l2_contrast == 'overall' & pemeta$l3_contrast == 'Intercept' & pemeta$model == 'Intercept-Age',]
-pe <- as_tibble(pebetas[pebetas$l2_contrast == 'overall' & pebetas$l3_contrast == 'Intercept' & pebetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<8 | cluster_number == 10 | cluster_number == 11)
+# pemeta$label <- substr(pemeta$label,22,100)
+# pemeta_overall <- pemeta[pemeta$l2_contrast == 'overall' & pemeta$l3_contrast == 'Intercept' & pemeta$model == 'Intercept-Age',]
+pemeta$atlas_value <- pemeta$roi
+pemeta_overall <- pemeta
+pe <- as_tibble(pebetas[pebetas$l2_contrast == 'overall' ,1:5]) 
+# pe <- as_tibble(pebetas[pebetas$l2_contrast == 'overall' & pebetas$l3_contrast == 'Intercept' & pebetas$model == 'Intercept-Age',1:3]) %>% filter(cluster_number<8 | cluster_number == 10 | cluster_number == 11)
+
 # head(merge(h,meta))
-perois_list <- distinct(pemeta_overall[c(1:7, 10:11),c(5,12)])
+# perois_list <- distinct(pemeta_overall[c(1:7, 10:11),c(5,12)])
+perois_list <- distinct(pemeta_overall)
+pemeta_overall$atlas_value <- pemeta_overall$roi
 
 # inspect distributions
-# for some reason, the clusters do not seem to fit the map -- check with MNH (big clusters broken down?) !!
 perois <- inner_join(pe,pemeta_overall)
-perois$labeled_cluster <- paste(perois$cluster_number,perois$label)
-pemeta_overall$labeled_cluster <- paste(pemeta_overall$cluster_number,pemeta_overall$label)
+# perois$labeled_cluster <- paste(perois$cluster_number,perois$label)
+perois$labeled_cluster <- paste(perois$roi,perois$label)
+# pemeta_overall$labeled_cluster <- paste(pemeta_overall$cluster_number,pemeta_overall$label)
+pemeta_overall$labeled_cluster <- paste(pemeta_overall$roi,pemeta_overall$label)
 # ggplot(perois,aes(scale(cope_value))) + geom_histogram() + facet_wrap(~labeled_cluster)
 
 pe_labeled <- inner_join(pe,perois_list)
-pe_labeled$labeled_cluster <- paste(pe_labeled$cluster_number,pe_labeled$label)
-pe_num <- select(pe_labeled,c(1,2,3))
-pe_labeled <- select(pe_labeled,c(1,3,5))
+pe_labeled$labeled_cluster <- paste(pe_labeled$roi,pe_labeled$label)
+# pe_labeled$labeled_cluster <- paste(pe_labeled$cluster_number,pe_labeled$label)
+pe_num <- select(pe_labeled,c("id", "beta", "numid", "roi"))
+pe_labeled <- select(pe_labeled,c("numid", "id", "beta", "labeled_cluster"))
 
-pe_wide <- spread(pe_labeled,labeled_cluster,cope_value)
-pe_wide_num <- spread(pe_num,cluster_number,cope_value)
+# pe_wide <- spread(pe_labeled,labeled_cluster,cope_value)
+pe_wide <- spread(pe_labeled,labeled_cluster,beta)
+
+# pe_wide_num <- spread(pe_num,cluster_number,cope_value)
+pe_wide_num <- spread(pe_num,roi,beta)
 
 ## we are no longer winsorizing betas
 # pe_wide <- pe_wide %>% mutate_if(is.double, winsor,trim = .075)
 # pe_wide_num <- pe_wide_num %>% mutate_if(is.double, winsor,trim = .075)
 
-pejust_rois <- pe_wide[,2:ncol(pe_wide)]
-pejust_rois_num <- pe_wide_num[,2:ncol(pe_wide_num)]
+pejust_rois <- pe_wide[,3:ncol(pe_wide)]
+# pejust_rois <- pe_wide[,2:ncol(pe_wide)]
+pejust_rois_num <- pe_wide_num[,3:ncol(pe_wide_num)]
 
 
 # non-parametric correlations to deal with outliers
@@ -153,8 +168,8 @@ peclust_cor <- corr.test(pejust_rois,method = 'pearson', adjust = 'none')
 
 setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
 if (unsmoothed) {
-  pdf("pe_cluster_corr_fixed_unsmoothed.pdf", width=12, height=12)
-} else {pdf("pe_cluster_corr_fixed.pdf", width=12, height=12)}
+  pdf("pe_cluster_corr_fixed_unsmoothed_broken_up.pdf", width=12, height=12)
+} else {pdf("pe_cluster_corr_fixed_broken_up.pdf", width=12, height=12)}
 corrplot(peclust_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
          order = "hclust", diag = FALSE,
@@ -163,17 +178,22 @@ corrplot(peclust_cor$r, cl.lim=c(-1,1),
 dev.off()
 
 mpe <- nfactors(peclust_cor$r, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
-pe.fa = psych::fa(pejust_rois, nfactors=2, rotate = "varimax", fm = "pa")
+pe.fa = psych::fa(pejust_rois, nfactors=3, rotate = "oblimin", fm = "pa")
+pe.faba = psych::bassAckward(pejust_rois, nfactors=6, rotate = "oblimin", fm = "pa")
 
 
-pe.fa = fa.sort(psych::fa(pejust_rois, nfactors=2))
+pe.fa = fa.sort(psych::fa(pejust_rois, nfactors=3))
 pefscores <- factor.scores(pejust_rois, pe.fa)$scores
-pe_wide$pe_f1_cort_str <- pefscores[,1]
-pe_wide$pe_f2_hipp <- pefscores[,2]
-pe_wide$pe_PH <- scale(rowMeans(cbind(pe_wide$`10 Left Hippocampus`, pe_wide$`7 Right Hippocampus`)))
-pe_wide$pe_PH_l <- scale(pe_wide$`10 Left Hippocampus`)
-pe_wide$pe_PH_r <- scale(pe_wide$`7 Right Hippocampus`)
-
+pe_wide$pe_f1_cort_hipp <- pefscores[,1]
+pe_wide$pe_f2_cerebell <- pefscores[,2]
+pe_wide$pe_f3_str <- pefscores[,3]
+# pe_wide$pe_PH <- scale(rowMeans(cbind(pe_wide$`10 Left Hippocampus`, pe_wide$`7 Right Hippocampus`)))
+# pe_wide$pe_PH_l <- scale(pe_wide$`10 Left Hippocampus`)
+pe_wide$pe_PH_r <- scale(pe_wide$`18 Right Hippocampus`)
+pe_wide$pe_ips <- scale(rowMeans(cbind(pe_wide$`1 Right Angular Gyrus`, pe_wide$`3 Left Inferior Parietal Lobule` )))
+# pe_wide$pe_str <- scale(pe_wide$`2 ; Left Caudate Nucleus`)
+# add 
+pe_wide$feat_input_id <- pe_wide$numid
 # save loadings
 setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/hippo/supp')
 pf <- as_tibble(cbind(rownames(unclass(round(pe.fa$Structure, digits = 3))),unclass(round(pe.fa$Structure, digits = 3)))) %>% arrange(desc(MR1) ) %>%  
@@ -183,8 +203,8 @@ stargazer(pf, type = 'html', out = 'pe_fa_structure.html', summary = F)
 
 if (unsmoothed) {
   pe_wide$pe_PH <- (pe_wide$`7 Right Hippocampus` + pe_wide$`10 Left Hippocampus`)/2
-  hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH")])
-} else {  hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r")])  }
+  hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_hipp", "pe_f2_cerebell", "pe_f3_str", "pe_PH_r", "pe_ips")])
+} else {  hpe_wide <- inner_join(h_wide,pe_wide[,c("feat_input_id","pe_f1_cort_hipp", "pe_f2_cerebell", "pe_f3_str", "pe_PH_r", "pe_ips")])  }
 
 
 #####
@@ -234,12 +254,12 @@ sub_df$id <- sub_df$ID
 if (unsmoothed) {
   params_beta <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb","h_HippAntL",
                            "DAN", "dan_r_sfg", "dan_l_sfg", "dan_parietal",
-                           "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
+                           "pe_f1_cort_hipp", "pe_f2_cerebell", "pe_f3_str", "pe_PH_r", "pe_ips",
                            "total_earnings", "LL", "alpha", "gamma", "beta")]
 } else {
   params_beta <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb","h_HippAntL",
                            "DAN", "dan_r_sfg", "dan_l_sfg", "dan_parietal",
-                           "pe_f1_cort_str", "pe_f2_hipp", "pe_PH",
+                           "pe_f1_cort_hipp", "pe_f2_cerebell", "pe_f3_str", "pe_PH_r", "pe_ips",
                            "total_earnings", "LL", "alpha", "gamma", "beta")]}
 param_cor <- corr.test(params_beta,method = 'pearson', adjust = 'none')
 
@@ -281,12 +301,12 @@ sub_df <- inner_join(sub_df, b_df, by = 'id')
 if (unsmoothed) {
   bdf <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb",
                    "DAN", "dan_r_sfg", "dan_l_sfg", "dan_parietal",
-                   "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
+                   "pe_f1_cort_hipp", "pe_f2_cerebell", "pe_f3_str", "pe_PH_r", "pe_ips",
                    "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]  
 } else {
   bdf <- sub_df[,c("h_f1_fp", "h_f2_neg_paralimb",
                    "DAN", "dan_r_sfg", "dan_l_sfg", "dan_parietal",
-                   "pe_f1_cort_str", "pe_f2_hipp", "pe_PH", "pe_PH_l", "pe_PH_r",
+                   "pe_f1_cort_hipp", "pe_f2_cerebell", "pe_f3_str", "pe_PH_r", "pe_ips",
                    "total_earnings", "LL", "alpha", "gamma", "beta", "v_maxB", "v_entropyB")]}
 b_cor <- corr.test(bdf,method = 'pearson', adjust = 'none')
 

@@ -14,6 +14,8 @@ library(sjstats)
 library(sjPlot)
 library(emmeans)
 library(cowplot)
+install_github("UNCDEPENdLab/dependlab")
+library(dependlab)
 source('~/code/Rhelpers/screen.lmerTest.R')
 source('~/code/Rhelpers/vif.lme.R')
 # library(stringi)
@@ -37,17 +39,17 @@ if (unsmoothed) {
 ############# fMRI
 # Effect of DAN on exploration
 mb_dan1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef)^2 + 
-                   rt_lag_sc:last_outcome:general_entropy + 
-                   rt_lag_sc:last_outcome:med_par +
-                   rt_lag_sc:last_outcome:fef +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
-                   rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
-                   (1|id/run), df)
+                                v_max_wi_lag + v_entropy_wi + dan_parietal + pe_ips)^2 + 
+                   rt_lag_sc:last_outcome:dan_parietal + 
+                   rt_lag_sc:last_outcome:pe_ips +
+                   rt_vmax_lag_sc:trial_neg_inv_sc:dan_parietal + 
+                   rt_vmax_lag_sc:trial_neg_inv_sc:pe_ips  +
+                   (1|id/run), df %>% filter(rt_csv<4000))
 screen.lmerTest(mb_dan1, .05)
 summary(mb_dan1)
 Anova(mb_dan1, '3')
+
+
 
 # add vlPFC entropy region
 mb_dan2 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
@@ -60,7 +62,7 @@ mb_dan2 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + la
                    rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
                    rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
                    rt_vmax_lag_sc:trial_neg_inv_sc:entropy_vlPFC + 
-                   (1|id/run), df)
+                   (1|id/run), df %>% filter(rt_csv<4000))
 screen.lmerTest(mb_dan2, .05)
 summary(mb_dan2)
 Anova(mb_dan2, '3')
@@ -69,15 +71,13 @@ anova(mb_dan1, mb_dan2)
 
 ################
 # replication
-mmb_dan1 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                v_max_wi_lag + v_entropy_wi + general_entropy + med_par + fef)^2 + 
-                   rt_lag_sc:last_outcome:general_entropy + 
-                   rt_lag_sc:last_outcome:med_par +
-                   rt_lag_sc:last_outcome:fef +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
-                   rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
-                   (1|id/run), mdf)
+mmb_dan1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                v_max_wi_lag + v_entropy_wi + dan_parietal + pe_ips)^2 + 
+                   rt_lag_sc:last_outcome:dan_parietal + 
+                   rt_lag_sc:last_outcome:pe_ips +
+                   rt_vmax_lag_sc:trial_neg_inv_sc:dan_parietal + 
+                   rt_vmax_lag_sc:trial_neg_inv_sc:pe_ips  +
+                   (1|id/run), mdf %>% filter(rt_csv<4000))
 screen.lmerTest(mmb_dan1, .05)
 summary(mmb_dan1)
 Anova(mmb_dan1, '3')
@@ -93,7 +93,7 @@ mmb_dan2 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + l
                     rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
                     rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
                     rt_vmax_lag_sc:trial_neg_inv_sc:entropy_vlPFC + 
-                    (1|id/run), mdf)
+                    (1|id/run), mdf %>% filter(rt_csv<4000))
 screen.lmerTest(mmb_dan2, .05)
 summary(mmb_dan2)
 Anova(mmb_dan2, '3')
@@ -117,8 +117,8 @@ mb_dan_lag3 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_lag2_sc + rt_
                       rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
                       rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
                       rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
-                      (1|id/run), df)
-screen.lmerTest(mb_dan_lag3, .05)
+                      (1|id/run), df %>% filter(rt_csv<4000))
+screen.lmerTest(mb_dan_lag3, .01)
 summary(mb_dan_lag3)
 Anova(mb_dan_lag3, '3')
 
@@ -131,7 +131,7 @@ mmb_dan_lag3 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_lag2_sc + rt
                        rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
                        rt_vmax_lag_sc:trial_neg_inv_sc:med_par  +
                        rt_vmax_lag_sc:trial_neg_inv_sc:fef  +
-                       (1|id/run), mdf)
+                       (1|id/run), mdf %>% filter(rt_csv<4000))
 screen.lmerTest(mmb_dan_lag3, .05)
 summary(mmb_dan1)
 Anova(mmb_dan1, '3')
@@ -151,7 +151,7 @@ mb_dan_lag3_rew <- lmer(rt_csv_sc ~  rt_lag_sc*v_entropy_wi*trial_neg_inv_sc +
                            rt_vmax_lag_sc*trial_neg_inv_sc*general_entropy + 
                            rt_vmax_lag_sc*trial_neg_inv_sc*med_par  +
                            rt_vmax_lag_sc*trial_neg_inv_sc*fef  +
-                           (1|id/run), df)
+                           (1|id/run), df %>% filter(rt_csv<4000))
 screen.lmerTest(mb_dan_lag3_rew, .01)
 summary(mb_dan_lag3_rew)
 Anova(mb_dan_lag3_rew, '3')
@@ -171,31 +171,126 @@ mmb_dan_lag3_rew <- lmer(rt_csv_sc ~  rt_lag_sc*v_entropy_wi*trial_neg_inv_sc +
                           rt_vmax_lag_sc*trial_neg_inv_sc*general_entropy + 
                           rt_vmax_lag_sc*trial_neg_inv_sc*med_par  +
                           rt_vmax_lag_sc*trial_neg_inv_sc*fef  +
-                          (1|id/run), mdf)
+                          (1|id/run), mdf %>% filter(rt_csv<4000))
 screen.lmerTest(mmb_dan_lag3_rew, .01)
 summary(mmb_dan_lag3_rew)
 Anova(mmb_dan_lag3_rew, '3')
 
-# TEST CONDITION EFFECTS - NONE, WHICH IS A GOOD THING
-mb_dan_lag3_cond <- lmer(rt_csv_sc ~  rt_lag_sc*trial_neg_inv_sc*rewFunc*general_entropy +
-                           rt_lag_sc*trial_neg_inv_sc*rewFunc*med_par +
-                           rt_lag_sc*trial_neg_inv_sc*rewFunc*fef +
-                          rt_lag_sc*last_outcome*general_entropy + 
-                          rt_lag_sc*last_outcome*med_par +
-                          rt_lag_sc*last_outcome*fef +
-                          rt_lag2_sc*last_outcome_lag2*general_entropy + 
-                          rt_lag2_sc*last_outcome_lag2*med_par +
-                          rt_lag2_sc*last_outcome_lag2*fef +
-                          rt_lag3_sc*last_outcome_lag3*general_entropy + 
-                          rt_lag3_sc*last_outcome_lag3*med_par +
-                          rt_lag3_sc*last_outcome_lag3*fef +
-                          rt_vmax_lag_sc*trial_neg_inv_sc*general_entropy + 
-                          rt_vmax_lag_sc*trial_neg_inv_sc*med_par  +
-                          rt_vmax_lag_sc*trial_neg_inv_sc*fef  +
-                          (1|id/run), df)
-screen.lmerTest(mb_dan_lag3_cond, .01)
+# TEST CONDITION EFFECTS 
+mb_dan_lag3_cond <- lmer(rt_csv_sc ~  rt_lag_sc*trial_neg_inv_sc*rewFunc*dan_parietal +
+                           rt_lag_sc*trial_neg_inv_sc*rewFunc*pe_ips +
+                          rt_lag_sc*last_outcome*dan_parietal + 
+                          rt_lag_sc*last_outcome*pe_ips +
+                          # rt_lag2_sc*last_outcome_lag2*dan_parietal + 
+                          # rt_lag2_sc*last_outcome_lag2*pe_ips +
+                          # rt_lag3_sc*last_outcome_lag3*dan_parietal + 
+                          # rt_lag3_sc*last_outcome_lag3*pe_ips +
+                          rt_vmax_lag_sc*trial_neg_inv_sc*dan_parietal + 
+                          rt_vmax_lag_sc*trial_neg_inv_sc*pe_ips  +
+                          (1|id/run), df %>% filter(rt_csv<4000))
+screen.lmerTest(mb_dan_lag3_cond, .05)
 summary(mb_dan_lag3_rew)
 Anova(mb_dan_lag3_rew, '3')
+
+mmb_dan_lag3_cond <- lmer(rt_csv_sc ~  rt_lag_sc*trial_neg_inv_sc*rewFunc*dan_parietal +
+                           rt_lag_sc*trial_neg_inv_sc*rewFunc*pe_ips +
+                           rt_lag_sc*last_outcome*dan_parietal + 
+                           rt_lag_sc*last_outcome*pe_ips +
+                           # rt_lag2_sc*last_outcome_lag2*dan_parietal + 
+                           # rt_lag2_sc*last_outcome_lag2*pe_ips +
+                           # rt_lag3_sc*last_outcome_lag3*dan_parietal + 
+                           # rt_lag3_sc*last_outcome_lag3*pe_ips +
+                           rt_vmax_lag_sc*trial_neg_inv_sc*dan_parietal + 
+                           rt_vmax_lag_sc*trial_neg_inv_sc*pe_ips  +
+                           (1|id/run), mdf %>% filter(rt_csv<4000))
+screen.lmerTest(mmb_dan_lag3_cond, .05)
+summary(mmb_dan_lag3_rew)
+Anova(mmb_dan_lag3_rew, '3')
+
+###############
+# predict score
+ms <- lmer(score_csv ~  (rewFunc + trial_neg_inv_sc + pe_ips + dan_parietal)^3 +
+             (1|id), df %>% filter(rt_csv<4000))
+summary(ms)
+car::Anova(ms)
+
+mms <- lmer(score_csv ~  (rewFunc + trial_neg_inv_sc + pe_ips + dan_parietal)^3 +
+             (1|id), mdf %>% filter(rt_csv<4000))
+summary(mms)
+car::Anova(mms)
+
+mev <- lmer(ev ~  (rewFunc + trial_neg_inv_sc + pe_ips + dan_parietal)^3 +
+             (1|id), df %>% filter(rt_csv<4000))
+summary(mev)
+car::Anova(ms)
+
+mmev <- lmer(ev ~  (rewFunc + trial_neg_inv_sc + pe_ips + dan_parietal)^3 +
+              (1|id), mdf %>% filter(rt_csv<4000))
+summary(mmev)
+car::Anova(mms)
+
+
+
+ms1 <- lmer(ev ~  (rewFunc + trial_neg_inv_sc + rt_lag_sc + rt_csv_sc + pe_ips + dan_parietal + pe_f3_str)^3 +
+             (1|id), df %>% filter(rt_csv<4000))
+screen.lmerTest(ms1, .01)
+
+mms1 <- lmer(ev ~  (rewFunc + trial_neg_inv_sc + rt_lag_sc + rt_csv_sc + pe_ips + dan_parietal + pe_f3_str)^3 +
+              (1|id), mdf %>% filter(rt_csv<4000))
+screen.lmerTest(mms1, .01)
+
+
+summary(ms1)
+car::Anova(ms1)
+emtrends(ms, ~rewFunc, var="rt_lag_sc")
+
+###############
+## PE clusters
+###############
+
+# pe_ips and h_ips
+mb_pe_ips_dan <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                       v_max_wi_lag + v_entropy_wi + pe_ips + dan_parietal)^3 + 
+                          rt_lag_sc:last_outcome:pe_ips:dan_parietal + 
+                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_ips:dan_parietal +
+                          (1|id/run), df %>% filter(rt_csv<4000))
+screen.lmerTest(mb_pe_ips_dan, .01)
+
+cm <- as_tibble(lmer_predict(mb_pe_ips_dan, divide=c("rt_lag_sc", "pe_ips", "dan_parietal"), 
+                   fixatmean = c("rt_vmax_lag_sc", "v_entropy_wi", "v_max_wi_lag", "trial_neg_inv_sc")))
+ggplot(cm, aes(as.numeric(rt_lag_sc), rt_csv_sc, color = pe_ips, group = pe_ips) ) + geom_line() + facet_wrap(last_outcome~dan_parietal)
+
+
+mmb_pe_ips_dan <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                      v_max_wi_lag + v_entropy_wi + pe_ips + dan_parietal)^3 + 
+                         rt_lag_sc:last_outcome:pe_ips:dan_parietal + 
+                         rt_vmax_lag_sc:trial_neg_inv_sc:pe_ips:dan_parietal +
+                         (1|id/run), mdf %>% filter(rt_csv<4000))
+screen.lmerTest(mmb_pe_ips_dan, .01)
+
+cm <- as_tibble(lmer_predict(mmb_pe_ips_dan, divide=c("rt_lag_sc", "pe_ips", "dan_parietal"), 
+                             fixat0 = c("rt_vmax_lag_sc", "v_entropy_wi", "v_max_wi_lag", "trial_neg_inv_sc")))
+ggplot(cm, aes(as.numeric(rt_lag_sc), rt_csv_sc, color = pe_ips, group = pe_ips) ) + geom_line() + facet_wrap(last_outcome~dan_parietal)
+
+
+### check if the RTvmax convergence in high-IPS PE beta subjects is early responding in DEV
+mb_pe_ips_dan <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                      v_max_wi_lag + v_entropy_wi + pe_ips + dan_parietal)^3 + 
+                         rt_lag_sc:last_outcome:pe_ips:dan_parietal + 
+                         rt_vmax_lag_sc:trial_neg_inv_sc:pe_ips:dan_parietal +
+                         (1|id/run), df %>% filter(rt_csv<4000))
+screen.lmerTest(mb_pe_ips_dan, .01)
+
+mmb_pe_ips_dan <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                       v_max_wi_lag + v_entropy_wi + pe_ips + dan_parietal)^3 + 
+                          rt_lag_sc:last_outcome:pe_ips:dan_parietal + 
+                          rt_vmax_lag_sc:trial_neg_inv_sc:pe_ips:dan_parietal +
+                          (1|id/run), mdf %>% filter(rt_csv<4000))
+screen.lmerTest(mmb_pe_ips_dan, .01)
+
+
+
+
 
 #### model-predicted effects for buffer models
 
@@ -262,7 +357,7 @@ p3 <- ggplot(em13, aes(x=last_outcome_lag3, y=rt_lag3_sc.trend, ymin=asymp.LCL, 
   scale_y_reverse(limits = c(.7, -.1)) 
 
 
-ggsave("fef1.pdf", p1, width=5, height=4)
+ggsave("fef1.pdf %>% filter(rt_csv<4000)", p1, width=5, height=4)
 
 
 
@@ -282,7 +377,7 @@ lm_fmri_dan1 <-  lm(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc +
                       rt_lag_sc:last_outcome:DAN +
                       rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                       rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
-                      rt_vmax_lag_sc:trial_neg_inv_sc:DAN, df, na.action = na.exclude)
+                      rt_vmax_lag_sc:trial_neg_inv_sc:DAN, df %>% filter(rt_csv<4000), na.action = na.exclude)
 plot(lm_fmri_dan1)
 # adding contingency does not capture structure
 
