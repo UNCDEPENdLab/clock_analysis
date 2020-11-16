@@ -232,10 +232,12 @@ trial_df <- trial_df %>%
                                        omission_lag2 = lag(score_csv==0, 2),
                                        omission_lag3 = lag(score_csv==0, 3),
                                        rt_vmax_lag = lag(rt_vmax),
+                                       rt_vmax_lag2 = lag(rt_vmax_lag),
                                        v_chosen_lag = lag(v_chosen),
                                        run_trial=1:50) %>% ungroup() %>%
   dplyr::mutate(rt_lag2_sc = scale(rt_lag2),
-                rt_lag3_sc = scale(rt_lag3))
+                rt_lag3_sc = scale(rt_lag3),
+                rt_vmax_lag2_sc = scale(rt_vmax_lag2))
 #compute rt_swing within run and subject
 u_df <- u_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change, 
                         u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change,
@@ -408,6 +410,40 @@ mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_chang
 #     id = as.integer(substr(id, 1, 5))) 
 
 mdf <- inner_join(mdf,mu_df, by = c("id", "run", "trial"))
+## dichotomize betas
+df <- df %>% mutate(pe_ips_resp = case_when(
+  pe_ips < median(pe_ips) ~ 'low_pe_ips',
+  pe_ips > median(pe_ips) ~ 'high_pe_ips'),
+  dan_h_resp = case_when(
+    DAN < median(DAN) ~ 'low_h_dan',
+    DAN > median(DAN) ~ 'high_h_dan'),
+  dan_general_entropy_resp = case_when(
+    general_entropy < median(general_entropy) ~ 'low_general_entropy_dan',
+    general_entropy > median(general_entropy) ~ 'high_general_entropy_dan'),
+  pe_f1_cort_hipp_resp = case_when(
+    pe_f1_cort_hipp < median(pe_f1_cort_hipp) ~ 'low_pe_f1_cort_hipp',
+    pe_f1_cort_hipp > median(pe_f1_cort_hipp) ~ 'high_pe_f1_cort_hipp'),
+  pe_f3_str_resp  = case_when(
+    pe_f3_str < median(pe_f3_str) ~ 'low_pe_f3_str',
+    pe_f3_str > median(pe_f3_str) ~ 'high_pe_f3_str'),
+)
+mdf <- mdf %>% mutate(pe_ips_resp = case_when(
+  pe_ips < median(pe_ips) ~ 'low_pe_ips',
+  pe_ips > median(pe_ips) ~ 'high_pe_ips'),
+  dan_h_resp = case_when(
+    DAN < median(DAN) ~ 'low_h_dan',
+    DAN > median(DAN) ~ 'high_h_dan'),
+  dan_general_entropy_resp = case_when(
+    general_entropy < median(general_entropy) ~ 'low_general_entropy_dan',
+    general_entropy > median(general_entropy) ~ 'high_general_entropy_dan'),
+  pe_f1_cort_hipp_resp = case_when(
+    pe_f1_cort_hipp < median(pe_f1_cort_hipp) ~ 'low_pe_f1_cort_hipp',
+    pe_f1_cort_hipp > median(pe_f1_cort_hipp) ~ 'high_pe_f1_cort_hipp'),
+  pe_f3_str_resp  = case_when(
+    pe_f3_str < median(pe_f3_str) ~ 'low_pe_f3_str',
+    pe_f3_str > median(pe_f3_str) ~ 'high_pe_f3_str'),
+)
+# checked box plots -- looks good
 
 
 if (unsmoothed) {

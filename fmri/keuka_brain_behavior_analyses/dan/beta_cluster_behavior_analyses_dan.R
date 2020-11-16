@@ -36,6 +36,37 @@ if (unsmoothed) {
 
 ############# Main analysis using Schaeffer-based betas
 
+### quick hippocampal sanity check
+# check PH PEs extracted at higher threshold
+# t <- df %>% select(id, pe_PH_r) %>% unique()
+# 
+# test <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+#                                 v_max_wi_lag + v_entropy_wi + h_HippAntL + pe_PH_r)^2 + 
+#                    rt_lag_sc:last_outcome:h_HippAntL + 
+#                    rt_lag_sc:last_outcome:pe_PH_r +
+#                    rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL + 
+#                    rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH_r  +
+#                    (1|id/run), df %>% filter(rt_csv<4000))
+# screen.lmerTest(test, .05)
+# Anova(test, '3')
+# 
+# mtest <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+#                              v_max_wi_lag + v_entropy_wi + h_HippAntL + pe_PH_r)^2 + 
+#                 rt_lag_sc:last_outcome:h_HippAntL + 
+#                 rt_lag_sc:last_outcome:pe_PH_r +
+#                 rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL + 
+#                 rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH_r  +
+#                 (1|id/run), mdf)# %>% filter(rt_csv<4000))
+# screen.lmerTest(mtest, .05)
+# Anova(mtest, '3')
+
+# # compare MEG and fMRI
+# df$session <- "fMRI"
+# mdf$session <- "MEG"
+# bdf <- bind_rows(df, mdf)
+# ggplot(bdf, aes(run_trial, rt_csv, color = rewFunc, lty = session)) + geom_smooth()
+# ggplot(bdf, aes(run_trial, ev, color = rewFunc, lty = session)) + geom_smooth()
+
 ############# fMRI
 # Effect of DAN on exploration
 mb_dan1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
