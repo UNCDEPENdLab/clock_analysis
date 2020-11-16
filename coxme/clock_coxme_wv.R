@@ -50,7 +50,15 @@ load ("fMRI_MEG_coxme_objects_Nov15_2020")
  summary(wv_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
                                  value_wi*general_entropy + uncertainty_wi*general_entropy + 
                                  (1|ID), fbb))
- Anova(wv_ge, '3')
+ 
+ # matrix of selections/outcomes + value/uncertainty
+ summary(wv_ge_rew_uv <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*omission_lag*general_entropy +
+                                    wvs2b1a1*omission_lag2*general_entropy + 
+                                    wvs3b1a1*omission_lag3*general_entropy + 
+                                    value_wi*general_entropy +
+                                    uncertainty_wi*general_entropy + 
+                                    (1|ID), fbb))
+
  
  # reduced model w/o value or uncertainty
  summary(wv_only_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
@@ -68,6 +76,7 @@ load ("fMRI_MEG_coxme_objects_Nov15_2020")
  summary(wv_vlpfc)
  Anova(wv_vlpfc, '3')
 
+ 
  # MEG replication
  summary(mwv_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
                           value_wi*general_entropy + uncertainty_wi*general_entropy + 
@@ -143,9 +152,9 @@ load ("fMRI_MEG_coxme_objects_Nov15_2020")
  # Effects of PE clusters
  ########################
  # only IPS PE
- summary(wv_pe_ips <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips + wvs2b1a1*pe_ips + wvs3b1a1*pe_ips +
+ summary(wv_pe_ips_nov <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips + wvs2b1a1*pe_ips + wvs3b1a1*pe_ips +
                               (1|ID), fbb))
- Anova(wv_pe_ips, '3')
+ Anova(wv_pe_ips_nov, '3')
  
  
  summary(wv_pe_ips <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips + wvs2b1a1*pe_ips + wvs3b1a1*pe_ips + 
@@ -153,10 +162,29 @@ load ("fMRI_MEG_coxme_objects_Nov15_2020")
                           (1|ID), fbb))
  Anova(wv_pe_ips, '3')
 
- summary(wv_pe_ips_v <- coxme(Surv(t1,t2,response) ~ value_wi*wvs1b1a1*pe_ips + value_wi*wvs2b1a1*pe_ips + value_wi*wvs3b1a1*pe_ips + 
-                               uncertainty_wi*pe_ips + 
+ summary(wv_pe_ips_v_trial <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips +
+                                      wvs2b1a1*pe_ips + 
+                                      wvs3b1a1*pe_ips + 
+                                value_wi*trial_neg_inv_sc*pe_ips +
+                               uncertainty_wi*trial_neg_inv_sc*pe_ips + 
                               (1|ID), fbb))
- Anova(wv_pe_ips_v, '3')
+ Anova(wv_pe_ips_v_trial, '3')
+ 
+ summary(wv_pe_ips_v_rew <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*omission_lag*pe_ips +
+                                      wvs2b1a1*omission_lag2*pe_ips + 
+                                      wvs3b1a1*omission_lag3*pe_ips + 
+                                      value_wi*pe_ips +
+                                      uncertainty_wi*pe_ips + 
+                                      (1|ID), fbb))
+ Anova(wv_pe_ips_v_rew, '3')
+ # interaction with entropy
+ summary(wv_pe_ips_ge_v_rew <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*omission_lag*pe_ips*general_entropy +
+                                    wvs2b1a1*omission_lag2*pe_ips*general_entropy + 
+                                    wvs3b1a1*omission_lag3*pe_ips*general_entropy + 
+                                    value_wi*pe_ips*general_entropy +
+                                    uncertainty_wi*pe_ips*general_entropy + 
+                                    (1|ID), fbb))
+ 
  
  summary(wv_h_dan_v <- coxme(Surv(t1,t2,response) ~ value_wi*wvs1b1a1*general_entropy + value_wi*wvs2b1a1*general_entropy + value_wi*wvs3b1a1*general_entropy + 
                                 uncertainty_wi*general_entropy + 

@@ -43,40 +43,6 @@ if (unsmoothed) {
 # ggplot(bdf, aes(run_trial, rt_csv, color = rewFunc, lty = session)) + geom_smooth()
 # ggplot(bdf, aes(run_trial, ev, color = rewFunc, lty = session)) + geom_smooth()
 
-## dichotomize betas
-df <- df %>% mutate(pe_ips_resp = case_when(
-  pe_ips < median(pe_ips) ~ 'low_pe_ips',
-  pe_ips > median(pe_ips) ~ 'high_pe_ips'),
-  dan_h_resp = case_when(
-    DAN < median(DAN) ~ 'low_h_dan',
-    DAN > median(DAN) ~ 'high_h_dan'),
-  dan_general_entropy_resp = case_when(
-    general_entropy < median(general_entropy) ~ 'low_general_entropy_dan',
-    general_entropy > median(general_entropy) ~ 'high_general_entropy_dan'),
-  pe_f1_cort_hipp_resp = case_when(
-    pe_f1_cort_hipp < median(pe_f1_cort_hipp) ~ 'low_pe_f1_cort_hipp',
-    pe_f1_cort_hipp > median(pe_f1_cort_hipp) ~ 'high_pe_f1_cort_hipp'),
- pe_f3_str_resp  = case_when(
-    pe_f3_str < median(pe_f3_str) ~ 'low_pe_f3_str',
-    pe_f3_str > median(pe_f3_str) ~ 'high_pe_f3_str'),
-  )
-mdf <- mdf %>% mutate(pe_ips_resp = case_when(
-  pe_ips < median(pe_ips) ~ 'low_pe_ips',
-  pe_ips > median(pe_ips) ~ 'high_pe_ips'),
-  dan_h_resp = case_when(
-    DAN < median(DAN) ~ 'low_h_dan',
-    DAN > median(DAN) ~ 'high_h_dan'),
-  dan_general_entropy_resp = case_when(
-    general_entropy < median(general_entropy) ~ 'low_general_entropy_dan',
-    general_entropy > median(general_entropy) ~ 'high_general_entropy_dan'),
-  pe_f1_cort_hipp_resp = case_when(
-    pe_f1_cort_hipp < median(pe_f1_cort_hipp) ~ 'low_pe_f1_cort_hipp',
-    pe_f1_cort_hipp > median(pe_f1_cort_hipp) ~ 'high_pe_f1_cort_hipp'),
-  pe_f3_str_resp  = case_when(
-    pe_f3_str < median(pe_f3_str) ~ 'low_pe_f3_str',
-    pe_f3_str > median(pe_f3_str) ~ 'high_pe_f3_str'),
-)
-# checked box plots -- looks good
 
 ###############################################
 # RT swing distribution by condition and betas
@@ -87,12 +53,12 @@ fmdf <- mdf %>% filter(rt_csv < 4000)
 # actually, fMRI and MEG look so similar that we can replicate everything later, 
 # after we sort thigns out in fMRI
 
-# RT swings, non-directional
+# density: RT swings, non-directional
 p1 <- ggplot(fdf %>% filter(rt_swing > 500), aes(rt_swing, color = dan_h_resp)) + geom_density() + facet_grid(~rewFunc)
 p2 <- ggplot(fdf %>% filter(rt_swing > 500), aes(rt_swing, color = pe_ips_resp)) + geom_density() + facet_grid(~rewFunc)
 ggarrange(p1, p2, ncol = 1, nrow = 2)
 
-# RT change, directional
+# density: RT change, directional
 p1 <- ggplot(fdf, aes(rt_change, color = dan_h_resp, lty = last_outcome)) + geom_density() #+ facet_grid(~last_outcome)
 p2 <- ggplot(fdf, aes(rt_change, color = pe_ips_resp, lty = last_outcome)) + geom_density() #+ facet_grid(~last_outcome)
 ggarrange(p1, p2, ncol = 1, nrow = 2)
@@ -100,6 +66,26 @@ ggarrange(p1, p2, ncol = 1, nrow = 2)
 p1 <- ggplot(fdf, aes(rt_change, color = dan_h_resp)) + geom_density() + facet_wrap(~last_outcome, scales="free_y", )
 p2 <- ggplot(fdf, aes(rt_change, color = pe_ips_resp)) + geom_density() + facet_wrap(~last_outcome, scales="free_y")
 ggarrange(p1, p2, ncol = 1, nrow = 2)
+
+# RT timecourses
+p1 <- ggplot(fdf, aes(run_trial, rt_csv, color = dan_h_resp)) + geom_smooth() + facet_grid(~rewFunc)
+p2 <- ggplot(fdf, aes(run_trial, rt_csv, color = pe_ips_resp)) + geom_smooth() + facet_grid(~rewFunc)
+ggarrange(p1, p2, ncol = 1, nrow = 2)
+
+# RT swing timecourses
+p1 <- ggplot(fdf, aes(run_trial, rt_swing, color = dan_h_resp)) + geom_smooth(method = "loess") + facet_grid(~rewFunc)
+p2 <- ggplot(fdf, aes(run_trial, rt_swing, color = pe_ips_resp)) + geom_smooth(method = "loess") + facet_grid(~rewFunc)
+ggarrange(p1, p2, ncol = 1, nrow = 2)
+
+# add interaction
+ggplot(fdf, aes(run_trial, rt_swing, color = pe_ips_resp, lty = dan_h_resp)) + geom_smooth(method = "loess") + facet_grid(~rewFunc)
+
+# RT swing timecourses
+p1 <- ggplot(fdf %>% filter(!is.na(last_outcome)), aes(trial_neg_inv_sc, rt_swing_lr, color = dan_h_resp)) + geom_smooth() + facet_grid(~last_outcome)
+p2 <- ggplot(fdf %>% filter(!is.na(last_outcome)), aes(trial_neg_inv_sc, rt_swing_lr, color = pe_ips_resp)) + geom_smooth() + facet_grid(~last_outcome)
+pdf("inspect_last_plot.pdf", height = 6, width = 8)
+ggarrange(p1, p2, ncol = 1, nrow = 2)
+dev.off()
 
 # lmer w/o the shoulders
 m0 <- lmer(rt_csv ~ rt_lag_sc * pe_ips + (1|ID/run), fdf)

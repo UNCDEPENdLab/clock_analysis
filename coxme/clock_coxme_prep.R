@@ -34,12 +34,14 @@ load(file="clock_for_coxme_value_only_070518.RData")
 
 # sanity checks on within-trial matrices
 
-# add DAN and other betas
+# add DAN and other betas, trial-level vars
 setwd(file.path(basedir, 'clock_analysis/fmri/keuka_brain_behavior_analyses/'))
 load('trial_df_and_vh_pe_clusters_u.Rdata')
-hdf <- df %>% select (ID, DAN, dan_parietal, dan_l_sfg, dan_r_sfg, general_entropy,
-                      pe_f1_cort_hipp, pe_f2_cerebell, pe_f3_str, pe_PH_r, pe_ips, med_par, fef, entropy_vlPFC) %>% unique()
-sdf <- sdf %>% inner_join(hdf, by = "ID")
+hdf <- df %>% select (ID, run, run_trial, DAN, dan_parietal, dan_l_sfg, dan_r_sfg, general_entropy,
+                      pe_f1_cort_hipp, pe_f2_cerebell, pe_f3_str, pe_PH_r, pe_ips, med_par, fef, entropy_vlPFC,
+                      omission_lag, omission_lag2, omission_lag3)
+sdf$run_trial <- sdf$trial
+sdf <- sdf %>% inner_join(hdf, by = c("ID", "run", "run_trial"))
 
 # mark events (responses)
 sdf$response <- round(sdf$rt/1000, digits = 1)==sdf$t2
@@ -147,7 +149,7 @@ mvudf$response <- mvudf$y_chosen==mvudf$bin
 # summary(test <- coxme(Surv(t1,t2,response) ~ v + u +
 #                                 (1|id), mdf))
 
-# add trial-level more variables
+# add trial-level variables
 
 load("../fmri/keuka_brain_behavior_analyses/trial_df_and_vh_pe_clusters_u.Rdata")
 msdf <- merge(mdf, mvudf)
