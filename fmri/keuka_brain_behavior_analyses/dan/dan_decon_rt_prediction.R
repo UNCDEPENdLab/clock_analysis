@@ -22,6 +22,7 @@ plots = T
 decode = T  # main analysis for Fig. 4 E-G
 u = F       # exploratory analysis attempting to predict the uncertainty of the next choice
 
+exclude_first_run = T
 
 # load data
 setwd('~/Box/SCEPTIC_fMRI/dan_medusa/cache/')
@@ -40,12 +41,19 @@ df <- df %>% select(id, run, run_trial, rewFunc,emotion, last_outcome, rt_csv, s
 
 # add deconvolved timeseries
 d <- merge(df, fb_wide, by = c("id", "run", "run_trial"))
-d <- d %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(rt_change = 100*rt_next - rt_csv, 
+d <- d %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(rt_next = lead(rt_csv_sc),
+                                                                        rt_change = rt_next - rt_csv_sc,
                                                                         v_entropy_wi_lead = lead(v_entropy_wi),
                                                                         v_entropy_wi_change = v_entropy_wi_lead-v_entropy_wi,
                                                                         u_chosen_quantile_next = lead(u_chosen_quantile),
                                                                         u_chosen_quantile_change_next = lead(u_chosen_quantile_change),
                                                                         outcome = lead(last_outcome)) %>% ungroup()
+# remove first run
+if (exclude_first_run) {
+  d <- d %>% filter(run>1)
+}
+
+
 
 scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
 # scale decon across subjects as a predictor
@@ -66,7 +74,7 @@ if (decode) {
      # for (t in -1:10) {
     d$h<-d[[label]]
     # d$h<-d[[paste(stringr::str_remove(pattern = gsub(".*_", "\\1", label), label), t, sep = "")]]
-    md <-  lmer(h ~ trial_neg_inv_sc + scale(rt_csv) + scale(rt_vmax_lag)  + scale(rt_vmax_change)  + v_entropy_wi  + v_max_wi + #u_chosen_quantile_change +
+    md <-  lmer(h ~ trial_neg_inv_sc + scale(rt_csv) + scale(rt_vmax_lag)  + scale(rt_vmax_change)  + v_entropy_wi + v_entropy_wi_change  + v_max_wi + #u_chosen_quantile_change +
                   (1|id), d, control=lmerControl(optimizer = "nloptwrap"))
     while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
       print(md@optinfo$conv$lme4$conv)
@@ -126,7 +134,9 @@ if (decode) {
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab("Time after outcome, seconds") + ylab("Parcel") + 
             labs(alpha = expression(~italic(p)~', FDR-corrected'))) 
     dev.off()
-  }
+  # save output for inspection
+    save(file = "medusa_decode_output.Rdata", ddf)
+    }
   
   
   
@@ -222,6 +232,7 @@ if (decode) {
     }
   }
   # }
-  
+  # change entropy to lead
+  # check v_max whole-brain 
   
   

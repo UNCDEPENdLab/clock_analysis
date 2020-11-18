@@ -27,7 +27,7 @@ source('~/code/Rhelpers/vif.lme.R')
 smooth_in_mask = T  # main analysis: data smoothed within mask
 unsmoothed = F      # no smoothing whatsoever
 newmask = F         # sensivitivy analysis: restrictive COBRA mask (default: Harvard-Oxford)
-reprocess = T
+reprocess = F
 
 repo_directory <- "~/code/clock_analysis"
 #repo_directory <- "~/Data_Analysis/clock_analysis"
@@ -113,17 +113,17 @@ dev.off()
 
 
 
-# check that it's specific to entropy and not last reward
-# it is, but PH is also more active after omissions and AH, after rewards
-rm3 <- lmer(decon_interp ~ (evt_time + bin_center_z + reward_lag + side) ^2 + (evt_time_sq + bin_center_z + reward_lag + side) ^2 + decon_prev_z + reward_lag + scale(rt_csv) +  (1 | id/run), rvdf)
-summary(rm3)
-vif.lme(rm3)
-Anova(rm3, '3')
-g <- ggpredict(rm3, terms = c("evt_time","bin_center_z [-2,-1, 0, 1,2]", "reward_lag"))
-g <- plot(g, facet = F, dodge = .3)
-g + scale_color_viridis_d(option = "plasma") + theme_dark()
-
-anova(rm1,rm2, rm3)
+# # check that it's specific to entropy and not last reward
+# # it is, but PH is also more active after omissions and AH, after rewards
+# rm3 <- lmer(decon_interp ~ (evt_time + bin_center_z + reward_lag + side) ^2 + (evt_time_sq + bin_center_z + reward_lag + side) ^2 + decon_prev_z + reward_lag + scale(rt_csv) +  (1 | id/run), rvdf)
+# summary(rm3)
+# vif.lme(rm3)
+# Anova(rm3, '3')
+# g <- ggpredict(rm3, terms = c("evt_time","bin_center_z [-2,-1, 0, 1,2]", "reward_lag"))
+# g <- plot(g, facet = F, dodge = .3)
+# g + scale_color_viridis_d(option = "plasma") + theme_dark()
+# 
+# anova(rm1,rm2, rm3)
 
 
 #### final descriptive model -- remove swing
@@ -182,6 +182,43 @@ ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(as.nume
         axis.title.x = element_text(margin=margin(t=6))) + facet_wrap(~reward_text) +
   scale_x_continuous(breaks=c(0, 2, 4, 6, 8, 10))
 
+dev.off()
+
+# look at timecourses windowed by trial bins
+
+# split by entropy - no modulation for feedback?
+pdf('fb_medusa_entropy.pdf', height = 6, width = 6)
+ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(as.numeric(evt_time_f), decon_interp, lty = entropy)) + 
+  geom_smooth(method = "gam", formula = y~splines::ns(x,3), se = T, size = .75) + facet_wrap(~label)
+dev.off()
+# clock:
+pdf('clock_medusa_entropy.pdf', height = 6, width = 6)
+ggplot(clock_comb %>% filter (iti_prev>1 & iti_ideal>1 & evt_time < 4 & !is.na(entropy)), aes(evt_time, decon_interp, lty = entropy)) + 
+  geom_smooth(method = "gam", formula = y~splines::ns(x,3), se = T, size = .75) + facet_wrap(~label)
+dev.off()
+
+pdf('clock_medusa_entropy_lag.pdf', height = 6, width = 6)
+ggplot(clock_comb %>% filter (iti_prev>1 & iti_ideal>1 & evt_time < 4 & !is.na(entropy_lag)), aes(evt_time, decon_interp, lty = entropy_lag)) + 
+  geom_smooth(method = "gam", formula = y~splines::ns(x,3), se = T, size = .75) + facet_wrap(~label)
+dev.off()
+
+# condition
+# clock:
+pdf('clock_medusa_condition.pdf', height = 6, width = 6)
+ggplot(clock_comb %>% filter (iti_prev>1 & iti_ideal>1 & evt_time < 4 & !is.na(entropy_lag)), aes(evt_time, decon_interp, color = rewFunc)) + 
+  geom_smooth(method = "gam", formula = y~splines::ns(x,3), se = T, size = .75) + facet_wrap(~label)
+dev.off()
+
+# feedback
+pdf('fb_medusa_condition.pdf', height = 6, width = 6)
+ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>6 & evt_time < 6 & !is.na(entropy_lag)), aes(evt_time, decon_interp, color = rewFunc)) + 
+  geom_smooth(method = "gam", formula = y~splines::ns(x,3), se = T, size = .75) + facet_wrap(~label)
+dev.off()
+
+# reward
+pdf('fb_medusa_reward.pdf', height = 8, width = 8)
+ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(as.numeric(evt_time_f), decon_interp, lty = rewom)) + 
+  geom_smooth(method = "gam", formula = y~splines::ns(x,3), se = T, size = .75) + facet_wrap(~label)
 dev.off()
 
 
