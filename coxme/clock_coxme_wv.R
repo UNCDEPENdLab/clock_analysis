@@ -21,6 +21,9 @@ library(ehahelper)
 library(broom)
 library(broom.mixed)
 library(car)
+# devtools::install_github("easystats/easystats")
+library(insight)
+
 load ("fMRI_MEG_coxme_objects_Nov15_2020")
 
 
@@ -44,267 +47,328 @@ load ("fMRI_MEG_coxme_objects_Nov15_2020")
 # _f suffix denotes model run on full interval (including the suspect ends)
 ###########
 
- ###################
- # Main analysis (interval ends filtered out)
- ###################
- summary(wv_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
-                                 value_wi*general_entropy + uncertainty_wi*general_entropy + 
-                                 (1|ID), fbb))
- 
- # matrix of selections/outcomes + value/uncertainty
- summary(wv_ge_rew_uv <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*omission_lag*general_entropy +
-                                    wvs2b1a1*omission_lag2*general_entropy + 
-                                    wvs3b1a1*omission_lag3*general_entropy + 
-                                    value_wi*general_entropy +
-                                    uncertainty_wi*general_entropy + 
-                                    (1|ID), fbb))
+###################
+# Main analysis (interval ends filtered out)
+###################
+summary(wv_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
+                         value_wi*general_entropy + uncertainty_wi*general_entropy + 
+                         (1|ID), fbb))
 
- 
- # reduced model w/o value or uncertainty
- summary(wv_only_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
-                          (1|ID), fbb))
- 
- summary(ge_rtlag <- coxme(Surv(t1,t2,response) ~ rtlag*general_entropy +
-                          value_wi*general_entropy + uncertainty_wi*general_entropy + 
-                          (1|ID), fbb))
- Anova(ge_rtlag, '3')
- 
- 
- summary(wv_vlpfc <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*entropy_vlPFC + wvs2b1a1*entropy_vlPFC + wvs3b1a1*entropy_vlPFC + 
-                                    value_wi*entropy_vlPFC + uncertainty_wi*entropy_vlPFC + 
-                                    (1|ID), fbb))
- summary(wv_vlpfc)
- Anova(wv_vlpfc, '3')
-
- 
- # MEG replication
- summary(mwv_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
-                          value_wi*general_entropy + uncertainty_wi*general_entropy + 
-                          (1|ID), mfbb))
- Anova(mwv_ge, '3')
- 
- # reduced model w/o value or uncertainty
- summary(mwv_only_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
-                               (1|ID), mfbb))
- 
- 
- summary(mge_rtlag <- coxme(Surv(t1,t2,response) ~ rt_lag*general_entropy +
-                             value_wi*general_entropy + uncertainty_wi*general_entropy + 
-                             (1|ID), mfbb))
- Anova(mge_rtlag, '3')
- 
- 
- summary(mwv_vlpfc <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*entropy_vlPFC + wvs2b1a1*entropy_vlPFC + wvs3b1a1*entropy_vlPFC + 
-                             value_wi*entropy_vlPFC + uncertainty_wi*entropy_vlPFC + 
-                             (1|ID), mfbb))
- Anova(mwv_vlpfc, '3')
- 
-  
-# add the fef and med_par factors with general entropy
- 
- summary(wv_ge_fef_par <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy +
-                                  wvs1b1a1*fef + wvs2b1a1*fef + wvs3b1a1*fef +
-                                  wvs1b1a1*med_par + wvs2b1a1*med_par + wvs3b1a1*med_par +
-                                  value_wi*general_entropy + uncertainty_wi*general_entropy + 
-                                  value_wi*fef + uncertainty_wi*fef + 
-                                  value_wi*med_par + uncertainty_wi*med_par + 
-                                  (1|ID), fbb))
- Anova(wv_ge_fef_par, '3')
- 
- # interactions with trial
- summary(wv_ge_trial <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy*trial + wvs2b1a1*general_entropy*trial + wvs3b1a1*general_entropy*trial + 
-                                       value_wi*general_entropy + uncertainty_wi*general_entropy*trial + 
-                                       (1|ID), fbb))
- Anova(wv_ge_trial, '3')
- 
- # add specific factors
- 
- summary(wv_alldan_middle_trial <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy*trial + 
-                                           wvs2b1a1*general_entropy*trial + 
-                                           wvs3b1a1*general_entropy*trial + 
-                                           value_wi*general_entropy + 
-                                           uncertainty_wi*general_entropy*trial + 
-                                           wvs1b1a1*fef*trial + 
-                                           wvs2b1a1*fef*trial + 
-                                           wvs3b1a1*fef*trial + 
-                                           value_wi*fef + 
-                                           uncertainty_wi*fef*trial + 
-                                           wvs1b1a1*med_par*trial + 
-                                           wvs2b1a1*med_par*trial + 
-                                           wvs3b1a1*med_par*trial + 
-                                           value_wi*med_par + 
-                                           uncertainty_wi*med_par*trial + 
-                                           (1|ID), fbb))
- Anova(wv_alldan_middle_trial, '3')
- # curious effect of med_par on uncertainty-seeking 
- # this also holds in a simple model above (wv_med_par, z=6.65)
- # check w/o other factors:
- summary(wv_medpar_middle_trial <- coxme(Surv(t1,t2,response) ~ 
-                                           wvs1b1a1*med_par*trial + 
-                                           wvs2b1a1*med_par*trial + 
-                                           wvs3b1a1*med_par*trial + 
-                                           value_wi*med_par + 
-                                           uncertainty_wi*med_par*trial + 
-                                           (1|ID), fbb))
- Anova(wv_medpar_middle_trial, '3')
- 
- ########################
- # Effects of PE clusters
- ########################
- # only IPS PE
- summary(wv_pe_ips_nov <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips + wvs2b1a1*pe_ips + wvs3b1a1*pe_ips +
-                              (1|ID), fbb))
- Anova(wv_pe_ips_nov, '3')
- 
- 
- summary(wv_pe_ips <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips + wvs2b1a1*pe_ips + wvs3b1a1*pe_ips + 
-                          value_wi*pe_ips + uncertainty_wi*pe_ips + 
-                          (1|ID), fbb))
- Anova(wv_pe_ips, '3')
-
- summary(wv_pe_ips_v_trial <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips +
-                                      wvs2b1a1*pe_ips + 
-                                      wvs3b1a1*pe_ips + 
-                                value_wi*trial_neg_inv_sc*pe_ips +
-                               uncertainty_wi*trial_neg_inv_sc*pe_ips + 
-                              (1|ID), fbb))
- Anova(wv_pe_ips_v_trial, '3')
- 
- summary(wv_pe_ips_v_rew <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*omission_lag*pe_ips +
-                                      wvs2b1a1*omission_lag2*pe_ips + 
-                                      wvs3b1a1*omission_lag3*pe_ips + 
-                                      value_wi*pe_ips +
-                                      uncertainty_wi*pe_ips + 
-                                      (1|ID), fbb))
- Anova(wv_pe_ips_v_rew, '3')
- # interaction with entropy
- summary(wv_pe_ips_ge_v_rew <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*omission_lag*pe_ips*general_entropy +
-                                    wvs2b1a1*omission_lag2*pe_ips*general_entropy + 
-                                    wvs3b1a1*omission_lag3*pe_ips*general_entropy + 
-                                    value_wi*pe_ips*general_entropy +
-                                    uncertainty_wi*pe_ips*general_entropy + 
-                                    (1|ID), fbb))
- 
- 
- summary(wv_h_dan_v <- coxme(Surv(t1,t2,response) ~ value_wi*wvs1b1a1*general_entropy + value_wi*wvs2b1a1*general_entropy + value_wi*wvs3b1a1*general_entropy + 
+# matrix of selections/outcomes + value/uncertainty
+summary(wv_ge_rew_uv <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*omission_lag*general_entropy +
+                                wvs2b1a1*omission_lag2*general_entropy + 
+                                wvs3b1a1*omission_lag3*general_entropy + 
+                                value_wi*general_entropy +
                                 uncertainty_wi*general_entropy + 
                                 (1|ID), fbb))
- Anova(wv_h_dan_v, '3')
- 
-  
- summary(rtlag_pe_ips <- coxme(Surv(t1,t2,response) ~ rtlag*pe_ips + 
-                              value_wi*pe_ips + uncertainty_wi*pe_ips + 
+
+
+# reduced model w/o value or uncertainty
+summary(wv_only_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
                               (1|ID), fbb))
- Anova(rtlag_pe_ips, '3')
- 
-  
- # all cortical PE
- summary(wv_pe_cort <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f1_cort_hipp + wvs2b1a1*pe_f1_cort_hipp + wvs3b1a1*pe_f1_cort_hipp + 
+
+summary(ge_rtlag <- coxme(Surv(t1,t2,response) ~ rtlag*general_entropy +
+                            value_wi*general_entropy + uncertainty_wi*general_entropy + 
+                            (1|ID), fbb))
+Anova(ge_rtlag, '3')
+
+
+summary(wv_vlpfc <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*entropy_vlPFC + wvs2b1a1*entropy_vlPFC + wvs3b1a1*entropy_vlPFC + 
+                            value_wi*entropy_vlPFC + uncertainty_wi*entropy_vlPFC + 
+                            (1|ID), fbb))
+summary(wv_vlpfc)
+Anova(wv_vlpfc, '3')
+
+
+# MEG replication
+summary(mwv_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
+                          value_wi*general_entropy + uncertainty_wi*general_entropy + 
+                          (1|ID), mfbb))
+Anova(mwv_ge, '3')
+
+# reduced model w/o value or uncertainty
+summary(mwv_only_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
+                               (1|ID), mfbb))
+
+
+summary(mge_rtlag <- coxme(Surv(t1,t2,response) ~ rt_lag*general_entropy +
+                             value_wi*general_entropy + uncertainty_wi*general_entropy + 
+                             (1|ID), mfbb))
+Anova(mge_rtlag, '3')
+
+
+summary(mwv_vlpfc <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*entropy_vlPFC + wvs2b1a1*entropy_vlPFC + wvs3b1a1*entropy_vlPFC + 
+                             value_wi*entropy_vlPFC + uncertainty_wi*entropy_vlPFC + 
+                             (1|ID), mfbb))
+Anova(mwv_vlpfc, '3')
+
+
+# add the fef and med_par factors with general entropy
+
+summary(wv_ge_fef_par <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy +
+                                 wvs1b1a1*fef + wvs2b1a1*fef + wvs3b1a1*fef +
+                                 wvs1b1a1*med_par + wvs2b1a1*med_par + wvs3b1a1*med_par +
+                                 value_wi*general_entropy + uncertainty_wi*general_entropy + 
+                                 value_wi*fef + uncertainty_wi*fef + 
+                                 value_wi*med_par + uncertainty_wi*med_par + 
+                                 (1|ID), fbb))
+Anova(wv_ge_fef_par, '3')
+
+# interactions with trial
+summary(wv_ge_trial <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy*trial + wvs2b1a1*general_entropy*trial + wvs3b1a1*general_entropy*trial + 
+                               value_wi*general_entropy + uncertainty_wi*general_entropy*trial + 
+                               (1|ID), fbb))
+Anova(wv_ge_trial, '3')
+
+# add specific factors
+
+summary(wv_alldan_middle_trial <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy*trial + 
+                                          wvs2b1a1*general_entropy*trial + 
+                                          wvs3b1a1*general_entropy*trial + 
+                                          value_wi*general_entropy + 
+                                          uncertainty_wi*general_entropy*trial + 
+                                          wvs1b1a1*fef*trial + 
+                                          wvs2b1a1*fef*trial + 
+                                          wvs3b1a1*fef*trial + 
+                                          value_wi*fef + 
+                                          uncertainty_wi*fef*trial + 
+                                          wvs1b1a1*med_par*trial + 
+                                          wvs2b1a1*med_par*trial + 
+                                          wvs3b1a1*med_par*trial + 
+                                          value_wi*med_par + 
+                                          uncertainty_wi*med_par*trial + 
+                                          (1|ID), fbb))
+Anova(wv_alldan_middle_trial, '3')
+# curious effect of med_par on uncertainty-seeking 
+# this also holds in a simple model above (wv_med_par, z=6.65)
+# check w/o other factors:
+summary(wv_medpar_middle_trial <- coxme(Surv(t1,t2,response) ~ 
+                                          wvs1b1a1*med_par*trial + 
+                                          wvs2b1a1*med_par*trial + 
+                                          wvs3b1a1*med_par*trial + 
+                                          value_wi*med_par + 
+                                          uncertainty_wi*med_par*trial + 
+                                          (1|ID), fbb))
+Anova(wv_medpar_middle_trial, '3')
+
+########################
+# Effects of PE clusters
+########################
+# only IPS PE
+summary(wv_pe_ips_nov <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips + wvs2b1a1*pe_ips + wvs3b1a1*pe_ips +
+                                 (1|ID), fbb))
+Anova(wv_pe_ips_nov, '3')
+
+
+summary(wv_pe_ips <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips + wvs2b1a1*pe_ips + wvs3b1a1*pe_ips + 
+                             value_wi*pe_ips + uncertainty_wi*pe_ips + 
+                             (1|ID), fbb))
+Anova(wv_pe_ips, '3')
+
+summary(wv_pe_ips_v_trial <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips +
+                                     wvs2b1a1*pe_ips + 
+                                     wvs3b1a1*pe_ips + 
+                                     value_wi*trial_neg_inv_sc*pe_ips +
+                                     uncertainty_wi*trial_neg_inv_sc*pe_ips + 
+                                     (1|ID), fbb))
+Anova(wv_pe_ips_v_trial, '3')
+
+summary(wv_pe_ips_v_rew <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*omission_lag*pe_ips +
+                                   wvs2b1a1*omission_lag2*pe_ips + 
+                                   wvs3b1a1*omission_lag3*pe_ips + 
+                                   value_wi*pe_ips +
+                                   uncertainty_wi*pe_ips + 
+                                   (1|ID), fbb))
+Anova(wv_pe_ips_v_rew, '3')
+# interaction with entropy
+summary(wv_pe_ips_ge_v_rew <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*omission_lag*pe_ips*general_entropy +
+                                      wvs2b1a1*omission_lag2*pe_ips*general_entropy + 
+                                      wvs3b1a1*omission_lag3*pe_ips*general_entropy + 
+                                      value_wi*pe_ips*general_entropy +
+                                      uncertainty_wi*pe_ips*general_entropy + 
+                                      (1|ID), fbb))
+
+
+summary(wv_h_dan_v <- coxme(Surv(t1,t2,response) ~ value_wi*wvs1b1a1*general_entropy + value_wi*wvs2b1a1*general_entropy + value_wi*wvs3b1a1*general_entropy + 
+                              uncertainty_wi*general_entropy + 
+                              (1|ID), fbb))
+Anova(wv_h_dan_v, '3')
+
+
+summary(rtlag_pe_ips <- coxme(Surv(t1,t2,response) ~ rtlag*pe_ips + 
+                                value_wi*pe_ips + uncertainty_wi*pe_ips + 
+                                (1|ID), fbb))
+Anova(rtlag_pe_ips, '3')
+
+
+# all cortical PE
+summary(wv_pe_cort <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f1_cort_hipp + wvs2b1a1*pe_f1_cort_hipp + wvs3b1a1*pe_f1_cort_hipp + 
                               value_wi*pe_f1_cort_hipp + uncertainty_wi*pe_f1_cort_hipp + 
                               (1|ID), fbb))
- Anova(wv_pe_cort, '3')
- 
- 
- # striatal PE
- summary(wv_pe_str <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f3_str + wvs2b1a1*pe_f3_str + wvs3b1a1*pe_f3_str + 
-                              value_wi*pe_f3_str + uncertainty_wi*pe_f3_str + 
-                              (1|ID), fbb))
- Anova(wv_pe_str, '3')
- 
- # cerebellar PE
- summary(wv_pe_cerebell <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f2_cerebell + wvs2b1a1*pe_f2_cerebell + wvs3b1a1*pe_f2_cerebell + 
-                              value_wi*pe_f2_cerebell + uncertainty_wi*pe_f2_cerebell + 
-                              (1|ID), fbb))
- Anova(wv_pe_cerebell, '3')
- 
- # hippocampal PE
- summary(wv_pe_ph <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_PH_r + wvs2b1a1*pe_PH_r + wvs3b1a1*pe_PH_r + 
-                                   value_wi*pe_PH_r + uncertainty_wi*pe_PH_r + 
-                                   (1|ID), fbb))
- Anova(wv_pe_ph, '3')
- 
- ######################
- ## PE: MEG replication
- ######################
- summary(mwv_pe_ips <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips + wvs2b1a1*pe_ips + wvs3b1a1*pe_ips + 
+Anova(wv_pe_cort, '3')
+
+
+# striatal PE
+summary(wv_pe_str <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f3_str + wvs2b1a1*pe_f3_str + wvs3b1a1*pe_f3_str + 
+                             value_wi*pe_f3_str + uncertainty_wi*pe_f3_str + 
+                             (1|ID), fbb))
+Anova(wv_pe_str, '3')
+
+# cerebellar PE
+summary(wv_pe_cerebell <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f2_cerebell + wvs2b1a1*pe_f2_cerebell + wvs3b1a1*pe_f2_cerebell + 
+                                  value_wi*pe_f2_cerebell + uncertainty_wi*pe_f2_cerebell + 
+                                  (1|ID), fbb))
+Anova(wv_pe_cerebell, '3')
+
+# hippocampal PE
+summary(wv_pe_ph <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_PH_r + wvs2b1a1*pe_PH_r + wvs3b1a1*pe_PH_r + 
+                            value_wi*pe_PH_r + uncertainty_wi*pe_PH_r + 
+                            (1|ID), fbb))
+Anova(wv_pe_ph, '3')
+
+######################
+## PE: MEG replication
+######################
+summary(mwv_pe_ips <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_ips + wvs2b1a1*pe_ips + wvs3b1a1*pe_ips + 
                               value_wi*pe_ips + uncertainty_wi*pe_ips + 
                               (1|ID), mfbb))
- Anova(mwv_pe_ips, '3')
- 
- summary(mrtlag_pe_ips <- coxme(Surv(t1,t2,response) ~ rt_lag*pe_ips + 
+Anova(mwv_pe_ips, '3')
+
+summary(mrtlag_pe_ips <- coxme(Surv(t1,t2,response) ~ rt_lag*pe_ips + 
                                  value_wi*pe_ips + uncertainty_wi*pe_ips + 
                                  (1|ID), mfbb))
- Anova(mrtlag_pe_ips, '3')
- 
- # all cortical PE
- summary(mwv_pe_cort <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f1_cort_hipp + wvs2b1a1*pe_f1_cort_hipp + wvs3b1a1*pe_f1_cort_hipp + 
+Anova(mrtlag_pe_ips, '3')
+
+# all cortical PE
+summary(mwv_pe_cort <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f1_cort_hipp + wvs2b1a1*pe_f1_cort_hipp + wvs3b1a1*pe_f1_cort_hipp + 
                                value_wi*pe_f1_cort_hipp + uncertainty_wi*pe_f1_cort_hipp + 
                                (1|ID), mfbb))
- Anova(mwv_pe_cort, '3')
- 
- 
- # striatal PE
- summary(mwv_pe_str <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f3_str + wvs2b1a1*pe_f3_str + wvs3b1a1*pe_f3_str + 
+Anova(mwv_pe_cort, '3')
+
+
+# striatal PE
+summary(mwv_pe_str <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f3_str + wvs2b1a1*pe_f3_str + wvs3b1a1*pe_f3_str + 
                               value_wi*pe_f3_str + uncertainty_wi*pe_f3_str + 
                               (1|ID), mfbb))
- Anova(mwv_pe_str, '3')
- 
- # cerebellar PE
- summary(mwv_pe_cerebell <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f2_cerebell + wvs2b1a1*pe_f2_cerebell + wvs3b1a1*pe_f2_cerebell + 
+Anova(mwv_pe_str, '3')
+
+# cerebellar PE
+summary(mwv_pe_cerebell <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_f2_cerebell + wvs2b1a1*pe_f2_cerebell + wvs3b1a1*pe_f2_cerebell + 
                                    value_wi*pe_f2_cerebell + uncertainty_wi*pe_f2_cerebell + 
                                    (1|ID), mfbb))
- Anova(mwv_pe_cerebell, '3')
- 
- summary(mwv_pe_ph <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_PH_r + wvs2b1a1*pe_PH_r + wvs3b1a1*pe_PH_r + 
+Anova(mwv_pe_cerebell, '3')
+
+summary(mwv_pe_ph <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*pe_PH_r + wvs2b1a1*pe_PH_r + wvs3b1a1*pe_PH_r + 
                              value_wi*pe_PH_r + uncertainty_wi*pe_PH_r + 
                              (1|ID), mfbb))
- Anova(mwv_pe_ph, '3')
- 
- 
- # just the SFG blobs
- summary(wv_sfgl_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*dan_l_sfg + wvs2b1a1*dan_l_sfg + wvs3b1a1*dan_l_sfg + 
-                                   value_wi*dan_l_sfg + uncertainty_wi*dan_l_sfg + 
-                                   (1|ID), fbb))
- Anova(wv_sfgl_middle, '3')
- 
- summary(wv_sfgr_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*dan_r_sfg + wvs2b1a1*dan_r_sfg + wvs3b1a1*dan_r_sfg + 
-                                   value_wi*dan_r_sfg + uncertainty_wi*dan_r_sfg + 
-                                   (1|ID), fbb))
- Anova(wv_sfgr_middle, '3')
- # 
- 
+Anova(mwv_pe_ph, '3')
+
+
+# just the SFG blobs
+summary(wv_sfgl_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*dan_l_sfg + wvs2b1a1*dan_l_sfg + wvs3b1a1*dan_l_sfg + 
+                                  value_wi*dan_l_sfg + uncertainty_wi*dan_l_sfg + 
+                                  (1|ID), fbb))
+Anova(wv_sfgl_middle, '3')
+
+summary(wv_sfgr_middle <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*dan_r_sfg + wvs2b1a1*dan_r_sfg + wvs3b1a1*dan_r_sfg + 
+                                  value_wi*dan_r_sfg + uncertainty_wi*dan_r_sfg + 
+                                  (1|ID), fbb))
+Anova(wv_sfgr_middle, '3')
+# 
+
 # DAN mean beta
 wv_dan1_f <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*DAN + wvs2b1a1*DAN + wvs3b1a1*DAN +
-                           value_wi*DAN + uncertainty_wi*DAN + 
-                           (1|ID), bb)
+                     value_wi*DAN + uncertainty_wi*DAN + 
+                     (1|ID), bb)
 summary(wv_dan1_f)
 Anova(wv_dan1_f, '3')
 
 # fef from bifactor model
 summary(wv_fef_f <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*fef + wvs2b1a1*fef + wvs3b1a1*fef + 
-                           value_wi*fef + uncertainty_wi*fef + 
-                           (1|ID), bb))
+                            value_wi*fef + uncertainty_wi*fef + 
+                            (1|ID), bb))
 Anova(wv_fef_f, '3')
 
 # parietal from bifactor model
 summary(wv_med_par_f <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*med_par + wvs2b1a1*med_par + wvs3b1a1*med_par + 
-                          value_wi*med_par + uncertainty_wi*med_par + 
-                          (1|ID), bb))
+                                value_wi*med_par + uncertainty_wi*med_par + 
+                                (1|ID), bb))
 Anova(wv_med_par_f, '3')
 
 # general DAN from bifactor model
 summary(wv_ge_f <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
-                          value_wi*general_entropy + uncertainty_wi*general_entropy + 
-                          (1|ID), bb))
+                           value_wi*general_entropy + uncertainty_wi*general_entropy + 
+                           (1|ID), bb))
 Anova(wv_ge, '3')
 
 # vlPFC mean
 summary(wv_vlpfc_f <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*entropy_vlPFC + wvs2b1a1*entropy_vlPFC + wvs3b1a1*entropy_vlPFC + 
-                         value_wi*entropy_vlPFC + trial_neg_inv_sc*uncertainty_wi*entropy_vlPFC + 
-                         (1|ID), bb))
+                              value_wi*entropy_vlPFC + trial_neg_inv_sc*uncertainty_wi*entropy_vlPFC + 
+                              (1|ID), bb))
 Anova(wv_vlpfc_f, '3')
 
- # try interaction with trials
+
+#########################
+## MEDUSA coxme prototype
+#########################
+
+# take right LIPd -- responsive to both PE and 
+# summary(med_lipd_r <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*LIPd_R + wvs2b1a1*LIPd_R + wvs3b1a1*LIPd_R + 
+#                               value_wi*LIPd_R + trial_neg_inv_sc*uncertainty_wi*LIPd_R + 
+#                               (1|ID), medfbb))
+# stats <- as_tibble(insight::get_statistic(med_lipd_r))
+# stats$p <- 2*(1-pnorm(stats$Statistic))
+# 
+# # test with 2 labels
+labels <- names(medfbb[grepl("_R|_r|_L|_l", names(medfbb))])[7:30]
+newlist <- list()
+
+for (label in labels) {print(paste("Processing parcel", label))
+  # for (side in c("l", "r")) {
+  # for (t in -1:10) {
+  medfbb$h <- medfbb[[label]]
+  # form <- as.formula(paste0("Surv(t1,t2,response) ~ wvs1b1a1*", label, " + wvs2b1a1*", label, " + wvs3b1a1*", label, 
+  # " +  value_wi*", label," + uncertainty_wi*", label, " + (1|ID)"))
+  m  <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*h + wvs2b1a1*h + wvs3b1a1*h + 
+                value_wi*h + uncertainty_wi*h + 
+                (1|ID), medfbb)
+  stats <- as_tibble(insight::get_statistic(m))
+  stats$p <- 2*(1-pnorm(stats$Statistic))
+  stats$label <- label
+  newlist[[label]]<-stats
+}
+ddf <- do.call(rbind,newlist)
+# ddf$label <- as.factor(stringr::str_remove(pattern = paste0("_", gsub(".*_", "\\1", ddf$label), ""), ddf$label))
+terms <- names(fixef(m))
+# FDR
+ddf <- ddf  %>% group_by(Parameter) %>% mutate(p_fdr = p.adjust(p, method = 'fdr'),
+                                               p_level_fdr = as.factor(case_when(
+                                                 # p_fdr > .1 ~ '0',
+                                                 # p_fdr < .1 & p_fdr > .05 ~ '1',
+                                                 p_fdr > .05 ~ '1',
+                                                 p_fdr < .05 & p_fdr > .01 ~ '2',
+                                                 p_fdr < .01 & p_fdr > .001 ~ '3',
+                                                 p_fdr <.001 ~ '4')),
+)
+ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
+ddf$`p, FDR-corrected` = ddf$p_level_fdr
+edf <- ddf %>% filter(grepl("h", Parameter))
+###### stopped here
+# make one mega-plot
+library(viridis)
+pdf("dan_medusa_coxme.pdf", width = 8, height = 10)
+print(ggplot(edf, aes(Parameter, label)) + geom_tile(aes(fill = Statistic, alpha = `p, FDR-corrected`), size = 1) +  
+        scale_fill_viridis(option = "plasma") + scale_color_grey() + ylab("Parcel") + 
+        labs(alpha = expression(~italic(p)~', FDR-corrected'))) 
+dev.off()
+
+ggplot(edf, aes(label, Statistic, color = Parameter, group = Parameter, alpha = `p, FDR-corrected`)) + geom_point(aes(size = `p, FDR-corrected`))
+
+save(file = "medusa_coxme_output.Rdata", ddf)
+
+
+
+l# try interaction with trials
 
 # summary(cox_wv2 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b1a1 + trial_neg_inv_sc*rewFunc + 
 #                            value_wi + uncertainty_wi + 

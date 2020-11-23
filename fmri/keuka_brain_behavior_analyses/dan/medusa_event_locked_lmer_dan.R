@@ -27,7 +27,7 @@ source('~/code/Rhelpers/vif.lme.R')
 smooth_in_mask = T  # main analysis: data smoothed within mask
 unsmoothed = F      # no smoothing whatsoever
 newmask = F         # sensivitivy analysis: restrictive COBRA mask (default: Harvard-Oxford)
-reprocess = F
+reprocess = T
 
 repo_directory <- "~/code/clock_analysis"
 #repo_directory <- "~/Data_Analysis/clock_analysis"
@@ -111,6 +111,23 @@ ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(run_tri
   scale_y_continuous(breaks=c(0.49, 0.50, 0.51))
 dev.off()
 
+# drill down on the effect of trial on the post-feedback timecourse
+
+pdf("post_feedback_DAN_learning.pdf", width = 30, height = 30)
+#pdf("../supp/supp4c_fb_hipp_AP_trial_anderson.pdf", width = 3, height = 3)
+ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(evt_time, decon_interp, color = !first10, group = !first10)) + 
+  geom_smooth(method = "gam", formula = y~splines::ns(x,3),  se = F, size = 1.2) + facet_wrap(~label) +
+  # scale_color_gradientn(colors = pal, guide = 'none') + 
+  xlab('Time after feedback') + ylab('DAN response (AU)') +
+  theme_bw(base_size=13) +
+  theme(legend.title = element_blank(),
+        panel.grid.major = element_line(colour = "grey45"), 
+        panel.grid.minor = element_line(colour = "grey45"), 
+        panel.background = element_rect(fill = 'grey40'),
+        axis.title.y = element_text(margin=margin(r=6)),
+        axis.title.x = element_text(margin=margin(t=6))) +
+  scale_y_continuous(breaks=c(0.49, 0.50, 0.51))
+dev.off()
 
 
 # # check that it's specific to entropy and not last reward

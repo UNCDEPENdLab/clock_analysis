@@ -29,6 +29,8 @@ library(car)
 ## Prep fMRI data
 #################
 
+medusa = T
+
 load(file="clock_for_coxme_value_only_070518.RData")
 # msdf <- read_csv("~/code/clock_analysis/coxme/sceptic_signals/mmclock_meg_fixed_uv_ureset_fixedparams_meg_ffx_trial_statistics.csv.gz")
 
@@ -42,6 +44,9 @@ hdf <- df %>% select (ID, run, run_trial, DAN, dan_parietal, dan_l_sfg, dan_r_sf
                       omission_lag, omission_lag2, omission_lag3)
 sdf$run_trial <- sdf$trial
 sdf <- sdf %>% inner_join(hdf, by = c("ID", "run", "run_trial"))
+
+# add evt_times for MEDUSA merge
+sdf$evt_time = floor(sdf$t2)
 
 # mark events (responses)
 sdf$response <- round(sdf$rt/1000, digits = 1)==sdf$t2
@@ -68,6 +73,7 @@ trialwise <- sdf %>% filter(bin==1) %>%
   ungroup() %>% select(ID, run, trial, timesteplag1, timesteplag2, timesteplag3, timesteplag4)
 
 sdf <- sdf %>% select(-timesteplag) %>% left_join(trialwise, by=c("ID", "run", "trial"))
+
 
 
 get_wv_smile <- function(microdf, nlags=3, nbefore=0, nafter=1, spec=FALSE) {
@@ -241,15 +247,29 @@ mfbb <- mbb %>% filter(bin >10 & bin <35)
 #  table(mbb$wv3b0a1)
 #  table(mbb$wv4b0a1)
 
+## strategy for merging MEDUSA data: 1. write downsampled evt-time to coxme df, 2. merge in long MEDUSA df by id, run, trial, evt_time
+
 # spot-check obsessively
 pdf('meg_check.pdf', height = 6, width = 6)
 ggplot(mbb, aes(run_trial, value_wi, color = rewFunc)) + geom_smooth()
 dev.off()
 
 pdf('fmri_check.pdf', height = 6, width = 6)
-ggplot(bb, aes(run_trial, value_wi, color = rewFunc)) + geom_smooth()
+p1 <- ggplot(bb, aes(run_trial, value_wi, color = rewFunc)) + geom_smooth(method = 'gam')
+p2 <- ggplot(bb, aes(t1, value_wi, color = rewFunc)) + geom_smooth(method = 'gam')
+p3 <- ggplot(bb, aes(run_trial, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam')
+p4 <- ggplot(bb, aes(t1, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam')
+ggarrange(p1,p2, p3, p4)
 dev.off()
 
+# merge in MEDUSA data -- I wonder if we have some missing censored evt_times
 
-save(file = "fMRI_MEG_coxme_objects_Nov15_2020", bb, fbb, mbb, mfbb)
+if (medusa) {
+load ("~/Box/SCEPTIC_fMRI/dan_medusa/cache/clock_dan_medusa_for_coxme.Rdata")  
+clock_cox$ID <- clock_cox$id
+medfbb <- inner_join(fbb, clock_cox)  %>% arrange(id, run, trial, t1)
+# spot-check -- not too much variability, but OK
+ggplot(medfbb, aes(t1, evt_time)) + geom_line()
+}
+save(file = "fMRI_MEG_coxme_objects_Nov22_2020", bb, fbb, mbb, mfbb, medfbb)
  

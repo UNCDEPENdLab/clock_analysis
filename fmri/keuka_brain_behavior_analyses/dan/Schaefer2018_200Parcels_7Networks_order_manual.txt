@@ -31,8 +31,8 @@
 31	7Networks_LH_DorsAttn_ITG_l	0	0	118	11	0
 32	7Networks_LH_DorsAttn_STL_l	0	0	118	12	0
 33	7Networks_LH_DorsAttn_SPL_l_7c	LIPd	1	118	13	0
-34	7Networks_LH_DorsAttn_IPL_l_BA2	0	0	118	15	0
-35	7Networks_LH_DorsAttn_IPL_l_BA2	0	0	118	16	0
+34	7Networks_LH_DorsAttn_IPL_l_BA2a	0	0	118	15	0
+35	7Networks_LH_DorsAttn_IPL_l_BA2b	0	0	118	16	0
 36	7Networks_LH_DorsAttn_IPS_ant_l_7p_good	AIP	1	118	17	0
 37	7Networks_LH_DorsAttn_SPL_lat_l_7a_good	VIP	1	118	18	0
 38	7Networks_LH_SPL_rostolat_l_7a_good	LIPv	1	118	19	0
@@ -135,8 +135,8 @@
 135	7Networks_RH_DorsAttn_ITG_r	0	0	119	12	0
 136	7Networks_RH_DorsAttn_STL_r	0	0	119	13	0
 137	7Networks_RH_DorsAttn_postcentr_r_BA2	0	0	119	14	0
-138	7Networks_RH_DorsAttn_IPS_a_caud_r_BA40_good	AIP	1	119	16	0
-139	7Networks_RH_DorsAttn_IPS_a_r_BA2_BA7_good	AIP	1	119	17	0
+138	7Networks_RH_DorsAttn_IPS_a_caud_r_BA40_good	AIP1	1	119	16	0
+139	7Networks_RH_DorsAttn_IPS_a_r_BA2_BA7_good	AIP2	1	119	17	0
 140	7Networks_RH_DorsAttn_SPL_r_7p_good	VIP	1	119	18	0
 141	7Networks_RH_DorsAttn_IPL_r_7a_good	LIPd	1	119	19	0
 142	7Networks_RH_DorsAttn_SPL_lat_r_7a_good	LIPv	1	119	20	0

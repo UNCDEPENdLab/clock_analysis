@@ -4,7 +4,7 @@ medusa_dir = "~/Box/SCEPTIC_fMRI/dan_medusa"
 cache_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/cache"
 repo_directory <- "~/code/clock_analysis"
 
- # reprocess = T
+# reprocess = T
 if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
 
 stopifnot(dir.exists(medusa_dir))  
@@ -25,15 +25,18 @@ if (!reprocess) {
   # load clock
   clock <- as_tibble(read_csv("Schaefer_DorsAttn_2.3mm_clock_long_decon_locked.csv.gz"))
   clock$atlas_value <- as.character(clock$atlas_value)
+  clock <- clock %>% arrange(id, run, run_trial, evt_time)
   # load feedback
   fb <- as_tibble(read_csv("Schaefer_DorsAttn_2.3mm_feedback_long_decon_locked.csv.gz"))
   fb$atlas_value <- as.character(fb$atlas_value)
+  fb <- fb %>% arrange(id, run, run_trial, evt_time)
+  
 }
 
 # add manual labels for Schaeffer areas
 labels <- as_tibble(read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_7Networks_order_manual.txt", 
-                                                                       "\t", escape_double = FALSE, col_names = FALSE, 
-                                                                       trim_ws = TRUE)) %>% select(1:4)
+                               "\t", escape_double = FALSE, col_names = FALSE, 
+                               trim_ws = TRUE)) %>% select(1:4)
 names(labels) <- c("atlas_value", "label_long", "label_short", "entropy_signal")
 labels <- labels %>% filter(grepl("DorsAtt", label_long))  %>% mutate(
   side  = case_when(
@@ -88,6 +91,7 @@ trial_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_fac
                   abs(pe_max) > mean(abs(pe_max)) ~ 'high abs. PE',
                   abs(pe_max) < mean(abs(pe_max)) ~ 'low abs. PE',
                   TRUE ~ NA_character_),
+                abs_pe = abs(pe_max),
                 rt_vmax_change = rt_vmax - rt_vmax_lag,
                 feedback_onset_prev = lag(feedback_onset),
                 v_max_above_median = v_max > median(na.omit(v_max)),
@@ -129,7 +133,8 @@ trial_df <- inner_join(trial_df, params, by = "id")
 message("Transforming for MEDUSA")
 
 clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
-                                  swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, gamma, total_earnings, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+                                  swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, v_entropy_wi, entropy, entropy_lag, 
+                                  gamma, total_earnings, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   inner_join(clock)
 fb_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
@@ -140,10 +145,12 @@ fb_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedbac
 
 # 20% of clock- and 32% of feedback-aligned timepoints are from the next trial: censor
 clock_comb$decon_interp[clock_comb$evt_time > clock_comb$rt_csv + clock_comb$iti_ideal] <- NA
+clock_comb$sd_interp[clock_comb$evt_time > clock_comb$rt_csv + clock_comb$iti_ideal] <- NA
 fb_comb$decon_interp[fb_comb$evt_time > fb_comb$iti_ideal] <- NA
+fb_comb$sd_interp[fb_comb$evt_time > fb_comb$iti_ideal] <- NA
 
 # code on- and offline periods and evt_time^2 for plotting models
-clock_comb <- clock_comb %>% mutate(online = evt_time > -1 & evt_time < rt_csv)
+clock_comb <- clock_comb %>% mutate(online = evt_time > -1 & evt_time < rt_csv & evt_time<4)
 clock_comb$online <- as.factor(clock_comb$online)
 
 # use more stringent feedback online window
@@ -191,7 +198,7 @@ fb_comb$evt_time_f <- as.factor(fb_comb$evt_time)
 
 # fb_comb <- fb_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
 # fb_comb <- fb_comb %>% mutate(bin6 = round((bin_num + .5)/2,digits = 0)) # also a 6-bin version
-# fb_wide <- fb_comb %>% select(id, run, run_trial, evt_time, side, bin_num, decon_interp) %>% spread(key = side, decon_interp) %>% myspread(bin_num, c("l", "r"))
+# fb_wide <- fb_comb %>% select(id, run, run_trial, evt_time, label, decon_interp) %>% spread(key = label, decon_interp) #%>% myspread(bin_num, c("l", "r"))
 # names(fb_wide)[5:28] <- paste("hipp", names(fb_wide)[5:28], sep = "_")
 # fb_wide_ex <- inner_join(fb_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi")], by = c("id", "run", "run_trial"))
 # fb_wide6 <- fb_comb %>% select(id, run, run_trial, evt_time, side, bin6, decon_interp) %>% group_by(id, run, run_trial, evt_time, side, bin6) %>% summarise(decon6  = mean(decon_interp)) %>% spread(key = side, decon6) %>% myspread(bin6, c("l", "r"))
@@ -199,7 +206,10 @@ fb_comb$evt_time_f <- as.factor(fb_comb$evt_time)
 # fb_wide6_ex <- inner_join(fb_wide6, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi")], by = c("id", "run", "run_trial"))
 
 # make wide fb df with side as observation to examine laterality
-fb_wide <- fb_comb %>% select(id, run, run_trial, evt_time, atlas_value, label, decon_interp) %>% pivot_wider(names_from = c(label, evt_time), values_from = decon_interp)
+
+fb_wide <- fb_comb %>% select(id, run, run_trial, evt_time, label, decon_interp) %>%  
+  pivot_wider(id_cols = c(id, run, run_trial), names_from = c(label, evt_time), values_from = decon_interp) 
+
 # names(fb_wide)[4:148] <- paste("dan", names(fb_wide)[4:148], sep = "_")
 
 
@@ -220,14 +230,20 @@ save(fb_comb, file = file.path(cache_dir, "feedback_dan_tall_ts.Rdata"))
 # clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
 
 # take only online event times
-clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, atlas_value, label, decon_interp) %>% pivot_wider(names_from = c(label, evt_time), values_from = decon_interp)
+clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, label, decon_interp) %>% 
+  group_by(id, run, run_trial) %>%
+  pivot_wider(names_from = c(label, evt_time), values_from = decon_interp)
+
+clock_cox <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, label, decon_interp) %>% 
+  group_by(id, run, run_trial) %>%
+  pivot_wider(names_from = c(label), values_from = decon_interp)
 # names(clock_wide)[4:length(names(clock_wide))] <- paste("dan", names(clock_wide)[4:length(names(clock_wide))], sep = "_")
 # clock_wide_t <- clock_wide %>% pivot_wider(names_from = evt_time, values_from = slices)
 # clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
 # 
 save(clock_wide,  file = file.path(cache_dir, "clock_dan_wide_ts.Rdata"))
 save(clock_comb, file = file.path(cache_dir, "clock_dan_tall_ts.Rdata"))
-
+save(clock_cox, file = file.path(cache_dir, "clock_dan_medusa_for_coxme.Rdata"))
 save(trial_df, file=file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))
 
 
