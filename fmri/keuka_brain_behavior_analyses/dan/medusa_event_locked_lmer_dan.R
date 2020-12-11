@@ -1,7 +1,7 @@
 ##  updated MEDUSA lmer scripts with only the newest plots 
-#   for ramps (Fig. 3) and post-feedback responses (Fig. 4 A-D)
+#   for ramps (cf NCOMM Fig. 3) and post-feedback responses (cf NCOMM Fig. 4 A-D)
 #   by running 'load_medusa_data.R' this also prepares data for
-#   decoding analyses (Fig. 4 E-G)
+#   decoding analyses (cf NCOMM Fig. 4 E-G)
 library(dplyr)
 library(tidyverse)
 library(psych)
@@ -12,12 +12,12 @@ library(cowplot)
 # library(sjPlot)
 # library(sjmisc)
 library(ggeffects)
-library(mlVAR)
 library(viridis)
 library(car)
 library(data.table)
 library(emmeans)
 library(wesanderson)
+library(directlabels)
 source('~/code/Rhelpers/screen.lmerTest.R')
 source('~/code/Rhelpers/vif.lme.R')
 
@@ -27,7 +27,11 @@ source('~/code/Rhelpers/vif.lme.R')
 smooth_in_mask = T  # main analysis: data smoothed within mask
 unsmoothed = F      # no smoothing whatsoever
 newmask = F         # sensivitivy analysis: restrictive COBRA mask (default: Harvard-Oxford)
-reprocess = T
+reprocess = F
+if (!reprocess) {
+  wide_only = F  
+  tall_only = T
+}
 
 repo_directory <- "~/code/clock_analysis"
 #repo_directory <- "~/Data_Analysis/clock_analysis"
@@ -36,8 +40,39 @@ repo_directory <- "~/code/clock_analysis"
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
 setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/')
 
-##############################
-# overall DAN response to reinforcement by trial
+##### label broader regions
+rt_comb <- rt_comb %>% 
+  mutate(region = case_when(
+    startsWith(label, "1_") ~ "prefrontal",
+    startsWith(label, "1a_") ~ "fronto-opercular",
+    startsWith(label, "2_") ~ "IPL",
+    startsWith(label, "3_") ~ "SPL",
+    startsWith(label, "4_") ~ "IPS",
+    startsWith(label, "5_") ~ "temporal",
+  ))
+
+##### plot RT-aligned signals --
+p <- ggplot(rt_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(evt_time, decon_interp, color = label, group = label)) + 
+  geom_smooth(method = "gam", formula = y~splines::ns(x,3),  se = F, size = 1.2) + 
+  # scale_color_gradientn(colors = pal, guide = 'none') + 
+  xlab('Time after feedback') + ylab('DAN response (AU)') +
+  theme_bw(base_size=13) +
+  theme(legend.title = element_blank(),
+        panel.grid.major = element_line(colour = "grey45"), 
+        panel.grid.minor = element_line(colour = "grey45"), 
+        panel.background = element_rect(fill = 'grey40'),
+        axis.title.y = element_text(margin=margin(r=6)),
+        axis.title.x = element_text(margin=margin(t=6))) +
+  scale_y_continuous(breaks=c(0.3, 0.4, 0.50, 0.6)) + 
+  scale_x_continuous(expansion(add = 0.5)) + geom_vline(xintercept = 0, color = 'red', size = 1.5, lty = "dashed", alpha = .5) + 
+  scale_colour_discrete(guide = 'none') + facet_wrap(~region)
+pdf("DAN_rt_locked_signals_all_regions.pdf", width = 12, height = 12)
+ direct.label(p,list(cex = 1,"angled.boxes"))
+dev.off()
+
+
+ ################
+# overall DAN response to reinforcement by trial ---
 fb_comb$trial_neg_inv_sc = scale(-1/fb_comb$run_trial)
 # fb_comb$bin6_f = as.factor(fb_comb$bin6)
 fb_comb <- fb_comb %>% mutate(trial_f = as.factor(round((run_trial + 10)/12,digits = 0))) # also a 6-bin version

@@ -24,3 +24,5 @@ fmri/keuka_brain_behavior_analyses/clusters_and_beta_series.Rdata
 .DS_Store
 fmri/keuka_brain_behavior_analyses/vhd_u_meg_models.Rdata
 fmri/clinical/bs_models.Rdata
+coxme/fMRI_MEG_coxme_objects_no_MEDUSA_Nov23_2020
+coxme/fMRI_MEG_coxme_objects_with_medusa_Nov24_2020

@@ -52,7 +52,7 @@ load ("fMRI_MEG_coxme_objects_Nov15_2020")
 ###################
 summary(wv_ge <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*general_entropy + wvs2b1a1*general_entropy + wvs3b1a1*general_entropy + 
                          value_wi*general_entropy + uncertainty_wi*general_entropy + 
-                         (1|ID), fbb))
+                         (1|ID/run/trial), fbb))
 
 # matrix of selections/outcomes + value/uncertainty
 summary(wv_ge_rew_uv <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*omission_lag*general_entropy +
@@ -312,15 +312,9 @@ Anova(wv_vlpfc_f, '3')
 ## MEDUSA coxme prototype
 #########################
 
-# take right LIPd -- responsive to both PE and 
-# summary(med_lipd_r <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*LIPd_R + wvs2b1a1*LIPd_R + wvs3b1a1*LIPd_R + 
-#                               value_wi*LIPd_R + trial_neg_inv_sc*uncertainty_wi*LIPd_R + 
-#                               (1|ID), medfbb))
-# stats <- as_tibble(insight::get_statistic(med_lipd_r))
-# stats$p <- 2*(1-pnorm(stats$Statistic))
-# 
-# # test with 2 labels
-labels <- names(medfbb[grepl("_R|_r|_L|_l", names(medfbb))])[7:30]
+# version with within-trial value and uncertainty
+
+labels <- names(medfbb[grepl("interp", names(medfbb))])
 newlist <- list()
 
 for (label in labels) {print(paste("Processing parcel", label))
@@ -329,12 +323,14 @@ for (label in labels) {print(paste("Processing parcel", label))
   medfbb$h <- medfbb[[label]]
   # form <- as.formula(paste0("Surv(t1,t2,response) ~ wvs1b1a1*", label, " + wvs2b1a1*", label, " + wvs3b1a1*", label, 
   # " +  value_wi*", label," + uncertainty_wi*", label, " + (1|ID)"))
-  m  <- coxme(Surv(t1,t2,response) ~ wvs1b1a1*h + wvs2b1a1*h + wvs3b1a1*h + 
-                value_wi*h + uncertainty_wi*h + 
+  m  <- coxme(Surv(t1,t2,response) ~ omission_lag*wvs1b1a1*h + omission_lag2*wvs2b1a1*h + omission_lag3*wvs3b1a1*h + 
+                value_wi_t*h + uncertainty_wi_t*h + 
+                value_b_t*h + uncertainty_b_t*h + 
+                trial_neg_inv_sc*h +
                 (1|ID), medfbb)
   stats <- as_tibble(insight::get_statistic(m))
   stats$p <- 2*(1-pnorm(stats$Statistic))
-  stats$label <- label
+  stats$label <- substr(label, 1, nchar(label)-7)
   newlist[[label]]<-stats
 }
 ddf <- do.call(rbind,newlist)
@@ -355,20 +351,21 @@ ddf$`p, FDR-corrected` = ddf$p_level_fdr
 edf <- ddf %>% filter(grepl("h", Parameter))
 ###### stopped here
 # make one mega-plot
+setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/coxme/')
 library(viridis)
-pdf("dan_medusa_coxme.pdf", width = 8, height = 10)
+pdf("dan_medusa_coxme_with_trial.pdf", width = 24, height = 14)
 print(ggplot(edf, aes(Parameter, label)) + geom_tile(aes(fill = Statistic, alpha = `p, FDR-corrected`), size = 1) +  
         scale_fill_viridis(option = "plasma") + scale_color_grey() + ylab("Parcel") + 
-        labs(alpha = expression(~italic(p)~', FDR-corrected'))) 
+        labs(alpha = expression(~italic(p)~', FDR-corrected'))) + theme(axis.text.x = element_text(angle = 45))
 dev.off()
 
-ggplot(edf, aes(label, Statistic, color = Parameter, group = Parameter, alpha = `p, FDR-corrected`)) + geom_point(aes(size = `p, FDR-corrected`))
+ggplot(edf, aes(label, Statistic, color = Parameter, group = Parameter, alpha = `p, FDR-corrected`)) + geom_point()
 
 save(file = "medusa_coxme_output.Rdata", ddf)
 
 
 
-l# try interaction with trials
+# try interaction with trials
 
 # summary(cox_wv2 <- coxme(Surv(t1,t2,response) ~ rtlag_sc + wv3b1a1 + trial_neg_inv_sc*rewFunc + 
 #                            value_wi + uncertainty_wi + 

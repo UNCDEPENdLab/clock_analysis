@@ -51,13 +51,17 @@ sdf$evt_time = floor(sdf$t2)
 # mark events (responses)
 sdf$response <- round(sdf$rt/1000, digits = 1)==sdf$t2
 
-# number bins
+# number bins, get within-subject and within-trial value and uncertainty
 sdf <- sdf %>% group_by(ID, run, trial) %>% dplyr::mutate(bin = 1:n(), time = bin/10) %>% ungroup() %>% 
   group_by(ID) %>% mutate(value_wi = scale(value),
                           uncertainty_wi = scale(uncertainty),
                           value_b = mean(value),
                           uncertainty_b = mean(uncertainty), 
-                          trial_neg_inv_sc = scale(-1/trial)) %>% ungroup() 
+                          trial_neg_inv_sc = scale(-1/trial)) %>% ungroup() %>%
+  group_by(ID, run, run_trial) %>% mutate(value_wi_t = scale(value),
+                                          uncertainty_wi_t = scale(uncertainty),
+                                          value_b_t = mean(value),
+                                          uncertainty_b_t = mean(uncertainty)) %>% ungroup()
 # filter out no-go zones at the edges
 # censoring the entire first second seems too harsh, remove first 500 ms
 fdf <- sdf %>% filter(bin >5 & bin <35)
@@ -163,15 +167,20 @@ msdf <- merge(mdf, mvudf)
 
 msdf$trial <- as.numeric(msdf$trial)
 msdf$timestep <- msdf$y_chosen
-# scale value and uncertainty
+# get within-subject and within-trial value and uncertainty
 msdf <- msdf %>% group_by(ID) %>% mutate(value_wi = scale(v),
-                          uncertainty_wi = scale(u),
-                          value_b = mean(v),
-                          uncertainty_b = mean(u), 
-                          trial_neg_inv_sc = scale(-1/run_trial)) %>% ungroup() 
+                                         uncertainty_wi = scale(u),
+                                         value_b = mean(v),
+                                         uncertainty_b = mean(u), 
+                                         trial_neg_inv_sc = scale(-1/run_trial)) %>% ungroup() %>%
+  group_by(ID, run, run_trial) %>% mutate(value_wi_t = scale(v),
+                                          uncertainty_wi_t = scale(u),
+                                          value_b_t = mean(v),
+                                          uncertainty_b_t = mean(u)) %>% ungroup()
+
 # filter out no-go zones at the edges
 # censoring the entire first second seems too harsh, remove first 500 ms
-mfdf <- msdf %>% filter(bin >5 & bin <35)
+mfdf <- msdf %>% filter(bin > 10 & bin <35)
 
 # diagnostics on uncertainty and value distributions
 
@@ -250,26 +259,43 @@ mfbb <- mbb %>% filter(bin >10 & bin <35)
 ## strategy for merging MEDUSA data: 1. write downsampled evt-time to coxme df, 2. merge in long MEDUSA df by id, run, trial, evt_time
 
 # spot-check obsessively
-pdf('meg_check.pdf', height = 6, width = 6)
-ggplot(mbb, aes(run_trial, value_wi, color = rewFunc)) + geom_smooth()
-dev.off()
-
-pdf('fmri_check.pdf', height = 6, width = 6)
-p1 <- ggplot(bb, aes(run_trial, value_wi, color = rewFunc)) + geom_smooth(method = 'gam')
-p2 <- ggplot(bb, aes(t1, value_wi, color = rewFunc)) + geom_smooth(method = 'gam')
-p3 <- ggplot(bb, aes(run_trial, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam')
-p4 <- ggplot(bb, aes(t1, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam')
-ggarrange(p1,p2, p3, p4)
-dev.off()
+# pdf('meg_check.pdf', height = 6, width = 6)
+# ggplot(mbb, aes(run_trial, value_wi, color = rewFunc)) + geom_smooth()
+# dev.off()
+# 
+# pdf('fmri_check.pdf', height = 6, width = 6)
+# p1 <- ggplot(bb, aes(run_trial, value_wi, color = rewFunc)) + geom_smooth(method = 'gam')
+# p2 <- ggplot(bb, aes(t1, value_wi, color = rewFunc)) + geom_smooth(method = 'gam')
+# p3 <- ggplot(bb, aes(run_trial, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam')
+# p4 <- ggplot(bb, aes(t1, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam')
+# ggarrange(p1,p2, p3, p4)
+# dev.off()
 
 # merge in MEDUSA data -- I wonder if we have some missing censored evt_times
 
+# use approx to interpolate
+
+# save w/o MEDUSA
+save(file = "fMRI_MEG_coxme_objects_no_MEDUSA_Nov23_2020", bb, fbb, mbb, mfbb)
+
+library(zoo)
 if (medusa) {
-load ("~/Box/SCEPTIC_fMRI/dan_medusa/cache/clock_dan_medusa_for_coxme.Rdata")  
-clock_cox$ID <- clock_cox$id
-medfbb <- inner_join(fbb, clock_cox)  %>% arrange(id, run, trial, t1)
-# spot-check -- not too much variability, but OK
-ggplot(medfbb, aes(t1, evt_time)) + geom_line()
+  load ("~/Box/SCEPTIC_fMRI/dan_medusa/cache/clock_dan_medusa_for_coxme.Rdata")  
+  clock_cox$ID <- clock_cox$id
+  # medbb <- inner_join(clock_cox, bb)  %>% arrange(id, run, trial, t1)
+  tmp <- left_join(clock_cox, bb)  %>% arrange(id, run, run_trial, evt_time) 
+  # View(tmp[1:500,c(1:6, 31:36, 88,89, 106)])
+  
+  labels <- names(clock_cox[grepl("_R|_r|_L|_l", names(clock_cox))])
+  medbb <-  tmp %>%  mutate_at(labels, funs(ifelse((online=="TRUE" & t1 != evt_time & !response), NA,.)))
+  medbb <- medbb  %>% arrange(ID, run, run_trial,evt_time)  %>% group_by(ID, run, run_trial) %>%
+    mutate_at(labels, list(interp = na.approx), na.rm = F)
+  # # spot-check -- not too much variability, but OK
+  # View(medbb[1:500,c(1:6, 31:35, 88,89,128, 106)])
+  # # spot-check again
+  # ggplot(medbb %>% filter(id==10637 & trial ==4 & run ==1), aes(t1, AIP1_R)) + 
+  #   geom_point() + geom_line(aes(t1, AIP1_R_interp))
+  medbb <- medbb %>% filter(!is.na(response)) %>% select(-labels)
+  medfbb <- medbb %>% filter(bin > 10 & bin < 35)
 }
-save(file = "fMRI_MEG_coxme_objects_Nov22_2020", bb, fbb, mbb, mfbb, medfbb)
- 
+save(file = "fMRI_MEG_coxme_objects_with_medusa_Nov24_2020", medbb, medfbb)
