@@ -295,6 +295,35 @@ df <- df %>% group_by(id,run) %>% mutate(v_max_wi = scale(v_max),
          rt_csv_sc = scale(rt_csv),
          rt_vmax_lag_sc = scale(rt_vmax_lag))
 
+get_kldsum <- function(v1, v2) {
+  require(LaplacesDemon)
+  stopifnot(length(v1) == length(v2))
+  if (any(is.na(v1)) || any(is.na(v2))) { return(NA_real_) }
+  kk <- KLD(v1, v2)
+  return(kk$sum.KLD.px.py)
+}
+df <- df %>% group_by(ID, run) %>% arrange(ID, run, run_trial) %>% mutate(
+  rt_lag2 = lag(rt_lag),
+  rt_lag3 = lag(rt_lag2),
+  rt_lag4 = lag(rt_lag3),
+  rt_lag5 = lag(rt_lag4),
+  rt_swing_lag2 = lag(rt_swing_lag),
+  omission_lag4 = lag(omission_lag3),
+  omission_lag5 = lag(omission_lag4)) %>% ungroup() %>%
+  rowwise() %>% mutate(
+    kld4 = get_kldsum(c(rt_lag4, rt_lag3, rt_lag2, rt_lag), c(rt_lag5, rt_lag4, rt_lag3, rt_lag2)),
+    kld3 = get_kldsum(c(rt_lag3, rt_lag2, rt_lag), c(rt_lag4, rt_lag3, rt_lag2)),
+    kld_rew3 = get_kldsum(c(omission_lag3, omission_lag2, omission_lag), c(omission_lag4, omission_lag3, omission_lag2)),
+    kld_rew4 = get_kldsum(c(omission_lag4, omission_lag3, omission_lag2, omission_lag), c(omission_lag5, omission_lag4, omission_lag3, omission_lag2))) %>%
+  ungroup() %>% group_by(ID, run) %>% mutate(kld3_lag = lag(kld3),
+                                             kld4_lag = lag(kld4),
+                                             kld3_cum2 = kld3 + kld3_lag,
+                                             kld4_cum2 = kld4 + kld4_lag
+  ) %>%
+  ungroup() %>% mutate(rt_swing_lag_sc = scale(rt_swing_lag),
+                       rt_swing_lag2_sc = scale(rt_swing_lag2))
+
+
 # correlate between-subject V and H with clusters
 b_df <- df %>% group_by(id) %>% dplyr::summarise(v_maxB = mean(v_max, na.rm = T),
                                                  v_entropyB = mean(v_entropy, na.rm = T))

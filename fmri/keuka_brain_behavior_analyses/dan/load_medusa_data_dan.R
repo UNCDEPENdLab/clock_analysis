@@ -4,7 +4,7 @@ medusa_dir = "~/Box/SCEPTIC_fMRI/dan_medusa"
 cache_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/cache"
 repo_directory <- "~/code/clock_analysis"
 
-# reprocess = T
+# reprocess = T # for troubleshooting only
 if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
 
 stopifnot(dir.exists(medusa_dir))  
@@ -257,8 +257,8 @@ if (!reprocess) {
   
   # clock_comb <- clock_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
   
-  # take only online event times
-  clock_wide <- clock_comb %>% filter(online==T) %>% select(id, run, run_trial, evt_time, label, decon_interp) %>% 
+  # both online and offline event times
+  clock_wide <- clock_comb %>% select(id, run, run_trial, evt_time, label, decon_interp) %>% 
     group_by(id, run, run_trial) %>%
     pivot_wider(names_from = c(label, evt_time), values_from = decon_interp)
   
