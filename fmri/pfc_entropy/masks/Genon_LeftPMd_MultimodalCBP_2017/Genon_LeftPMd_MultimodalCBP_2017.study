@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VolumeViewerStudy name="Genon et al., 2017" directory="Genon_LeftPMd_MultimodalCBP_2017">
+  <Metadata>
+    <Element name="Submitter" islink="false" default="" editable="false" required="true">sgenon</Element>
+    <Element name="Timestamp" islink="false" default="" editable="false" required="true">03.03.2017 15:34 Europe/Berlin</Element>
+    <Element name="Description" islink="false" default="Concise description of the study (500 characters or less)" editable="true" required="true">Five subregions were disentangled within the left dorsal premotor cortex by using multimodal in-vivo parcellation. The subregions were subsequently characterised in terms of functional connectivity and associated behavioral functions.</Element>
+    <Element name="Abstract" islink="false" default="Full abstract of the study" editable="true" required="true">Despite the common conception of the dorsal premotor cortex (PMd) as a single brain region, its diverse connectivity profiles and behavioral heterogeneity argue for a differentiated organization of the PMd. A previous study revealed that the right PMd is characterised by a rostro-caudal and a ventro-dorsal distinction dividing it into five subregions: rostral, central, caudal, ventral and dorsal. The present study assessed whether a similar organization is present in the left hemisphere, by capitalizing on a multimodal data-driven approach combining connectivity-based parcellation (CBP) based on meta-analytic modeling, resting-state functional connectivity, and probabilistic diffusion tractography. The resulting PMd modules were then characterized based on multimodal functional connectivity and a quantitative analysis of associated behavioral functions. Analyzing the clusters consistent across all modalities revealed an organization of the left PMd that mirrored its right counterpart to a large degree. Again, caudal, central and rostral modules reflected a cognitive-motor gradient and a premotor eye-field was found in the ventral part of the left PMd. In addition, a distinct module linked to abstract cognitive functions was observed in the rostro-ventral left PMd across all CBP modalities, implying greater differentiation of higher cognitive functions for the left than the right PMd. </Element>
+    <Element name="Title" islink="false" default="Who stole Santa's cookies?" editable="true" required="true">The heterogeneity of the left dorsal premotor cortex evidenced by multimodal connectivity-based parcellation and functional characterization.</Element>
+    <Element name="Journal" islink="false" default="Journal of Fictitious Crimes" editable="true" required="true">NeuroImage</Element>
+    <Element name="Year" islink="false" default="2010" editable="true" required="true">2017</Element>
+    <Element name="Authors" islink="false" default="A.B. Author;B.B. King" editable="true" required="true">S. Genon, A. Reid, H. Li, L. Fan, V.I. Müller, E.C. Cieslik, F. Hoffstaedter, R. Langner, C. Grefkes, A.R. Laird, P.T. Fox, T. Jiang, K. Amunts, S.B. Eickhoff </Element>
+    <Element name="Volume" islink="false" default="1(2)" editable="true" required="false"/>
+    <Element name="Pages" islink="false" default="120-134" editable="true" required="false"/>
+    <Element name="PDF" upload="application/pdf" islink="false" default="" editable="true" required="false">Genon_et_al_2017_NeuroImage_leftPMd.pdf</Element>
+    <Element name="Keywords" islink="false" default="cookies;milk;Santa Claus" editable="true" required="true">precentral gyrus, eye-field, probabilistic diffusion tractography, fMRI, area 55b</Element>
+    <Element name="PubMedID" islink="true" default="12345678" editable="true" required="false">28213119</Element>
+    <Element name="DOI" islink="true" default="" editable="true" required="false"/>
+    <Element name="CanRedistribute" islink="false" default="true" editable="false" required="true">true</Element>
+    <Element name="AnimaId" islink="false" default="000000" editable="false" required="true">
+		</Element>
+    <Element name="Version" islink="false" default="1" editable="false" required="true">1</Element>
+  </Metadata>
+  <StudyElements>
+    <StudyElement name="Figure_3_rostral_module" type="VolumeFile" file="Conj_RostralMiddle_red.nii.gz">
+      <Metadata>
+        <Element name="Caption">The rostral left PMd module identified by multimodal CBP.</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="Figure_3_central_module" type="VolumeFile" file="Conj_Central_blue.nii.gz">
+      <Metadata>
+        <Element name="Caption">The central left PMd module identified by multimodal CBP</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">T-statistic</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="Figure_3_caudal_module" type="VolumeFile" file="Conj_Caudal_green.nii.gz">
+      <Metadata>
+        <Element name="Caption">The caudal left PMd module identified by multimodal CBP</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="Figure_3_ventral_subregion" type="VolumeFile" file="Conj_IntermediateVentral_yellow.nii.gz">
+      <Metadata>
+        <Element name="Caption">The ventral (posterior) left PMd subregion identified by multimodal CBP</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="Figure_3_rostro-ventral_subregion" type="VolumeFile" file="Conj_RostralInferior_Pink.nii.gz">
+      <Metadata>
+        <Element name="Caption">The rostro-ventral left PMd subregion identified by multimodal CBP</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="Figure_4_SpecificFC_rostral" type="VolumeFile" file="fSpecific_Rostral_MACMRSFC.nii.gz">
+      <Metadata>
+        <Element name="Caption">Specific functional connectivity of the rostral left PMd modules</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="Figure_4_SpecificFC_central&#9;" type="VolumeFile" file="fSpecific_Central_MACMRSFC.nii.gz">
+      <Metadata>
+        <Element name="Caption">Specific functional connectivity of the central left PMd modules	</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="Figure_4_SpecificFC_caudal&#9;" type="VolumeFile" file="fSpecific_Caudal_RSMACM.nii.gz">
+      <Metadata>
+        <Element name="Caption">Specific functional connectivity of the caudal left PMd modules</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="Figure_4_SpecificFC_ventral&#9;" type="VolumeFile" file="fSpecific_Ventral_RSMACM.nii.gz">
+      <Metadata>
+        <Element name="Caption">Specific functional connectivity of the ventral (posterior) left PMd subregion</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="Figure_4_SpecificFC_RostroVentral&#9;" type="VolumeFile" file="fSpecific_RostroVentral_MACMRSFC.nii.gz">
+      <Metadata>
+        <Element name="Caption">Specific functional connectivity of the rostro-ventral left PMd subregion</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="FigureS9_MACM_rostral" type="VolumeFile" file="lPMd_RostralMiddle_red.nii.gz">
+      <Metadata>
+        <Element name="Caption">Task-based functional connectivity profile of the rostral left PMd module revealed by MACM</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="FigureS9_MACM_central" type="VolumeFile" file="lPMd_central_blue.nii.gz">
+      <Metadata>
+        <Element name="Caption">Task-based functional connectivity profile of the central left PMd module revealed by MACM</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="FigureS9_MACM_caudal" type="VolumeFile" file="lPMd_caudal_green.nii.gz">
+      <Metadata>
+        <Element name="Caption">Task-based functional connectivity profile of the caudal left PMd module revealed by MACM</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="FigureS9_MACM_ventral" type="VolumeFile" file="lPMd_IntermediateVentral_yellow.nii.gz">
+      <Metadata>
+        <Element name="Caption">Task-based functional connectivity profile of the (posterior) ventral left PMd module revealed by MACM</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="FigureS9_MACM_RostroVentral" type="VolumeFile" file="lPMd_RostralInferior_pink.nii.gz">
+      <Metadata>
+        <Element name="Caption">Task-based functional connectivity profile of the rostro-ventral left PMd module revealed by MACM</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">Mask</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="FigureS10_RSFC_rostral" type="VolumeFile" file="fRSFC_specific_rostral5kMMCBP.nii.gz">
+      <Metadata>
+        <Element name="Caption">Unconstrained functional connectivity profile of the rostral left PMd module revealed by RSFC</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">T-statistic</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="FigureS10_RSFC_central" type="VolumeFile" file="fRSFC_specific_central5kMMCBP.nii.gz">
+      <Metadata>
+        <Element name="Caption">Unconstrained functional connectivity profile of the central left PMd module revealed by RSFC</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">T-statistic</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="FigureS10_RSFC_caudal" type="VolumeFile" file="fRSFC_specific_caudal5kMMCBP.nii.gz">
+      <Metadata>
+        <Element name="Caption">Unconstrained functional connectivity profile of the caudal left PMd module revealed by RSFC</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">T-statistic</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="FigureS10_RSFC_ventral" type="VolumeFile" file="fRSFC_specific_ventral5kMMCBP.nii.gz">
+      <Metadata>
+        <Element name="Caption">Unconstrained functional connectivity profile of the ventral left PMd module revealed by RSFC</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">T-statistic</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+    <StudyElement name="FigureS10_RSFC_RostroVentral" type="VolumeFile" file="fRSFC_specific_rostroventral5kMMCBP.nii.gz">
+      <Metadata>
+        <Element name="Caption">Unconstrained functional connectivity profile of the rostro-ventral left PMd module revealed by RSFC</Element>
+        <Element name="Coords">ICBM-152</Element>
+        <Element name="Quantity">T-statistic</Element>
+        <Element name="Threshold">None</Element>
+      </Metadata>
+    </StudyElement>
+  </StudyElements>
+</VolumeViewerStudy>

@@ -14,9 +14,13 @@ library(broom.mixed)
 library(car)
 library(foreach)
 library(doParallel)
+library(viridis)
 
 reprocess = F # if running for the first time or need to reprocess MEDUSA data
 lagged_decon = F # use previous trial's signal to predict current RT
+# alignment = c("clock", "rt") # alignment of within-trial deconvolved signal
+alignment = c("rt")
+uncensored = F # include first 1s and last 0.5s in survival models
 
 # basedir <- "~/Data_Analysis"
 basedir <- "~/code"
@@ -25,8 +29,10 @@ medusa_dir = "~/Box/SCEPTIC_fMRI/dan_medusa"
 cache_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/cache"
 repo_directory <- file.path(basedir,"clock_analysis")
 if (lagged_decon) {
-plot_dir <- "~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/coxme/next_rt_rt_aligned"
-} else {plot_dir <- "~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/coxme/this_rt_rt_aligned"}
+  rt_plot_dir <- "~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/coxme/next_rt_rt_aligned"
+  clock_plot_dir <- "~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/coxme/next_rt_clock_aligned"
+} else {rt_plot_dir <- "~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/coxme/this_rt_rt_aligned"
+clock_plot_dir <- "~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/coxme/this_rt_clock_aligned"}
 cwd <- getwd()
 setwd(coxme_dir)
 
@@ -34,7 +40,11 @@ setwd(coxme_dir)
 if (reprocess) {
   source(file.path(coxme_dir, "clock_coxme_prep_medusa_wtrial_inv.R"))
 } else {
-  load(file.path(cache_dir, "fMRI_coxme_objects_with_wtrial_inv_medusa_Dec15_2020.RData"))
+  if (lagged_decon) {
+    load(file.path(cache_dir, "fMRI_coxme_objects_with_wtrial_inv_medusa_lagged_Dec29_2020.RData"))  
+  } else{
+    load(file.path(cache_dir, "fMRI_coxme_objects_with_wtrial_inv_medusa_UNlagged_Dec29_2020.RData"))  
+  }
 }
 
 # make cluster ----
@@ -53,51 +63,73 @@ registerDoParallel(cl)
 
 # trial-invariant MEDUSA coxme ----
 # drop "_lag" suffix (kept in .RData to avoid confusion)
-medlag_fbb <- medlag_fbb %>%
-  rename_at(vars(contains("_R_") |  contains("_L_")), 
-            ~ str_remove(., "_lag"))
-medlag_bb <- medlag_bb %>%
-  rename_at(vars(contains("_R_") |  contains("_L_")), 
-            ~ str_remove(., "_lag"))
-labels <- names(medlag_fbb[grepl("_L_|_R_", names(medlag_fbb))])
+if (lagged_decon) {
+  if (uncensored) {
+    clock_surv <- clock_lag_bb %>%
+      rename_at(vars(contains("_R_") |  contains("_L_")), 
+                ~ str_remove(., "_lag"))
+    rt_surv <- rt_lag_bb %>%
+      rename_at(vars(contains("_R_") |  contains("_L_")), 
+                ~ str_remove(., "_lag"))
+  } else {
+    clock_surv <- clock_lag_fbb %>%
+      rename_at(vars(contains("_R_") |  contains("_L_")), 
+                ~ str_remove(., "_lag"))
+    rt_surv <- rt_lag_fbb %>%
+      rename_at(vars(contains("_R_") |  contains("_L_")), 
+                ~ str_remove(., "_lag"))
+  }
+} else {
+  if (uncensored) {
+    clock_surv <- clock_bb 
+    rt_surv <- rt_bb 
+  } else {
+    clock_surv <- clock_fbb 
+    rt_surv <- rt_fbb 
+  }
+  
+}
+labels <- names(rt_surv[grepl("_L_|_R_", names(rt_surv))])
 # #test
-labels <- labels[1:2]
+# labels <- labels[1:2]
 # newlist <- list()
 
-ddf <- foreach(i = 1:length(labels), .packages=c("lme4", "tidyverse", "broom", "coxme", "car"), 
-               .combine='rbind', .noexport=c("medlag_bb")) %dopar% {
-                 label <- labels[[i]]
-                 # for (label in labels) {print(paste("Processing parcel", label))
-                 # for (side in c("l", "r")) {
-                 # for (t in -1:10) {
-                 medlag_fbb$h <- medlag_fbb[[label]]
-                 # form <- as.formula(paste0("Surv(t1,t2,response) ~ wvs1b1a1*", label, " + wvs2b1a1*", label, " + wvs3b1a1*", label, 
-                 # " +  value_wi*", label," + uncertainty_wi*", label, " + (1|ID)"))
-                 # simplified model:
-                 m  <- coxme(Surv(t1,t2,response) ~ omission_lag*wvs1b1a1*h + omission_lag2*wvs2b1a1*h + 
-                               value_wi_t*h + uncertainty_wi_t*h + 
-                               (1|ID), medlag_fbb)
-                 # m  <- coxme(Surv(t1,t2,response) ~ omission_lag*wvs1b1a1*h + omission_lag2*wvs2b1a1*h + 
-                 #               value_wi_t*h + uncertainty_wi_t*h + 
-                 #               value_b_t*h + uncertainty_b_t*h + 
-                 #               trial_neg_inv_sc*h +
-                 #               (1|ID), medlag_fbb)
-                 stats <- as_tibble(insight::get_statistic(m))
-                 stats$p <- 2*(1-pnorm(stats$Statistic))
-                 stats$label <- label
-                 stats$side <- substr(as.character(str_match(label, "_R_|_L_")),2,2)
-                 stats$t <- as.numeric(gsub(".*_", "\\1", label))
-                 suffix <- paste0("_", stats$side[1], "_", stats$t[1])
-                 stats$region <- str_remove(label, suffix)
-                 # newlist[[label]]<-stats
-                 stats}
-df <- as_tibble(ddf)               
-# ddf$label <- as.factor(stringr::str_remove(pattern = paste0("_", gsub(".*_", "\\1", ddf$label), ""), ddf$label))
-terms <- unique(ddf$Parameter) 
-neural <- str_detect(terms,"h")
-terms <- terms[neural]
-# FDR ----
-df <- df  %>% group_by(Parameter) %>% mutate(p_fdr = p.adjust(p, method = 'fdr'),
+for (event in alignment) {
+  if (event == 'rt') {surv_df <- clock_surv} else {surv_df <- rt_surv}
+  df <- foreach(i = 1:length(labels), .packages=c("lme4", "tidyverse", "broom", "coxme", "car"), 
+                 .combine='rbind') %dopar% {
+                   label <- labels[[i]]
+                   # for (label in labels) {print(paste("Processing parcel", label))
+                   # for (side in c("l", "r")) {
+                   # for (t in -1:10) {
+                   surv_df$h <- surv_df[[label]]
+                   # form <- as.formula(paste0("Surv(t1,t2,response) ~ wvs1b1a1*", label, " + wvs2b1a1*", label, " + wvs3b1a1*", label, 
+                   # " +  value_wi*", label," + uncertainty_wi*", label, " + (1|ID)"))
+                   # simplified model:
+                   m  <- coxme(Surv(t1,t2,response) ~ omission_lag*wvs1b1a1*h + omission_lag2*wvs2b1a1*h + 
+                                 value_wi_t*h + uncertainty_wi_t*h + 
+                                 (1|ID), surv_df)
+                   # m  <- coxme(Surv(t1,t2,response) ~ omission_lag*wvs1b1a1*h + omission_lag2*wvs2b1a1*h + 
+                   #               value_wi_t*h + uncertainty_wi_t*h + 
+                   #               value_b_t*h + uncertainty_b_t*h + 
+                   #               trial_neg_inv_sc*h +
+                   #               (1|ID), medlag_fbb)
+                   stats <- as_tibble(insight::get_statistic(m))
+                   stats$p <- 2*(1-pnorm(stats$Statistic))
+                   stats$label <- label
+                   stats$side <- substr(as.character(str_match(label, "_R_|_L_")),2,2)
+                   stats$t <- as.numeric(gsub(".*_", "\\1", label))
+                   suffix <- paste0("_", stats$side[1], "_", stats$t[1])
+                   stats$region <- str_remove(label, suffix)
+                   # newlist[[label]]<-stats
+                   stats}
+  df <- as_tibble(df)               
+  # ddf$label <- as.factor(stringr::str_remove(pattern = paste0("_", gsub(".*_", "\\1", ddf$label), ""), ddf$label))
+  terms <- unique(ddf$Parameter) 
+  neural <- str_detect(terms,"h")
+  terms <- terms[neural]
+  # FDR ----
+  df <- df  %>% group_by(Parameter) %>% mutate(p_fdr = p.adjust(p, method = 'fdr'),
                                                p_level_fdr = as.factor(case_when(
                                                  # p_fdr > .1 ~ '0',
                                                  # p_fdr < .1 & p_fdr > .05 ~ '1',
@@ -105,23 +137,29 @@ df <- df  %>% group_by(Parameter) %>% mutate(p_fdr = p.adjust(p, method = 'fdr')
                                                  p_fdr < .05 & p_fdr > .01 ~ '2',
                                                  p_fdr < .01 & p_fdr > .001 ~ '3',
                                                  p_fdr <.001 ~ '4')),
-) %>% ungroup() 
-df$p_level_fdr <- factor(df$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
-df$`p, FDR-corrected` = df$p_level_fdr
-# plots ----
-setwd(plot_dir)
-epoch_label = "Time relative to outcome, seconds"
-for (fe in terms) {
-  edf <- df %>% filter(Parameter == paste(fe)) 
-  termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-  pdf(paste(termstr, ".pdf", sep = ""), width = 11, height = 6)
-  print(ggplot(edf, aes(t, region)) + geom_tile(aes(fill = Statistic, alpha = `p, FDR-corrected`), size = 1) +  
-          geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + facet_wrap(~side) +
-          scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Parcel") + 
-          labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
-  dev.off()
-  ## save ----
-  # save output for inspection
-  save(file = "medusa_coxme_wtrial_inv_output.Rdata", df, ddf)} 
+  ) %>% ungroup() 
+  df$p_level_fdr <- factor(df$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
+  df$`p, FDR-corrected` = df$p_level_fdr
+  # plots ----
+  if (event == "clock") {
+    setwd(clock_plot_dir)  
+    epoch_label = "Time relative to clock onset, seconds"
+  } else if (event == "rt") {
+    setwd(rt_plot_dir)
+    epoch_label = "Time relative to outcome, seconds"
+  }
+  for (fe in terms) {
+    edf <- df %>% filter(Parameter == paste(fe)) 
+    termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
+    pdf(paste(termstr, ".pdf", sep = ""), width = 11, height = 6)
+    print(ggplot(edf, aes(t, region)) + geom_tile(aes(fill = Statistic, alpha = `p, FDR-corrected`), size = 1) +  
+            geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + facet_wrap(~side) +
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Parcel") + 
+            labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
+    dev.off()
+    ## save ----
+    # save output for inspection
+    save(file = "medusa_coxme_wtrial_inv_output.Rdata", df, ddf)} 
+}
 stopCluster(cl)
 
