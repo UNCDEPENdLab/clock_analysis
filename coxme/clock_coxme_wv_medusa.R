@@ -8,12 +8,14 @@ library(survival)
 library(coxme)
 library(survminer)
 library(ggpubr)
+library(broom)
+library(broom.mixed)
 # devtools::install_github('junkka/ehahelper') # requires gfortran, $ brew cask install gfortran
 library(car)
 library(foreach)
 library(doParallel)
 
-reprocess = T # if running for the first time or need to reprocess MEDUSA data
+reprocess = F # if running for the first time or need to reprocess MEDUSA data
 lagged_decon = F # use previous trial's signal to predict current RT
 
 # basedir <- "~/Data_Analysis"
@@ -59,7 +61,7 @@ medlag_bb <- medlag_bb %>%
             ~ str_remove(., "_lag"))
 labels <- names(medlag_fbb[grepl("_L_|_R_", names(medlag_fbb))])
 # #test
-# labels <- labels[1:2]
+labels <- labels[1:2]
 # newlist <- list()
 
 ddf <- foreach(i = 1:length(labels), .packages=c("lme4", "tidyverse", "broom", "coxme", "car"), 
