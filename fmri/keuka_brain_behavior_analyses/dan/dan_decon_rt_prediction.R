@@ -18,7 +18,7 @@ repo_directory <- "~/code/clock_analysis"
 # data & options ----
 
 # data loading options
-reprocess = F # otherwise load data from cache
+reprocess = T # otherwise load data from cache
 if (!reprocess) {
   wide_only = T # only load wide data (parcels and timepoints as variables)
 }
@@ -27,7 +27,7 @@ source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_me
 
 # what to run
 plots = T
-decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
+decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt_predict = T # predicts next response based on signal and behavioral variables
 online = T # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = T

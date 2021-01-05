@@ -18,8 +18,10 @@ library(viridis)
 
 reprocess = F # if running for the first time or need to reprocess MEDUSA data
 lagged_decon = F # use previous trial's signal to predict current RT
-# alignment = c("clock", "rt") # alignment of within-trial deconvolved signal
-alignment = c("rt")
+alignment = c("clock", "rt") # alignment of within-trial deconvolved signal
+# alignment = c("rt")
+# alignment = c("clock")
+
 uncensored = F # include first 1s and last 0.5s in survival models
 
 # basedir <- "~/Data_Analysis"
@@ -95,7 +97,7 @@ labels <- names(rt_surv[grepl("_L_|_R_", names(rt_surv))])
 # newlist <- list()
 
 for (event in alignment) {
-  if (event == 'rt') {surv_df <- clock_surv} else {surv_df <- rt_surv}
+  if (event == 'rt') {surv_df <- rt_surv} else {surv_df <- clock_surv}
   df <- foreach(i = 1:length(labels), .packages=c("lme4", "tidyverse", "broom", "coxme", "car"), 
                  .combine='rbind') %dopar% {
                    label <- labels[[i]]
@@ -125,7 +127,7 @@ for (event in alignment) {
                    stats}
   df <- as_tibble(df)               
   # ddf$label <- as.factor(stringr::str_remove(pattern = paste0("_", gsub(".*_", "\\1", ddf$label), ""), ddf$label))
-  terms <- unique(ddf$Parameter) 
+  terms <- unique(df$Parameter) 
   neural <- str_detect(terms,"h")
   terms <- terms[neural]
   # FDR ----
@@ -159,7 +161,7 @@ for (event in alignment) {
     dev.off()
     ## save ----
     # save output for inspection
-    save(file = "medusa_coxme_wtrial_inv_output.Rdata", df, ddf)} 
+    save(file = "medusa_coxme_wtrial_inv_output.Rdata", df)} 
 }
 stopCluster(cl)
 
