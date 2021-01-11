@@ -13,11 +13,9 @@ setwd("/Users/michael/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_ana
 #source("/Users/hallquist/Data_Analysis/r_packages/fmri.pipeline/R/get_mmy3_trial_df.R")
 #setwd(file.path(getMainDir(), "users", "michael", "sceptic_decon"))
 
-source("/Users/michael/Data_Analysis/r_packages/fmri.pipeline/R/rle_dt.R")
+#source("/Users/michael/Data_Analysis/r_packages/fmri.pipeline/R/rle_dt.R")
 
-compress_results <- read_csv("Schaefer_DorsAttn_2.3mm_clock_long_compression.csv.gz") %>%
-  as.data.table()
-
+compress_results <- read_csv("Schaefer_DorsAttn_2.3mm_clock_long_compression.csv.gz") %>% as.data.table()
 compress_results[, atlas := NULL]
 
 trial_df <- readRDS("/Users/michael/Data_Analysis/clock_analysis/fmri/mmy3_trial_df_selective_groupfixed.rds") %>%
@@ -49,21 +47,27 @@ combined <- left_join(compress_results, trial_df, by=c("id", "run", "trial")) %>
     rt_vmax_lag=scale(rt_vmax_lag)
   )
 
-combined_rle <- rle_dt$new(data=combined, keys=c("id", "run", "trial", "atlas_value", "rewFunc", "emotion"), optimize_order = FALSE)
+#combined_rle <- rle_dt$new(data=combined, keys=c("id", "run", "trial", "atlas_value", "rewFunc", "emotion"), optimize_order = FALSE)
 
 avs <- sort(unique(combined$atlas_value))
 
 #force cleanup
-rm(compress_results, combined)
-gc()
+#rm(compress_results, combined)
+#gc()
 
 
 
-toplot <- combined_rle$get() %>% filter(atlas_value %in% c(41, 145, 33, 141, 31, 135)) %>%
+# toplot <- combined_rle$get() %>% filter(atlas_value %in% c(41, 145, 33, 141, 31, 135)) %>%
+#   mutate(atlas_value=factor(atlas_value, levels=c(33, 41, 141, 145, 31, 135), labels=c("L_LIPd", "L_FEF", "R_LIPd", "R_FEF", "L_MT", "R_MT")))
+# 
+# 
+# rfef <- combined_rle$get() %>% filter(atlas_value == 145)
+
+toplot <- combined %>% filter(atlas_value %in% c(41, 145, 33, 141, 31, 135)) %>%
   mutate(atlas_value=factor(atlas_value, levels=c(33, 41, 141, 145, 31, 135), labels=c("L_LIPd", "L_FEF", "R_LIPd", "R_FEF", "L_MT", "R_MT")))
 
 
-rfef <- combined_rle$get() %>% filter(atlas_value == 145)
+rfef <- combined %>% filter(atlas_value == 145)
 
 
 
