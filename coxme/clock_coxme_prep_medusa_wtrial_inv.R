@@ -34,7 +34,7 @@ load(file.path(cache_dir, 'clock_dan_wide_ts.Rdata'))
 cat("Loading RT decons\n")
 load(file.path(cache_dir, 'rt_dan_wide_ts.Rdata'))
 
-cat("Scale behavioral variables\n")
+cat("Scaling behavioral variables\n")
 # U and V within- and between-trial
 bb <- bb %>% group_by(ID, run, run_trial) %>% mutate(value_wi_t = scale(value),
                                                      uncertainty_wi_t = scale(uncertainty),
@@ -45,20 +45,25 @@ fbb <- fbb %>% group_by(ID, run, run_trial) %>% mutate(value_wi_t = scale(value)
                                                        value_b_t = mean(value),
                                                        uncertainty_b_t = mean(uncertainty)) %>% ungroup()
 
+# swap in censored clock-aligned data
+if (censor_clock_post_rt) {clock_wide <- clock_wide_cens}
+
 # get lagged brain signal ----
-# start with RT-locked decons, get lags for RT prediction
-labels <- names(rt_wide[grepl("_R|_r|_L|_l", names(rt_wide))])
+# lags are for next RT prediction
+rt_labels <- names(rt_wide[grepl("_R|_r|_L|_l", names(rt_wide))])
+clock_labels <- names(clock_wide[grepl("_R|_r|_L|_l", names(clock_wide))])
+
 rt_wide <- rt_wide %>% group_by(id, run) %>% arrange(id, run, run_trial)
 clock_wide <- clock_wide %>% group_by(id, run) %>% arrange(id, run, run_trial)
 
 cat("Getting decon lags\n")
 if (lagged_decon) {
-  for (label in labels) {
+  for (label in rt_labels) {
     varname = paste0(label, "_lag")
     rt_wide <- rt_wide %>% 
       mutate(!!varname := lag(!!as.name(label)))
   }
-  for (label in labels) {
+  for (label in clock_labels) {
     varname = paste0(label, "_lag")
     clock_wide <- clock_wide %>% 
       mutate(!!varname := lag(!!as.name(label)))
@@ -70,8 +75,9 @@ if (lagged_decon) {
   # merge ----
   # merge survival objects with lagged MEDUSA data
   cat("Removing unlagged decons\n")
-  rt_wide <- rt_wide %>% select(-all_of(labels)) %>% mutate(ID = id) %>% ungroup()
-  clock_wide <- clock_wide %>% select(-all_of(labels)) %>% mutate(ID = id) %>% ungroup()
+  rt_wide <- rt_wide %>% select(-all_of(rt_labels)) %>% mutate(ID = id) %>% ungroup()
+  clock_wide <- clock_wide %>% select(-all_of(clock_labels)) %>% mutate(ID = id) %>% ungroup()
+
   cat("Merging\n")
   rt_lag_bb <- inner_join(bb, rt_wide)
   rt_lag_fbb <- inner_join(fbb, rt_wide)

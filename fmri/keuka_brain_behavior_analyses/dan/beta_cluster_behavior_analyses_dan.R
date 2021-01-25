@@ -14,7 +14,7 @@ library(sjstats)
 library(sjPlot)
 library(emmeans)
 library(cowplot)
-install_github("UNCDEPENdLab/dependlab")
+# install_github("UNCDEPENdLab/dependlab")
 library(dependlab)
 source('~/code/Rhelpers/screen.lmerTest.R')
 source('~/code/Rhelpers/vif.lme.R')
@@ -80,7 +80,15 @@ screen.lmerTest(mb_dan1, .05)
 summary(mb_dan1)
 Anova(mb_dan1, '3')
 
-
+# basic model with only the general entropy factor:
+mb_dan1a <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                v_max_wi_lag + v_entropy_wi + general_entropy)^2 + 
+                   rt_lag_sc:last_outcome:general_entropy + 
+                    rt_lag_sc:trial_neg_inv_sc: v_entropy_wi:general_entropy + 
+                   rt_vmax_lag_sc:trial_neg_inv_sc:general_entropy + 
+                   (1|id/run), df %>% filter(rt_csv<4000))
+screen.lmerTest(mb_dan1a, .05)
+summary(mb_dan1a)
 
 # add vlPFC entropy region
 mb_dan2 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 

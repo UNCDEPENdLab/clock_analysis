@@ -1,6 +1,15 @@
 # reads in data
+# normally called from medusa_event_locked_lmer_dan.R
 
-medusa_dir = "~/Box/SCEPTIC_fMRI/dan_medusa"
+# if running separately, uncomment lines 4-8
+# reprocess = T
+# if (!reprocess) {
+#   wide_only = F  
+#   tall_only = T
+# }
+
+medusa_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/"
+if (replicate_compression) {medusa_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/new_locking_compression"}
 cache_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/cache"
 repo_directory <- "~/code/clock_analysis"
 
@@ -32,20 +41,33 @@ if (!reprocess) {
     load(file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))
   }
 } else { 
-  # load clock
+  # load clock ----
   clock <- as_tibble(read_csv("Schaefer_DorsAttn_2.3mm_clock_long_decon_locked.csv.gz"))
   clock$atlas_value <- as.character(clock$atlas_value)
-  clock <- clock %>% arrange(id, run, run_trial, evt_time)
+  
+  if (replicate_compression) {clock <- clock %>%
+    mutate(run_trial = trial - (run - 1)*50, 
+           decon_interp = decon_mean, 
+           sd_interp = decon_sd) %>% ungroup()
+  }
+  clock <- clock %>% arrange(id, run, run_trial, evt_time) 
   # # load feedback
   # fb <- as_tibble(read_csv("Schaefer_DorsAttn_2.3mm_feedback_long_decon_locked.csv.gz"))
   # fb$atlas_value <- as.character(fb$atlas_value)
   # fb <- fb %>% arrange(id, run, run_trial, evt_time)
-  # load RT
-  rt <- as_tibble(read_csv("Schaefer_DorsAttn_2.3mm_rt_long_decon_locked.csv.gz"))
-  rt$atlas_value <- as.character(rt$atlas_value)
-  rt <- rt %>% arrange(id, run, run_trial, evt_time)
+  # load RT ----
+  if (!replicate_compression) {
+    
+    rt <- as_tibble(read_csv("Schaefer_DorsAttn_2.3mm_rt_long_decon_locked.csv.gz"))
+    rt$atlas_value <- as.character(rt$atlas_value)
+    if (replicate_compression) {rt <- rt %>%
+      mutate(run_trial = trial - (run - 1)*50, 
+             decon_interp = decon_mean) %>% ungroup()
+    }
+    rt <- rt %>% arrange(id, run, run_trial, evt_time)
+  }
   
-  # add manual labels for Schaeffer areas
+  # add manual labels for Schaefer areas ----
   labels <- as_tibble(read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_DAN_order_manual.txt", 
                                  "\t", escape_double = FALSE, col_names = FALSE, 
                                  trim_ws = TRUE)) %>% select(1:4)
@@ -65,7 +87,10 @@ if (!reprocess) {
   
   # fb <- merge(fb, labels)
   clock <- merge(clock, labels)
-  rt <- merge(rt, labels)
+  if (!replicate_compression) {
+    rt <- merge(rt, labels)
+  }
+  # load trial-level data ----
   message("Loading trial-level data")
   trial_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")) %>%
     mutate(trial=as.numeric(trial)) %>%
@@ -139,12 +164,27 @@ if (!reprocess) {
   
   trial_df <- inner_join(trial_df,u_df)
   
+  # load fixed entropy and RT_vmax
+  fixed <-  read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
+  fixed <- as_tibble(fixed) %>% select(c(id, run, trial, v_entropy, rt_vmax, pe_max)) %>%
+    rename(v_entropy_fixed = v_entropy, rt_vmax_fixed = rt_vmax, pe_max_fixed = pe_max) %>% group_by(id, run) %>%
+    mutate(
+      rt_vmax_lag_fixed = lag(rt_vmax_fixed),
+      rt_vmax_change_fixed = rt_vmax_fixed - rt_vmax_lag_fixed,
+      rt_vmax_next_fixed = lead(rt_vmax_fixed),
+      rt_vmax_change_next_fixed = rt_vmax_next_fixed - rt_vmax_fixed,
+      v_entropy_wi_fixed = scale(v_entropy_fixed),
+      v_entropy_wi_lead_fixed = lead(v_entropy_wi_fixed),
+      v_entropy_wi_change_fixed = v_entropy_wi_lead_fixed - v_entropy_wi_fixed,
+    )
   
-  # add parameters
+  trial_df <- inner_join(trial_df, fixed, by = c("id", "trial", "run"))
+  # add parameters ----
   params <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv"))
   
   trial_df <- inner_join(trial_df, params, by = "id")
   
+  # transform for MEDUSA ----
   message("Transforming for MEDUSA")
   
   clock_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
@@ -158,29 +198,29 @@ if (!reprocess) {
   #   group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
   #   inner_join(fb) %>% arrange(id, run, run_trial, evt_time)
   # 
-  rt_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
-                                 swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, rt_vmax_lag, rt_vmax_change,
-                                 gamma, total_earnings, ev,next_swing_above_median, u_chosen, u_chosen_lag, u_chosen_change, rt_vmax_change_next) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
-    group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
-    inner_join(rt) %>% arrange(id, run, run_trial, evt_time)
-  
+  if (!replicate_compression) {
+    rt_comb <- trial_df %>% select(id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
+                                   swing_above_median, first10,reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy, entropy_lag, abs_pe_f, rt_vmax_lag, rt_vmax_change,
+                                   gamma, total_earnings, ev,next_swing_above_median, u_chosen, u_chosen_lag, u_chosen_change, rt_vmax_change_next) %>% mutate(rewom=if_else(score_csv > 0, "rew", "om")) %>%
+      group_by(id, run) %>% mutate(iti_prev=dplyr::lag(iti_ideal, by="run_trial")) %>% ungroup() %>%
+      inner_join(rt) %>% arrange(id, run, run_trial, evt_time)
+  }
   
   # 20% of clock- and 32% of feedback-aligned timepoints are from the next trial: censor
   clock_comb$decon_interp[clock_comb$evt_time > clock_comb$rt_csv + clock_comb$iti_ideal] <- NA
   clock_comb$sd_interp[clock_comb$evt_time > clock_comb$rt_csv + clock_comb$iti_ideal] <- NA
-  # fb_comb$decon_interp[fb_comb$evt_time > fb_comb$iti_ideal] <- NA
-  # fb_comb$sd_interp[fb_comb$evt_time > fb_comb$iti_ideal] <- NA
-  rt_comb$decon_interp[rt_comb$evt_time > rt_comb$iti_ideal] <- NA
-  rt_comb$sd_interp[rt_comb$evt_time > rt_comb$iti_ideal] <- NA
-  
-  
   # code on- and offline periods and evt_time^2 for plotting models
   clock_comb <- clock_comb %>% mutate(online = evt_time > -1 & evt_time < rt_csv & evt_time<4)
   clock_comb$online <- as.factor(clock_comb$online)
   
-  rt_comb <- rt_comb %>% mutate(online = evt_time > -1 & evt_time < rt_csv & evt_time<4)
-  rt_comb$online <- as.factor(rt_comb$online)
-  
+  # fb_comb$decon_interp[fb_comb$evt_time > fb_comb$iti_ideal] <- NA
+  # fb_comb$sd_interp[fb_comb$evt_time > fb_comb$iti_ideal] <- NA
+  if (!replicate_compression) {
+    rt_comb$decon_interp[rt_comb$evt_time > rt_comb$iti_ideal] <- NA
+    rt_comb$sd_interp[rt_comb$evt_time > rt_comb$iti_ideal] <- NA
+    rt_comb <- rt_comb %>% mutate(online = evt_time > -1 & evt_time < rt_csv & evt_time<4)
+    rt_comb$online <- as.factor(rt_comb$online)
+  }
   # use more stringent feedback online window
   # fb_comb <- fb_comb %>% mutate(online = evt_time > -rt_csv & evt_time < 0)
   # fb_comb$online <- as.factor(fb_comb$online)
@@ -247,7 +287,6 @@ if (!reprocess) {
   # # fb_wide_t <- dcast(setDT(fb_wide), id + run + run_trial ~ evt_time, value.var = slices)
   # fb_wide_t <- fb_wide %>% pivot_wider(names_from = evt_time, values_from = slices)
   
-  message("Saving to cache")
   # save(fb_wide, file = file.path(cache_dir, "feedback_dan_wide_ts.Rdata"))
   # save(fb_comb, file = file.path(cache_dir, "feedback_dan_tall_ts.Rdata"))
   # save(fb_wide_t, fb_wide_bl, file = file.path(cache_dir, 'feedback_hipp_widest_by_timepoint_decon.Rdata'))
@@ -261,6 +300,10 @@ if (!reprocess) {
   clock_wide <- clock_comb %>% select(id, run, run_trial, evt_time, label, decon_interp) %>% 
     group_by(id, run, run_trial) %>%
     pivot_wider(names_from = c(label, evt_time), values_from = decon_interp)
+  clock_wide_cens <- clock_comb %>% select(id, run, run_trial, evt_time, label, decon_interp, online) %>% 
+    group_by(id, run, run_trial) %>% filter(evt_time < 1 | online == "TRUE") %>% select(!online) %>%
+    pivot_wider(names_from = c(label, evt_time), values_from = decon_interp)
+  
   
   # for coxme -- don't filter online times so that we can later interpolate
   clock_cox <- clock_comb %>% select(id, run, run_trial, evt_time, online, label, decon_interp) %>% 
@@ -270,21 +313,24 @@ if (!reprocess) {
   # clock_wide_t <- clock_wide %>% pivot_wider(names_from = evt_time, values_from = slices)
   # clock_wide_ex <- inner_join(clock_wide, trial_df[,c("id", "run", "run_trial", "pe_max", "reward", "v_entropy_wi", "swing_above_median")], by = c("id", "run", "run_trial"))
   # 
-  save(clock_wide,  file = file.path(cache_dir, "clock_dan_wide_ts.Rdata"))
-  save(clock_comb, file = file.path(cache_dir, "clock_dan_tall_ts.Rdata"))
-  save(clock_cox, file = file.path(cache_dir, "clock_dan_medusa_for_coxme.Rdata"))
-  
-  # take all preceding timepoints for RT_wide
-  rt_comb <- rt_comb %>% arrange(id, run, run_trial, evt_time)
-  rt_wide <- rt_comb %>%  select(id, run, run_trial, evt_time, label, decon_interp) %>% 
-    group_by(id, run, run_trial) %>%
-    pivot_wider(names_from = c(label, evt_time), values_from = decon_interp)
-  
-  save(rt_wide, file = file.path(cache_dir, "rt_dan_wide_ts.Rdata"))
-  save(rt_comb, file = file.path(cache_dir, "rt_dan_tall_ts.Rdata"))
-  
-  save(trial_df, file=file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))
-  
+  # save clock ----
+  if (!replicate_compression) {
+    
+    message("Saving to cache")
+    save(clock_wide, clock_wide_cens,  file = file.path(cache_dir, "clock_dan_wide_ts.Rdata"))
+    save(clock_comb, file = file.path(cache_dir, "clock_dan_tall_ts.Rdata"))
+    save(clock_cox, file = file.path(cache_dir, "clock_dan_medusa_for_coxme.Rdata"))
+    
+    # save RT ----
+    # take all preceding timepoints for RT_wide
+    rt_comb <- rt_comb %>% arrange(id, run, run_trial, evt_time)
+    rt_wide <- rt_comb %>%  select(id, run, run_trial, evt_time, label, decon_interp) %>% 
+      group_by(id, run, run_trial) %>%
+      pivot_wider(names_from = c(label, evt_time), values_from = decon_interp)
+    
+    save(rt_wide, file = file.path(cache_dir, "rt_dan_wide_ts.Rdata"))
+    save(rt_comb, file = file.path(cache_dir, "rt_dan_tall_ts.Rdata"))
+    save(trial_df, file=file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))}
 }
 #reset working directory
 setwd(cwd)

@@ -22,16 +22,19 @@ reprocess = T # otherwise load data from cache
 if (!reprocess) {
   wide_only = T # only load wide data (parcels and timepoints as variables)
 }
+replicate_compression = F
+if(replicate_compression) {reprocess = T}
 # load MEDUSA deconvolved data
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
 
 # what to run
 plots = T
 decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt_predict = T # predicts next response based on signal and behavioral variables
+rt_predict = F # predicts next response based on signal and behavioral variables
 online = T # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = T
 reg_diagnostics = F
+
 
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 
@@ -98,13 +101,13 @@ if (decode) {
   for (label in labels) {print(paste("Processing parcel", label,  sep = " "))
     d$h<-d[[label]]
     if (online) {
-      md <-  lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag) + 
-                    v_entropy_wi + v_entropy_wi_change  + v_max_wi  + 
+      md <-  lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag) + scale(rt_vmax_change) + 
+                    v_entropy_wi + v_entropy_wi_lead +  v_entropy_wi_change_lag + #v_entropy_wi_change  +
                     kld3_lag  + v_max_wi  + scale(abs_pe_lag) + last_outcome + 
                     (1|id), d, control=lmerControl(optimizer = "nloptwrap"))
     } else {
     md <-  lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
-                  v_entropy_wi + v_entropy_wi_change  + v_max_wi  + 
+                  v_entropy_wi + v_entropy_wi_lead + v_entropy_wi_change_lag + #v_entropy_wi_change  + 
                   kld3_lag  + v_max_wi  + scale(abs_pe) + outcome + 
                   (1|id), d, control=lmerControl(optimizer = "nloptwrap")) }
     while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
@@ -158,7 +161,9 @@ if (decode) {
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe) & t < 8) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    pdf(paste(termstr, ".pdf", sep = ""), width = 11, height = 6)
+    fname = paste(termstr, ".pdf", sep = "")
+    if (replicate_compression){fname = paste(termstr,"_replicate_compression", ".pdf", sep = "")}
+    pdf(fname, width = 11, height = 6)
     print(ggplot(edf, aes(t, region)) + geom_tile(aes(fill = estimate, alpha = `p, FDR-corrected`), size = 1) +  
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + facet_wrap(~side) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Parcel") + 
@@ -243,7 +248,8 @@ if (rt_predict) {
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe) & t < 8) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    pdf(paste(termstr, ".pdf", sep = ""), width = 11, height = 6)
+    if (replicate_compression){fname = paste(termstr,"_replicate_compression", ".pdf", sep = "")}
+    pdf(fname, width = 11, height = 6)
     print(ggplot(edf, aes(t, region)) + geom_tile(aes(fill = estimate, alpha = `p, FDR-corrected`), size = 1) +  
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + facet_wrap(~side) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Parcel") + 
