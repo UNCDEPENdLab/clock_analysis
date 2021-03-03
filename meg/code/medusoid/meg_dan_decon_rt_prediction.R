@@ -124,7 +124,7 @@ registerDoParallel(cl)
 labels <- names(d[grepl("\\.", names(d))])
 # labels <- labels[1:10]
 if (decode) {
-  newlist <- list()
+  # newlist <- list()
   # for (label in labels) {print(paste("Processing parcel", label,  sep = " "))
   ddf <- foreach(i = 1:length(labels), .packages=c("lme4", "tidyverse", "broom.mixed", "car"), 
                  .combine='rbind') %dopar% {
