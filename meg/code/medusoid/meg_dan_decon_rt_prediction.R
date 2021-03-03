@@ -31,8 +31,8 @@ source(file.path(repo_directory, "meg/code/medusoid/meg_load_medusa_data.R"))
 
 # what to run
 plots = T
-decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt_predict = F # predicts next response based on signal and behavioral variables
+decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
+rt_predict = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = T
 reg_diagnostics = F
@@ -106,7 +106,7 @@ d <- d %>% mutate_at(vars(contains(".")), scale2, na.rm = TRUE) %>% ungroup()
 # make cluster
 f <- Sys.getenv('PBS_NODEFILE')
 library(parallel)
-ncores <- detectCores()
+ncores <- detectCores() - 8
 nodelist <- if (nzchar(f)) readLines(f) else rep('localhost', ncores)
 
 cat("Node list allocated to this job\n")
@@ -126,7 +126,7 @@ labels <- names(d[grepl("\\.", names(d))])
 if (decode) {
   # newlist <- list()
   # for (label in labels) {print(paste("Processing parcel", label,  sep = " "))
-  ddf <- foreach(i = 1:length(labels), .packages=c("lme4", "tidyverse", "broom.mixed", "car"), 
+  ddf <- foreach(i = 1:length(labels), .packages=c("lme4", "tidyverse", "broom.mixed", "car"), .noexport = c("df", "rt_wide"),
                  .combine='rbind') %dopar% {
                    label <- labels[[i]]
                    d$h<-d[[label]]
@@ -218,7 +218,7 @@ if (rt_predict) {
   labels <- names(d[grepl("\\.", names(d))])
   # newlist <- list()
   # for (label in labels) {print(paste("Processing parcel", label,  sep = " "))
-  ddf <- foreach(i = 1:length(labels), .packages=c("lme4", "tidyverse", "broom.mixed", "car"), 
+  ddf <- foreach(i = 1:length(labels), .packages=c("lme4", "tidyverse", "broom.mixed"), .noexport = c("df", "rt_wide"),
                  .combine='rbind') %dopar% {
                    label <- labels[[i]]
                    
@@ -252,6 +252,7 @@ if (rt_predict) {
                    # }
                  dm}
   # ddf <- do.call(rbind,newlist)
+  ddf <- as_tibble(ddf)
   ddf$t <- as.numeric(ddf$t)
   ddf$label <-  as.factor(sub("_[^_]+$", "", ddf$label))
   ddf$stat_order <- factor(ddf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
