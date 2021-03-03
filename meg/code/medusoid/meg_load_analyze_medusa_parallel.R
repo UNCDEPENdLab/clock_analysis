@@ -39,7 +39,7 @@ files <- list.files(medusa_dir)[-1]
 all_sensors <- substr(files, 4,7)
 
 # take first 10 for testing
-all_sensors <- all_sensors[1:20]
+# all_sensors <- all_sensors[1:20]
 scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
 
 
@@ -225,14 +225,14 @@ for (fe in terms) {
   edf <- ddf %>% filter(term == paste(fe)) 
   termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
   fname = paste("meg_all_uncorrected_", termstr, ".pdf", sep = "")
-  pdf(fname, width = 16, height = 20)
+  pdf(fname, width = 16, height = 30)
   print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
           geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
           scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
           labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
   dev.off()
   fname = paste("meg_all_FDR_", termstr, ".pdf", sep = "")
-  pdf(fname, width = 16, height = 20)
+  pdf(fname, width = 16, height = 30)
   print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_fdr)) + 
           geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
           scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
@@ -241,5 +241,5 @@ for (fe in terms) {
   
 }
 # save model stats ----
-save(file = "medusa_decode_output.Rdata", ddf)
+save(file = "medusa_decode_output_all.Rdata", ddf)
 
