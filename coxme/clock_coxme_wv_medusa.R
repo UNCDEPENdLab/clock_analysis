@@ -16,7 +16,7 @@ library(foreach)
 library(doParallel)
 library(viridis)
 
-reprocess = T # if running for the first time or need to reprocess MEDUSA data
+reprocess = F # if running for the first time or need to reprocess MEDUSA data
 if (reprocess) {censor_clock_post_rt = T # include ITI and clock epochs only, exclude post-RT epoch
 }
 # alignment = c("clock", "rt") # alignment of within-trial deconvolved signal
