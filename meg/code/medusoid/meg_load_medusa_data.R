@@ -15,7 +15,9 @@ repo_directory <- "~/code/clock_analysis"
 # For IPS, 1823, 1822, 2222,2223.’
 fef_sensors <- c("0612","0613", "0542", "0543","1022")
 ips_sensors <- c("1823", "1822", "2222","2223")
-all_sensors <- c(fef_sensors,ips_sensors)
+dan_sensors <- c(fef_sensors,ips_sensors)
+files <- list.files(medusa_dir)[-1]
+all_sensors <- substr(files, 4,7)
 
 # reprocess = T # for troubleshooting only
 if (!exists("reprocess") || !is.logical(reprocess)) { reprocess=FALSE } #default
