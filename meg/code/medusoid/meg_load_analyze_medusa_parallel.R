@@ -24,7 +24,7 @@ setwd(medusa_dir)
 parallel = T
 plots = T
 decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt_predict = F # predicts next response based on signal and behavioral variables
+rt = F # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
 reg_diagnostics = F
@@ -128,82 +128,182 @@ levels(trial_df$rewFunc) <- c("DEV", "IEV", "CEV", "CEVR")
 
 # make cluster ----
 if (parallel) {
-f <- Sys.getenv('PBS_NODEFILE')
-library(parallel)
-ncores <- detectCores()
-nodelist <- if (nzchar(f)) readLines(f) else rep('localhost', ncores)
-
-cat("Node list allocated to this job\n")
-print(nodelist)
-
-cl <- makePSOCKcluster(nodelist, outfile='')
-print(cl) ##; print(unclass(cl))
-registerDoParallel(cl)
+  f <- Sys.getenv('PBS_NODEFILE')
+  library(parallel)
+  ncores <- detectCores()
+  nodelist <- if (nzchar(f)) readLines(f) else rep('localhost', ncores)
+  
+  cat("Node list allocated to this job\n")
+  print(nodelist)
+  
+  cl <- makePSOCKcluster(nodelist, outfile='')
+  print(cl) ##; print(unclass(cl))
+  registerDoParallel(cl)
 }
 # loop over sensors ----
 message("Analyzing censor data")
 pb <- txtProgressBar(0, max = length(all_sensors), style = 3)
 
-ddf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
-               .combine='rbind') %dopar% {
-# for (i in 1:length(all_sensors)) {
-  if (i %% 2 == 0) {setTxtProgressBar(pb, i)}
-  sensor <- all_sensors[[i]]
-  # load data ----
-  message("Loading")
-  rt <- as_tibble(readRDS(paste0("MEG", sensor, "_20Hz.rds"))) %>% filter(Time>start_time) %>%
-    rename(id = Subject, trial = Trial, run = Run, evt_time = Time, signal = Signal) %>%
-    mutate(signal = scale2(signal)) # scale signal across subjects
-  rt$sensor <- as.character(sensor)
-  # combine with behavior ----
-  message("Merging with behavior")
-  rt_comb <- trial_df %>% 
-    group_by(id, run) %>% ungroup() %>% inner_join(rt) %>% arrange(id, run, run_trial, evt_time)
-  rt_comb$evt_time_f <- as.factor(rt_comb$evt_time)
-  # wrangle into wide
-  message("Wranging")
-  rt_wide <- rt_comb %>%  group_by(id, run, run_trial) %>%
-    pivot_wider(names_from = c(evt_time), values_from = signal)
-  # analysis
-  timepoints = as.character(unique(rt_comb$evt_time))
-  for (t in timepoints) {
-    message(paste("Analyzing timepoint", t,  sep = " "))
-      rt_wide$h<-rt_wide[[t]]
-      md <-  lmerTest::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
-                    v_entropy_wi + v_entropy_wi_change_lag + v_entropy_wi_change  + 
-                    v_max_wi  + scale(abs_pe) + outcome + 
-                    (1|id), rt_wide, control=lmerControl(optimizer = "nloptwrap"))
-    while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
-      print(md@optinfo$conv$lme4$conv)
-      ss <- getME(md,c("theta","fixef"))
-      md <- update(md, start=ss)}
-    
-    dm <- tidy(md)
-    dm$sensor <- sensor
-    dm$t <- t
+
+if(decode) {
+  ddf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
+                 .combine='rbind') %dopar% {
+                   # for (i in 1:length(all_sensors)) {
+                   if (i %% 10 == 0) {setTxtProgressBar(pb, i)}
+                   sensor <- all_sensors[[i]]
+                   # load data ----
+                   # message("Loading")
+                   rt <- as_tibble(readRDS(paste0("MEG", sensor, "_20Hz.rds"))) %>% filter(Time>start_time) %>%
+                     rename(id = Subject, trial = Trial, run = Run, evt_time = Time, signal = Signal) %>%
+                     mutate(signal = scale2(signal)) # scale signal across subjects
+                   rt$sensor <- as.character(sensor)
+                   # combine with behavior ----
+                   # message("Merging with behavior")
+                   rt_comb <- trial_df %>% 
+                     group_by(id, run) %>% ungroup() %>% inner_join(rt) %>% arrange(id, run, run_trial, evt_time)
+                   rt_comb$evt_time_f <- as.factor(rt_comb$evt_time)
+                   # wrangle into wide
+                   # message("Wranging")
+                   rt_wide <- rt_comb %>%  group_by(id, run, run_trial) %>%
+                     pivot_wider(names_from = c(evt_time), values_from = signal)
+                   # analysis
+                   timepoints = as.character(unique(rt_comb$evt_time))
+                   for (t in timepoints) {
+                     # message(paste("Analyzing timepoint", t,  sep = " "))
+                     rt_wide$h<-rt_wide[[t]]
+                     md <-  lmerTest::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
+                                             v_entropy_wi + v_entropy_wi_change_lag + v_entropy_wi_change  + 
+                                             v_max_wi  + scale(abs_pe) + outcome + 
+                                             (1|id), rt_wide, control=lmerControl(optimizer = "nloptwrap"))
+                     while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
+                       print(md@optinfo$conv$lme4$conv)
+                       ss <- getME(md,c("theta","fixef"))
+                       md <- update(md, start=ss)}
+                     
+                     dm <- tidy(md)
+                     dm$sensor <- sensor
+                     dm$t <- t
+                   }
+                   # newlist[[sensor]]<-dm
+                   if (parallel) {dm}
+                 }
+  if (parallel){
+    stopCluster(cl)}
+  
+  # format statistics ----
+  
+  ddf <- ddf %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
+                                                         abs(statistic) > 2 & abs(statistic) < 3 ~ '2', 
+                                                         abs(statistic) > 3 ~ '3')),
+                        p_value = as.factor(case_when(`p.value` > .05 ~ '1',
+                                                      `p.value` < .05 & `p.value` > .01 ~ '2',
+                                                      `p.value` < .01 & `p.value` > .001 ~ '3',
+                                                      `p.value` <.001 ~ '4')))
+  ddf$t <- as.numeric(ddf$t)
+  # ddf$label <- as.factor(sub("_[^_]+$", "", ddf$label))
+  ddf$stat_order <- factor(ddf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
+  ddf$p_value <- factor(ddf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
+  terms <- unique(ddf$term)
+  # FDR correction ----
+  ddf <- ddf  %>% group_by(term) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
+                                                             p_level_fdr = as.factor(case_when(
+                                                               # p_fdr > .1 ~ '0',
+                                                               # p_fdr < .1 & p_fdr > .05 ~ '1',
+                                                               p_fdr > .05 ~ '1',
+                                                               p_fdr < .05 & p_fdr > .01 ~ '2',
+                                                               p_fdr < .01 & p_fdr > .001 ~ '3',
+                                                               p_fdr <.001 ~ '4'))
+  ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
+  #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
+  ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
+  ddf$`p, FDR-corrected` = ddf$p_level_fdr
+  
+  # plots ----
+  
+  setwd('~/OneDrive/collected_letters/papers/meg/plots/rt_decode')
+  epoch_label = "Time relative to outcome, seconds"
+  for (fe in terms) {
+    edf <- ddf %>% filter(term == paste(fe)) 
+    termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
+    fname = paste("meg_all_uncorrected_", termstr, ".pdf", sep = "")
+    pdf(fname, width = 16, height = 30)
+    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
+            geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
+            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
+    dev.off()
+    fname = paste("meg_all_FDR_", termstr, ".pdf", sep = "")
+    pdf(fname, width = 16, height = 30)
+    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_fdr)) + 
+            geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
+            labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
+    dev.off()
   }
-  # newlist[[sensor]]<-dm
-if (parallel) {dm}
+  # save model stats ----
+  save(file = "meg_medusa_decode_output_all.Rdata", ddf)
+} # end of decoding
+
+if(rt) {rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
+                         .combine='rbind') %dopar% {
+                           # for (i in 1:length(all_sensors)) {
+                           if (i %% 10 == 0) {setTxtProgressBar(pb, i)}
+                           sensor <- all_sensors[[i]]
+                           # load data ----
+                           message("Loading")
+                           rt <- as_tibble(readRDS(paste0("MEG", sensor, "_20Hz.rds"))) %>% filter(Time>start_time) %>%
+                             rename(id = Subject, trial = Trial, run = Run, evt_time = Time, signal = Signal) %>%
+                             mutate(signal = scale2(signal)) # scale signal across subjects
+                           rt$sensor <- as.character(sensor)
+                           # combine with behavior ----
+                           message("Merging with behavior")
+                           rt_comb <- trial_df %>% 
+                             group_by(id, run) %>% ungroup() %>% inner_join(rt) %>% arrange(id, run, run_trial, evt_time)
+                           rt_comb$evt_time_f <- as.factor(rt_comb$evt_time)
+                           # wrangle into wide
+                           message("Wranging")
+                           rt_wide <- rt_comb %>%  group_by(id, run, run_trial) %>%
+                             pivot_wider(names_from = c(evt_time), values_from = signal)
+                           # analysis
+                           timepoints = as.character(unique(rt_comb$evt_time))
+                           for (t in timepoints) {
+                             # message(paste("Analyzing timepoint", t,  sep = " "))
+                             rt_wide$h<-rt_wide[[t]]
+                             md <-  lmer(scale(rt_next) ~ scale(h) * rt_csv_sc * outcome  + scale(h) * scale(rt_vmax)  +
+                                           scale(h) * rt_lag_sc + 
+                                           (1|id), d, control=lmerControl(optimizer = "nloptwrap"))}
+                           while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
+                             print(md@optinfo$conv$lme4$conv)
+                             ss <- getME(md,c("theta","fixef"))
+                             md <- update(md, start=ss)}
+                           
+                           dm <- tidy(md)
+                           dm$sensor <- sensor
+                           dm$t <- t
+                         # }
+# newlist[[sensor]]<-dm
+if (parallel) {dm} 
 }
 if (parallel){
-stopCluster(cl)}
+  stopCluster(cl)}
 
 # format statistics ----
 
-ddf <- ddf %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
-                                                     abs(statistic) > 2 & abs(statistic) < 3 ~ '2', 
-                                                     abs(statistic) > 3 ~ '3')),
-                    p_value = as.factor(case_when(`p.value` > .05 ~ '1',
-                                                  `p.value` < .05 & `p.value` > .01 ~ '2',
-                                                  `p.value` < .01 & `p.value` > .001 ~ '3',
-                                                  `p.value` <.001 ~ '4')))
-ddf$t <- as.numeric(ddf$t)
-# ddf$label <- as.factor(sub("_[^_]+$", "", ddf$label))
-ddf$stat_order <- factor(ddf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
-ddf$p_value <- factor(ddf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
-terms <- unique(ddf$term)
+rdf <- rdf %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
+                                                       abs(statistic) > 2 & abs(statistic) < 3 ~ '2', 
+                                                       abs(statistic) > 3 ~ '3')),
+                      p_value = as.factor(case_when(`p.value` > .05 ~ '1',
+                                                    `p.value` < .05 & `p.value` > .01 ~ '2',
+                                                    `p.value` < .01 & `p.value` > .001 ~ '3',
+                                                    `p.value` <.001 ~ '4')))
+rdf$t <- as.numeric(rdf$t)
+# rdf$label <- as.factor(sub("_[^_]+$", "", rdf$label))
+rdf$stat_order <- factor(rdf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
+rdf$p_value <- factor(rdf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
+terms <- unique(rdf$term)
+terms <- terms[grepl("(h)",terms)]
 # FDR correction ----
-ddf <- ddf  %>% filter(t>-2) %>% group_by(term) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
+rdf <- rdf  %>% group_by(term) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
                                                            p_level_fdr = as.factor(case_when(
                                                              # p_fdr > .1 ~ '0',
                                                              # p_fdr < .1 & p_fdr > .05 ~ '1',
@@ -213,16 +313,15 @@ ddf <- ddf  %>% filter(t>-2) %>% group_by(term) %>% mutate(p_fdr = p.adjust(p.va
                                                              p_fdr <.001 ~ '4'))
 ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
 #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
-ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
-ddf$`p, FDR-corrected` = ddf$p_level_fdr
+rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
+rdf$`p, FDR-corrected` = rdf$p_level_fdr
 
 # plots ----
 
-setwd('~/OneDrive/collected_letters/papers/meg/plots/rt_decode')
-  epoch_label = "Time relative to outcome, seconds"
-
+setwd('~/OneDrive/collected_letters/papers/meg/plots/rt_rt')
+epoch_label = "Time relative to outcome, seconds"
 for (fe in terms) {
-  edf <- ddf %>% filter(term == paste(fe)) 
+  edf <- rdf %>% filter(term == paste(fe)) 
   termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
   fname = paste("meg_all_uncorrected_", termstr, ".pdf", sep = "")
   pdf(fname, width = 16, height = 30)
@@ -238,8 +337,7 @@ for (fe in terms) {
           scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
           labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
   dev.off()
-  
 }
 # save model stats ----
-save(file = "medusa_decode_output_all.Rdata", ddf)
-
+save(file = "meg_medusa_rt_predict_output_all.Rdata", rdf)
+}
