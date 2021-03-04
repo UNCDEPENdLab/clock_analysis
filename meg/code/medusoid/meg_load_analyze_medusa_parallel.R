@@ -38,8 +38,8 @@ start_time = -2
 files <- list.files(medusa_dir)[-1]
 all_sensors <- substr(files, 4,7)
 
-# take first 10 for testing
-# all_sensors <- all_sensors[1:20]
+# take first few for testing
+all_sensors <- all_sensors[1:4]
 scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
 
 
@@ -168,6 +168,7 @@ if(decode) {
                      pivot_wider(names_from = c(evt_time), values_from = signal)
                    # analysis
                    timepoints = as.character(unique(rt_comb$evt_time))
+                   newlist <- list()
                    for (t in timepoints) {
                      # message(paste("Analyzing timepoint", t,  sep = " "))
                      rt_wide$h<-rt_wide[[t]]
