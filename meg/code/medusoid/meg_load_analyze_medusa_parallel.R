@@ -23,12 +23,12 @@ setwd(medusa_dir)
 # options, files ----
 parallel = T
 plots = T
-decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
+decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
 reg_diagnostics = F
-start_time = -2
+start_time = .75
 
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
@@ -39,7 +39,7 @@ files <- list.files(medusa_dir)[-1]
 all_sensors <- substr(files, 4,7)
 
 # # take first few for testing
-# all_sensors <- all_sensors[1:8]
+all_sensors <- all_sensors[1:4]
 scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
 
 
@@ -185,8 +185,7 @@ if(decode) {
                      newlist[[t]]<-dm
                    }
                    do.call(rbind,newlist)}
-  if (parallel){
-    stopCluster(cl)}
+  
   
   # format statistics ----
   
@@ -247,20 +246,7 @@ message("RT prediction: analyzing censor data")
 pb <- txtProgressBar(0, max = length(all_sensors), style = 3)
 setwd(medusa_dir)
 
-# make cluster ----
-if (parallel) {
-  f <- Sys.getenv('PBS_NODEFILE')
-  library(parallel)
-  ncores <- detectCores()
-  nodelist <- if (nzchar(f)) readLines(f) else rep('localhost', ncores)
-  
-  cat("Node list allocated to this job\n")
-  print(nodelist)
-  
-  cl <- makePSOCKcluster(nodelist, outfile='')
-  print(cl) ##; print(unclass(cl))
-  registerDoParallel(cl)
-}
+
 if(rt) {rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
                        .combine='rbind') %dopar% {
                          # for (i in 1:length(all_sensors)) {
@@ -288,8 +274,8 @@ if(rt) {rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse
                            # message(paste("Analyzing timepoint", t,  sep = " "))
                            rt_wide$h<-rt_wide[[t]]
                            md <-  lmerTest::lmer(scale(rt_next) ~ scale(h) * rt_csv_sc * outcome  + scale(h) * scale(rt_vmax)  +
-                                         scale(h) * rt_lag_sc + 
-                                         (1|id), rt_wide, control=lmerControl(optimizer = "nloptwrap"))
+                                                   scale(h) * rt_lag_sc + 
+                                                   (1|id), rt_wide, control=lmerControl(optimizer = "nloptwrap"))
                            while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
                              print(md@optinfo$conv$lme4$conv)
                              ss <- getME(md,c("theta","fixef"))
@@ -301,8 +287,6 @@ if(rt) {rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse
                            newlist[[t]]<-dm
                          }
                          do.call(rbind,newlist)}
-if (parallel){
-  stopCluster(cl)}
 
 # format statistics ----
 
@@ -334,7 +318,6 @@ rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), label
 rdf$`p, FDR-corrected` = rdf$p_level_fdr
 
 # plots ----
-
 setwd('~/OneDrive/collected_letters/papers/meg/plots/rt_rt')
 epoch_label = "Time relative to outcome, seconds"
 for (fe in terms) {
@@ -358,3 +341,4 @@ for (fe in terms) {
 # save model stats ----
 save(file = "meg_medusa_rt_predict_output_all.Rdata", rdf)
 }
+stopCluster(cl)
