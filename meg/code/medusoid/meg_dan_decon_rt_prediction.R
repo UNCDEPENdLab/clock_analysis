@@ -31,7 +31,7 @@ source(file.path(repo_directory, "meg/code/medusoid/meg_load_medusa_data.R"))
 
 # what to run
 plots = T
-decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
+decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt_predict = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = T
@@ -166,7 +166,8 @@ if (decode) {
   ddf$stat_order <- factor(ddf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
   ddf$p_value <- factor(ddf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   
-  terms <- names(fixef(md))
+  # terms <- names(fixef(md))
+  terms <- unique(ddf$term)
   # FDR correction ----
   ddf <- ddf  %>% filter(t>-2) %>% group_by(term) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
                                                              p_level_fdr = as.factor(case_when(
@@ -195,7 +196,7 @@ if (decode) {
     fname = paste("meg_", termstr, ".pdf", sep = "")
     if (replicate_compression){fname = paste(termstr,"_replicate_compression", ".pdf", sep = "")}
     pdf(fname, width = 16, height = 3)
-    print(ggplot(edf, aes(t, label)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
+    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
@@ -258,7 +259,8 @@ if (rt_predict) {
   ddf$stat_order <- factor(ddf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
   ddf$p_value <- factor(ddf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   
-  terms <- names(fixef(md))
+  # terms <- names(fixef(md))
+  terms <- unique(rdf$term)
   terms <- terms[grepl("(h)",terms)]
   
   # FDR correction ----
@@ -284,18 +286,18 @@ if (rt_predict) {
     epoch_label = "Time relative to outcome, seconds"}
   
   for (fe in terms) {
-    edf <- ddf %>% filter(term == paste(fe)) 
+    edf <- rdf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
     fname = paste("meg_", termstr, ".pdf", sep = "")
-    if (replicate_compression){fname = paste(termstr,"_replicate_compression", ".pdf", sep = "")}
+    # if (replicate_compression){fname = paste(termstr,"_replicate_compression", ".pdf", sep = "")}
     pdf(fname, width = 16, height = 3)
-    print(ggplot(edf, aes(t, label)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
+    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
     # save output for inspection
-    save(file = "medusa_rt_predict_output.Rdata", ddf)
+    # save(file = "medusa_rt_predict_output.Rdata", ddf)
   }
 }
 stopCluster(cl)
