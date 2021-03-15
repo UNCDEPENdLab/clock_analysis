@@ -18,8 +18,8 @@ library(cowplot)
 #source('~/code/Rhelpers/vif.lme.R')
 # library(stringi)
 
-# clock_folder <- "~/Data_Analysis/clock_analysis" #michael
-clock_folder <- "~/code/clock_analysis" #alex
+clock_folder <- "~/Data_Analysis/clock_analysis" #michael
+#clock_folder <- "~/code/clock_analysis" #alex
 
 # source('~/code/Rhelpers/')
 setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
@@ -32,6 +32,29 @@ if (unsmoothed) {
   load('trial_df_and_vh_pe_clusters_u_unsmoothed.Rdata')
 } else { load('trial_df_and_vh_pe_clusters_u.Rdata') }
 
+screen.lmerTest <- function (mod,p=NULL) {
+  if (is.null(p)) {p <- .05}
+  c1 <- as.data.frame(coef(summary(mod))[,4:5])
+  dd <- cbind(c1[2:nrow(c1),],as.data.frame(vif.lme(mod)))
+  names(dd)[3] <- 'VIF'
+  dd$`Pr(>|t|)` <- as.numeric(dd$`Pr(>|t|)`)
+  print(dd[dd$`Pr(>|t|)`<p,c(1,3)], digits = 3)
+  }
+
+vif.lme <- function (fit) {
+  ## adapted from rms::vif
+  v <- vcov(fit)
+  nam <- names(fixef(fit))
+  ## exclude intercepts
+  ns <- sum(1 * (nam == "Intercept" | nam == "(Intercept)"))
+  if (ns > 0) {
+    v <- v[-(1:ns), -(1:ns), drop = FALSE]
+    nam <- nam[-(1:ns)] }
+  d <- diag(v)^0.5
+  v <- diag(solve(v/(d %o% d)))
+  names(v) <- nam
+  v }
+
 
 ###############
 # Main analyses including model-derived behavioral variables
@@ -43,6 +66,7 @@ mb3hpe_hipp <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc 
                        rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
                        rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
                        (1|id/run), df)
+
 screen.lmerTest(mb3hpe_hipp, .05)
 summary(mb3hpe_hipp)
 Anova(mb3hpe_hipp, '3')
