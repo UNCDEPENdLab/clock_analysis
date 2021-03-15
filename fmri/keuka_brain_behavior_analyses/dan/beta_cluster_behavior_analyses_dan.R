@@ -24,15 +24,12 @@ source('~/code/Rhelpers/vif.lme.R')
 clock_folder <- "~/code/clock_analysis" #alex
 
 # source('~/code/Rhelpers/')
-setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/'))
+setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/dan'))
 
 ### load data
 # load('trial_df_and_vhdkfpe_clusters.Rdata')
 # cleaner version with only H, PE and uncertainty trial vars
-unsmoothed = F
-if (unsmoothed) {
-  load('trial_df_and_vh_pe_clusters_u_unsmoothed.Rdata')
-} else { load('trial_df_and_vh_pe_clusters_u.Rdata') }
+load('trial_df_and_vh_pe_hd_clusters_u.Rdata')
 
 ############# Main analysis using Schaeffer-based betas
 
@@ -282,6 +279,60 @@ screen.lmerTest(mms1, .01)
 summary(ms1)
 car::Anova(ms1)
 emtrends(ms, ~rewFunc, var="rt_lag_sc")
+
+################
+# Entropy change
+################
+
+# Effect of DAN entropy change on exploration
+mb_hd1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                v_max_wi_lag + v_entropy_wi + hd_f2_DAN)^2 + 
+                   rt_lag_sc:last_outcome:hd_f2_DAN + 
+                   rt_vmax_lag_sc:trial_neg_inv_sc:hd_f2_DAN + 
+                   (1|id/run), df %>% filter(rt_csv<4000))
+screen.lmerTest(mb_hd1, .05)
+summary(mb_hd1)
+Anova(mb_hd1, '3')
+
+# replication
+mmb_hd1 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                               v_max_wi_lag + v_entropy_wi + hd_f2_DAN)^2 + 
+                  rt_lag_sc:last_outcome:hd_f2_DAN + 
+                  rt_vmax_lag_sc:trial_neg_inv_sc:hd_f2_DAN + 
+                  (1|id/run), mdf %>% filter(rt_csv<4000))
+screen.lmerTest(mmb_hd1, .05)
+summary(mmb_hd1)
+Anova(mmb_hd1, '3')
+
+# add other factors:
+# Effect of DAN, salience, rlPFC entropy change on exploration
+mb_hd2 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                               v_max_wi_lag + v_entropy_wi + hd_f2_DAN + hd_f1_salience + hd_f3_rlPFC)^2 + 
+                  rt_lag_sc:last_outcome:hd_f2_DAN + 
+                  rt_lag_sc:last_outcome:hd_f1_salience + 
+                  rt_lag_sc:last_outcome:hd_f3_rlPFC + 
+                  rt_vmax_lag_sc:trial_neg_inv_sc:hd_f2_DAN + 
+                  rt_vmax_lag_sc:trial_neg_inv_sc:hd_f1_salience + 
+                  rt_vmax_lag_sc:trial_neg_inv_sc:hd_f3_rlPFC +
+                  (1|id/run), df %>% filter(rt_csv<4000))
+screen.lmerTest(mb_hd2, .05)
+summary(mb_hd2)
+Anova(mb_hd2, '3')
+
+# replication
+mmb_hd2 <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                               v_max_wi_lag + v_entropy_wi + hd_f2_DAN + hd_f1_salience + hd_f3_rlPFC)^2 + 
+                  rt_lag_sc:last_outcome:hd_f2_DAN + 
+                  rt_lag_sc:last_outcome:hd_f1_salience + 
+                  rt_lag_sc:last_outcome:hd_f3_rlPFC + 
+                  rt_vmax_lag_sc:trial_neg_inv_sc:hd_f2_DAN + 
+                  rt_vmax_lag_sc:trial_neg_inv_sc:hd_f1_salience + 
+                  rt_vmax_lag_sc:trial_neg_inv_sc:hd_f3_rlPFC +
+                  (1|id/run), mdf %>% filter(rt_csv<4000))
+screen.lmerTest(mmb_hd2, .05)
+summary(mb_hd2)
+Anova(mb_hd2, '3')
+
 
 ###############
 ## PE clusters

@@ -14,8 +14,8 @@ library(sjstats)
 library(sjPlot)
 library(emmeans)
 library(cowplot)
-#source('~/code/Rhelpers/screen.lmerTest.R')
-#source('~/code/Rhelpers/vif.lme.R')
+source('~/code/Rhelpers/screen.lmerTest.R')
+source('~/code/Rhelpers/vif.lme.R')
 # library(stringi)
 
 clock_folder <- "~/Data_Analysis/clock_analysis" #michael
@@ -60,13 +60,24 @@ vif.lme <- function (fit) {
 # Main analyses including model-derived behavioral variables
 # hippocampal model-based analysis
 mb3hpe_hipp <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                    v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_f2_hipp)^2 + 
+                                    v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH_r)^2 + 
                        rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                       rt_lag_sc:last_outcome:pe_f2_hipp +
+                       rt_lag_sc:last_outcome:pe_PH_r +
                        rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
-                       rt_vmax_lag_sc:trial_neg_inv_sc:pe_f2_hipp  +
+                       rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH_r  +
                        (1|id/run), df)
 
+screen.lmerTest(mb3hpe_hipp, .05)
+summary(mb3hpe_hipp)
+Anova(mb3hpe_hipp, '3')
+
+mb3hpe_hipp <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+                                    v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH_r)^2 + 
+                       rt_lag_sc:last_outcome:h_HippAntL_neg + 
+                       rt_lag_sc:last_outcome:pe_PH_r +
+                       rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
+                       rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH_r  +
+                       (rt_lag_sc*last_outcome + rt_vmax_lag_sc*trial_neg_inv_sc|id/run) + (1|rewFunc), df)
 screen.lmerTest(mb3hpe_hipp, .05)
 summary(mb3hpe_hipp)
 Anova(mb3hpe_hipp, '3')
