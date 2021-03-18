@@ -33,7 +33,8 @@ source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_me
 plots = T
 decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt_predict = F # predicts next response based on signal and behavioral variables
-online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
+# online = c(T, F) # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
+online_alignment <- c(T, F)
 exclude_first_run = T
 reg_diagnostics = F
 
@@ -50,6 +51,7 @@ df <- df %>% select(id, run, run_trial, rewFunc,emotion, last_outcome, rt_csv, s
                     rt_vmax_change, v_max_wi, v_entropy_wi, v_entropy_b, v_entropy, v_max_b, u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change, 
                     rt_vmax_lag_sc, rt_lag_sc,rt_lag2_sc, rt_csv_sc, trial_neg_inv_sc, Age, Female, kld3, kld4)
 
+for (online in online_alignment) {
 if (online) {
   d <- merge(df, clock_wide, by = c("id", "run", "run_trial"))
 } else { d <- merge(df, rt_wide, by = c("id", "run", "run_trial"))}
@@ -196,7 +198,7 @@ if (online) {
       save(file = "medusa_decode_output.Rdata", ddf)
     }
 
-
+}
 
   ## RT prediction ----
   
