@@ -21,7 +21,6 @@ stopifnot(dir.exists(cache_dir))
 setwd(medusa_dir)
 
 # options, files ----
-test_only = T
 parallel = T
 plots = T
 decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
@@ -40,13 +39,11 @@ files <- list.files(medusa_dir)[-1]
 all_sensors <- substr(files, 4,7)
 
 # # take first few for testing
-if (test_only) {all_sensors <- all_sensors[1:4]
-start_time = .75}
+# all_sensors <- all_sensors[1:4]
 scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
 
 
 # get behavioral data ----
-# calculate lags, scale behavioral variables
 message("Loading behavioral data")
 trial_df <-  read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_meg_decay_factorize_selective_psequate_fixedparams_meg_ffx_trial_statistics.csv.gz") %>%
   mutate(trial=as.numeric(trial)) %>% ungroup() %>%   mutate(rt_csv_sc = scale(rt_csv),
@@ -227,14 +224,14 @@ if(decode) {
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
     fname = paste("meg_all_uncorrected_", termstr, ".pdf", sep = "")
     pdf(fname, width = 16, height = 30)
-    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
+    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
     fname = paste("meg_all_FDR_", termstr, ".pdf", sep = "")
     pdf(fname, width = 16, height = 30)
-    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = abs(estimate), alpha = p_level_fdr)) + 
+    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
@@ -328,14 +325,14 @@ for (fe in terms) {
   termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
   fname = paste("meg_all_uncorrected_", termstr, ".pdf", sep = "")
   pdf(fname, width = 16, height = 30)
-  print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
+  print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
           geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
           scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
           labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
   dev.off()
   fname = paste("meg_all_FDR_", termstr, ".pdf", sep = "")
   pdf(fname, width = 16, height = 30)
-  print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = abs(estimate), alpha = p_level_fdr)) + 
+  print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
           geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
           scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
           labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
