@@ -126,13 +126,13 @@ if(decode) {
                    label <- as.character(labels[[i]])
                    d$h <- as.numeric(d[[label]])
                    if (online) {
-                     md <-  lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag) + scale(rt_vmax_change) + 
-                                   v_entropy_wi + v_entropy_wi_lead +  v_entropy_wi_change_lag + #v_entropy_wi_change  +
+                     md <-  lmerTest::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag) + scale(rt_vmax_change) + 
+                                   v_entropy_wi + v_entropy_wi_change_lag + v_entropy_wi_change  +
                                    kld3_lag  + v_max_wi  + scale(abs_pe_lag) + last_outcome + 
                                    (1|id), d, control=lmerControl(optimizer = "nloptwrap"))
                    } else {
-                     md <-  lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
-                                   v_entropy_wi + v_entropy_wi_lead + v_entropy_wi_change_lag + #v_entropy_wi_change  + 
+                     md <-  lmerTest::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
+                                   v_entropy_wi + v_entropy_wi_change_lag + v_entropy_wi_change  + 
                                    kld3_lag  + v_max_wi  + scale(abs_pe) + outcome + 
                                    (1|id), d, control=lmerControl(optimizer = "nloptwrap")) }
                    while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
@@ -195,9 +195,8 @@ if (online) {
       # save model stats ----
       save(file = "medusa_decode_output.Rdata", ddf)
     }
-  }
 
-## finished editing now  
+
 
   ## RT prediction ----
   

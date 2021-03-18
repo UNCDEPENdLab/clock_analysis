@@ -69,7 +69,7 @@ if (!reprocess) {
   
   # add manual labels for Schaefer areas ----
   labels <- as_tibble(read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx")) %>%
-    select(c("roinum", "MNHLabel", "Stream", "Visuomotor_Gradient", "Stream_Gradient"))
+    select(c("roinum", "plot_label", "Stream", "Visuomotor_Gradient", "Stream_Gradient"))
   # labels <- as_tibble(read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_DAN_order_manual.txt", 
   #                                "\t", escape_double = FALSE, col_names = FALSE, 
   #                                trim_ws = TRUE)) %>% select(1:4)
