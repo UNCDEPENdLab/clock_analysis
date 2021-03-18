@@ -28,7 +28,7 @@ rt = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
 reg_diagnostics = F
-start_time = .75
+start_time = -3
 
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
@@ -39,7 +39,7 @@ files <- list.files(medusa_dir)[-1]
 all_sensors <- substr(files, 4,7)
 
 # # take first few for testing
-all_sensors <- all_sensors[1:4]
+# all_sensors <- all_sensors[1:4]
 scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
 
 
