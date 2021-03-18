@@ -68,22 +68,27 @@ if (!reprocess) {
   }
   
   # add manual labels for Schaefer areas ----
-  labels <- as_tibble(read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_DAN_order_manual.txt", 
-                                 "\t", escape_double = FALSE, col_names = FALSE, 
-                                 trim_ws = TRUE)) %>% select(1:4)
-  names(labels) <- c("atlas_value", "label_long", "label_short", "entropy_signal")
-  labels <- labels %>% filter(grepl("DorsAtt", label_long))  %>% mutate(
+  labels <- as_tibble(read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx")) %>%
+    select(c("roinum", "MNHLabel", "Stream", "Visuomotor_Gradient", "Stream_Gradient"))
+  # labels <- as_tibble(read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_DAN_order_manual.txt", 
+  #                                "\t", escape_double = FALSE, col_names = FALSE, 
+  #                                trim_ws = TRUE)) %>% select(1:4)
+  names(labels) <- c("atlas_value","label_short", "stream", "visuomotor_grad", "stream_grad")
+  labels$stream_grad <- as.numeric(labels$stream_grad)
+  labels <- labels %>% arrange(visuomotor_grad, stream_grad) %>% mutate(
     side  = case_when(
-      grepl("LH", label_long) ~ "L",
-      grepl("RH", label_long) ~ "R"
-    ),
-    label_short_side = paste(label_short, side, sep ="_"),
-    label_long1 = substr(label_long, 23, 100),
-    label = case_when(
-      label_short!="0" ~ label_short_side,
-      label_short=="0" ~ label_long1
-    )
-  ) %>% select(c(label, side, atlas_value))
+      grepl("L_", label_short) ~ "L",
+      grepl("R_", label_short) ~ "R"),
+    label_short = substr(label_short, 3, length(label_short)),
+    label = paste(visuomotor_grad, stream_grad, label_short, side, sep = "_")) %>% 
+    select(c(label, label_short, side, atlas_value, stream, visuomotor_grad, stream_grad))
+
+  # ,
+  # label_short_side = paste(label_short, side, sep ="_"),
+  # label_long1 = substr(label_long, 23, 100),
+  # label = case_when(
+  #   label_short!="0" ~ label_short_side,
+  #   label_short=="0" ~ label_long1
   
   # fb <- merge(fb, labels)
   clock <- merge(clock, labels)
