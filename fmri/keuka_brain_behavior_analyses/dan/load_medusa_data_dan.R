@@ -32,6 +32,12 @@ if (!reprocess) {
     load(file.path(cache_dir, 'clock_dan_tall_ts.Rdata'))
     load(file.path(cache_dir, 'rt_dan_tall_ts.Rdata'))
     load(file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))
+  } else if (streams) {
+    load(file.path(cache_dir, 'clock_dan_streams.Rdata'))
+    load(file.path(cache_dir, 'rt_dan_streams.Rdata'))
+  } else if (visuomotor) {
+    load(file.path(cache_dir, 'clock_dan_visuomotor.Rdata'))
+    load(file.path(cache_dir, 'rt_dan_visuomotor.Rdata'))
   } else {
     load(file.path(cache_dir, 'clock_dan_wide_ts.Rdata'))
     load(file.path(cache_dir, 'clock_dan_tall_ts.Rdata'))
@@ -308,6 +314,12 @@ if (!reprocess) {
   clock_wide_cens <- clock_comb %>% select(id, run, run_trial, evt_time, label, decon_interp, online) %>% 
     group_by(id, run, run_trial) %>% filter(evt_time < 1 | online == "TRUE") %>% select(!online) %>%
     pivot_wider(names_from = c(label, evt_time), values_from = decon_interp)
+  clock_streams <- clock_comb %>% select(id, run, run_trial, evt_time, label, decon_interp, stream) %>% 
+    group_by(id, run, run_trial) %>%
+    pivot_wider(names_from = c(stream, evt_time), values_from = decon_interp)
+  clock_visuomotor <- clock_comb %>% select(id, run, run_trial, evt_time, label, decon_interp, visuomotor_grad) %>% 
+    group_by(id, run, run_trial) %>%
+    pivot_wider(names_from = c(visuomotor_grad, evt_time), values_from = decon_interp)
   
   
   # for coxme -- don't filter online times so that we can later interpolate
@@ -325,6 +337,9 @@ if (!reprocess) {
     save(clock_wide, clock_wide_cens,  file = file.path(cache_dir, "clock_dan_wide_ts.Rdata"))
     save(clock_comb, file = file.path(cache_dir, "clock_dan_tall_ts.Rdata"))
     save(clock_cox, file = file.path(cache_dir, "clock_dan_medusa_for_coxme.Rdata"))
+    save(clock_streams,  file = file.path(cache_dir, "clock_dan_streams.Rdata"))
+    save(clock_visuomotor,  file = file.path(cache_dir, "clock_dan_visuomotor.Rdata"))
+    
     
     # save RT ----
     # take all preceding timepoints for RT_wide
@@ -332,10 +347,23 @@ if (!reprocess) {
     rt_wide <- rt_comb %>%  select(id, run, run_trial, evt_time, label, decon_interp) %>% 
       group_by(id, run, run_trial) %>%
       pivot_wider(names_from = c(label, evt_time), values_from = decon_interp)
+    rt_streams <- rt_comb %>% select(id, run, run_trial, evt_time, label, decon_interp, stream) %>% 
+      group_by(id, run, run_trial) %>%
+      pivot_wider(names_from = c(stream, evt_time), values_from = decon_interp)
+    rt_visuomotor <- rt_comb %>% select(id, run, run_trial, evt_time, label, decon_interp, visuomotor_grad) %>% 
+      group_by(id, run, run_trial) %>%
+      pivot_wider(names_from = c(visuomotor_grad, evt_time), values_from = decon_interp)
+    
+    
+    
     
     save(rt_wide, file = file.path(cache_dir, "rt_dan_wide_ts.Rdata"))
     save(rt_comb, file = file.path(cache_dir, "rt_dan_tall_ts.Rdata"))
-    save(trial_df, file=file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))}
+    save(trial_df, file=file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))
+    save(rt_streams,  file = file.path(cache_dir, "rt_dan_streams.Rdata"))
+    save(rt_visuomotor,  file = file.path(cache_dir, "rt_dan_visuomotor.Rdata"))
+    
+  }
 }
 #reset working directory
 setwd(cwd)
