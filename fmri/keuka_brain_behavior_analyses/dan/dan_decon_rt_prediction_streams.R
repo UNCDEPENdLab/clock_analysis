@@ -51,23 +51,8 @@ load(file.path(repo_dir, '/fmri/keuka_brain_behavior_analyses/trial_df_and_vh_pe
 
 # select relevant columns for compactness
 df <- df %>% select(id, run, run_trial, rewFunc,emotion, last_outcome, rt_csv, score_csv, rt_next, pe_max, rt_vmax, rt_vmax_lag,
-                    rt_vmax_change, v_max_wi, v_entropy_wi, v_entropy_wi_change, v_entropy_wi_change_lag, v_entropy_b, v_entropy, v_max_b, u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change, 
-                    rt_vmax_lag_sc, rt_lag_sc,rt_lag2_sc, rt_csv_sc, trial_neg_inv_sc, Age, Female, kld3, kld4)
-
-if (online) {
-  if (streams) {
-    d <- merge(df, clock_streams, by = c("id", "run", "run_trial"))
-  } else {
-    d <- merge(df, clock_visuomotor, by = c("id", "run", "run_trial"))    
-  }
-} else {if (streams) {
-  d <- merge(df, rt_streams, by = c("id", "run", "run_trial"))
-} else {
-  d <- merge(df, rt_visuomotor, by = c("id", "run", "run_trial"))    
-}
-}
-
-d <- d %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% 
+                    rt_vmax_change, v_max_wi, v_entropy_wi, v_entropy_b, v_entropy, v_max_b, u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change, 
+                    rt_vmax_lag_sc, rt_lag_sc,rt_lag2_sc, rt_csv_sc, trial_neg_inv_sc, Age, Female, kld3, kld4) %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% 
   mutate(rt_next = lead(rt_csv_sc),
          rt_change = rt_next - rt_csv_sc,
          rt_vmax_lead = lead(rt_vmax),
@@ -85,6 +70,27 @@ d <- d %>% group_by(id, run) %>% arrange(id, run, run_trial) %>%
          abs_pe = abs(pe_max),
          abs_pe_lag = lag(abs_pe)
   ) %>% ungroup()
+
+if (online) {
+  if (streams) {
+    d <- merge(df, clock_streams, by = c("id", "run", "run_trial"))
+  } else {
+    d <- merge(df, clock_visuomotor, by = c("id", "run", "run_trial"))    
+  }
+} else {if (streams) {
+  d <- merge(df, rt_streams, by = c("id", "run", "run_trial"))
+} else {
+  d <- merge(df, rt_visuomotor, by = c("id", "run", "run_trial"))    
+}
+}
+units <- names(d[grepl("_\\d|-\\d", names(d))])
+# summarize by stream (for RT prediction)
+message("Summarizing by stream")
+dstreams <- d %>%
+  group_by(id, run, run_trial, ) %>%
+  summarise_at(.vars = units, .funs = mean, na.rm = T) %>% ungroup() %>% merge(df)
+
+
 # remove first run
 if (exclude_first_run) {
   d <- d %>% filter(run>1)
@@ -111,7 +117,6 @@ scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
 # combined right and left hippocampus with side as a predictor
 # if model does not converge, update with new starting values (not needed here)
 # labels <- names(d[grepl("_R_|_r_|_L_|_l_", names(d))])
-units <- names(d[grepl("_\\d|-\\d", names(d))])
 # make cluster ----
 f <- Sys.getenv('PBS_NODEFILE')
 library(parallel)
@@ -132,127 +137,106 @@ pb <- txtProgressBar(0, max = length(units), style = 3)
 
 if(decode) {
   message("\nDecoding: analyzing parcel data")
+  
   ddf <- foreach(i = 1:length(units), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
-                 .combine='rbind', .noexport = c("clock_wide", "clock_wide_cens", "rt_wide")) %dopar% {
+                 .combine='rbind', .noexport = c("clock_wide", "clock_wide_cens", "rt_wide", "clock_streams", "clock_visuomotor", "rt_streams", "rt_visuomotor")) %dopar% {
                    # message(paste("Analyzing timepoint", t,  sep = " "))
-                   if (i %% 10 == 0) {setTxtProgressBar(pb, i)}
-                   unit <- as.character(units[[i]])
+                   if (i %% 2 == 0) {setTxtProgressBar(pb, i)}
+                   # for (unit in units) {
+                   
+                   unit <- as.character(units[i])
                    d$h <- as.numeric(d[[unit]])
-                   d <- d[!is.na(d[[unit]]),]
+                   s <- d[!is.na(d$h),]
                    if (online) {
                      md <-  lmerTest::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag) + scale(rt_vmax_change) + 
                                              v_entropy_wi + v_entropy_wi_change  +
                                              kld3_lag  + v_max_wi  + scale(abs_pe_lag) + last_outcome + 
-                                             (1|id) + (1|label), d, control=lmerControl(optimizer = "nloptwrap"))
-                 } else {
-                   md <-  lmerTest::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
-                                           v_entropy_wi + v_entropy_wi_change  + 
-                                           kld3_lag  + v_max_wi  + scale(abs_pe) + outcome + 
-                                           (1|id) + (1|label), d, control=lmerControl(optimizer = "nloptwrap")) }
-  while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
-    print(md@optinfo$conv$lme4$conv)
-    ss <- getME(md,c("theta","fixef"))
-    md <- update(md, start=ss)}
-
-dm <- tidy(md)
-dm$unit <- unit
-dm$t <- gsub(".*_", "\\1", unit)
-dm}
-# FDR correction ----
-message("\nFDR correction")
-ddf <- ddf %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
-                                                       abs(statistic) > 2 & abs(statistic) < 3 ~ '2', 
-                                                       abs(statistic) > 3 ~ '3')),
-                      p_value = as.factor(case_when(`p.value` > .05 ~ '1',
-                                                    `p.value` < .05 & `p.value` > .01 ~ '2',
-                                                    `p.value` < .01 & `p.value` > .001 ~ '3',
-                                                    `p.value` <.001 ~ '4')))
-ddf$t <- as.numeric(ddf$t)
-ddf$unit <- as.factor(sub("_[^_]+$", "", ddf$unit))
-ddf$stat_order <- factor(ddf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
-ddf$p_value <- factor(ddf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
-terms <- unique(ddf$term[ddf$effect=="fixed"])
-ddf <- ddf  %>% group_by(term) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
-                                          p_level_fdr = as.factor(case_when(
-                                            # p_fdr > .1 ~ '0',
-                                            # p_fdr < .1 & p_fdr > .05 ~ '1',
-                                            p_fdr > .05 ~ '1',
-                                            p_fdr < .05 & p_fdr > .01 ~ '2',
-                                            p_fdr < .01 & p_fdr > .001 ~ '3',
-                                            p_fdr <.001 ~ '4'))
-) %>% ungroup() %>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
-                           region = substr(as.character(label), 1, nchar(as.character(label))-2))
-ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
-ddf$`p, FDR-corrected` = ddf$p_level_fdr
-
-# plots ----
-message("\nPlotting")
-if (online) {
-  setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/clock_decode')
-  epoch_label = "Time relative to clock onset, seconds"
-  decode_results_fname = "clock_decode_output.Rdata"
-} else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/rt_decode')
-  epoch_label = "Time relative to outcome, seconds"
-  decode_results_fname = "rt_decode_output.Rdata"}
-for (fe in terms) {
-  edf <- ddf %>% filter(term == paste(fe) & t < 8) 
-  termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-  fname = paste(termstr, ".pdf", sep = "")
-  pdf(fname, width = 11, height = 6)
-  print(ggplot(edf, aes(t, region)) + geom_tile(aes(fill = estimate, alpha = `p, FDR-corrected`), size = 1) +  
-          geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + facet_wrap(~side) +
-          scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Parcel") + 
-          labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
-  dev.off()
-  # save model stats ----
-}
-# add labels
-message("\nLabelling results")
-all_labels <- as_tibble(read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx")) %>%
-  select(c("roinum", "plot_label", "Stream", "Visuomotor_Gradient", "Stream_Gradient"))
-names(all_labels) <- c("atlas_value","label_short", "stream", "visuomotor_grad", "stream_grad")
-all_labels$stream_grad <- as.numeric(all_labels$stream_grad)
-all_labels <- all_labels %>% arrange(visuomotor_grad, stream_grad) %>% mutate(
-  side  = case_when(
-    grepl("L_", label_short) ~ "L",
-    grepl("R_", label_short) ~ "R"),
-  label_short = substr(label_short, 3, length(label_short)),
-  label = paste(visuomotor_grad, stream_grad, label_short, side, sep = "_")) %>% 
-  select(c(label, label_short, side, atlas_value, stream, visuomotor_grad, stream_grad))
-ddf <- merge(ddf, all_labels)
-message("\nSaving results")
-save(file = decode_results_fname, ddf)
-gc()
-}
-
-
-
-## RT prediction ----
-
-if(rt_predict) {
-  message("\nRT prediction: analyzing parcel data")
-  rdf <- foreach(i = 1:length(labels), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
-                 .combine='rbind', .noexport = c("clock_wide", "clock_wide_cens", "rt_wide")) %dopar% {
-                   # message(paste("Analyzing timepoint", t,  sep = " "))
-                   if (i %% 10 == 0) {setTxtProgressBar(pb, i)}
-                   label <- as.character(labels[[i]])
-                   d$h <- as.numeric(d[[label]])
-                   if (online) {
-                     md <-  lmerTest::lmer(scale(rt_next) ~ scale(h) * scale(rt_vmax)  + 
-                                             scale(h) * rt_csv_sc * last_outcome + scale(h) * rt_lag_sc + 
-                                             (1|id), d, control=lmerControl(optimizer = "nloptwrap"))
+                                             (1|id) + (1|label), s, control=lmerControl(optimizer = "nloptwrap"))
                    } else {
-                     md <-  lmerTest::lmer(scale(rt_next) ~ scale(h) * rt_csv_sc * outcome  + scale(h) * scale(rt_vmax)  +
-                                             scale(h) * rt_lag_sc + 
-                                             (1|id), d, control=lmerControl(optimizer = "nloptwrap"))}                   
+                     md <-  lmerTest::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
+                                             v_entropy_wi + v_entropy_wi_change  + 
+                                             kld3_lag  + v_max_wi  + scale(abs_pe) + outcome + 
+                                             (1|id) + (1|label), s, control=lmerControl(optimizer = "nloptwrap")) }
                    while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
                      print(md@optinfo$conv$lme4$conv)
                      ss <- getME(md,c("theta","fixef"))
                      md <- update(md, start=ss)}
                    
                    dm <- tidy(md)
-                   dm$label <- label
-                   dm$t <- gsub(".*_", "\\1", label)
+                   dm$unit <- unit
+                   dm$t <- gsub(".*_", "\\1", unit)
+                   dm}
+  
+  # FDR correction ----
+  message("\nFDR correction")
+  ddf <- ddf %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
+                                                         abs(statistic) > 2 & abs(statistic) < 3 ~ '2', 
+                                                         abs(statistic) > 3 ~ '3')),
+                        p_value = as.factor(case_when(`p.value` > .05 ~ '1',
+                                                      `p.value` < .05 & `p.value` > .01 ~ '2',
+                                                      `p.value` < .01 & `p.value` > .001 ~ '3',
+                                                      `p.value` <.001 ~ '4')))
+  ddf$t <- as.numeric(ddf$t)
+  ddf$unit <- as.factor(sub("_[^_]+$", "", ddf$unit))
+  ddf$stat_order <- factor(ddf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
+  ddf$p_value <- factor(ddf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
+  terms <- unique(ddf$term[ddf$effect=="fixed"])
+  ddf <- ddf  %>% group_by(term) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
+                                            p_level_fdr = as.factor(case_when(
+                                              # p_fdr > .1 ~ '0',
+                                              # p_fdr < .1 & p_fdr > .05 ~ '1',
+                                              p_fdr > .05 ~ '1',
+                                              p_fdr < .05 & p_fdr > .01 ~ '2',
+                                              p_fdr < .01 & p_fdr > .001 ~ '3',
+                                              p_fdr <.001 ~ '4'))
+  ) %>% ungroup() %>% mutate(side = substr(as.character(unit), nchar(as.character(unit)), nchar(as.character(unit))),
+                             zone = substr(as.character(unit), 1, nchar(as.character(unit))-2))
+  ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
+  ddf$`p, FDR-corrected` = ddf$p_level_fdr
+  # plots ----
+  message("\nSaving decoding results")
+  if (online) {
+    setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/clock_decode')
+    if(streams) { decode_results_fname = "clock_decode_output_streams.Rdata"
+    } else {decode_results_fname = "clock_decode_output_visuomotor.Rdata"}
+  } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/rt_decode')
+    if(streams) { decode_results_fname = "rt_decode_output_streams.Rdata"
+    } else {decode_results_fname = "rt_decode_output_visuomotor.Rdata"}
+  }
+  save(file = decode_results_fname, ddf)
+  # gc()
+}
+
+## STOPPED HERE
+
+
+## RT prediction ----
+
+if(rt_predict) {
+  message("\nRT prediction: analyzing parcel data")
+  rdf <- foreach(i = 1:length(units), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
+                 .combine='rbind', .noexport = c("clock_wide", "clock_wide_cens", "rt_wide", "clock_streams", "clock_visuomotor", "rt_streams", "rt_visuomotor", "d")) %dopar% {
+                   # message(paste("Analyzing timepoint", t,  sep = " "))
+                   if (i %% 10 == 0) {setTxtProgressBar(pb, i)}
+                   unit <- as.character(units[i])
+                   dstreams$h <- as.numeric(dstreams[[unit]])
+                   s <- dstreams[!is.na(dstreams$h),]
+                   if (online) {
+                     md <-  lmerTest::lmer(scale(rt_next) ~ scale(h) * scale(rt_vmax)  + 
+                                             scale(h) * rt_csv_sc * last_outcome + scale(h) * rt_lag_sc + 
+                                             (1|id), s, control=lmerControl(optimizer = "nloptwrap"))
+                   } else {
+                     md <-  lmerTest::lmer(scale(rt_next) ~ scale(h) * rt_csv_sc * outcome  + scale(h) * scale(rt_vmax)  +
+                                             scale(h) * rt_lag_sc + 
+                                             (1|id), s, control=lmerControl(optimizer = "nloptwrap"))}                   
+                   while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
+                     print(md@optinfo$conv$lme4$conv)
+                     ss <- getME(md,c("theta","fixef"))
+                     md <- update(md, start=ss)}
+                   
+                   dm <- tidy(md)
+                   dm$unit <- unit
+                   dm$t <- gsub(".*_", "\\1", unit)
                    dm}
   # FDR correction ----
   message("\nFDR correction")
@@ -264,7 +248,7 @@ if(rt_predict) {
                                                       `p.value` < .01 & `p.value` > .001 ~ '3',
                                                       `p.value` <.001 ~ '4')))
   rdf$t <- as.numeric(rdf$t)
-  rdf$label <- as.factor(sub("_[^_]+$", "", rdf$label))
+  rdf$unit <- as.factor(sub("_[^_]+$", "", rdf$unit))
   rdf$stat_order <- factor(rdf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
   rdf$p_value <- factor(rdf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   terms <- unique(rdf$term[rdf$effect=="fixed"])
@@ -277,51 +261,22 @@ if(rt_predict) {
                                               p_fdr < .05 & p_fdr > .01 ~ '2',
                                               p_fdr < .01 & p_fdr > .001 ~ '3',
                                               p_fdr <.001 ~ '4'))
-  ) %>% ungroup() %>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
-                             region = substr(as.character(label), 1, nchar(as.character(label))-2))
+  ) %>% ungroup() %>% mutate(side = substr(as.character(unit), nchar(as.character(unit)), nchar(as.character(unit))),
+                             region = substr(as.character(unit), 1, nchar(as.character(unit))-2))
   rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
   rdf$`p, FDR-corrected` = rdf$p_level_fdr
   
   # plots ----
-  message("\nPlotting")
+  message("\nSaving RT prediction results")
   if (online) {
     setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/clock_rt')
-    epoch_label = "Time relative to clock onset, seconds"  
-    rt_results_fname = "clock_rt_predict_output.Rdata"
-  } else {
-    setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/rt_rt')
-    epoch_label = "Time relative to outcome, seconds"
-    rt_results_fname = "rt_rt_predict_output.Rdata"
+    if(streams) { rt_results_fname = "clock_rt_output_streams.Rdata"
+    } else {rt_results_fname = "clock_rt_output_visuomotor.Rdata"}
+  } else {setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/rt_rt')
+    if(streams) { rt_results_fname = "rt_rt_output_streams.Rdata"
+    } else {rt_results_fname = "rt_rt_output_visuomotor.Rdata"}
+    save(file = rt_results_fname, rdf)
   }
-  for (fe in terms) {
-    edf <- rdf %>% filter(term == paste(fe) & t < 8) 
-    termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste(termstr, ".pdf", sep = "")
-    pdf(fname, width = 11, height = 6)
-    print(ggplot(edf, aes(t, region)) + geom_tile(aes(fill = estimate, alpha = `p, FDR-corrected`), size = 1) +  
-            geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + facet_wrap(~side) +
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Parcel") + 
-            labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
-    dev.off()
-    # save output for inspection
-    
-  }
-  # add labels
-  message("\nLabelling results")
-  all_labels <- as_tibble(read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx")) %>%
-    select(c("roinum", "plot_label", "Stream", "Visuomotor_Gradient", "Stream_Gradient"))
-  names(all_labels) <- c("atlas_value","label_short", "stream", "visuomotor_grad", "stream_grad")
-  all_labels$stream_grad <- as.numeric(all_labels$stream_grad)
-  all_labels <- all_labels %>% arrange(visuomotor_grad, stream_grad) %>% mutate(
-    side  = case_when(
-      grepl("L_", label_short) ~ "L",
-      grepl("R_", label_short) ~ "R"),
-    label_short = substr(label_short, 3, length(label_short)),
-    label = paste(visuomotor_grad, stream_grad, label_short, side, sep = "_")) %>% 
-    select(c(label, label_short, side, atlas_value, stream, visuomotor_grad, stream_grad))
-  rdf <- merge(rdf, all_labels)
-  message("\nSaving results")
-  save(file = rt_results_fname, rdf)
 }
 stopCluster(cl)
 gc()
