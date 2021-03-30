@@ -18,6 +18,7 @@ library(readxl)
 repo_directory <- "~/code/clock_analysis"
 
 # what to run
+# you can run all options at once
 decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt_predict = T # predicts next response based on signal and behavioral variables
 alignments = c(T,F) # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses

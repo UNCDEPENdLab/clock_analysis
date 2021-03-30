@@ -31,14 +31,17 @@ if(replicate_compression) {reprocess = T}
 
 # what to run
 plots = T
+# CAN RUN BOTH AT ONCE:
 decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt_predict = T # predicts next response based on signal and behavioral variables
+
+# PICK ONE AT A TIME:
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
-# online_alignment <- c(T, F)
-exclude_first_run = T
-reg_diagnostics = F
 streams = T # whether models are run on parcels within levels of visuomotor gradient (F) or on parcels within streams (T)
 visuomotor = F
+
+exclude_first_run = T
+reg_diagnostics = F
 # load MEDUSA deconvolved data
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
 
