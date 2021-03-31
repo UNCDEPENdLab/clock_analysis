@@ -11,6 +11,7 @@ library(psych)
 library(corrplot)
 library(foreach)
 library(doParallel)
+# library(data.table)
 repo_directory <- "~/code/clock_analysis"
 medusa_dir = "~/Box/SCEPTIC_fMRI/MEG_TimeFreq/"
 decode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_decode/"
@@ -235,30 +236,30 @@ if(decode) {
 message("RT prediction: analyzing censor data")
 pb <- txtProgressBar(0, max = length(all_sensors)*length(freqs), style = 3)
 
-# DECODING ANALYSES ----
+# RT ANALYSES ----
 if(rt) {
   rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
                  .combine='rbind') %:%
-    foreach(j = 1:length(freqs), .combine='c') %dopar% {
+    sensor <- all_sensors[[i]]
+    rt <- as.data.table(readRDS(paste0("MEG", sensor, "_tf.rds"))) %>% filter(Time>start_time) %>%
+      rename(id = Subject, trial = Trial, run = Run, evt_time = Time, pow = Pow) %>%
+      mutate(pow = scale2(pow)) %>% filter(Freq == freq)# scale signal across subjects
+    rt$sensor <- as.character(sensor)
+    # combine with behavior ----
+    # message("Merging with behavior")
+    rt_comb <- trial_df %>% 
+      group_by(id, run) %>% ungroup() %>% inner_join(rt) %>% arrange(id, run, run_trial, evt_time)
+    rt_comb$evt_time_f <- as.factor(rt_comb$evt_time)
+    rt_comb <- split(rt_comb, rt_comb$Freq)
+    foreach(d = iter(rt_comb), j = icount(), .combine='c', .noexport = c("rt_comb", "rt")) %dopar% {
       # for (i in 1:length(all_sensors)) {  # TEST ONLY
       if (i*j %% 10 == 0) {setTxtProgressBar(pb, i*j)}
-      sensor <- all_sensors[[i]]
       freq <- freqs[j]
       # load data ----
       # message("Loading")
-      rt <- as_tibble(readRDS(paste0("MEG", sensor, "_tf.rds"))) %>% filter(Time>start_time) %>%
-        rename(id = Subject, trial = Trial, run = Run, evt_time = Time, pow = Pow) %>%
-        mutate(pow = scale2(pow)) %>% filter(Freq == freq)# scale signal across subjects
-      rt$sensor <- as.character(sensor)
-      # combine with behavior ----
-      # message("Merging with behavior")
-      rt_comb <- trial_df %>% 
-        group_by(id, run) %>% ungroup() %>% inner_join(rt) %>% arrange(id, run, run_trial, evt_time)
-      rt_comb$evt_time_f <- as.factor(rt_comb$evt_time)
-      
       # wrangle into wide -----
       # message("Wranging")
-      rt_wide <- rt_comb %>%  group_by(id, run, run_trial) %>% 
+      rt_wide <- d %>%  group_by(id, run, run_trial) %>% 
         pivot_wider(names_from = c(evt_time_f), values_from = pow)
       # analysis -----
       timepoints = as.character(unique(rt_comb$evt_time))
