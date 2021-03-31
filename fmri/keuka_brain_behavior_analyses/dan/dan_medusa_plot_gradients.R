@@ -15,18 +15,19 @@ library(psych)
 # library(foreach)
 # library(doParallel)
 library(readxl)
-repo_directory <- "~/code/clock_analysis"
+#repo_directory <- "~/code/clock_analysis"
+repo_directory <- "~/Data_Analysis/clock_analysis"
 
 # what to run
 # you can run all options at once
 decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt_predict = T # predicts next response based on signal and behavioral variables
+rt_predict = F # predicts next response based on signal and behavioral variables
 alignments = c(T,F) # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 
 # directories
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd(file.path(repo_directory, 'fmri/keuka_brain_behavior_analyses/'))
 cache_dir <- "~/Box/SCEPTIC_fMRI/dan_medusa/cache/"
-repo_dir <- "~/code/clock_analysis"
+
 for (online in alignments)
 {
   if(decode) {
@@ -69,16 +70,28 @@ for (online in alignments)
       # fe <- terms[1] # test only
       edf <- ddf %>% filter(term == paste(fe) & t < 8) 
       termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-      # # plot stream gradients
+      # plot stream gradients
       fname = paste("streams_", termstr, ".pdf", sep = "")
       pdf(fname, width = 9, height = 3.5)
-      print(ggplot(edf, aes(t, zone)) + geom_tile(aes(fill = estimate, alpha = `p, FDR-corrected`), size = 1) +  
+      print(ggplot(edf, aes(t, zone)) + geom_tile(aes(fill = estimate, alpha = `p, FDR-corrected`), size = 1) +
               geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + facet_wrap(~side) +
-              scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + 
+              scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) +
               labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)) + ylab("") +
               scale_y_discrete(labels=c("visual-motion" = "MT+,\ncontrol", "ventro-dorsal" = "Ventro-dorsal\nstream",
                                         "oculomotor" = "Oculomotor\nstream", "dorso-dorsal" = "Dorso-dorsal\nstream")))
       dev.off()
+
+      fname = paste("streams_line_", termstr, ".pdf", sep = "")
+      pdf(fname, width = 9, height = 3.5)
+      gg <- ggplot(edf, aes(x=t, y=estimate, ymin=estimate-std.error, ymax=estimate+std.error, color=zone, size=`p, FDR-corrected`)) + 
+              geom_line(size = 1) + geom_point() +
+              geom_errorbar() +
+              geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + facet_wrap(~side) +
+              scale_color_brewer(palette="Set1") + xlab(epoch_label) + 
+              labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)) + ylab("")
+      print(gg)
+      dev.off()
+
     }
   }
   # add labels
