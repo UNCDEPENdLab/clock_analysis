@@ -13,7 +13,7 @@ library(foreach)
 library(doParallel)
 repo_directory <- "~/code/clock_analysis"
 medusa_dir = "~/Box/SCEPTIC_fMRI/MEG_TimeFreq/"
-
+plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/"
 stopifnot(dir.exists(medusa_dir))  
 
 setwd(medusa_dir)
@@ -182,7 +182,7 @@ if(decode) {
                                                v_entropy_wi + v_entropy_wi_change  + 
                                                v_max_wi  + scale(abs_pe) + outcome + 
                                                (1|id), rt_wide, control=lmerControl(optimizer = "nloptwrap"))
-                       while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
+                       while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) { 
                          print(md@optinfo$conv$lme4$conv)
                          ss <- getME(md,c("theta","fixef"))
                          md <- update(md, start=ss)}
@@ -226,6 +226,7 @@ if(decode) {
   ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
   ddf$`p, FDR-corrected` = ddf$p_level_fdr
   # save model stats ----
+  setwd(plot_dir)
   save(file = "meg_freq_medusa_decode_output_all.Rdata", ddf)
   
 }
@@ -273,7 +274,7 @@ if(rt) {rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse
                              md <-  lmerTest::lmer(scale(rt_next) ~ scale(h) * rt_csv_sc * outcome  + scale(h) * scale(rt_vmax)  +
                                                      scale(h) * rt_lag_sc + 
                                                      (1|id), rt_wide, control=lmerControl(optimizer = "nloptwrap"))
-                             while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
+                             while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) { 
                                print(md@optinfo$conv$lme4$conv)
                                ss <- getME(md,c("theta","fixef"))
                                md <- update(md, start=ss)}
@@ -317,7 +318,7 @@ rdf <- rdf  %>% group_by(term) %>% mutate(p_fdr = p.adjust(p.value, method = 'fd
 #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
 rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
 rdf$`p, FDR-corrected` = rdf$p_level_fdr
-
+setwd(plot_dir)
 save(file = "meg_freq_medusa_rt_predict_output_all.Rdata", rdf)
 }
 stopCluster(cl)
