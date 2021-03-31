@@ -24,11 +24,11 @@ setwd(medusa_dir)
 # options, files ----
 parallel = T
 decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt = T # predicts next response based on signal and behavioral variables
+rt_predict = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
 reg_diagnostics = F
-start_time = -3
+start_time = .9
 
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
@@ -145,7 +145,7 @@ if (parallel) {
 test <- as_tibble(readRDS(paste0("MEG", all_sensors[1], "_tf.rds"))) %>% filter(Time>start_time) %>%
   rename(id = Subject, trial = Trial, run = Run, evt_time = Time, pow = Pow) %>%
   mutate(pow = scale2(pow)) # scale signal across subjects
-freqs <- unique(test$Freq)
+freqs <- as.list(unique(test$Freq))
 # freqs <- freqs[1] # TEST ONLY
 message("Decoding: analyzing censor data")
 pb <- txtProgressBar(0, max = length(all_sensors)*length(freqs), style = 3)
@@ -199,7 +199,7 @@ if(decode) {
         newlist[[t]]<-dm
       } 
       do.call(rbind,newlist)} 
-
+  
   # format statistics ----
   
   ddf <- ddf %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
@@ -216,13 +216,13 @@ if(decode) {
   terms <- unique(ddf$term[ddf$effect=="fixed"])
   # FDR correction ----
   ddf <- ddf  %>% group_by(term, sensor) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
-                                            p_level_fdr = as.factor(case_when(
-                                              # p_fdr > .1 ~ '0',
-                                              # p_fdr < .1 & p_fdr > .05 ~ '1',
-                                              p_fdr > .05 ~ '1',
-                                              p_fdr < .05 & p_fdr > .01 ~ '2',
-                                              p_fdr < .01 & p_fdr > .001 ~ '3',
-                                              p_fdr <.001 ~ '4'))
+                                                    p_level_fdr = as.factor(case_when(
+                                                      # p_fdr > .1 ~ '0',
+                                                      # p_fdr < .1 & p_fdr > .05 ~ '1',
+                                                      p_fdr > .05 ~ '1',
+                                                      p_fdr < .05 & p_fdr > .01 ~ '2',
+                                                      p_fdr < .01 & p_fdr > .001 ~ '3',
+                                                      p_fdr <.001 ~ '4'))
   ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
   #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
   ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
@@ -234,38 +234,38 @@ if(decode) {
 }
 
 message("RT prediction: analyzing censor data")
-pb <- txtProgressBar(0, max = length(all_sensors)*length(freqs), style = 3)
+pb <- txtProgressBar(0, max = length(all_sensors), style = 3)
 
 # RT ANALYSES ----
-if(rt) {
-  rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
-                 .combine='rbind') %:%
-    sensor <- all_sensors[[i]]
-    rt <- as.data.table(readRDS(paste0("MEG", sensor, "_tf.rds"))) %>% filter(Time>start_time) %>%
+s = 0
+if(rt_predict) {
+  biglist <- list()
+  for (sensor in all_sensors) {
+    s = s + 1
+    rt <- as_tibble(readRDS(paste0("MEG", sensor, "_tf.rds"))) %>% filter(Time>start_time) %>%
       rename(id = Subject, trial = Trial, run = Run, evt_time = Time, pow = Pow) %>%
-      mutate(pow = scale2(pow)) %>% filter(Freq == freq)# scale signal across subjects
-    rt$sensor <- as.character(sensor)
+      mutate(pow = scale2(pow)) # scale signal across subjects
+    rt$sensor <- as.character(sensor) 
     # combine with behavior ----
     # message("Merging with behavior")
     rt_comb <- trial_df %>% 
       group_by(id, run) %>% ungroup() %>% inner_join(rt) %>% arrange(id, run, run_trial, evt_time)
     rt_comb$evt_time_f <- as.factor(rt_comb$evt_time)
     rt_comb <- split(rt_comb, rt_comb$Freq)
-    foreach(d = iter(rt_comb), j = icount(), .combine='c', .noexport = c("rt_comb", "rt")) %dopar% {
-      # for (i in 1:length(all_sensors)) {  # TEST ONLY
-      if (i*j %% 10 == 0) {setTxtProgressBar(pb, i*j)}
-      freq <- freqs[j]
-      # load data ----
-      # message("Loading")
-      # wrangle into wide -----
-      # message("Wranging")
-      rt_wide <- d %>%  group_by(id, run, run_trial) %>% 
-        pivot_wider(names_from = c(evt_time_f), values_from = pow)
-      # analysis -----
-      timepoints = as.character(unique(rt_comb$evt_time))
-      # timepoints <- timepoints[1]# TEST ONLY
-      newlist <- list()
-      for (t in timepoints) {
+    timepoints = as.character(unique(rt_comb[[1]]$evt_time))
+    if (s %% 1 == 0) {setTxtProgressBar(pb, s)}
+    dd <- foreach(d = iter(rt_comb), i = icount(), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
+                   .combine='rbind') %:%
+      foreach(t = iter(timepoints), j = icount(), .combine='rbind', .noexport = c("rt_comb", "rt")) %dopar% {
+        freq <- as.character(freqs[[i]])
+        # load data ----
+        # message("Loading")
+        # wrangle into wide -----
+        # message("Wranging")
+        rt_wide <- d %>% filter(evt_time==t) %>%  group_by(id, run, run_trial) %>% 
+          pivot_wider(names_from = c(evt_time_f), values_from = pow) 
+        # analysis -----
+        # timepoints <- timepoints[1]# TEST ONLY
         message(paste(freq, t))
         # message(paste("Analyzing timepoint", t,  sep = " "))
         rt_wide$h<-rt_wide[[t]]
@@ -281,39 +281,40 @@ if(rt) {
         dm$sensor <- sensor
         dm$t <- t
         dm$freq <- freq
-        newlist[[t]]<-dm
-      } 
-      newlist}
-  # do.call(rbind,newlist)
-# format statistics ----
-
-rdf <- rdf %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
-                                                       abs(statistic) > 2 & abs(statistic) < 3 ~ '2', 
-                                                       abs(statistic) > 3 ~ '3')),
-                      p_value = as.factor(case_when(`p.value` > .05 ~ '1',
-                                                    `p.value` < .05 & `p.value` > .01 ~ '2',
-                                                    `p.value` < .01 & `p.value` > .001 ~ '3',
-                                                    `p.value` <.001 ~ '4')))
-rdf$t <- as.numeric(rdf$t)
-# rdf$label <- as.factor(sub("_[^_]+$", "", rdf$label))
-rdf$stat_order <- factor(rdf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
-rdf$p_value <- factor(rdf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
-terms <- unique(rdf$term[rdf$effect=="fixed"])
-terms <- terms[grepl("(h)",terms)]
-# FDR correction ----
-rdf <- rdf  %>% group_by(term, sensor) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
-                                          p_level_fdr = as.factor(case_when(
-                                            # p_fdr > .1 ~ '0',
-                                            # p_fdr < .1 & p_fdr > .05 ~ '1',
-                                            p_fdr > .05 ~ '1',
-                                            p_fdr < .05 & p_fdr > .01 ~ '2',
-                                            p_fdr < .01 & p_fdr > .001 ~ '3',
-                                            p_fdr <.001 ~ '4'))
-) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
-#          region = substr(as.character(label), 1, nchar(as.character(label))-2))
-rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
-rdf$`p, FDR-corrected` = rdf$p_level_fdr
-setwd(rt_plot_dir)
-save(file = "meg_freq_medusa_rt_predict_output_nested.Rdata", rdf)
+        # print(dm)
+        dm}
+  biglist[[sensor]] <- dd}
+  
+  rdf <-  do.call(rbind,biglist)
+  # format statistics ----
+  
+  rdf <- rdf %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
+                                                         abs(statistic) > 2 & abs(statistic) < 3 ~ '2', 
+                                                         abs(statistic) > 3 ~ '3')),
+                        p_value = as.factor(case_when(`p.value` > .05 ~ '1',
+                                                      `p.value` < .05 & `p.value` > .01 ~ '2',
+                                                      `p.value` < .01 & `p.value` > .001 ~ '3',
+                                                      `p.value` <.001 ~ '4')))
+  rdf$t <- as.numeric(rdf$t)
+  # rdf$label <- as.factor(sub("_[^_]+$", "", rdf$label))
+  rdf$stat_order <- factor(rdf$stat_order, labels = c("NS", "|t| > 2", "|t| > 3"))
+  rdf$p_value <- factor(rdf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
+  terms <- unique(rdf$term[rdf$effect=="fixed"])
+  terms <- terms[grepl("(h)",terms)]
+  # FDR correction ----
+  rdf <- rdf  %>% group_by(term, sensor) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
+                                                    p_level_fdr = as.factor(case_when(
+                                                      # p_fdr > .1 ~ '0',
+                                                      # p_fdr < .1 & p_fdr > .05 ~ '1',
+                                                      p_fdr > .05 ~ '1',
+                                                      p_fdr < .05 & p_fdr > .01 ~ '2',
+                                                      p_fdr < .01 & p_fdr > .001 ~ '3',
+                                                      p_fdr <.001 ~ '4'))
+  ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
+  #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
+  rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
+  rdf$`p, FDR-corrected` = rdf$p_level_fdr
+  setwd(rt_plot_dir)
+  save(file = "meg_freq_medusa_rt_predict_output_nested.Rdata", rdf)
 }
 stopCluster(cl)
