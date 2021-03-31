@@ -28,7 +28,7 @@ rt_predict = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
 reg_diagnostics = F
-start_time = .9
+start_time = .5
 
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
@@ -129,7 +129,7 @@ levels(trial_df$rewFunc) <- c("DEV", "IEV", "CEV", "CEVR")
 if (parallel) {
   f <- Sys.getenv('PBS_NODEFILE')
   library(parallel)
-  ncores <- detectCores()/2
+  ncores <- detectCores()
   nodelist <- if (nzchar(f)) readLines(f) else rep('localhost', ncores)
   
   cat("Node list allocated to this job\n")
@@ -172,7 +172,7 @@ if(decode) {
       rt_comb$evt_time_f <- as.factor(rt_comb$evt_time)
       
       # wrangle into wide
-      # message("Wranging")
+      # message("Wrangling")
       rt_wide <- rt_comb %>%  group_by(id, run, run_trial) %>% 
         pivot_wider(names_from = c(evt_time_f), values_from = pow)
       # analysis ----
@@ -251,13 +251,17 @@ if(rt_predict) {
     rt_comb <- trial_df %>% 
       group_by(id, run) %>% ungroup() %>% inner_join(rt) %>% arrange(id, run, run_trial, evt_time)
     rt_comb$evt_time_f <- as.factor(rt_comb$evt_time)
-    rt_comb <- split(rt_comb, rt_comb$Freq)
-    timepoints = as.character(unique(rt_comb[[1]]$evt_time))
+    timepoints = as.character(unique(rt_comb$evt_time))
     if (s %% 1 == 0) {setTxtProgressBar(pb, s)}
-    dd <- foreach(d = iter(rt_comb), i = icount(), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
-                   .combine='rbind') %:%
-      foreach(t = iter(timepoints), j = icount(), .combine='rbind', .noexport = c("rt_comb", "rt")) %dopar% {
-        freq <- as.character(freqs[[i]])
+    newlist <- list()
+    f = 1
+    for (freq in freqs) {
+      f = f + 1
+      rt_comb_l <- rt_comb %>% filter(Freq == freq)
+      rt_comb_l <- split(rt_comb_l, rt_comb$evt_time)
+      
+      dd <- foreach(d = iter(rt_comb_l), j = icount(), .combine='rbind',.packages=c("lme4", "tidyverse", "broom.mixed", "car"), .noexport = c("rt_comb", "rt")) %dopar% {
+        t <- timepoints[[j]]
         # load data ----
         # message("Loading")
         # wrangle into wide -----
@@ -283,7 +287,8 @@ if(rt_predict) {
         dm$freq <- freq
         # print(dm)
         dm}
-  biglist[[sensor]] <- dd}
+    }
+    biglist[[sensor]] <- dd}
   
   rdf <-  do.call(rbind,biglist)
   # format statistics ----
