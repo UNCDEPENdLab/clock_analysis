@@ -22,7 +22,7 @@ setwd(medusa_dir)
 
 # options, files ----
 parallel = T
-decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
@@ -128,7 +128,7 @@ levels(trial_df$rewFunc) <- c("DEV", "IEV", "CEV", "CEVR")
 if (parallel) {
   f <- Sys.getenv('PBS_NODEFILE')
   library(parallel)
-  ncores <- detectCores()
+  ncores <- detectCores()/2
   nodelist <- if (nzchar(f)) readLines(f) else rep('localhost', ncores)
   
   cat("Node list allocated to this job\n")
@@ -139,8 +139,6 @@ if (parallel) {
   registerDoParallel(cl)
 }
 # loop over sensors ----
-message("Decoding: analyzing censor data")
-pb <- txtProgressBar(0, max = length(all_sensors), style = 3)
 
 # define frequencies for the loop
 test <- as_tibble(readRDS(paste0("MEG", all_sensors[1], "_tf.rds"))) %>% filter(Time>start_time) %>%
@@ -148,6 +146,8 @@ test <- as_tibble(readRDS(paste0("MEG", all_sensors[1], "_tf.rds"))) %>% filter(
   mutate(pow = scale2(pow)) # scale signal across subjects
 freqs <- unique(test$Freq)
 # freqs <- freqs[1] # TEST ONLY
+message("Decoding: analyzing censor data")
+pb <- txtProgressBar(0, max = length(all_sensors)*length(freqs), style = 3)
 
 # DECODING ANALYSES ----
 if(decode) {
@@ -155,7 +155,7 @@ if(decode) {
                  .combine='rbind') %:%
     foreach(j = 1:length(freqs), .combine='c') %dopar% {
       # for (i in 1:length(all_sensors)) {  # TEST ONLY
-      if (i %% 10 == 0) {setTxtProgressBar(pb, i)}
+      if (i*j %% 10 == 0) {setTxtProgressBar(pb, i*j)}
       sensor <- all_sensors[[i]]
       freq <- freqs[j]
       # load data ----
@@ -233,14 +233,15 @@ if(decode) {
 }
 
 message("RT prediction: analyzing censor data")
-pb <- txtProgressBar(0, max = length(all_sensors), style = 3)
-setwd(medusa_dir)
-# RT PREDICTION ANALYSES ----
-if(rt) {rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
-                    .combine='rbind') %:%
+pb <- txtProgressBar(0, max = length(all_sensors)*length(freqs), style = 3)
+
+# DECODING ANALYSES ----
+if(rt) {
+  rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
+                 .combine='rbind') %:%
     foreach(j = 1:length(freqs), .combine='c') %dopar% {
       # for (i in 1:length(all_sensors)) {  # TEST ONLY
-      if (i %% 10 == 0) {setTxtProgressBar(pb, i)}
+      if (i*j %% 10 == 0) {setTxtProgressBar(pb, i*j)}
       sensor <- all_sensors[[i]]
       freq <- freqs[j]
       # load data ----
@@ -281,7 +282,8 @@ if(rt) {rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse
         dm$freq <- freq
         newlist[[t]]<-dm
       } 
-      do.call(rbind,newlist)} 
+      newlist}
+  # do.call(rbind,newlist)
 # format statistics ----
 
 rdf <- rdf %>% mutate(stat_order = as.factor(case_when(abs(statistic) < 2 ~ '1', 
