@@ -13,7 +13,7 @@ rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt//"
 
 # what to run
 # you can run all options at once
-decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt_predict = T # predicts next response based on signal and behavioral variables
 
 # plots ----
@@ -59,15 +59,14 @@ if (decode) {
   }
 } 
 
-if(rt) {
+if(rt_predict) {
   # plots ----
   setwd('~/OneDrive/collected_letters/papers/meg/plots/rt_rt')
   epoch_label = "Time relative to outcome, seconds"
-  rt_results_fname = "meg_freq_medusa_rt_predict_output_all.Rdata"
-  decode_results_fname = "meg_freq_medusa_rt_predict_output_all.Rdata"
-  load(decode_results_fname)
+  rt_results_fname = "meg_freq_medusa_rt_predict_output_nested.Rdata"
+  load(rt_results_fname)
   terms <- unique(rdf$term[rdf$effect=="fixed"])
-  terms <- terms[grepl("(h)",terms)]
+  terms <- terms[grepl("(pow)",terms)]
   
   # # within-sensor FDR correction
   # rdf <- rdf  %>% group_by(term, sensor) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
@@ -82,23 +81,35 @@ if(rt) {
   # #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
   # rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
   # rdf$`p, FDR-corrected` = rdf$p_level_fdr
+  library(ggnewscale)
   
   for (fe in terms) {
     edf <- rdf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste("meg_tf_dan_uncorrected_", termstr, ".pdf", sep = "")
-    pdf(fname, width = 30, height = 30)
-    print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) + 
-            geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
+    fname = paste("meg_tf_dan_uncorrected", termstr, ".pdf", sep = "")
+    pdf(fname, width = 18, height = 8)
+    print(ggplot(edf %>% filter(estimate < 0), aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) + 
+            geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + #theme_dark() + 
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + facet_wrap(~sensor) +
-            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
+            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
+            new_scale_fill() +
+            geom_tile(data = edf %>% filter(estimate > 0), aes(t, freq, fill = estimate, alpha = p_value), size = .01) +
+            geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + #theme_dark() + 
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + facet_wrap(~sensor) +
+            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) 
     dev.off()
+    
     fname = paste("meg_tf_dan_FDR_", termstr, ".pdf", sep = "")
     pdf(fname, width = 18, height = 8)
-    print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) + 
-            geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
+    print(ggplot(edf %>% filter(estimate < 0), aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) + 
+            geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + theme_dark() + 
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + facet_wrap(~sensor) +
-            labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
+            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
+            new_scale_fill() +
+            geom_tile(data = edf %>% filter(estimate > 0), aes(t, freq, fill = estimate, alpha = p_value), size = .01) +
+            geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + theme_dark() + 
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + facet_wrap(~sensor) +
+            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) 
     dev.off()
   }
 }
