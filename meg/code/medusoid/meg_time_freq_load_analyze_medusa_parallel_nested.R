@@ -149,7 +149,7 @@ test <- as_tibble(readRDS(paste0("MEG", all_sensors[1], "_tf.rds"))) %>% filter(
   rename(id = Subject, trial = Trial, run = Run, evt_time = Time, pow = Pow) %>%
   mutate(pow = scale2(pow)) # scale signal across subjects
 freqs <- as.list(unique(test$Freq))
-# freqs <- freqs[1] # TEST ONLY
+freqs <- freqs[1] # TEST ONLY
 message("Decoding: analyzing censor data")
 pb <- txtProgressBar(0, max = length(all_sensors)*length(freqs), style = 3)
 
@@ -177,30 +177,19 @@ if(decode) {
     f = 1
     for (freq in freqs) {
       f = f + 1
-      rt_comb_l <- rt_comb %>% filter(Freq == freq)
-      rt_comb_l <- split(rt_comb_l, rt_comb$evt_time)
+      rt_comb_f <- rt_comb %>% filter(Freq == freq)
+      rt_comb_t <- split(rt_comb_f, rt_comb_f$evt_time)
       
-      dd <- foreach(d = iter(rt_comb_l), j = icount(), .combine='rbind',.packages=c("lme4", "tidyverse", "broom.mixed", "car"), .noexport = c("rt_comb", "rt")) %dopar% {
+      dd <- foreach(d = iter(rt_comb_t), j = icount(), .combine='rbind',.packages=c("lme4", "tidyverse", "broom.mixed", "car"), .noexport = c("rt_comb", "rt")) %dopar% {
         t <- timepoints[[j]]
-        # load data ----
-        # message("Loading")
-        # wrangle into wide -----
-        # message("Wranging")
-        rt_wide <- d %>% filter(evt_time==t) %>%  group_by(id, run, run_trial) %>% 
-          pivot_wider(names_from = c(evt_time_f), values_from = pow) 
-        # analysis -----
-        # timepoints <- timepoints[1]# TEST ONLY
-        message(paste(s, freq, t))
-        # message(paste("Analyzing timepoint", t,  sep = " "))
-        rt_wide$h<-rt_wide[[t]]
-        md <-  lmerTest::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
+        md <-  lmerTest::lmer(pow ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
                                 v_entropy_wi + v_entropy_wi_change  + 
                                 v_max_wi  + scale(abs_pe) + outcome + 
-                                (1|id), rt_wide, control=lmerControl(optimizer = "nloptwrap"))
+                                (1|id), d, control=lmerControl(optimizer = "nloptwrap"))
         while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
           print(md@optinfo$conv$lme4$conv)
           ss <- getME(md,c("theta","fixef"))
-          md <- update(md, start=ss)}
+          md <- update(md, start=ss, control=lmerControl(optimizer = "bobyqa"))}  
         
         dm <- tidy(md)
         dm$sensor <- sensor
@@ -208,8 +197,10 @@ if(decode) {
         dm$freq <- freq
         # print(dm)
         dm}
-    }
-    biglist[[sensor]] <- dd}
+      newlist[[freq]] <- dd}
+    df <-  do.call(rbind,newlist)
+    biglist[[sensor]] <- df}
+  
   ddf <-  do.call(rbind,biglist)
   
   # format statistics ----
@@ -276,11 +267,11 @@ if(rt_predict) {
     timepoints = as.character(unique(rt_comb$evt_time))
     if (s %% 1 == 0) {setTxtProgressBar(pb, s)}
     newlist <- list()
-    f = 1
+    
     for (freq in freqs) {
-      f = f + 1
-      rt_comb_l <- rt_comb %>% filter(Freq == freq)
-      rt_comb_l <- split(rt_comb_l, rt_comb$evt_time)
+      rt_comb_f <- rt_comb %>% filter(Freq == freq)
+      rt_comb_t <- split(rt_comb_f, rt_comb_f$evt_time)
+      message(paste(s, freq))
       
       dd <- foreach(d = iter(rt_comb_l), j = icount(), .combine='rbind',.packages=c("lme4", "tidyverse", "broom.mixed", "car"), .noexport = c("rt_comb", "rt")) %dopar% {
         t <- timepoints[[j]]
@@ -292,16 +283,25 @@ if(rt_predict) {
           pivot_wider(names_from = c(evt_time_f), values_from = pow) 
         # analysis -----
         # timepoints <- timepoints[1]# TEST ONLY
-        message(paste(s, freq, t))
         # message(paste("Analyzing timepoint", t,  sep = " "))
         rt_wide$h<-rt_wide[[t]]
-        md <-  lmerTest::lmer(scale(rt_next) ~ scale(h) * rt_csv_sc * outcome  + scale(h) * scale(rt_vmax)  +
-                                scale(h) * rt_lag_sc + 
-                                (1|id), rt_wide, control=lmerControl(optimizer = "nloptwrap"))
-        while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
-          print(md@optinfo$conv$lme4$conv)
-          ss <- getME(md,c("theta","fixef"))
-          md <- update(md, start=ss)}
+        if (random) {
+          md <-  lmerTest::lmer(scale(rt_next) ~ scale(pow) * rt_csv_sc * outcome  + scale(pow) * scale(rt_vmax)  +
+                                  scale(pow) * rt_lag_sc + 
+                                  (rt_csv_sc + rt_lag_sc + scale(rt_vmax)|id), d, control=lmerControl(optimizer = "nloptwrap"))
+          while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
+            print(md@optinfo$conv$lme4$conv)
+            ss <- getME(md,c("theta","fixef"))
+            md <- update(md, start=ss, control=lmerControl(optimizer = "bobyqa"))}  
+        } else {
+          md <-  lmerTest::lmer(scale(rt_next) ~ scale(pow) * rt_csv_sc * outcome  + scale(pow) * scale(rt_vmax)  +
+                                  scale(pow) * rt_lag_sc + 
+                                  (1|id), d, control=lmerControl(optimizer = "nloptwrap"))
+          while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {
+            print(md@optinfo$conv$lme4$conv)
+            ss <- getME(md,c("theta","fixef"))
+            md <- update(md, start=ss, control=lmerControl(optimizer = "bobyqa"))}  
+        }
         
         dm <- tidy(md)
         dm$sensor <- sensor
@@ -309,8 +309,9 @@ if(rt_predict) {
         dm$freq <- freq
         # print(dm)
         dm}
-    }
-    biglist[[sensor]] <- dd}
+      newlist[[freq]] <- dd}
+    df <-  do.call(rbind,newlist)
+    biglist[[sensor]] <- df}
   
   rdf <-  do.call(rbind,biglist)
   # format statistics ----
