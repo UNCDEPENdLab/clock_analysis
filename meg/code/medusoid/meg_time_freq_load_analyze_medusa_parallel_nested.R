@@ -23,12 +23,14 @@ setwd(medusa_dir)
 
 # options, files ----
 parallel = T
-decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
+decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt_predict = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
 reg_diagnostics = F
-start_time = .5
+start_time = -3
+end_time = .94
+log = T # whether to log-transform power
 
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
@@ -38,6 +40,7 @@ start_time = .5
 files <- list.files(medusa_dir)
 files <- files[grepl("MEG", files)]
 all_sensors <- substr(files, 4,7)
+all_sensors <- all_sensors[1]
 
 # # take first few for testing
 # all_sensors <- all_sensors[1:2] # TEST ONLY
@@ -151,36 +154,43 @@ message("Decoding: analyzing censor data")
 pb <- txtProgressBar(0, max = length(all_sensors)*length(freqs), style = 3)
 
 # DECODING ANALYSES ----
+s = 0
+
 if(decode) {
-  ddf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
-                 .combine='rbind') %:%
-    foreach(j = 1:length(freqs), .combine='c') %dopar% {
-      # for (i in 1:length(all_sensors)) {  # TEST ONLY
-      if (i*j %% 10 == 0) {setTxtProgressBar(pb, i*j)}
-      sensor <- all_sensors[[i]]
-      freq <- freqs[j]
-      # load data ----
-      # message("Loading")
-      rt <- as_tibble(readRDS(paste0("MEG", sensor, "_tf.rds"))) %>% filter(Time>start_time) %>%
-        rename(id = Subject, trial = Trial, run = Run, evt_time = Time, pow = Pow) %>%
-        mutate(pow = scale2(pow)) %>% filter(Freq == freq)# scale signal across subjects
-      rt$sensor <- as.character(sensor)
-      # combine with behavior ----
-      # message("Merging with behavior")
-      rt_comb <- trial_df %>% 
-        group_by(id, run) %>% ungroup() %>% inner_join(rt) %>% arrange(id, run, run_trial, evt_time)
-      rt_comb$evt_time_f <- as.factor(rt_comb$evt_time)
+  biglist <- list()
+  for (sensor in all_sensors) {
+    s = s + 1
+    setwd(medusa_dir)
+    rt <- as_tibble(readRDS(paste0("MEG", sensor, "_tf.rds"))) %>% filter(Time>start_time & Time < end_time) %>%
+      rename(id = Subject, trial = Trial, run = Run, evt_time = Time, pow = Pow) %>%
+      mutate(
+        pow = log(pow + 10^-25)) %>% group_by(Freq) %>% mutate(pow = scale2(pow)) %>% ungroup()
+    rt$sensor <- as.character(sensor) 
+    # combine with behavior ----
+    # message("Merging with behavior")
+    rt_comb <- trial_df %>% 
+      group_by(id, run) %>% ungroup() %>% inner_join(rt) %>% arrange(id, run, run_trial, evt_time)
+    rt_comb$evt_time_f <- as.factor(rt_comb$evt_time)
+    timepoints = as.character(unique(rt_comb$evt_time))
+    if (s %% 1 == 0) {setTxtProgressBar(pb, s)}
+    newlist <- list()
+    f = 1
+    for (freq in freqs) {
+      f = f + 1
+      rt_comb_l <- rt_comb %>% filter(Freq == freq)
+      rt_comb_l <- split(rt_comb_l, rt_comb$evt_time)
       
-      # wrangle into wide
-      # message("Wrangling")
-      rt_wide <- rt_comb %>%  group_by(id, run, run_trial) %>% 
-        pivot_wider(names_from = c(evt_time_f), values_from = pow)
-      # analysis ----
-      timepoints = as.character(unique(rt_comb$evt_time))
-      # timepoints <- timepoints[1]# TEST ONLY
-      newlist <- list()
-      for (t in timepoints) {
-        message(paste(freq, t))
+      dd <- foreach(d = iter(rt_comb_l), j = icount(), .combine='rbind',.packages=c("lme4", "tidyverse", "broom.mixed", "car"), .noexport = c("rt_comb", "rt")) %dopar% {
+        t <- timepoints[[j]]
+        # load data ----
+        # message("Loading")
+        # wrangle into wide -----
+        # message("Wranging")
+        rt_wide <- d %>% filter(evt_time==t) %>%  group_by(id, run, run_trial) %>% 
+          pivot_wider(names_from = c(evt_time_f), values_from = pow) 
+        # analysis -----
+        # timepoints <- timepoints[1]# TEST ONLY
+        message(paste(s, freq, t))
         # message(paste("Analyzing timepoint", t,  sep = " "))
         rt_wide$h<-rt_wide[[t]]
         md <-  lmerTest::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
@@ -196,9 +206,11 @@ if(decode) {
         dm$sensor <- sensor
         dm$t <- t
         dm$freq <- freq
-        newlist[[t]]<-dm
-      } 
-      do.call(rbind,newlist)} 
+        # print(dm)
+        dm}
+    }
+    biglist[[sensor]] <- dd}
+  ddf <-  do.call(rbind,biglist)
   
   # format statistics ----
   
@@ -242,10 +254,20 @@ if(rt_predict) {
   biglist <- list()
   for (sensor in all_sensors) {
     s = s + 1
-    rt <- as_tibble(readRDS(paste0("MEG", sensor, "_tf.rds"))) %>% filter(Time>start_time) %>%
+    setwd(medusa_dir)
+    rt <- as_tibble(readRDS(paste0("MEG", sensor, "_tf.rds"))) %>% filter(Time>start_time & Time < end_time) %>%
       rename(id = Subject, trial = Trial, run = Run, evt_time = Time, pow = Pow) %>%
-      mutate(pow = scale2(pow)) # scale signal across subjects
+      mutate(
+        pow = log(pow + 10^-25)) %>% group_by(Freq) %>% mutate(pow = scale2(pow)) %>% ungroup()
+    # ggplot(rt, aes(pow)) + geom_histogram() + facet_wrap(~Freq)
     rt$sensor <- as.character(sensor) 
+    ## Diagnostics on power distributions
+    setwd("~/OneDrive/collected_letters/papers/meg/plots/diagnostics/")
+    t <- rt %>% group_by(evt_time, Freq) %>% summarise(.groups = "keep", mean_pow = mean(pow, na.rm = T)) # %>%
+    #   group_by(Freq) %>%  mutate(mean_pow = scale2(mean_pow)) %>% filter(evt_time < .95)
+    pdf(paste0(sensor, "_log_power_heatmap_scaled.pdf"))
+    ggplot(t, aes(evt_time, Freq,  fill = mean_pow)) + geom_tile() + scale_fill_viridis(option = "plasma")  + scale_color_grey()
+    dev.off()
     # combine with behavior ----
     # message("Merging with behavior")
     rt_comb <- trial_df %>% 
@@ -270,7 +292,7 @@ if(rt_predict) {
           pivot_wider(names_from = c(evt_time_f), values_from = pow) 
         # analysis -----
         # timepoints <- timepoints[1]# TEST ONLY
-        message(paste(freq, t))
+        message(paste(s, freq, t))
         # message(paste("Analyzing timepoint", t,  sep = " "))
         rt_wide$h<-rt_wide[[t]]
         md <-  lmerTest::lmer(scale(rt_next) ~ scale(h) * rt_csv_sc * outcome  + scale(h) * scale(rt_vmax)  +

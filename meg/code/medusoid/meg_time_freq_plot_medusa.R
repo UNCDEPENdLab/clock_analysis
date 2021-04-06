@@ -86,7 +86,7 @@ if(rt_predict) {
   for (fe in terms) {
     edf <- rdf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste("meg_tf_dan_uncorrected", termstr, ".pdf", sep = "")
+    fname = paste("meg_tf_dan_uncorrected_random_", termstr, ".pdf", sep = "")
     pdf(fname, width = 18, height = 8)
     print(ggplot(edf %>% filter(estimate < 0), aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + #theme_dark() + 
@@ -99,7 +99,7 @@ if(rt_predict) {
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) 
     dev.off()
     
-    fname = paste("meg_tf_dan_FDR_", termstr, ".pdf", sep = "")
+    fname = paste("meg_tf_dan_FDR_random_", termstr, ".pdf", sep = "")
     pdf(fname, width = 18, height = 8)
     print(ggplot(edf %>% filter(estimate < 0), aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + theme_dark() + 
@@ -109,7 +109,7 @@ if(rt_predict) {
             geom_tile(data = edf %>% filter(estimate > 0), aes(t, freq, fill = estimate, alpha = p_value), size = .01) +
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + theme_dark() + 
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + facet_wrap(~sensor) +
-            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) 
+            labs(alpha = expression(italic(p)[FDR-corrected])) + ggtitle(paste(termstr))) 
     dev.off()
   }
 }
