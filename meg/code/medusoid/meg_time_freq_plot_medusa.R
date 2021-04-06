@@ -92,11 +92,16 @@ if(rt_predict) {
   for (fe in terms) {
     edf <- rdf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
+<<<<<<< HEAD
     if (uncorrected) {
     if (random) {fname = paste("meg_tf_dan_uncorrected_random_", termstr, ".pdf", sep = "")  
     } else {fname = paste("meg_tf_dan_uncorrected_", termstr, ".pdf", sep = "")}
     
     pdf(fname, width = 20, height = 8)
+=======
+    fname = paste("meg_tf_dan_uncorrected_random_", termstr, ".pdf", sep = "")
+    pdf(fname, width = 18, height = 8)
+>>>>>>> 720825a3639b026074ddbbf98398e8dd3d71ec23
     print(ggplot(edf %>% filter(estimate < 0), aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) + 
             scale_fill_distiller(palette = "OrRd", direction = 1, limits = c(-.2, 0)) + scale_color_grey(limits = rev(levels(rdf$p_level_fdr))) + xlab(epoch_label) + ylab("Frequency") + facet_wrap(~sensor) +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
@@ -106,18 +111,31 @@ if(rt_predict) {
             scale_fill_distiller(palette = "GnBu", direction = -1, limits = c(0, .2))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + facet_wrap(~sensor, ncol = 3) +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) + scale_y_discrete(limits = rev(levels(rdf$p_level_fdr)))
     dev.off()
+<<<<<<< HEAD
     }
     if (random) {fname = paste("meg_tf_dan_FDR_random_", termstr, ".pdf", sep = "")  
     } else {fname = paste("meg_tf_dan_FDR_", termstr, ".pdf", sep = "")}
     pdf(fname, width = 20, height = 8)
+=======
+    
+    fname = paste("meg_tf_dan_FDR_random_", termstr, ".pdf", sep = "")
+    pdf(fname, width = 18, height = 8)
+>>>>>>> 720825a3639b026074ddbbf98398e8dd3d71ec23
     print(ggplot(edf %>% filter(estimate < 0), aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) + 
             scale_fill_distiller(palette = "OrRd", direction = 1, name = "Exploration", limits = c(-.3, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 20)) + labs(fill = "Exploration") +
             new_scale_fill() +
+<<<<<<< HEAD
             geom_tile(data = edf %>% filter(estimate > 0), aes(t, freq, fill = estimate, alpha = p_level_fdr), size = .01) +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) + theme_bw() + 
             scale_fill_distiller(palette = "GnBu", direction = -1, name = "Exploitation", limits = c(0, .3))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + facet_wrap(~sensor, ncol = 3) +
             labs(alpha = expression(italic(p)[FDR-corrected])) + ggtitle(paste(termstr))) + labs(fill = "Exploitation")
 
+=======
+            geom_tile(data = edf %>% filter(estimate > 0), aes(t, freq, fill = estimate, alpha = p_value), size = .01) +
+            geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + theme_dark() + 
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + facet_wrap(~sensor) +
+            labs(alpha = expression(italic(p)[FDR-corrected])) + ggtitle(paste(termstr))) 
+>>>>>>> 720825a3639b026074ddbbf98398e8dd3d71ec23
     dev.off()
   }
   
