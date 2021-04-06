@@ -31,6 +31,7 @@ reg_diagnostics = F
 start_time = -3
 end_time = .94
 log = T # whether to log-transform power
+random = F # include effects of behavioral variables as random in RT prediction models
 
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
@@ -179,9 +180,11 @@ if(decode) {
       f = f + 1
       rt_comb_f <- rt_comb %>% filter(Freq == freq)
       rt_comb_t <- split(rt_comb_f, rt_comb_f$evt_time)
+      message(paste(s, freq))
       
       dd <- foreach(d = iter(rt_comb_t), j = icount(), .combine='rbind',.packages=c("lme4", "tidyverse", "broom.mixed", "car"), .noexport = c("rt_comb", "rt")) %dopar% {
         t <- timepoints[[j]]
+        message(paste(s, freq, t))
         md <-  lmerTest::lmer(pow ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
                                 v_entropy_wi + v_entropy_wi_change  + 
                                 v_max_wi  + scale(abs_pe) + outcome + 
@@ -232,7 +235,7 @@ if(decode) {
   ddf$`p, FDR-corrected` = ddf$p_level_fdr
   # save model stats ----
   setwd(decode_plot_dir)
-  save(file = "TESTmeg_freq_medusa_decode_output_nested.Rdata", ddf)
+  save(file = "TESTmeg_freq_medusa_decode_output_scaled.Rdata", ddf)
   
 }
 
@@ -273,18 +276,9 @@ if(rt_predict) {
       rt_comb_t <- split(rt_comb_f, rt_comb_f$evt_time)
       message(paste(s, freq))
       
-      dd <- foreach(d = iter(rt_comb_l), j = icount(), .combine='rbind',.packages=c("lme4", "tidyverse", "broom.mixed", "car"), .noexport = c("rt_comb", "rt")) %dopar% {
+      dd <- foreach(d = iter(rt_comb_t), j = icount(), .combine='rbind',.packages=c("lme4", "tidyverse", "broom.mixed", "car"), .noexport = c("rt_comb", "rt")) %dopar% {
         t <- timepoints[[j]]
-        # load data ----
-        # message("Loading")
-        # wrangle into wide -----
-        # message("Wranging")
-        rt_wide <- d %>% filter(evt_time==t) %>%  group_by(id, run, run_trial) %>% 
-          pivot_wider(names_from = c(evt_time_f), values_from = pow) 
-        # analysis -----
-        # timepoints <- timepoints[1]# TEST ONLY
-        # message(paste("Analyzing timepoint", t,  sep = " "))
-        rt_wide$h<-rt_wide[[t]]
+        message(paste(s, freq, t))
         if (random) {
           md <-  lmerTest::lmer(scale(rt_next) ~ scale(pow) * rt_csv_sc * outcome  + scale(pow) * scale(rt_vmax)  +
                                   scale(pow) * rt_lag_sc + 
@@ -343,6 +337,6 @@ if(rt_predict) {
   rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
   rdf$`p, FDR-corrected` = rdf$p_level_fdr
   setwd(rt_plot_dir)
-  save(file = "meg_freq_medusa_rt_predict_output_nested.Rdata", rdf)
+  save(file = "meg_freq_medusa_rt_predict_output_scaled.Rdata", rdf)
 }
 stopCluster(cl)
