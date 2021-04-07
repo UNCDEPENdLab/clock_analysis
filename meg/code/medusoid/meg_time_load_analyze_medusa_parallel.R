@@ -154,7 +154,7 @@ if(decode) {
                    # message("Loading")
                    rt <- as_tibble(readRDS(paste0("MEG", sensor, "_20Hz.rds"))) %>% filter(Time>start_time) %>%
                      rename(id = Subject, trial = Trial, run = Run, evt_time = Time, signal = Signal) %>%
-                     mutate(signal = scale2(signal)) # scale signal across subjects
+                     mutate(signal = winsor(scale2(signal), trim = .075))  # scale signal across subjects
                    rt$sensor <- as.character(sensor)
                    # combine with behavior ----
                    # message("Merging with behavior")
@@ -223,14 +223,14 @@ if(decode) {
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste("meg_all_uncorrected_", termstr, ".pdf", sep = "")
+    fname = paste("meg_all_uncorrected_winsor_", termstr, ".pdf", sep = "")
     pdf(fname, width = 16, height = 30)
     print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
-    fname = paste("meg_all_FDR_", termstr, ".pdf", sep = "")
+    fname = paste("meg_all_FDR_winsor", termstr, ".pdf", sep = "")
     pdf(fname, width = 16, height = 30)
     print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
@@ -239,7 +239,9 @@ if(decode) {
     dev.off()
   }
   # save model stats ----
-  save(file = "meg_medusa_decode_output_all.Rdata", ddf)
+  save(file = "meg_medusa_decode_output_all_winsor.Rdata", ddf)
+  system("for i in *winsor*.pdf; do sips -s format tiff $i --out $i.tif; done")
+  
 } # end of decoding
 
 
@@ -257,7 +259,7 @@ if(rt) {rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse
                          message("Loading")
                          rt <- as_tibble(readRDS(paste0("MEG", sensor, "_20Hz.rds"))) %>% filter(Time>start_time) %>%
                            rename(id = Subject, trial = Trial, run = Run, evt_time = Time, signal = Signal) %>%
-                           mutate(signal = scale2(signal)) # scale signal across subjects
+                           mutate(signal = winsor(scale2(signal), trim = .075)) # scale signal across subjects
                          rt$sensor <- as.character(sensor)
                          # combine with behavior ----
                          message("Merging with behavior")
@@ -324,14 +326,14 @@ epoch_label = "Time relative to outcome, seconds"
 for (fe in terms) {
   edf <- rdf %>% filter(term == paste(fe)) 
   termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-  fname = paste("meg_all_uncorrected_", termstr, ".pdf", sep = "")
+  fname = paste("meg_all_uncorrected_winsor_", termstr, ".pdf", sep = "")
   pdf(fname, width = 16, height = 30)
   print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
           geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
           scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
           labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
   dev.off()
-  fname = paste("meg_all_FDR_", termstr, ".pdf", sep = "")
+  fname = paste("meg_all_FDR_winsor_", termstr, ".pdf", sep = "")
   pdf(fname, width = 16, height = 30)
   print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
           geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
@@ -340,6 +342,7 @@ for (fe in terms) {
   dev.off()
 }
 # save model stats ----
-save(file = "meg_medusa_rt_predict_output_all.Rdata", rdf)
+save(file = "meg_medusa_rt_predict_output_all_winsor.Rdata", rdf)
+system("for i in *winsor*.pdf; do sips -s format tiff $i --out $i.tif; done")
 }
 stopCluster(cl)
