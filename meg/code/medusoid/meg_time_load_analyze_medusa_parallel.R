@@ -138,6 +138,10 @@ if (parallel) {
   cl <- makePSOCKcluster(nodelist, outfile='')
   print(cl) ##; print(unclass(cl))
   registerDoParallel(cl)
+  on.exit(try(stopCluster(cl)))
+} else {
+  registerDoSEQ()
+}
 }
 # loop over sensors ----
 message("Decoding: analyzing censor data")
@@ -239,7 +243,7 @@ if(decode) {
     dev.off()
   }
   # save model stats ----
-  save(file = "meg_medusa_decode_output_all_winsor.Rdata", ddf)
+  save(file = "meg_medusa_decode_output_all_winsor_macbook.Rdata", ddf)
   system("for i in *winsor*.pdf; do sips -s format tiff $i --out $i.tif; done")
   
 } # end of decoding
@@ -342,7 +346,7 @@ for (fe in terms) {
   dev.off()
 }
 # save model stats ----
-save(file = "meg_medusa_rt_predict_output_all_winsor.Rdata", rdf)
+save(file = "meg_medusa_rt_predict_output_all_winsor_macbook.Rdata", rdf)
 system("for i in *winsor*.pdf; do sips -s format tiff $i --out $i.tif; done")
 }
 stopCluster(cl)
