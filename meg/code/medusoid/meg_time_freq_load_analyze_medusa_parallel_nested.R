@@ -23,15 +23,15 @@ setwd(medusa_dir)
 
 # options, files ----
 parallel = T
-decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt_predict = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
 reg_diagnostics = F
 start_time = -3
-end_time = .94
+end_time = .96
 log = T # whether to log-transform power
-random = F # include effects of behavioral variables as random in RT prediction models
+random = T # include effects of behavioral variables as random in RT prediction models
 
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
@@ -41,7 +41,7 @@ random = F # include effects of behavioral variables as random in RT prediction 
 files <- list.files(medusa_dir)
 files <- files[grepl("MEG", files)]
 all_sensors <- substr(files, 4,7)
-all_sensors <- all_sensors[1]
+# all_sensors <- all_sensors[1]
 
 # # take first few for testing
 # all_sensors <- all_sensors[1:2] # TEST ONLY
@@ -150,7 +150,7 @@ test <- as_tibble(readRDS(paste0("MEG", all_sensors[1], "_tf.rds"))) %>% filter(
   rename(id = Subject, trial = Trial, run = Run, evt_time = Time, pow = Pow) %>%
   mutate(pow = scale2(pow)) # scale signal across subjects
 freqs <- as.list(unique(test$Freq))
-freqs <- freqs[1] # TEST ONLY
+# freqs <- freqs[1] # TEST ONLY
 message("Decoding: analyzing censor data")
 pb <- txtProgressBar(0, max = length(all_sensors)*length(freqs), style = 3)
 
@@ -278,7 +278,6 @@ if(rt_predict) {
       
       dd <- foreach(d = iter(rt_comb_t), j = icount(), .combine='rbind',.packages=c("lme4", "tidyverse", "broom.mixed", "car"), .noexport = c("rt_comb", "rt")) %dopar% {
         t <- timepoints[[j]]
-        message(paste(s, freq, t))
         if (random) {
           md <-  lmerTest::lmer(scale(rt_next) ~ scale(pow) * rt_csv_sc * outcome  + scale(pow) * scale(rt_vmax)  +
                                   scale(pow) * rt_lag_sc + 
@@ -337,6 +336,10 @@ if(rt_predict) {
   rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
   rdf$`p, FDR-corrected` = rdf$p_level_fdr
   setwd(rt_plot_dir)
-  save(file = "meg_freq_medusa_rt_predict_output_scaled.Rdata", rdf)
+  if (random) {
+    save(file = "meg_freq_medusa_rt_predict_output_random.Rdata", rdf)
+  } else {
+    save(file = "meg_freq_medusa_rt_predict_output_scaled.Rdata", rdf)  
+  }
 }
 stopCluster(cl)
