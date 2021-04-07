@@ -154,7 +154,7 @@ if(decode) {
                    # message("Loading")
                    rt <- as_tibble(readRDS(paste0("MEG", sensor, "_20Hz.rds"))) %>% filter(Time>start_time) %>%
                      rename(id = Subject, trial = Trial, run = Run, evt_time = Time, signal = Signal) %>%
-                     mutate(signal = winsor(scale2(signal), trim = .075))  # scale signal across subjects
+                     mutate(signal = winsor(scale2(signal), trim = .01))  # scale signal across subjects
                    rt$sensor <- as.character(sensor)
                    # combine with behavior ----
                    # message("Merging with behavior")
@@ -259,7 +259,7 @@ if(rt) {rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse
                          message("Loading")
                          rt <- as_tibble(readRDS(paste0("MEG", sensor, "_20Hz.rds"))) %>% filter(Time>start_time) %>%
                            rename(id = Subject, trial = Trial, run = Run, evt_time = Time, signal = Signal) %>%
-                           mutate(signal = winsor(scale2(signal), trim = .075)) # scale signal across subjects
+                           mutate(signal = winsor(scale2(signal), trim = .01)) # scale signal across subjects
                          rt$sensor <- as.character(sensor)
                          # combine with behavior ----
                          message("Merging with behavior")

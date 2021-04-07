@@ -14,7 +14,7 @@ rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt//"
 
 # what to run
 # you can run all options at once
-decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt_predict = T # predicts next response based on signal and behavioral variables
 random = T # whether to use data from analyses where behavioral variables have both fixed and random effects
 uncorrected = F # whether to plot uncorrected data (FDR-corrected always plotted)
@@ -68,7 +68,7 @@ if(rt_predict) {
   # plots ----
   setwd('~/OneDrive/collected_letters/papers/meg/plots/rt_rt')
   epoch_label = "Time relative to outcome, seconds"
-  if (random) {rt_results_fname = "meg_freq_medusa_rt_predict_output_scaled.Rdata"} else {
+  if (random) {rt_results_fname = "meg_freq_medusa_rt_predict_output_random.Rdata"} else {
     rt_results_fname = "meg_freq_medusa_rt_predict_output_scaled.Rdata"  
   }
   load(rt_results_fname)
