@@ -11,6 +11,7 @@ library(psych)
 library(corrplot)
 library(foreach)
 library(doParallel)
+library(psych)
 repo_directory <- "~/code/clock_analysis"
 medusa_dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz/"
 cache_dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz/cache"
@@ -145,7 +146,7 @@ pb <- txtProgressBar(0, max = length(all_sensors), style = 3)
 
 
 if(decode) {
-  ddf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
+  ddf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car", "psych"),
                  .combine='rbind') %dopar% {
                    # for (i in 1:length(all_sensors)) {
                    if (i %% 10 == 0) {setTxtProgressBar(pb, i)}
@@ -225,14 +226,14 @@ if(decode) {
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
     fname = paste("meg_all_uncorrected_winsor_", termstr, ".pdf", sep = "")
     pdf(fname, width = 16, height = 30)
-    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
+    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
     fname = paste("meg_all_FDR_winsor", termstr, ".pdf", sep = "")
     pdf(fname, width = 16, height = 30)
-    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
+    print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = abs(estimate), alpha = p_level_fdr)) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
@@ -240,7 +241,7 @@ if(decode) {
   }
   # save model stats ----
   save(file = "meg_medusa_decode_output_all_winsor.Rdata", ddf)
-  system("for i in *winsor*.pdf; do sips -s format tiff $i --out $i.tif; done")
+  system("for i in *winsor*.pdf; do sips -s format png $i --out $i.png; done")
   
 } # end of decoding
 
@@ -250,7 +251,7 @@ pb <- txtProgressBar(0, max = length(all_sensors), style = 3)
 setwd(medusa_dir)
 
 
-if(rt) {rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car"),
+if(rt) {rdf <- foreach(i = 1:length(all_sensors), .packages=c("lme4", "tidyverse", "broom.mixed", "car", "psych"),
                        .combine='rbind') %dopar% {
                          # for (i in 1:length(all_sensors)) {
                          if (i %% 10 == 0) {setTxtProgressBar(pb, i)}
@@ -328,21 +329,21 @@ for (fe in terms) {
   termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
   fname = paste("meg_all_uncorrected_winsor_", termstr, ".pdf", sep = "")
   pdf(fname, width = 16, height = 30)
-  print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
+  print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
           geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
-          scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
+          scale_fill_distiller(palette = "OrRd") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
           labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
   dev.off()
   fname = paste("meg_all_FDR_winsor_", termstr, ".pdf", sep = "")
   pdf(fname, width = 16, height = 30)
-  print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
+  print(ggplot(edf, aes(t, sensor)) + geom_tile(aes(fill = abs(estimate), alpha = p_level_fdr)) + 
           geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
-          scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
+          scale_fill_distiller(palette = "OrRd") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
           labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
   dev.off()
 }
 # save model stats ----
 save(file = "meg_medusa_rt_predict_output_all_winsor.Rdata", rdf)
-system("for i in *winsor*.pdf; do sips -s format tiff $i --out $i.tif; done")
+system("for i in *winsor*.pdf; do sips -s format png $i --out $i.png; done")
 }
 stopCluster(cl)
