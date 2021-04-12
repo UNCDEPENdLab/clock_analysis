@@ -31,7 +31,8 @@ reg_diagnostics = F
 start_time = -3
 domain = "time" # "time"
 label_sensors = F
-test = T
+test = F
+scale_winsor = T
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
 # fef_sensors <- c("0612","0613", "0542", "0543","1022")
@@ -54,18 +55,30 @@ if (label_sensors) {
     saveRDS(d, file = this_file)
   }
 }
+
+if (scale_winsor) {
+  scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
+  for (this_file in files) {
+    d <- readRDS(this_file)
+    d$signal_scaled <- winsor(scale2(d$Signal), trim = .01)
+    saveRDS(d, file = this_file)
+  }
+}
 # files <- files[1] # TEST ONLY
 
 # # take first few for testing
 # all_sensors <- all_sensors[1:4]
-scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
 
 trial_df <- readRDS(behavioral_data_file)
 trial_df$Subject <- trial_df$id
 trial_df$Run <- trial_df$run
 trial_df$Trial <- trial_df$trial
+# 
+# sample_data <- readRDS(files[2])
+# sample_data$signal_scaled <- winsor(scale2(sample_data$Signal), trim = .01)
+# ggplot(sample_data, aes(signal_scaled)) + geom_histogram() + facet_wrap(~Subject)
+# ggplot(sample_data, aes(Signal)) + geom_histogram() + facet_wrap(~Subject)
 
-sample_data <- readRDS(files[2])
 # check data - looks good!
 # sensor <- all_sensors[[1]]
 # rt <- as_tibble(readRDS(paste0("MEG", sensor, "_20Hz.rds"))) %>% filter(Time>start_time) %>%
@@ -85,7 +98,7 @@ if (domain == "tf") {
   splits = c("Time", "sensor", "Freq")
   outcome = "Pow"} else if (domain == "time") {
     splits = c("Time", "sensor")
-    outcome = "Signal"} 
+    outcome = "signal_scaled"} 
 ddf <- mixed_by(files, outcomes = outcome, rhs_model_formulae = decode_formula , split_on = splits, external_df = trial_df,
                 padjust_by = "term", padjust_method = "fdr", ncores = 20, refit_on_nonconvergence = 3)
 
