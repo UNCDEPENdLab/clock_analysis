@@ -126,23 +126,25 @@ levels(trial_df$rewFunc) <- c("DEV", "IEV", "CEV", "CEVR")
 
 
 # make cluster ----
-if (parallel) {
-  f <- Sys.getenv('PBS_NODEFILE')
-  library(parallel)
-  ncores <- detectCores()
-  nodelist <- if (nzchar(f)) readLines(f) else rep('localhost', ncores)
-  
-  cat("Node list allocated to this job\n")
-  print(nodelist)
-  
-  cl <- makePSOCKcluster(nodelist, outfile='')
-  print(cl) ##; print(unclass(cl))
+f <- Sys.getenv('PBS_NODEFILE')
+library(parallel)
+ncores <- detectCores()
+nodelist <- if (nzchar(f)) readLines(f) else rep('localhost', ncores)
+
+cat("Node list allocated to this job\n")
+print(nodelist)
+
+if (ncores > 1L) {
+  cl <- makeCluster(ncores)
   registerDoParallel(cl)
   on.exit(try(stopCluster(cl)))
 } else {
   registerDoSEQ()
 }
-}
+
+# cl <- makePSOCKcluster(nodelist, outfile='')
+# print(cl) ##; print(unclass(cl))
+
 # loop over sensors ----
 message("Decoding: analyzing censor data")
 pb <- txtProgressBar(0, max = length(all_sensors), style = 3)
