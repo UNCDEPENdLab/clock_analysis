@@ -23,16 +23,16 @@ setwd(medusa_dir)
 
 # options, files ----
 plots = F
-decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
 reg_diagnostics = F
 start_time = -3
-domain = "time" # "time"
+domain = "tf" # "time"
 label_sensors = F
-test = T
-scale_winsor = F
+test = F
+scale_winsor = T
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
 # fef_sensors <- c("0612","0613", "0542", "0543","1022")
@@ -50,14 +50,8 @@ if (domain == "time") {
 
 if (label_sensors | scale_winsor) {
   # make cluster ----
-  f <- Sys.getenv('PBS_NODEFILE')
   library(parallel)
   ncores <- detectCores()
-  nodelist <- if (nzchar(f)) readLines(f) else rep('localhost', ncores)
-  
-  cat("Node list allocated to this job\n")
-  print(nodelist)
-  
   if (ncores > 1L) {
     cl <- makeCluster(ncores)
     registerDoParallel(cl)
@@ -82,13 +76,14 @@ if (scale_winsor & domain == "time") {
     d$signal_scaled <- winsor(scale2(d$Signal), trim = .01)
     saveRDS(d, file = files[i])
   } 
-} else if (scale_winsor & domain == "tf") {
+  stopCluster(cl)} else if (scale_winsor & domain == "tf") {
   foreach(i = 1:length(files), .packages=c("tidyverse", "psych")) %dopar% {
+    scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
     d <- readRDS(files[i])
-    d$pow_scaled <- winsor(scale2(d$Pow), trim = .01)
+    d$pow_scaled <- scale2(winsor(d$Pow, trim = .01))
     saveRDS(d, file = files[i])
   }
-}
+  stopCluster(cl)}
 # files <- files[1] # TEST ONLY
 
 # # take first few for testing
@@ -97,10 +92,11 @@ if (scale_winsor & domain == "time") {
 
 # 
 # sample_data <- readRDS(files[2])
-# sample_data$signal_scaled <- winsor(scale2(sample_data$Signal), trim = .01)
-# ggplot(sample_data, aes(signal_scaled)) + geom_histogram() + facet_wrap(~Subject)
-# ggplot(sample_data, aes(Signal)) + geom_histogram() + facet_wrap(~Subject)
-
+# sample_data$pow_scaled <- winsor((sample_data$Pow), trim = .01)
+# 
+# ggplot(sample_data, aes(pow_scaled)) + geom_histogram() + facet_wrap(~Subject)
+# ggplot(sample_data, aes(Pow)) + geom_histogram() + facet_wrap(~Subject)
+# 
 # check data - looks good!
 # sensor <- all_sensors[[1]]
 # rt <- as_tibble(readRDS(paste0("MEG", sensor, "_20Hz.rds"))) %>% filter(Time>start_time) %>%
@@ -122,7 +118,7 @@ decode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_v
                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
 if (domain == "tf") {
   splits = c("Time", "sensor", "Freq")
-  outcome = "Pow"} else if (domain == "time") {
+  outcome = "pow_scaled"} else if (domain == "time") {
     splits = c("Time", "sensor")
     outcome = "signal_scaled"} 
 ddf <- mixed_by(files, outcomes = outcome, rhs_model_formulae = decode_formula , split_on = splits, external_df = trial_df,
@@ -132,4 +128,4 @@ ddf <- as_tibble(ddf)
 
 # save output
 setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_decode/")
-saveRDS(ddf, file = "meg_mixed_by_ddf.RDS")
+saveRDS(ddf, file = "meg_mixed_by_tf_ddf.RDS")
