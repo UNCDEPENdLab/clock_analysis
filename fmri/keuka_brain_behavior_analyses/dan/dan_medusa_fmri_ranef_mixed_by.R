@@ -17,6 +17,8 @@ if (!reprocess) {
 replicate_compression = F
 if(replicate_compression) {reprocess = T}
 
+plots = F
+
 # load MEDUSA deconvolved data
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
 
@@ -46,12 +48,15 @@ df <- df %>% select(id, run, run_trial, emotion, last_outcome, rt_next, pe_max, 
 d <- merge(df, rt_comb, by = c("id", "run", "run_trial"))
 
 # mixed_by call
-splits = c("stream", "side", "evt_time", "visuomotor_grad")
+splits = c("stream", "side", "evt_time")
 encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
                            v_entropy_wi + v_entropy_wi_change + kld3_lag  + v_max_wi  + scale(abs_pe) + outcome + (outcome + v_entropy_wi|id))
 ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = encode_formula , split_on = splits,
-                padjust_by = "term", padjust_method = "fdr", ncores = 8, refit_on_nonconvergence = 5,
-                tidy_args = 'effects = "ran_vals", conf.int=TRUE')
+                ncores = 20, refit_on_nonconvergence = 5,
+                tidy_args = "ran_vals")
+setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/rt_decode')
+encode_results_fname = "rt_encode_output_streams_mixed_by_entropy_ranef.RDS"
+saveRDS(file = encode_results_fname, ddf)
 
 if (plots) {
   ## Check plots
@@ -59,7 +64,7 @@ if (plots) {
   library(viridis)
   setwd('~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/rt_decode')
   epoch_label = "Time relative to outcome, seconds"
-  encode_results_fname = "rt_encode_output_streams_mixed_by.Rdata"
+  encode_results_fname = "rt_encode_output_streams_mixed_by_entropy_change_ranef.RDS"
   ddf <- as_tibble(ddf)
   ddf$t <- ddf$evt_time
   ddf <- ddf  %>% mutate(p_fdr = padj_fdr_term, 
@@ -104,4 +109,4 @@ if (plots) {
     
   }
 }
-save(file = encode_results_fname, ddf)
+saveRDS(file = encode_results_fname, ddf)

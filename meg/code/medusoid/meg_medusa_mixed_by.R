@@ -23,14 +23,14 @@ setwd(medusa_dir)
 
 # options, files ----
 plots = F
-encode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
+encode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
 
-rt = T # predicts next response based on signal and behavioral variables
+rt = F # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
 reg_diagnostics = F
 start_time = -3
-domain = "time" # "time"
+domain = "tf" # "time"
 label_sensors = F
 test = F
 scale_winsor = F
