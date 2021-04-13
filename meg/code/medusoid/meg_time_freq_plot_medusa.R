@@ -14,9 +14,9 @@ rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt//"
 
 # what to run
 # you can run all options at once
-decode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt_predict = T # predicts next response based on signal and behavioral variables
-random = T # whether to use data from analyses where behavioral variables have both fixed and random effects
+decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+rt_predict = F # predicts next response based on signal and behavioral variables
+random = F # whether to use data from analyses where behavioral variables have both fixed and random effects
 uncorrected = F # whether to plot uncorrected data (FDR-corrected always plotted)
 
 # plots ----
@@ -24,25 +24,33 @@ if (decode) {
   message("Plotting decoding results")
   setwd(decode_plot_dir)
   epoch_label = "Time relative to outcome, seconds"
-  load("TESTmeg_freq_medusa_decode_output_scaled.Rdata")
+  ddf <- readRDS("meg_mixed_by_tf_ddf.RDS")
   terms <- unique(ddf$term[ddf$effect=="fixed"])
   
-  # # within-sensor FDR correction
-  # ddf <- ddf  %>% group_by(term, sensor) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
-  #                                                   p_level_fdr = as.factor(case_when(
-  #                                                     # p_fdr > .1 ~ '0',
-  #                                                     # p_fdr < .1 & p_fdr > .05 ~ '1',
-  #                                                     p_fdr > .05 ~ '1',
-  #                                                     p_fdr < .05 & p_fdr > .01 ~ '2',
-  #                                                     p_fdr < .01 & p_fdr > .001 ~ '3',
-  #                                                     p_fdr <.001 ~ '4'))
-  # ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
-  # #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
-  # ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
-  # ddf$`p, FDR-corrected` = ddf$p_level_fdr
+  ddf <- ddf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
+                                                      `p.value` < .05 & `p.value` > .01 ~ '2',
+                                                      `p.value` < .01 & `p.value` > .001 ~ '3',
+                                                      `p.value` <.001 ~ '4')),
+                        t  = as.numeric(Time),
+                        sensor = as.character(sensor))
+  ddf$p_value <- factor(ddf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
+  terms <- unique(ddf$term[ddf$effect=="fixed"])
+  # FDR labeling ----
+  ddf <- ddf  %>% mutate(p_fdr = padj_fdr_term,
+                         p_level_fdr = as.factor(case_when(
+                           # p_fdr > .1 ~ '0',
+                           # p_fdr < .1 & p_fdr > .05 ~ '1',
+                           p_fdr > .05 ~ '1',
+                           p_fdr < .05 & p_fdr > .01 ~ '2',
+                           p_fdr < .01 & p_fdr > .001 ~ '3',
+                           p_fdr <.001 ~ '4'))
+  ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
+  #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
+  ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
+  ddf$`p, FDR-corrected` = ddf$p_level_fdr
   
-  levels(ddf$freq) <- substr(unique(ddf$freq), 3,6)
-  ddf$freq <- fct_rev(ddf$freq)
+  levels(ddf$Freq) <- substr(unique(ddf$Freq), 3,6)
+  ddf$freq <- fct_rev(ddf$Freq)
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")

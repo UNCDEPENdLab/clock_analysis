@@ -23,7 +23,7 @@ setwd(medusa_dir)
 
 # options, files ----
 plots = F
-decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+encode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
@@ -118,18 +118,40 @@ trial_df <- readRDS(behavioral_data_file)
 trial_df$Subject <- trial_df$id
 trial_df$Run <- trial_df$run
 trial_df$Trial <- trial_df$trial
-decode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
+encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
+rt_formula = formula( ~ scale(pow) * rt_csv_sc * outcome  + scale(pow) * scale(rt_vmax)  +
+                        scale(pow) * rt_lag_sc + 
+                        (1|id))
+rt_outcome = scale(rt_next)
 if (domain == "tf") {
   splits = c("Time", "sensor", "Freq")
-  outcome = "Pow"} else if (domain == "time") {
+  signal_outcome = "Pow"} else if (domain == "time") {
     splits = c("Time", "sensor")
-    outcome = "signal_scaled"} 
-ddf <- mixed_by(files, outcomes = outcome, rhs_model_formulae = decode_formula , split_on = splits, external_df = trial_df,
-                padjust_by = "term", padjust_method = "fdr", ncores = 20, refit_on_nonconvergence = 3)
+    signal_outcome = "signal_scaled"} 
+if (encode) {
+  ddf <- as_tibble(mixed_by(files, outcomes = outcome, rhs_model_formulae = encode_formula , split_on = splits, external_df = trial_df,
+                            padjust_by = "term", padjust_method = "fdr", ncores = 20, refit_on_nonconvergence = 3))
+  # save output
+  setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_decode/")
+  if (domain == "time") {
+    saveRDS(rdf, file = "meg_mixed_by_time_ddf.RDS")
+  } else if (domain == "tf") {
+    saveRDS(rdf, file = "meg_mixed_by_tf_ddf.RDS")
+  }
+}
 
-ddf <- as_tibble(ddf)
+if (rt) {
+  rdf <- as_tibble(mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = rt_formula , split_on = splits, external_df = trial_df,
+                            padjust_by = "term", padjust_method = "fdr", ncores = 20, refit_on_nonconvergence = 3))
+  # save output
+  setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_rt/")
+  if (domain == "time") {
+    saveRDS(rdf, file = "meg_mixed_by_time_rdf.RDS")
+  } else if (domain == "tf") {
+    saveRDS(rdf, file = "meg_mixed_by_tf_rdf.RDS")
+  }
+}
 
-# save output
-setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_decode/")
-saveRDS(ddf, file = "meg_mixed_by_ddf.RDS")
+
+
