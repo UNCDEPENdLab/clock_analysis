@@ -116,6 +116,9 @@ trial_df$Subject <- trial_df$id
 trial_df$Run <- trial_df$run
 trial_df$Trial <- trial_df$trial
 trial_df$rt_next_sc <- scale(trial_df$rt_next)
+# save behavioral data with new variables
+saveRDS(trial_df, behavioral_data_file)
+
 encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
 rt_tf_formula = formula( ~ pow_scaled * rt_csv_sc * outcome  + pow_scaled * scale(rt_vmax)  +
