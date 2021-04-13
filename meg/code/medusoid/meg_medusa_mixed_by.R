@@ -112,15 +112,17 @@ if (scale_winsor & domain == "time") {
 
 # mixed_by call
 trial_df <- readRDS(behavioral_data_file)
-trial_df$Subject <- trial_df$id
-trial_df$Run <- trial_df$run
-trial_df$Trial <- trial_df$trial
-trial_df$rt_next_sc <- scale(trial_df$rt_next)
-# save behavioral data with new variables
-saveRDS(trial_df, behavioral_data_file)
+# trial_df$Subject <- trial_df$id
+# trial_df$Run <- trial_df$run
+# trial_df$Trial <- trial_df$trial
+# trial_df$rt_next_sc <- scale(trial_df$rt_next)
+# # save behavioral data with new variables
+# saveRDS(trial_df, behavioral_data_file)
 
-encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
-                           v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
+# encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
+#                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
+encode_formula = formula(~ echange_f1_early + echange_f2_late + e_f1 + (1|Subject))
+
 rt_tf_formula = formula( ~ pow_scaled * rt_csv_sc * outcome  + pow_scaled * scale(rt_vmax)  +
                         pow_scaled * rt_lag_sc + 
                         (1|id))
@@ -134,14 +136,14 @@ if (domain == "tf") {
     splits = c("Time", "sensor")
     signal_outcome = "signal_scaled"} 
 if (encode) {
-  ddf <- as_tibble(mixed_by(files, outcomes = outcome, rhs_model_formulae = encode_formula , split_on = splits, external_df = trial_df,
+  ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula , split_on = splits, external_df = trial_df,
                             padjust_by = "term", padjust_method = "fdr", ncores = 20, refit_on_nonconvergence = 3))
   # save output
   setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_decode/")
   if (domain == "time") {
     saveRDS(rdf, file = "meg_mixed_by_time_ddf.RDS")
   } else if (domain == "tf") {
-    saveRDS(rdf, file = "meg_mixed_by_tf_ddf.RDS")
+    saveRDS(rdf, file = "meg_mixed_by_tf_ranefs_ddf.RDS")
   }
 }
 
