@@ -68,9 +68,9 @@ e.faba = psych::bassAckward(ranefs, nfactors=2, rotate = "oblimin", fm = "pa")
 e.fa = fa.sort(psych::fa(ranefs, nfactors=1))
 efscores <- factor.scores(ranefs, e.fa)$scores
 wdf$e_f1 <- efscores[,1]
-
+wdf <- wdf %>% mutate(Subject = as.integer(Subject))
 
 # add to behavioral data file ----
 behavioral_data_file = "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
-trial_df <- as_tibble(readRDS(behavioral_data_file)) %>% mutate(Subject = as.character(Subject)) %>% inner_join(wdf)
+trial_df <- as_tibble(readRDS(behavioral_data_file))  %>% inner_join(wdf)
 saveRDS(trial_df, file = behavioral_data_file)
