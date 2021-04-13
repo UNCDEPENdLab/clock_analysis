@@ -23,7 +23,7 @@ setwd(medusa_dir)
 
 # options, files ----
 plots = F
-encode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+encode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
 
 rt = T # predicts next response based on signal and behavioral variables
 online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
@@ -33,7 +33,7 @@ start_time = -3
 domain = "tf" # "time"
 label_sensors = F
 test = F
-scale_winsor = T
+scale_winsor = F
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
 # fef_sensors <- c("0612","0613", "0542", "0543","1022")
@@ -115,12 +115,13 @@ trial_df <- readRDS(behavioral_data_file)
 trial_df$Subject <- trial_df$id
 trial_df$Run <- trial_df$run
 trial_df$Trial <- trial_df$trial
+trial_df$rt_next_sc <- scale(trial_df$rt_next)
 encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
-rt_formula = formula( ~ scale(pow) * rt_csv_sc * outcome  + scale(pow) * scale(rt_vmax)  +
-                        scale(pow) * rt_lag_sc + 
+rt_formula = formula( ~ pow_scaled * rt_csv_sc * outcome  + pow_scaled * scale(rt_vmax)  +
+                        pow_scaled * rt_lag_sc + 
                         (1|id))
-rt_outcome = scale(rt_next)
+rt_outcome = "rt_next_sc"
 if (domain == "tf") {
   splits = c("Time", "sensor", "Freq")
   signal_outcome = "pow_scaled"} else if (domain == "time") {
