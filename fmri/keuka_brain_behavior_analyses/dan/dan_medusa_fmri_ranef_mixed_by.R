@@ -51,7 +51,7 @@ encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_v
                            v_entropy_wi + v_entropy_wi_change + kld3_lag  + v_max_wi  + scale(abs_pe) + outcome + (outcome + v_entropy_wi|id))
 ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = encode_formula , split_on = splits,
                 padjust_by = "term", padjust_method = "fdr", ncores = 8, refit_on_nonconvergence = 5,
-                tidy_args = 'effects = "ran_vals", conf.int=TRUE')
+                tidy_args = "ran_vals")
 
 if (plots) {
   ## Check plots
