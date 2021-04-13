@@ -30,7 +30,7 @@ online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline
 exclude_first_run = F
 reg_diagnostics = F
 start_time = -3
-domain = "tf" # "time"
+domain = "time" # "time"
 label_sensors = F
 test = F
 scale_winsor = F
@@ -121,9 +121,12 @@ saveRDS(trial_df, behavioral_data_file)
 
 encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
-rt_formula = formula( ~ pow_scaled * rt_csv_sc * outcome  + pow_scaled * scale(rt_vmax)  +
+rt_tf_formula = formula( ~ pow_scaled * rt_csv_sc * outcome  + pow_scaled * scale(rt_vmax)  +
                         pow_scaled * rt_lag_sc + 
                         (1|id))
+rt_time_formula = formula( ~ signal_scaled * rt_csv_sc * outcome  + signal_scaled * scale(rt_vmax)  +
+                             signal_scaled * rt_lag_sc + 
+                           (1|id))
 rt_outcome = "rt_next_sc"
 if (domain == "tf") {
   splits = c("Time", "sensor", "Freq")
@@ -143,7 +146,7 @@ if (encode) {
 }
 
 if (rt) {
-  rdf <- as_tibble(mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = rt_formula , split_on = splits, external_df = trial_df,
+  rdf <- as_tibble(mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = rt_time_formula , split_on = splits, external_df = trial_df,
                             padjust_by = "term", padjust_method = "fdr", ncores = 20, refit_on_nonconvergence = 3))
   # save output
   setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_rt/")
