@@ -8,21 +8,21 @@ library(car)
 library(viridis)
 # library(psych)
 repo_directory <- "~/code/clock_analysis"
-decode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_decode/"
+encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_decode/"
 rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt//"
 
 
 # what to run
 # you can run all options at once
-decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt_predict = F # predicts next response based on signal and behavioral variables
+encode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
+rt_predict = T # predicts next response based on signal and behavioral variables
 random = F # whether to use data from analyses where behavioral variables have both fixed and random effects
 uncorrected = F # whether to plot uncorrected data (FDR-corrected always plotted)
 
 # plots ----
-if (decode) {  
+if (encode) {  
   message("Plotting decoding results")
-  setwd(decode_plot_dir)
+  setwd(encode_plot_dir)
   epoch_label = "Time relative to outcome, seconds"
   ddf <- readRDS("meg_mixed_by_tf_ddf.RDS")
   terms <- unique(ddf$term[ddf$effect=="fixed"])
@@ -77,26 +77,35 @@ if(rt_predict) {
   setwd('~/OneDrive/collected_letters/papers/meg/plots/rt_rt')
   epoch_label = "Time relative to outcome, seconds"
   if (random) {rt_results_fname = "meg_freq_medusa_rt_predict_output_random.Rdata"} else {
-    rt_results_fname = "meg_freq_medusa_rt_predict_output_scaled.Rdata"  
+    rt_results_fname = "meg_mixed_by_tf_rdf.RDS"  
   }
-  load(rt_results_fname)
+  rdf <- readRDS(rt_results_fname)
   terms <- unique(rdf$term[rdf$effect=="fixed"])
   terms <- terms[grepl("(pow)",terms)]
-  levels(rdf$freq) <- substr(unique(rdf$freq), 3,6)
-  rdf$freq <- fct_rev(rdf$freq)
-  # # within-sensor FDR correction
-  # rdf <- rdf  %>% group_by(term, sensor) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr'),
-  #                                                   p_level_fdr = as.factor(case_when(
-  #                                                     # p_fdr > .1 ~ '0',
-  #                                                     # p_fdr < .1 & p_fdr > .05 ~ '1',
-  #                                                     p_fdr > .05 ~ '1',
-  #                                                     p_fdr < .05 & p_fdr > .01 ~ '2',
-  #                                                     p_fdr < .01 & p_fdr > .001 ~ '3',
-  #                                                     p_fdr <.001 ~ '4'))
-  # ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
-  # #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
-  # rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
-  # rdf$`p, FDR-corrected` = rdf$p_level_fdr
+  rdf <- rdf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
+                                                      `p.value` < .05 & `p.value` > .01 ~ '2',
+                                                      `p.value` < .01 & `p.value` > .001 ~ '3',
+                                                      `p.value` <.001 ~ '4')),
+                        t  = as.numeric(Time),
+                        sensor = as.character(sensor))
+  rdf$p_value <- factor(rdf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
+  terms <- unique(rdf$term[rdf$effect=="fixed"])
+  # FDR labeling ----
+  rdf <- rdf  %>% mutate(p_fdr = padj_fdr_term,
+                         p_level_fdr = as.factor(case_when(
+                           # p_fdr > .1 ~ '0',
+                           # p_fdr < .1 & p_fdr > .05 ~ '1',
+                           p_fdr > .05 ~ '1',
+                           p_fdr < .05 & p_fdr > .01 ~ '2',
+                           p_fdr < .01 & p_fdr > .001 ~ '3',
+                           p_fdr <.001 ~ '4'))
+  ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
+  #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
+  rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
+  rdf$`p, FDR-corrected` = rdf$p_level_fdr
+  
+  levels(rdf$Freq) <- substr(unique(rdf$Freq), 3,6)
+  rdf$freq <- fct_rev(rdf$Freq)
   library(ggnewscale)
 
   for (fe in terms) {
@@ -131,8 +140,8 @@ if(rt_predict) {
     dev.off()
   }
   
-  # convert to TIFF for Word
-  system("for i in *random*.pdf; do sips -s format tiff $i --out $i.tif; done")
+  # convert to PNG for Word
+  system("for i in *meg_tf*.pdf; do sips -s format png $i --out $i.png; done")
   
   # TESTING THE "UNIFIED" VERSION -- currently not functional
   unified = F
