@@ -15,7 +15,7 @@ library(psych)
 repo_directory <- "~/code/clock_analysis"
 medusa_dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"
 diag_dir =  "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/diags/"
-behavioral_data_file = "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
+behavioral_data_file = "~/Box/SCEPTIC_fMRI/sceptic_model_fits/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
 source("~/code/fmri.pipeline/R/mixed_by.R")
 stopifnot(dir.exists(medusa_dir))  
 
@@ -93,10 +93,10 @@ if (scale_winsor & domain == "time") {
 
 # 
 sample_data <- readRDS(files[2])
-sample_data$pow_scaled <- winsor((sample_data$Pow), trim = .005)
-
-ggplot(sample_data, aes(pow_scaled)) + geom_histogram() + facet_wrap(~Subject)
-ggplot(sample_data, aes(Pow)) + geom_histogram() + facet_wrap(~Subject)
+# sample_data$pow_scaled <- winsor((sample_data$Pow), trim = .005)
+# 
+# ggplot(sample_data, aes(pow_scaled)) + geom_histogram() + facet_wrap(~Subject)
+# ggplot(sample_data, aes(Pow)) + geom_histogram() + facet_wrap(~Subject)
 # 
 # check data - looks good!
 # sensor <- all_sensors[[1]]
@@ -116,7 +116,7 @@ trial_df <- readRDS(behavioral_data_file)
 # trial_df$Run <- trial_df$run
 # trial_df$Trial <- trial_df$trial
 # trial_df$rt_next_sc <- scale(trial_df$rt_next)
-# # save behavioral data with new variables
+# # # save behavioral data with new variables
 # saveRDS(trial_df, behavioral_data_file)
 
 # encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
@@ -127,12 +127,12 @@ encode_formula_e = formula(~ scale(rt_vmax_lag)*echange_f1_early + scale(rt_vmax
                            rt_csv_sc*echange_f1_early + rt_csv_sc*echange_f2_late + rt_csv_sc*e_f1 +
                            trial_neg_inv_sc*echange_f1_early + trial_neg_inv_sc*echange_f2_late + trial_neg_inv_sc*e_f1 +
                            v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + v_entropy_wi*e_f1 + rt_lag_sc*e_f1 + (1|Subject))
-encode_formula_pe = formula(~ scale(rt_vmax_lag)*abs_pe_f2_early + scale(rt_vmax_lag)*abs_pabs_pe_f3_late_mid + scale(rt_vmax_lag)*abs_pe_f3_late +
-                              scale(abs_pe)*abs_pe_f2_early + scale(abs_pe)*abs_pabs_pe_f3_late_mid + scale(abs_pe)*abs_pe_f3_late +
-                              outcome*abs_pe_f2_early + outcome*abs_pabs_pe_f3_late_mid + outcome*abs_pe_f3_late +
-                              rt_csv_sc*abs_pe_f2_early + rt_csv_sc*abs_pabs_pe_f3_late_mid + rt_csv_sc*abs_pe_f3_late +
-                              trial_neg_inv_sc*abs_pe_f2_early + trial_neg_inv_sc*abs_pabs_pe_f3_late_mid + trial_neg_inv_sc*abs_pe_f3_late +
-                              v_entropy_wi_change*abs_pe_f2_early + v_entropy_wi_change*abs_pabs_pe_f3_late_mid + v_entropy_wi*abs_pe_f3_late + rt_lag_sc*abs_pe_f3_late + (1|Subject))
+encode_formula_pe = formula(~ scale(rt_vmax_lag)*abs_pe_f2_early + scale(rt_vmax_lag)*abs_pe_f1_mid + scale(rt_vmax_lag)*abs_pe_f3_late +
+                              scale(abs_pe)*abs_pe_f2_early + scale(abs_pe)*abs_pe_f1_mid + scale(abs_pe)*abs_pe_f3_late +
+                              outcome*abs_pe_f2_early + outcome*abs_pe_f1_mid + outcome*abs_pe_f3_late +
+                              rt_csv_sc*abs_pe_f2_early + rt_csv_sc*abs_pe_f1_mid + rt_csv_sc*abs_pe_f3_late +
+                              trial_neg_inv_sc*abs_pe_f2_early + trial_neg_inv_sc*abs_pe_f1_mid + trial_neg_inv_sc*abs_pe_f3_late +
+                              v_entropy_wi_change*abs_pe_f2_early + v_entropy_wi_change*abs_pe_f1_mid + v_entropy_wi*abs_pe_f3_late + rt_lag_sc*abs_pe_f3_late + (1|Subject))
 
 rt_tf_formula = formula( ~ pow_scaled * rt_csv_sc * outcome  + pow_scaled * scale(rt_vmax)  +
                         pow_scaled * rt_lag_sc + 
