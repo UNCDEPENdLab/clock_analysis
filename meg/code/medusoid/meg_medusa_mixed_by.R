@@ -30,7 +30,7 @@ online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline
 exclude_first_run = F
 reg_diagnostics = F
 start_time = -3
-domain = "tf" # "time"
+domain = "time" # "time"
 label_sensors = F
 test = F
 scale_winsor = F
@@ -121,7 +121,12 @@ trial_df <- readRDS(behavioral_data_file)
 
 # encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
 #                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
-encode_formula = formula(~ echange_f1_early + echange_f2_late + e_f1 + (1|Subject))
+encode_formula = formula(~ scale(rt_vmax_lag)*echange_f1_early + scale(rt_vmax_lag)*echange_f2_late + scale(rt_vmax_lag)*e_f1 +
+                           scale(abs_pe)*echange_f1_early + scale(abs_pe)*echange_f2_late + scale(abs_pe)*e_f1 +
+                           outcome*echange_f1_early + outcome*echange_f2_late + outcome*e_f1 +
+                           rt_csv_sc*echange_f1_early + rt_csv_sc*echange_f2_late + rt_csv_sc*e_f1 +
+                           trial_neg_inv_sc*echange_f1_early + trial_neg_inv_sc*echange_f2_late + trial_neg_inv_sc*e_f1 +
+                           v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + v_entropy_wi*e_f1 + rt_lag_sc*e_f1 + (1|Subject))
 
 rt_tf_formula = formula( ~ pow_scaled * rt_csv_sc * outcome  + pow_scaled * scale(rt_vmax)  +
                         pow_scaled * rt_lag_sc + 
@@ -137,13 +142,13 @@ if (domain == "tf") {
     signal_outcome = "signal_scaled"} 
 if (encode) {
   ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula , split_on = splits, external_df = trial_df,
-                            padjust_by = "term", padjust_method = "fdr", ncores = 20, refit_on_nonconvergence = 3))
+                            padjust_by = "term", padjust_method = "fdr", ncores = 20, refit_on_nonconvergence = 5))
   # save output
   setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_decode/")
   if (domain == "time") {
-    saveRDS(rdf, file = "meg_mixed_by_time_ddf.RDS")
+    saveRDS(ddf, file = "meg_mixed_by_time_ranefs_mult_interactions_ddf.RDS")
   } else if (domain == "tf") {
-    saveRDS(rdf, file = "meg_mixed_by_tf_ranefs_ddf.RDS")
+    saveRDS(ddf, file = "meg_mixed_by_tf_ranefs_interactions_ddf.RDS")
   }
 }
 
