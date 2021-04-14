@@ -9,13 +9,13 @@ library(viridis)
 # library(psych)
 repo_directory <- "~/code/clock_analysis"
 encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_decode/"
-rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt//"
+rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt/"
 
 
 # what to run
 # you can run all options at once
-encode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt_predict = T # predicts next response based on signal and behavioral variables
+encode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+rt_predict = F # predicts next response based on signal and behavioral variables
 random = F # whether to use data from analyses where behavioral variables have both fixed and random effects
 uncorrected = F # whether to plot uncorrected data (FDR-corrected always plotted)
 
@@ -24,7 +24,7 @@ if (encode) {
   message("Plotting decoding results")
   setwd(encode_plot_dir)
   epoch_label = "Time relative to outcome, seconds"
-  ddf <- readRDS("meg_mixed_by_tf_ddf.RDS")
+  ddf <- readRDS("meg_mixed_by_tf_ranefs_interactions_ddf.RDS")
   terms <- unique(ddf$term[ddf$effect=="fixed"])
   
   ddf <- ddf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
@@ -45,7 +45,7 @@ if (encode) {
                            p_fdr < .01 & p_fdr > .001 ~ '3',
                            p_fdr <.001 ~ '4'))
   ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
-  #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
+           # region = substr(as.character(label), 1, nchar(as.character(label))-2))
   ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
   ddf$`p, FDR-corrected` = ddf$p_level_fdr
   
@@ -54,16 +54,16 @@ if (encode) {
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste("meg_tf_dan_uncorrected_scaled_", termstr, ".pdf", sep = "")
+    fname = paste("meg_tf_dan_ranef_int_uncorrected_", termstr, ".pdf", sep = "")
     pdf(fname, width = 18, height = 8)
     print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + #scale_y_discrete(limits = rev) +
             scale_fill_viridis(option = "plasma") +  xlab(epoch_label) + ylab("Frequency") + facet_wrap(~sensor) +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) + theme_dark()
     dev.off()
-    fname = paste("meg_tf_dan_FDR_scaled_", termstr, ".pdf", sep = "")
+    fname = paste("meg_tf_dan_ranef_int_FDR_", termstr, ".pdf", sep = "")
     pdf(fname, width = 18, height = 8)
-    print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) + 
+    print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) +
             geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + facet_wrap(~sensor) +
             labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr))) + theme_dark()

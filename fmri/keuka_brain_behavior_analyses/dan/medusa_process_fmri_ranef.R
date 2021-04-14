@@ -5,7 +5,7 @@ library(lme4)
 
 plot_dir = "~/OneDrive/collected_letters/papers/sceptic_fmri/dan/plots/rt_decode"
 setwd(plot_dir)
-
+save = F
 # read in entropy change data
 fname = "rt_encode_output_streams_mixed_by_entropy_change_ranef.RDS"
 ddf <- as.data.frame(readRDS(fname)) %>% select(-model_name, -rhs, -outcome, -std.error, -effect, -group)
@@ -70,7 +70,48 @@ efscores <- factor.scores(ranefs, e.fa)$scores
 wdf$e_f1 <- efscores[,1]
 wdf <- wdf %>% mutate(Subject = as.integer(Subject))
 
+if (save) {
 # add to behavioral data file ----
 behavioral_data_file = "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
 trial_df <- as_tibble(readRDS(behavioral_data_file))  %>% inner_join(wdf)
 saveRDS(trial_df, file = behavioral_data_file)
+}
+# absolute PE ----
+# read in data
+fname = "rt_encode_output_streams_mixed_by_abs_pe_ranef.RDS"
+pddf <- as.data.frame(readRDS(fname)) %>% select(-model_name, -rhs, -outcome, -std.error, -effect, -group)
+# spread by stream and time
+pwdf <- pddf %>% group_by(level) %>% filter(term=="scale(abs_pe)", evt_time>0) %>% 
+  select(-term) %>%
+  pivot_wider(names_from = c(stream, evt_time, side), values_from = estimate) %>% ungroup()
+
+# correlation plots
+
+ranefs <- distinct(pwdf) %>% select(-level)
+ranef_cor <- corr.test(na.omit(ranefs),method = 'pearson', adjust = 'none')
+# parametric correlations on winsorised betas
+# clust_cor <- cor(just_rois_w,method = 'pearson')
+
+pdf("abs_pe_ranef_corr.pdf", width=60, height=60)
+corrplot(ranef_cor$r, cl.lim=c(-1,1), 
+         method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
+         order = "hclust", diag = FALSE,
+         addCoef.col="black", addCoefasPercent = FALSE,
+         p.mat = ranef_cor$p, sig.level=0.05, insig = "blank")
+dev.off()
+
+nr <- nfactors(ranef_cor$r, n=10, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
+p.fa = psych::fa(ranefs, nfactors=3, rotate = "oblimin", fm = "pa")
+p.faba = psych::bassAckward(ranefs, nfactors=2, rotate = "oblimin", fm = "pa")
+p.fa = fa.sort(psych::fa(ranefs, nfactors=1))
+pfscores <- factor.scores(ranefs, e.fa)$scores
+wdf$abs_pe_f1_mid <- pfscores[,1]
+wdf$abs_pe_f2_early <- pfscores[,2]
+wdf$abs_pe_f3_late <- pfscores[,3]
+
+
+# add to behavioral data file ----
+behavioral_data_file = "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
+trial_df <- as_tibble(readRDS(behavioral_data_file))  %>% inner_join(wdf)
+saveRDS(trial_df, file = behavioral_data_file)
+

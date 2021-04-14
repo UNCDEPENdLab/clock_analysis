@@ -14,17 +14,17 @@ rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt//"
 
 # what to run
 # you can run all options at once
-decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+encode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt_predict = F # predicts next response based on signal and behavioral variables
 random = T # whether to use data from analyses where behavioral variables have both fixed and random effects
 uncorrected = F # whether to plot uncorrected data (FDR-corrected always plotted)
 
 # plots ----
-if (decode) {  
+if (encode) {  
   message("Plotting decoding results")
-  setwd(decode_plot_dir)
+  setwd(encode_plot_dir)
   epoch_label = "Time relative to outcome, seconds"
-  ddf <- readRDS("meg_mixed_by_ddf.RDS")
+  ddf <- readRDS("meg_mixed_by_time_ranefs_interactions_ddf.RDS")
   terms <- unique(ddf$term[ddf$effect=="fixed"])
   
   ddf <- ddf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
@@ -68,7 +68,7 @@ if (decode) {
     dev.off()
   }
 } 
-system("for i in *n63*.pdf; do sips -s format tiff $i --out $i.tif; done")
+system("for i in *n63*.pdf; do sips -s format png $i --out $i.png; done")
 
 if(rt_predict) {
   # plots ----
