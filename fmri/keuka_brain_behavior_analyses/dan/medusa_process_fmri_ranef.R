@@ -103,8 +103,8 @@ dev.off()
 nr <- nfactors(ranef_cor$r, n=10, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
 p.fa = psych::fa(ranefs, nfactors=3, rotate = "oblimin", fm = "pa")
 p.faba = psych::bassAckward(ranefs, nfactors=2, rotate = "oblimin", fm = "pa")
-p.fa = fa.sort(psych::fa(ranefs, nfactors=1))
-pfscores <- factor.scores(ranefs, e.fa)$scores
+p.fa = fa.sort(psych::fa(ranefs, nfactors=3))
+pfscores <- factor.scores(ranefs, p.fa)$scores
 wdf$abs_pe_f1_mid <- pfscores[,1]
 wdf$abs_pe_f2_early <- pfscores[,2]
 wdf$abs_pe_f3_late <- pfscores[,3]
