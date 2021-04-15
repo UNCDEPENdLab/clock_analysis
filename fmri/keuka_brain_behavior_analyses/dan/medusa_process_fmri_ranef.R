@@ -111,7 +111,7 @@ wdf$abs_pe_f3_late <- pfscores[,3]
 
 
 # add to behavioral data file ----
-behavioral_data_file = "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
+behavioral_data_file = "~/Box/SCEPTIC_fMRI/sceptic_model_fits/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
 trial_df <- as_tibble(readRDS(behavioral_data_file))  %>% inner_join(wdf)
 saveRDS(trial_df, file = behavioral_data_file)
 

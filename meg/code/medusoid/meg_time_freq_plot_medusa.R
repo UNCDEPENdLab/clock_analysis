@@ -24,7 +24,7 @@ if (encode) {
   message("Plotting decoding results")
   setwd(encode_plot_dir)
   epoch_label = "Time relative to outcome, seconds"
-  ddf <- readRDS("meg_mixed_by_tf_ranefs_interactions_ddf.RDS")
+  ddf <- readRDS("meg_mixed_by_tf_ranefs_mult_interactions_e_ddf.RDS")
   terms <- unique(ddf$term[ddf$effect=="fixed"])
   
   ddf <- ddf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
@@ -70,7 +70,7 @@ if (encode) {
     dev.off()
   }
 } 
-system("for i in *scaled*.pdf; do sips -s format tiff $i --out $i.tif; done")
+system("for i in *scaled*.pdf; do sips -s format png $i --out $i.png; done")
 
 if(rt_predict) {
   # plots ----
