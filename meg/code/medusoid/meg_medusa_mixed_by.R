@@ -15,7 +15,7 @@ library(psych)
 repo_directory <- "~/code/clock_analysis"
 medusa_dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"
 diag_dir =  "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/diags/"
-behavioral_data_file = "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
+behavioral_data_file = "~/Box/SCEPTIC_fMRI/sceptic_model_fits/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
 source("~/code/fmri.pipeline/R/mixed_by.R")
 stopifnot(dir.exists(medusa_dir))  
 
@@ -30,7 +30,7 @@ online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline
 exclude_first_run = F
 reg_diagnostics = F
 start_time = -3
-domain = "time" # "time"
+domain = "tf" # "time"
 label_sensors = F
 test = F
 scale_winsor = F
@@ -81,7 +81,7 @@ if (scale_winsor & domain == "time") {
   foreach(i = 1:length(files), .packages=c("tidyverse", "psych")) %dopar% {
     scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
     d <- readRDS(files[i])
-    d$pow_scaled <- scale2(winsor(d$Pow, trim = .01))
+    d$pow_scaled <- scale2(winsor(d$Pow, trim = .005))
     saveRDS(d, file = files[i])
   }
   stopCluster(cl)}
@@ -92,8 +92,8 @@ if (scale_winsor & domain == "time") {
 
 
 # 
-# sample_data <- readRDS(files[2])
-# sample_data$pow_scaled <- winsor((sample_data$Pow), trim = .01)
+sample_data <- readRDS(files[2])
+# sample_data$pow_scaled <- winsor((sample_data$Pow), trim = .005)
 # 
 # ggplot(sample_data, aes(pow_scaled)) + geom_histogram() + facet_wrap(~Subject)
 # ggplot(sample_data, aes(Pow)) + geom_histogram() + facet_wrap(~Subject)
@@ -116,17 +116,23 @@ trial_df <- readRDS(behavioral_data_file)
 # trial_df$Run <- trial_df$run
 # trial_df$Trial <- trial_df$trial
 # trial_df$rt_next_sc <- scale(trial_df$rt_next)
-# # save behavioral data with new variables
+# # # save behavioral data with new variables
 # saveRDS(trial_df, behavioral_data_file)
 
 # encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
 #                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
-encode_formula = formula(~ scale(rt_vmax_lag)*echange_f1_early + scale(rt_vmax_lag)*echange_f2_late + scale(rt_vmax_lag)*e_f1 +
+encode_formula_e = formula(~ scale(rt_vmax_lag)*echange_f1_early + scale(rt_vmax_lag)*echange_f2_late + scale(rt_vmax_lag)*e_f1 +
                            scale(abs_pe)*echange_f1_early + scale(abs_pe)*echange_f2_late + scale(abs_pe)*e_f1 +
                            outcome*echange_f1_early + outcome*echange_f2_late + outcome*e_f1 +
                            rt_csv_sc*echange_f1_early + rt_csv_sc*echange_f2_late + rt_csv_sc*e_f1 +
                            trial_neg_inv_sc*echange_f1_early + trial_neg_inv_sc*echange_f2_late + trial_neg_inv_sc*e_f1 +
                            v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + v_entropy_wi*e_f1 + rt_lag_sc*e_f1 + (1|Subject))
+encode_formula_pe = formula(~ scale(rt_vmax_lag)*abs_pe_f2_early + scale(rt_vmax_lag)*abs_pe_f1_mid + scale(rt_vmax_lag)*abs_pe_f3_late +
+                              scale(abs_pe)*abs_pe_f2_early + scale(abs_pe)*abs_pe_f1_mid + scale(abs_pe)*abs_pe_f3_late +
+                              outcome*abs_pe_f2_early + outcome*abs_pe_f1_mid + outcome*abs_pe_f3_late +
+                              rt_csv_sc*abs_pe_f2_early + rt_csv_sc*abs_pe_f1_mid + rt_csv_sc*abs_pe_f3_late +
+                              trial_neg_inv_sc*abs_pe_f2_early + trial_neg_inv_sc*abs_pe_f1_mid + trial_neg_inv_sc*abs_pe_f3_late +
+                              v_entropy_wi_change*abs_pe_f2_early + v_entropy_wi_change*abs_pe_f1_mid + v_entropy_wi*abs_pe_f3_late + rt_lag_sc*abs_pe_f3_late + (1|Subject))
 
 rt_tf_formula = formula( ~ pow_scaled * rt_csv_sc * outcome  + pow_scaled * scale(rt_vmax)  +
                         pow_scaled * rt_lag_sc + 
@@ -141,14 +147,14 @@ if (domain == "tf") {
     splits = c("Time", "sensor")
     signal_outcome = "signal_scaled"} 
 if (encode) {
-  ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula , split_on = splits, external_df = trial_df,
+  ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_pe, split_on = splits, external_df = trial_df,
                             padjust_by = "term", padjust_method = "fdr", ncores = 20, refit_on_nonconvergence = 5))
   # save output
   setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_decode/")
   if (domain == "time") {
     saveRDS(ddf, file = "meg_mixed_by_time_ranefs_mult_interactions_ddf.RDS")
   } else if (domain == "tf") {
-    saveRDS(ddf, file = "meg_mixed_by_tf_ranefs_interactions_ddf.RDS")
+    saveRDS(ddf, file = "meg_mixed_by_tf_ranefs_mult_interactions_e_ddf.RDS")
   }
 }
 
