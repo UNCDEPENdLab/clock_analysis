@@ -31,7 +31,7 @@ exclude_first_run = F
 reg_diagnostics = F
 start_time = -3
 domain = "time" # "time"
-label_sensors = F
+label_sensors = T
 test = F
 scale_winsor = F
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
@@ -155,6 +155,10 @@ if (domain == "tf") {
   signal_outcome = "pow_scaled"} else if (domain == "time") {
     splits = c("Time", "sensor")
     signal_outcome = "signal_scaled"} 
+cl <- makeCluster(ncores)
+registerDoParallel(cl)
+on.exit(try(stopCluster(cl)))
+
 if (encode) {
   ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_clock, split_on = splits, external_df = trial_df,
                             padjust_by = "term", padjust_method = "fdr", ncores = ncores, refit_on_nonconvergence = 5))
