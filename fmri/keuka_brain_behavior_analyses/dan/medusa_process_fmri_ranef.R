@@ -103,15 +103,15 @@ dev.off()
 nr <- nfactors(ranef_cor$r, n=10, rotate = "oblimin", diagonal = FALSE,fm = "pa", n.obs = 70, SMC = FALSE)
 p.fa = psych::fa(ranefs, nfactors=3, rotate = "oblimin", fm = "pa")
 p.faba = psych::bassAckward(ranefs, nfactors=2, rotate = "oblimin", fm = "pa")
-p.fa = fa.sort(psych::fa(ranefs, nfactors=1))
-pfscores <- factor.scores(ranefs, e.fa)$scores
+p.fa = fa.sort(psych::fa(ranefs, nfactors=3))
+pfscores <- factor.scores(ranefs, p.fa)$scores
 wdf$abs_pe_f1_mid <- pfscores[,1]
 wdf$abs_pe_f2_early <- pfscores[,2]
 wdf$abs_pe_f3_late <- pfscores[,3]
 
 
 # add to behavioral data file ----
-behavioral_data_file = "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
+behavioral_data_file = "~/Box/SCEPTIC_fMRI/sceptic_model_fits/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
 trial_df <- as_tibble(readRDS(behavioral_data_file))  %>% inner_join(wdf)
 saveRDS(trial_df, file = behavioral_data_file)
 

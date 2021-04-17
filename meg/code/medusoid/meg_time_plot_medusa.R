@@ -8,7 +8,7 @@ library(car)
 library(viridis)
 # library(psych)
 repo_directory <- "~/code/clock_analysis"
-decode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_decode/"
+encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_decode/"
 rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt//"
 
 
@@ -24,7 +24,7 @@ if (encode) {
   message("Plotting decoding results")
   setwd(encode_plot_dir)
   epoch_label = "Time relative to outcome, seconds"
-  ddf <- readRDS("meg_mixed_by_time_ranefs_interactions_ddf.RDS")
+  ddf <- readRDS("meg_mixed_by_time_ranefs_mult_interactions_ddf.RDS")
   terms <- unique(ddf$term[ddf$effect=="fixed"])
   
   ddf <- ddf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
