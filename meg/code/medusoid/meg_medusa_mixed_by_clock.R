@@ -23,17 +23,19 @@ setwd(medusa_dir)
 
 # options, files ----
 plots = F
-encode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+encode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
 
-rt = F # predicts next response based on signal and behavioral variables
-online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
+rt = T # predicts next response based on signal and behavioral variables
+online = T # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
 reg_diagnostics = F
 start_time = -3
 domain = "time" # "time"
-label_sensors = T
+label_sensors = F
 test = F
 scale_winsor = F
+ncores <- detectCores()
+
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
 # fef_sensors <- c("0612","0613", "0542", "0543","1022")
@@ -63,11 +65,11 @@ if (label_sensors | scale_winsor) {
 }
 
 if (label_sensors) {
-  for (this_file in files) {
-    d <- readRDS(this_file)
+  foreach(i = 1:length(files), .packages=c("tidyverse", "psych")) %dopar% {
+    d <- readRDS(files[i])
     d$sensor <- str_extract(this_file, "[[:digit:]]{4}")
     saveRDS(d, file = this_file)
-    rm(d)
+    return(NULL)
   }
 }
 
@@ -124,7 +126,7 @@ trial_df <- readRDS(behavioral_data_file)
 
 # encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
 #                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
-encode_formula_clock = formula(~ rt_vmax_lag_sc + reward_lag + rt_csv_sc + rt_lag_sc + v_max_wi + trial_neg_inv_sc + 
+encode_formula_clock = formula(~ rt_vmax + reward_lag + rt_csv_sc + rt_lag_sc + v_max_wi + trial_neg_inv_sc + 
                              v_entropy_wi + v_entropy_wi_change_lag + (1|Subject))
 
 
@@ -149,21 +151,22 @@ rt_tf_formula = formula( ~ pow_scaled * rt_csv_sc * outcome  + pow_scaled * scal
 rt_time_formula = formula( ~ signal_scaled * rt_csv_sc * outcome  + signal_scaled * scale(rt_vmax)  +
                              signal_scaled * rt_lag_sc + 
                            (1|id))
-rt_outcome = "rt_next_sc"
+rt_clock_time_formula = formula( ~ signal_scaled * rt_lag_sc * reward_lag  + signal_scaled * scale(rt_vmax)  +
+                             (1|id))
+# rt_outcome = "rt_next_sc"
+rt_outcome = "rt_csv_sc"
+trial_df_rt <- trial_df %>% select(reward_lag, rt_csv_sc, rt_lag_sc, rt_vmax, Subject, Trial, Run)
 if (domain == "tf") {
   splits = c("Time", "sensor", "Freq")
   signal_outcome = "pow_scaled"} else if (domain == "time") {
     splits = c("Time", "sensor")
     signal_outcome = "signal_scaled"} 
-cl <- makeCluster(ncores)
-registerDoParallel(cl)
-on.exit(try(stopCluster(cl)))
 
 if (encode) {
   ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_clock, split_on = splits, external_df = trial_df,
                             padjust_by = "term", padjust_method = "fdr", ncores = ncores, refit_on_nonconvergence = 5))
   # save output
-  setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_decode/")
+  setwd("~/OneDrive/collected_letters/papers/meg/plots/clock_encode/")
   if (domain == "time") {
     saveRDS(ddf, file = "meg_mixed_by_time_clock_ddf.RDS")
     #     saveRDS(ddf, file = "meg_mixed_by_time_ranefs_mult_interactions_pe_ddf.RDS")
@@ -175,10 +178,10 @@ if (encode) {
 }  
 
 if (rt) {
-  rdf <- as_tibble(mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = rt_time_formula , split_on = splits, external_df = trial_df,
+  rdf <- as_tibble(mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = rt_clock_time_formula, split_on = splits, external_df = trial_df,
                             padjust_by = "term", padjust_method = "fdr", ncores = 20, refit_on_nonconvergence = 3))
   # save output
-  setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_rt/")
+  setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_clock/")
   if (domain == "time") {
     saveRDS(rdf, file = "meg_mixed_by_time_rdf.RDS")
   } else if (domain == "tf") {
