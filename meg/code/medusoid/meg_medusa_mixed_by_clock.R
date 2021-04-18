@@ -13,7 +13,7 @@ library(foreach)
 library(doParallel)
 library(psych)
 repo_directory <- "~/code/clock_analysis"
-medusa_dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign//"
+medusa_dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"
 diag_dir =  "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/diags/"
 behavioral_data_file = "~/Box/SCEPTIC_fMRI/sceptic_model_fits/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
 source("~/code/fmri.pipeline/R/mixed_by.R")
@@ -30,10 +30,12 @@ online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline
 exclude_first_run = F
 reg_diagnostics = F
 start_time = -3
-domain = "time" # "time"
-label_sensors = T
+domain = "tf" # "time", "tf"
+label_sensors = F
 test = F
 scale_winsor = F
+ncores <- detectCores()
+
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
 # fef_sensors <- c("0612","0613", "0542", "0543","1022")
@@ -45,7 +47,7 @@ if (domain == "time") {
   files <- files[grepl("MEG", files)]
   if (test) {files <- files[1:4]}
 } else if (domain == "tf") {
-  files <-  gsub("//", "/", list.files(medusa_dir,pattern = "tf", full.names = T))
+  files <-  gsub("//", "/", list.files(medusa_dir,pattern = "_tf.rds", full.names = T))
   files <- files[grepl("MEG", files)]
 }
 
@@ -124,7 +126,7 @@ trial_df <- readRDS(behavioral_data_file)
 
 # encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
 #                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
-encode_formula_clock = formula(~ rt_vmax_lag_sc + reward_lag + rt_csv_sc + rt_lag_sc + v_max_wi + trial_neg_inv_sc + 
+encode_formula_clock = formula(~ rt_vmax + reward_lag + rt_csv_sc + rt_lag_sc + v_max_wi + trial_neg_inv_sc + 
                              v_entropy_wi + v_entropy_wi_change_lag + (1|Subject))
 
 
@@ -155,15 +157,12 @@ if (domain == "tf") {
   signal_outcome = "pow_scaled"} else if (domain == "time") {
     splits = c("Time", "sensor")
     signal_outcome = "signal_scaled"} 
-cl <- makeCluster(ncores)
-registerDoParallel(cl)
-on.exit(try(stopCluster(cl)))
 
 if (encode) {
   ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_clock, split_on = splits, external_df = trial_df,
                             padjust_by = "term", padjust_method = "fdr", ncores = ncores, refit_on_nonconvergence = 5))
   # save output
-  setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_decode/")
+  setwd("~/OneDrive/collected_letters/papers/meg/plots/clock_encode/")
   if (domain == "time") {
     saveRDS(ddf, file = "meg_mixed_by_time_clock_ddf.RDS")
     #     saveRDS(ddf, file = "meg_mixed_by_time_ranefs_mult_interactions_pe_ddf.RDS")
