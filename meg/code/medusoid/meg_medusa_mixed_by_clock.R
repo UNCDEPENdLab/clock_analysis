@@ -22,7 +22,8 @@ online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline
 exclude_first_run = F
 reg_diagnostics = F
 start_time = -3
-domain = "time" # "time"
+domain = "tf" # "time", "tf"
+
 label_sensors = F
 test = F
 scale_winsor = F
@@ -41,6 +42,7 @@ stopifnot(dir.exists(medusa_dir))
 setwd(medusa_dir)
 
 
+
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
 # fef_sensors <- c("0612","0613", "0542", "0543","1022")
@@ -53,7 +55,7 @@ if (domain == "time") {
   files <- files[!endsWith(files,"1_20Hz.rds")]
   if (test) {files <- files[1:4]}
 } else if (domain == "tf") {
-  files <-  gsub("//", "/", list.files(medusa_dir,pattern = "tf", full.names = T))
+  files <-  gsub("//", "/", list.files(medusa_dir,pattern = "_tf.rds", full.names = T))
   files <- files[grepl("MEG", files)]
   files <- files[!endsWith(files,"1_20Hz.rds")]
 }
@@ -134,7 +136,7 @@ trial_df <- readRDS(behavioral_data_file)
 # encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
 #                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
 encode_formula_clock = formula(~ rt_vmax + reward_lag + rt_csv_sc + rt_lag_sc + v_max_wi + trial_neg_inv_sc + 
-                                 v_entropy_wi + v_entropy_wi_change_lag + (1|Subject))
+                             v_entropy_wi + v_entropy_wi_change_lag + (1|Subject))
 
 
 encode_formula_e = formula(~ scale(rt_vmax_lag)*echange_f1_early + scale(rt_vmax_lag)*echange_f2_late + scale(rt_vmax_lag)*e_f1 +

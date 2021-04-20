@@ -17,16 +17,16 @@ rt_predict = T # predicts next response based on signal and behavioral variables
 # uncorrected = F # whether to plot uncorrected data (FDR-corrected always plotted)
 
 repo_directory <- "~/code/clock_analysis"
-if (online) {encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"} else {
-  encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_encode/"  
-}
+rt_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_encode/"  
+clock_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"  
+dual_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_encode/"  
 
-# encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"
-# rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt/"
-if (online) {rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_rt/"} else {
-rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt/"}
-if (online) {
-  epoch_label = "Time relative to clock onset, seconds"} else {epoch_label = "Time relative to outcome, seconds"}
+rt_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt/"
+clock_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_rt/"
+dual_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_rt/"
+
+clock_epoch_label = "Time relative to clock onset, seconds"
+rt_epoch_label = "Time relative to outcome, seconds"
 
 
 sensor_map <- read.table("~/OneDrive/collected_letters/papers/meg/plots/meg_sensors_annotated.txt", header = T, colClasses = "character") %>%
@@ -38,10 +38,13 @@ sensor_map <- read.table("~/OneDrive/collected_letters/papers/meg/plots/meg_sens
 # plots ----
 if (encode) {  
   message("Plotting decoding results")
-  setwd(encode_plot_dir)
-  epoch_label = "Time relative to clock onset, seconds"
-# basic models on n = 63
-  ddf <- readRDS("meg_mixed_by_time_clock_ddf.RDS")
+  setwd(rt_encode_plot_dir)
+  rddf <- readRDS("meg_mixed_by_time_clock_ddf.RDS") %>% filter(Time > -2 & Time < 2) %>%
+    mutate(t  = as.numeric(Time) - 5, alignment = "rt")
+  setwd(clock_encode_plot_dir)
+  cddf <- readRDS("meg_mixed_by_time_clock_ddf.RDS") %>% filter(Time > -2 & Time < 2) %>%
+    mutate(t  = as.numeric(Time), alignment = "clock")
+  ddf <- rbind(rddf, cddf)
     # ddf <- readRDS("meg_mixed_by_time_ranefs_mult_interactions_pe_ddf.RDS")
   terms <- unique(ddf$term[ddf$effect=="fixed"])
   
@@ -49,7 +52,6 @@ if (encode) {
                                                       `p.value` < .05 & `p.value` > .01 ~ '2',
                                                       `p.value` < .01 & `p.value` > .001 ~ '3',
                                                       `p.value` <.001 ~ '4')),
-                        t  = as.numeric(Time),
                         sensor = as.character(sensor))
   ddf$p_value <- factor(ddf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   # terms <- unique(ddf$term[ddf$effect=="fixed"])
@@ -72,43 +74,54 @@ if (encode) {
   ddf <- ddf %>% filter(!grepl("1$", sensor))
   # add sensor labels
   ddf <- ddf %>% merge(sensor_map)
-  # ggplot(ddf %>% filter(term==terms[1]), aes(t, newlab)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
-    facet_grid(lobe  ~ hemi, scales = "free")
+  # ggplot(ddf %>% filter(term==terms[1]), aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
+    # facet_grid(lobe  ~ hemi, scales = "free")
+  setwd(dual_encode_plot_dir)
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste("meg_time_clock_uncorrected_n63", termstr, ".pdf", sep = "")
+    fname = paste("meg_time_dual_uncorrected_n63", termstr, ".pdf", sep = "")
     message(fname)
     pdf(fname, width = 30, height = 16)
-    print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
+    print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
             facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
+            geom_vline(xintercept = -5, lty = "dashed", color = "red", size = 2) +
+            geom_vline(xintercept = -5.3, lty = "dashed", color = "red", size = 1) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
-    fname = paste("meg_time_clock_FDR_n63", termstr, ".pdf", sep = "")
+    fname = paste("meg_time_dual_FDR_n63", termstr, ".pdf", sep = "")
     pdf(fname, width = 30, height = 16)
-    print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = abs(estimate), alpha = p_level_fdr)) + 
+    print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
             facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
+            geom_vline(xintercept = -5, lty = "dashed", color = "red", size = 2) +
+            geom_vline(xintercept = -5.3, lty = "dashed", color = "red", size = 1) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
   }
 } 
-# system("for i in *_time_clock_*.pdf; do sips -s format png $i --out $i.png; done")
+# system("for i in *.pdf; do sips -s format jpeg $i --out $i.jpeg; done")
 
 if(rt_predict) {
-  # plots ----
-  setwd(rt_plot_dir)
-  rdf <- readRDS("meg_mixed_by_time_rdf.RDS")
-  terms <- unique(rdf$term[rdf$effect=="fixed"])
+  message("Plotting decoding results")
+  setwd(rt_rt_plot_dir)
+  rrdf <- readRDS("meg_mixed_by_time_rdf.RDS") %>% filter(Time > -2 & Time < 2) %>%
+    mutate(t  = as.numeric(Time) - 5, alignment = "rt")
+  setwd(clock_rt_plot_dir)
+  crdf <- readRDS("meg_mixed_by_time_rdf.RDS") %>% filter(Time > -2 & Time < 2) %>%
+    mutate(t  = as.numeric(Time), alignment = "clock")
+  rdf <- rbind(rrdf, crdf)
+  # ddf <- readRDS("meg_mixed_by_time_ranefs_mult_interactions_pe_ddf.RDS")
+  terms <- unique(ddf$term[rdf$effect=="fixed"])
   terms <- terms[grepl("signal", terms)]
   rdf <- rdf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
                                                       `p.value` < .05 & `p.value` > .01 ~ '2',
                                                       `p.value` < .01 & `p.value` > .001 ~ '3',
                                                       `p.value` <.001 ~ '4')),
-                        t  = as.numeric(Time),
+                        t  = t,
                         sensor = as.character(sensor))
   rdf$p_value <- factor(rdf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   terms <- unique(rdf$term[rdf$effect=="fixed"])
@@ -131,7 +144,7 @@ if(rt_predict) {
   rdf <- rdf %>% filter(!grepl("1$", sensor))
   # add sensor labels
   rdf <- rdf %>% merge(sensor_map)
-  # ggplot(rdf %>% filter(term==terms[1]), aes(t, newlab)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
+  # ggplot(rdf %>% filter(term==terms[1]), aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
   facet_grid(lobe  ~ hemi, scales = "free")
   for (fe in terms) {
     edf <- rdf %>% filter(term == paste(fe)) 
