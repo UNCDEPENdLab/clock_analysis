@@ -12,21 +12,13 @@ library(corrplot)
 library(foreach)
 library(doParallel)
 library(psych)
-repo_directory <- "~/code/clock_analysis"
-medusa_dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign//"
-diag_dir =  "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/diags/"
-behavioral_data_file = "~/Box/SCEPTIC_fMRI/sceptic_model_fits/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
-source("~/code/fmri.pipeline/R/mixed_by.R")
-stopifnot(dir.exists(medusa_dir))  
-
-setwd(medusa_dir)
 
 # options, files ----
 plots = F
-encode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
+encode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
 
-rt = T # predicts next response based on signal and behavioral variables
-online = T # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
+rt = F # predicts next response based on signal and behavioral variables
+online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 exclude_first_run = F
 reg_diagnostics = F
 start_time = -3
@@ -35,6 +27,19 @@ label_sensors = F
 test = F
 scale_winsor = F
 ncores <- detectCores()
+
+repo_directory <- "~/code/clock_analysis"
+if (online) {
+  medusa_dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"
+  diag_dir =  "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/diags/"} else {
+    medusa_dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"  
+  }
+behavioral_data_file = "~/Box/SCEPTIC_fMRI/sceptic_model_fits/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
+source("~/code/fmri.pipeline/R/mixed_by.R")
+stopifnot(dir.exists(medusa_dir))
+
+setwd(medusa_dir)
+
 
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
@@ -45,10 +50,12 @@ ncores <- detectCores()
 if (domain == "time") {
   files <-  gsub("//", "/", list.files(medusa_dir,pattern = "20Hz", full.names = T))
   files <- files[grepl("MEG", files)]
+  files <- files[!endsWith(files,"1_20Hz.rds")]
   if (test) {files <- files[1:4]}
 } else if (domain == "tf") {
   files <-  gsub("//", "/", list.files(medusa_dir,pattern = "tf", full.names = T))
   files <- files[grepl("MEG", files)]
+  files <- files[!endsWith(files,"1_20Hz.rds")]
 }
 
 if (label_sensors | scale_winsor) {
@@ -82,14 +89,14 @@ if (scale_winsor & domain == "time") {
     return(NULL)
   } 
   stopCluster(cl)} else if (scale_winsor & domain == "tf") {
-  foreach(i = 1:length(files), .packages=c("tidyverse", "psych")) %dopar% {
-    scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
-    d <- readRDS(files[i])
-    d$pow_scaled <- scale2(winsor(d$Pow, trim = .005))
-    saveRDS(d, file = files[i])
-    return(NULL)
-  }
-  stopCluster(cl)}
+    foreach(i = 1:length(files), .packages=c("tidyverse", "psych")) %dopar% {
+      scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
+      d <- readRDS(files[i])
+      d$pow_scaled <- scale2(winsor(d$Pow, trim = .005))
+      saveRDS(d, file = files[i])
+      return(NULL)
+    }
+    stopCluster(cl)}
 # files <- files[1] # TEST ONLY
 
 # # take first few for testing
@@ -127,15 +134,15 @@ trial_df <- readRDS(behavioral_data_file)
 # encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
 #                            v_entropy_wi + v_entropy_wi_change + v_max_wi  + scale(abs_pe) + outcome + (1|Subject))
 encode_formula_clock = formula(~ rt_vmax + reward_lag + rt_csv_sc + rt_lag_sc + v_max_wi + trial_neg_inv_sc + 
-                             v_entropy_wi + v_entropy_wi_change_lag + (1|Subject))
+                                 v_entropy_wi + v_entropy_wi_change_lag + (1|Subject))
 
 
 encode_formula_e = formula(~ scale(rt_vmax_lag)*echange_f1_early + scale(rt_vmax_lag)*echange_f2_late + scale(rt_vmax_lag)*e_f1 +
-                           scale(abs_pe)*echange_f1_early + scale(abs_pe)*echange_f2_late + scale(abs_pe)*e_f1 +
-                           outcome*echange_f1_early + outcome*echange_f2_late + outcome*e_f1 +
-                           rt_csv_sc*echange_f1_early + rt_csv_sc*echange_f2_late + rt_csv_sc*e_f1 +
-                           trial_neg_inv_sc*echange_f1_early + trial_neg_inv_sc*echange_f2_late + trial_neg_inv_sc*e_f1 +
-                           v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + v_entropy_wi*e_f1 + rt_lag_sc*e_f1 + (1|Subject))
+                             scale(abs_pe)*echange_f1_early + scale(abs_pe)*echange_f2_late + scale(abs_pe)*e_f1 +
+                             outcome*echange_f1_early + outcome*echange_f2_late + outcome*e_f1 +
+                             rt_csv_sc*echange_f1_early + rt_csv_sc*echange_f2_late + rt_csv_sc*e_f1 +
+                             trial_neg_inv_sc*echange_f1_early + trial_neg_inv_sc*echange_f2_late + trial_neg_inv_sc*e_f1 +
+                             v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + v_entropy_wi*e_f1 + rt_lag_sc*e_f1 + (1|Subject))
 encode_formula_pe = formula(~ scale(rt_vmax_lag)*abs_pe_f2_early + scale(rt_vmax_lag)*abs_pe_f1_mid + scale(rt_vmax_lag)*abs_pe_f3_late +
                               scale(abs_pe)*abs_pe_f2_early + scale(abs_pe)*abs_pe_f1_mid + scale(abs_pe)*abs_pe_f3_late +
                               outcome*abs_pe_f2_early + outcome*abs_pe_f1_mid + outcome*abs_pe_f3_late +   
@@ -146,13 +153,14 @@ encode_formula_pe = formula(~ scale(rt_vmax_lag)*abs_pe_f2_early + scale(rt_vmax
                               rt_lag_sc*abs_pe_f2_early + rt_lag_sc*abs_pe_f1_mid + rt_lag_sc*abs_pe_f3_late + (1|Subject))
 
 rt_tf_formula = formula( ~ pow_scaled * rt_csv_sc * outcome  + pow_scaled * scale(rt_vmax)  +
-                        pow_scaled * rt_lag_sc + 
-                        (1|id))
+                           pow_scaled * rt_lag_sc + 
+                           (1|id))
 rt_time_formula = formula( ~ signal_scaled * rt_csv_sc * outcome  + signal_scaled * scale(rt_vmax)  +
                              signal_scaled * rt_lag_sc + 
-                           (1|id))
-rt_clock_time_formula = formula( ~ signal_scaled * rt_lag_sc * reward_lag  + signal_scaled * scale(rt_vmax)  +
                              (1|id))
+rt_clock_time_formula = formula( ~ signal_scaled * rt_lag_sc * reward_lag + signal_scaled * rt_lag_sc * v_entropy_wi + 
+                                   signal_scaled * scale(rt_vmax) * v_entropy_wi  +
+                                   (1|id))
 # rt_outcome = "rt_next_sc"
 rt_outcome = "rt_csv_sc"
 trial_df_rt <- trial_df %>% select(reward_lag, rt_csv_sc, rt_lag_sc, rt_vmax, Subject, Trial, Run)
@@ -181,7 +189,7 @@ if (rt) {
   rdf <- as_tibble(mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = rt_clock_time_formula, split_on = splits, external_df = trial_df,
                             padjust_by = "term", padjust_method = "fdr", ncores = 20, refit_on_nonconvergence = 3))
   # save output
-  setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_clock/")
+  setwd("~/OneDrive/collected_letters/papers/meg/plots/clock_rt/")
   if (domain == "time") {
     saveRDS(rdf, file = "meg_mixed_by_time_rdf.RDS")
   } else if (domain == "tf") {
