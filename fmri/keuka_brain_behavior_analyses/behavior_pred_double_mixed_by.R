@@ -6,13 +6,18 @@ source("~/Data_Analysis/r_packages/fmri.pipeline/R/mixed_by.R")
 repo_directory <- "~/Data_Analysis/clock_analysis"
 load(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/trial_df_and_vh_pe_hd_clusters_u.Rdata"))
 
-
+#BLUPs are generated externally by dan_medusa_fmri_ranef_mixed_by.R
+#That script estimates MEDuSA encoding models for fMRI decons (currently RT aligned only), allowing for random slopes of
+#entropy, entropy_change, and/or kld3. This is encoded in the model_name variable and detailed in the $rhs.
+#Here, we read in these BLUPs (one per subject x time x stream x side combination). These are then entered as
+#interactions in the behav model rt_csv ~ rt_lag_sc * brain_blup etc.
+#Read in the ranefs and generate MEDuSA results for the behavioral model
 brain_df <- readRDS(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/encode_ranefs.rds"))
-#now read in the ranefs and generate MEDuSA results for the behavioral model
 
 #lacks a few things like v_max_wi_lag
 #trial_df <- readRDS(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/fmri_trial_df_medusa.RDS"))
 
+#comment out to keep fMRI behavioral dataset (to be fit)
 df <- mdf #switch to meg as behavior
 
 #for simplicity, change all matrix columns (wi-centering and scaling) to numeric
@@ -47,7 +52,7 @@ brain_df <- brain_df %>%
   mutate(brain_ranef=make.names(brain_ranef), id=as.integer(id)) %>%
   filter(brain_ranef %in% c("scale.abs_pe.", "v_entropy_wi")) #just pe and entropy slopes for now
 
-#combine ranefs with behavior
+#combine ranefs with behavior trial df
 combined_df <- merge(brain_df, df, by="id", allow.cartesian = TRUE)
 
 
@@ -56,10 +61,10 @@ behav_formula <- formula( ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + las
                             rt_lag_sc:last_outcome:brain_blup +
                             rt_vmax_lag_sc:trial_neg_inv_sc:brain_blup + (1|id/run))
 
-#combine ranefs with trial_df
 
 splits <- c("stream", "side", "evt_time", "brain_ranef")
 
+#test model on single split
 # test_df <- combined_df %>% filter(
 #   stream=="dorso-dorsal" & side=="L" & evt_time=="-4" & brain_ranef=="scale.abs_pe."
 # )
