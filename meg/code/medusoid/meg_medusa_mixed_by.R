@@ -13,15 +13,23 @@ library(foreach)
 library(doParallel)
 library(psych)
 
-sensor_list <- read.table("/proj/mnhallqlab/projects/clock_analysis/meg/code/meg_sensors_annotated.txt", header=TRUE, colClasses="character") %>%
-  filter(dan != "no") %>% pull(sensor)
-
-repo_directory <- "/proj/mnhallqlab/projects/clock_analysis"
-behavioral_data_file <- "/proj/mnhallqlab/projects/clock_analysis/meg/code/medusoid/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
-source("/proj/mnhallqlab/users/michael/fmri.pipeline/R/mixed_by.R")
+if (whoami::username() == "dombax" || whoami::username() == "alexdombrovski") {
+  sensor_list <- read.table("~/code/clock_analysis/meg/code/meg_sensors_annotated.txt", header=TRUE, colClasses="character") %>%
+    filter(dan != "no") %>% pull(sensor)
+  repo_directory <- "~/code/clock_analysis"
+  behavioral_data_file <- "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
+  source("~/code/fmri.pipeline/R/mixed_by.R")
+} else {
+  sensor_list <- read.table("/proj/mnhallqlab/projects/clock_analysis/meg/code/meg_sensors_annotated.txt", header=TRUE, colClasses="character") %>%
+    filter(dan != "no") %>% pull(sensor)
+  repo_directory <- "/proj/mnhallqlab/projects/clock_analysis"
+  behavioral_data_file <- "/proj/mnhallqlab/projects/clock_analysis/meg/code/medusoid/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
+  
+  source("/proj/mnhallqlab/users/michael/fmri.pipeline/R/mixed_by.R")
+  }
 
 #repo_directory <- "~/code/clock_analysis"
-#medusa_dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"
+# <- _dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"
 #diag_dir =  "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/diags/"
 #behavioral_data_file = "~/Box/SCEPTIC_fMRI/sceptic_model_fits/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
 #source("~/code/fmri.pipeline/R/mixed_by.R")
@@ -54,6 +62,11 @@ if (encode == "") {
 } else {
   stopifnot(alignment %in% c("RT", "clock", "feedback"))
   medusa_dir <- paste0("/proj/mnhallqlab/projects/Clock_MEG/tfr_rds/", alignment, "/time_freq")
+  if (whoami::username() == "dombax" || whoami::username() == "alexdombrovski") {
+    if (alignment == "clock") {medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"} else if (alignment == "RT") {
+      medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"
+    }
+  }
 }
 cat("Alignment: ", as.character(alignment), "\n")
 
@@ -64,13 +77,15 @@ online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline
 exclude_first_run = F
 reg_diagnostics = F
 start_time = -2
-domain = "tf" # "time", "tf"
+domain = Sys.getenv("domain") # "time", "tf"
 label_sensors = F
 test = F
 scale_winsor = F
-#ncores <- detectCores()
-ncores <- 36
 
+ncores <- 36
+if (whoami::username()=="dombax" | whoami::username() == "alexdombrovski") {
+  ncores <- detectCores()
+}
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
 # fef_sensors <- c("0612","0613", "0542", "0543","1022")
@@ -80,6 +95,7 @@ ncores <- 36
 if (domain == "time") {
   files <-  gsub("//", "/", list.files(medusa_dir,pattern = "20Hz", full.names = T))
   files <- files[grepl("MEG", files)]
+  files <- files[!endsWith(suffix = "1_20Hz.rds",x = files)]
   if (test) {files <- files[1:4]}
 } else if (domain == "tf") {
   #files <-  gsub("//", "/", list.files(medusa_dir,pattern = "_tf.rds", full.names = T))
@@ -135,6 +151,9 @@ encode_formula_pe = formula(~ scale(rt_vmax_lag)*abs_pe_f2_early + scale(rt_vmax
                               rt_lag_sc*abs_pe_f2_early + rt_lag_sc*abs_pe_f1_mid + rt_lag_sc*abs_pe_f3_late + (1|Subject))
 
 
+# preproc trial-df
+trial_df <- trial_df %>% mutate(Subject = as.integer(id), Trial = trial, Run = run)
+
 rt_outcome = "rt_next_sc"
 if (domain == "tf") {
   splits = c("Time", ".filename", "Freq")
@@ -157,9 +176,10 @@ if (domain == "tf") {
 
 if (encode) {
   ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula, split_on = splits,
-    external_df = trial_df, padjust_by = "term", padjust_method = "BY", ncores = ncores,
+    external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
     refit_on_nonconvergence = 5, outcome_transform=trans_func))
-  
+    # refit_on_nonconvergence = 5))
+  ddf$sensor <- readr::parse_number(ddf$.filename)
   # save output
   #setwd("~/OneDrive/collected_letters/papers/meg/plots/clock_encode/")
   if (domain == "time") {
@@ -176,6 +196,7 @@ if (encode) {
 if (rt_predict) {
   rdf <- as_tibble(mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = rt_predict_formula , split_on = splits, external_df = trial_df,
     padjust_by = "term", padjust_method = "BY", ncores = ncores, refit_on_nonconvergence = 5, outcome_transform=trans_func))
+  rdf$sensor <- readr::parse_number(ddf$.filename)
   
   # save output
   #setwd("~/OneDrive/collected_letters/papers/meg/plots/rt_rt/")
