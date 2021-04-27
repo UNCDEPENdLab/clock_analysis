@@ -11,8 +11,8 @@ library(viridis)
 # what to run
 # you can run all options at once
 online = T
-encode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt_predict = T # predicts next response based on signal and behavioral variables
+encode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+rt_predict = F # predicts next response based on signal and behavioral variables
 # random = T # whether to use data from analyses where behavioral variables have both fixed and random effects
 # uncorrected = F # whether to plot uncorrected data (FDR-corrected always plotted)
 
@@ -39,7 +39,7 @@ sensor_map <- read.table("~/OneDrive/collected_letters/papers/meg/plots/meg_sens
 if (encode) {  
   message("Plotting decoding results")
   setwd(rt_encode_plot_dir)
-  rddf <- readRDS("meg_mixed_by_time_clock_ddf.RDS") %>% filter(Time > -2 & Time < 2) %>%
+  rddf <- readRDS("meg_mixed_by_time_ddf.RDS") %>% filter(Time > -2 & Time < 2) %>%
     mutate(t  = as.numeric(Time) - 5, alignment = "rt")
   setwd(clock_encode_plot_dir)
   cddf <- readRDS("meg_mixed_by_time_clock_ddf.RDS") %>% filter(Time > -2 & Time < 2) %>%
@@ -88,7 +88,7 @@ if (encode) {
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
             geom_vline(xintercept = -5, lty = "dashed", color = "red", size = 2) +
             geom_vline(xintercept = -5.3, lty = "dashed", color = "red", size = 1) +
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
     fname = paste("meg_time_dual_FDR_n63", termstr, ".pdf", sep = "")
@@ -98,7 +98,7 @@ if (encode) {
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
             geom_vline(xintercept = -5, lty = "dashed", color = "red", size = 2) +
             geom_vline(xintercept = -5.3, lty = "dashed", color = "red", size = 1) +
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
   }

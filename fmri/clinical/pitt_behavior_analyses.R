@@ -226,15 +226,19 @@ print(c1 <- createTable(compareGroups(groupLeth ~ age + female + edu + wtar_s + 
 export2html(c1, "bsocial_clock_group_characteristics.html")
 }
 if (explore) {
-  print(c1 <- createTable(compareGroups(GroupNEW ~ age + female + wtar_raw + exit_raw +
+  print(c1 <- createTable(compareGroups(GroupNEW ~ age + female + edu + wtar_s + exit_total +
                                           neoffi_neuroticism_total + neoffi_extraversion_total + neoffi_conscientiousness_total +
                                           neoffi_agreeableness_total + total_earnings, sdf),show.n = T))
   export2html(c1, "explore_clock_group_characteristics.html")
+  print(c2 <- createTable(compareGroups(GroupNEW ~ age + female + edu + wtar_s + exit_total, sdf),show.n = F))
+  export2html(c2, "explore_clock_group_characteristics_brief.html")
+  
   # need education
 }
 # check missingness - a lot in Explore!
 library(VIM)
-df_aggr = aggr(sdf, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(sdf), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
+library(mice)
+df_aggr = VIM::aggr(sdf, col=mice::mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(sdf), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
 
 # sanity check on modeling
 if (plots) {
@@ -253,12 +257,14 @@ ggplot(df, aes(run_trial, v_entropy_wi, lty = rewFunc)) + geom_smooth(method = '
 
 ggplot(df, aes(run_trial, rt_csv, color = GroupNEW)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) +
   facet_wrap(~rewFunc)
-ggplot(df, aes(run_trial, rt_swing_lr, color = GroupNEW)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) +
+pdf("explore_rt_swings_group_geom_smooth.pdf", height = 4, width = 8)
+ggplot(df, aes(run_trial, rt_swing_lr, color = GroupNEW)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,4)) +
   facet_wrap(~rewFunc)
-ggplot(df, aes(run_trial, score_csv, color = GroupNEW)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) +
+dev.off()
+ggplot(df, aes(run_trial, score_csv, color = GroupNEW)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,5)) +
   facet_wrap(~rewFunc)
 
-ggplot(df, aes(run_trial, v_entropy, color = GroupNEW)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,3)) +
+ggplot(df, aes(run_trial, v_entropy, color = GroupNEW)) + geom_smooth(method = 'gam',  formula = y~splines::ns(x,4)) +
   facet_wrap(~rewFunc)
 
 }
@@ -284,7 +290,7 @@ mf1 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc +  omission_lag)
 summary(mf1)
 vif(mf1)
 # mf2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + groupLeth)^3 +
-mf2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + GroupNEW)^3 +
+mf2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + rt_vmax_lag_sc + GroupNEW)^3 +
               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(mf2)
 Anova(mf2, '3')
@@ -294,16 +300,18 @@ anova(mf1, mf2)
 # just 2-way RTlag*grp interaction
 em <- as_tibble(emtrends(mf2,var = "rt_lag_sc", specs = c("GroupNEW", "rewFunc")), data = df %>% filter(!is.na(rt_vmax_lag_sc)))
 em$RT_swing = -em$rt_lag_sc.trend
-pdf("explore_rt_swings_group_3way.pdf", height = 4, width = 5)
+group_labels <- c("Suicide \nattempters", "Depressed, \nhigh-ideation", "Depressed, \nlow-ideation", "Controls")
+pdf("explore_rt_swings_group_3way.pdf", height = 4, width = 6)
 ggplot(em, aes(GroupNEW, RT_swing, color = GroupNEW, lty = rewFunc)) + xlab("") +
-  geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point()
+  geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL), size = 1) + geom_point(size = 4) + 
+  scale_x_discrete(labels = group_labels)  + theme(legend.title = element_blank())
 dev.off()
 
 em <- as_tibble(emtrends(mf2,var = "rt_lag_sc", specs = c("GroupNEW", "omission_lag", "rewFunc")), data = df %>% filter(!is.na(rt_vmax_lag_sc)))
 em$RT_swing = -em$rt_lag_sc.trend
 em$reward <- "Reward"
 em$reward[em$omission_lag] <- "Omission"
-pdf("explore_rt_swings_group_rewFunc.pdf", height = 4, width = 8)
+pdf("explore_rt_swings_group_rewFunc.pdf", height = 4, width = 9)
 ggplot(em, aes(GroupNEW, RT_swing, color = GroupNEW, lty = reward)) + xlab("") +
   geom_errorbar(aes( ymin = -asymp.LCL, ymax = -asymp.UCL)) + geom_point() + facet_wrap(~rewFunc)
 dev.off()
