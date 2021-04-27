@@ -11,8 +11,8 @@ library(viridis)
 # what to run
 # you can run all options at once
 online = T
-encode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt_predict = F # predicts next response based on signal and behavioral variables
+encode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
+rt_predict = T # predicts next response based on signal and behavioral variables
 # random = T # whether to use data from analyses where behavioral variables have both fixed and random effects
 # uncorrected = F # whether to plot uncorrected data (FDR-corrected always plotted)
 
@@ -105,56 +105,70 @@ if (encode) {
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste("meg_time_dual_uncorrected_n63_check", termstr, ".pdf", sep = "")
+    fname = paste("meg_time_dual_uncorrected_n63_short_", termstr, ".pdf", sep = "")
     message(fname)
-    pdf(fname, width = 30, height = 16)
+    pdf(fname, width = 30, height = 10)
     print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
             facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            geom_vline(xintercept = -4.5, lty = "dashed", color = "red", size = 2) +
-            geom_vline(xintercept = -4.8, lty = "dashed", color = "red", size = 1) +
+            geom_vline(xintercept = -3.5, lty = "dashed", color = "red", size = 2) +
+            geom_vline(xintercept = -3.8, lty = "dashed", color = "red", size = 1) +
             geom_vline(xintercept = -2.25, lty = "dotted", color = "grey", size = 1) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
-    fname = paste("meg_time_dual_FDR_n63_check", termstr, ".pdf", sep = "")
-    pdf(fname, width = 30, height = 16)
+    fname = paste("meg_time_dual_FDR_n63_short_", termstr, ".pdf", sep = "")
+    pdf(fname, width = 30, height = 10)
     print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
             facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            geom_vline(xintercept = -4.5, lty = "dashed", color = "red", size = 2) +
-            geom_vline(xintercept = -4.8, lty = "dashed", color = "red", size = 1) +
+            geom_vline(xintercept = -3.5, lty = "dashed", color = "red", size = 2) +
+            geom_vline(xintercept = -3.8, lty = "dashed", color = "red", size = 1) +
             geom_vline(xintercept = -2.25, lty = "dotted", color = "grey", size = 1) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
   }
 } 
-# system("for i in *.pdf; do sips -s format jpeg $i --out $i.jpeg; done")
+# system("for i in *FDR*short*.pdf; do sips -s format jpeg $i --out $i.jpeg; done")
+# system("for i in *PE*.pdf; do sips -s format jpeg $i --out $i.jpeg; done")
 
 if(rt_predict) {
   message("Plotting decoding results")
+  # read in RT-aligned data
   setwd(rt_rt_plot_dir)
   rrdf <- readRDS("meg_mixed_by_time_rdf.RDS") %>% filter(Time > -2 & Time < 2) %>%
-    mutate(t  = as.numeric(Time) - 5, alignment = "rt")
+    mutate(t  = as.numeric(Time) - 3.5, 
+           alignment = "rt",
+           term = case_when(
+             term=="signal_scaled:rt_csv_sc" ~ "signal_scaled:RT_t",
+             term=="signal_scaled:rt_csv_sc:v_entropy_wi" ~ "signal_scaled:RT_t:v_entropy_wi",
+             TRUE ~ term))
+  # read in clock-aligned data
   setwd(clock_rt_plot_dir)
   crdf <- readRDS("meg_mixed_by_time_rdf.RDS") %>% filter(Time > -2 & Time < 2) %>%
-    mutate(t  = as.numeric(Time), alignment = "clock")
+    mutate(t  = as.numeric(Time), 
+           alignment = "clock",
+           term = case_when(
+           term=="signal_scaled:rt_lag_sc" ~ "signal_scaled:RT_t",
+           term=="signal_scaled:rt_lag_sc:v_entropy_wi" ~ "signal_scaled:RT_t:v_entropy_wi",
+           TRUE ~ term)
+           ) %>% select(-.filename)
   rdf <- rbind(rrdf, crdf)
   # ddf <- readRDS("meg_mixed_by_time_ranefs_mult_interactions_pe_ddf.RDS")
-  terms <- unique(ddf$term[rdf$effect=="fixed"])
+  terms <- unique(rdf$term[rdf$effect=="fixed"])
   terms <- terms[grepl("signal", terms)]
   rdf <- rdf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
                                                       `p.value` < .05 & `p.value` > .01 ~ '2',
                                                       `p.value` < .01 & `p.value` > .001 ~ '3',
                                                       `p.value` <.001 ~ '4')),
                         t  = t,
-                        sensor = as.character(sensor))
+                        sensor = as.character(sensor)) %>% filter(term %in% terms)
   rdf$p_value <- factor(rdf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   terms <- unique(rdf$term[rdf$effect=="fixed"])
   terms <- terms[grepl("signal", terms)]
   # FDR labeling ----
-  rdf <- rdf  %>% filter(t>-1) %>% mutate(p_fdr = padj_fdr_term,
+  rdf <- rdf %>% mutate(p_fdr = padj_fdr_term,
                                           p_level_fdr = as.factor(case_when(
                                             # p_fdr > .1 ~ '0',
                                             # p_fdr < .1 & p_fdr > .05 ~ '1',
@@ -171,29 +185,36 @@ if(rt_predict) {
   rdf <- rdf %>% filter(!grepl("1$", sensor))
   # add sensor labels
   rdf <- rdf %>% merge(sensor_map)
-  # ggplot(rdf %>% filter(term==terms[1]), aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
-  facet_grid(lobe  ~ hemi, scales = "free")
+  # edf <- rdf %>% filter(term=="signal_scaled:rt_lag_sc") # TEST
+  setwd(dual_rt_plot_dir)
   for (fe in terms) {
     edf <- rdf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste("meg_time_clock_uncorrected_n63", termstr, ".pdf", sep = "")
-    pdf(fname, width = 20, height = 16)
+    fname = paste("meg_time_dual_uncorrected_n63_short_", termstr, ".pdf", sep = "")
+    message(fname)
+    pdf(fname, width = 30, height = 10)
     print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
             facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
+            geom_vline(xintercept = -3.5, lty = "dashed", color = "red", size = 2) +
+            geom_vline(xintercept = -3.8, lty = "dashed", color = "red", size = 1) +
+            geom_vline(xintercept = -2.25, lty = "dotted", color = "grey", size = 1) +
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
-    fname = paste("meg_time_clock_FDR_n63", termstr, ".pdf", sep = "")
-    pdf(fname, width = 20, height = 16)
+    fname = paste("meg_time_dual_FDR_n63_short_", termstr, ".pdf", sep = "")
+    pdf(fname, width = 30, height = 10)
     print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
             facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
+            geom_vline(xintercept = -3.5, lty = "dashed", color = "red", size = 2) +
+            geom_vline(xintercept = -3.8, lty = "dashed", color = "red", size = 1) +
+            geom_vline(xintercept = -2.25, lty = "dotted", color = "grey", size = 1) +
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
   }
   
   # convert to PNG for Word
-  # system("for i in *63*.pdf; do sips -s format png $i --out $i.png; done")
+  system("for i in *signal_scaled*.pdf; do sips -s format png $i --out $i.png; done")
 }
