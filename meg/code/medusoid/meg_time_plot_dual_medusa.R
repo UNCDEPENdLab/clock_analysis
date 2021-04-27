@@ -124,6 +124,7 @@ if (encode) {
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
             geom_vline(xintercept = -3.5, lty = "dashed", color = "red", size = 2) +
             geom_vline(xintercept = -3.8, lty = "dashed", color = "red", size = 1) +
+
             geom_vline(xintercept = -2.25, lty = "dotted", color = "grey", size = 1) +
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))

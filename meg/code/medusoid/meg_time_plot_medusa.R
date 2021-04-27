@@ -10,7 +10,7 @@ library(viridis)
 
 # what to run
 # you can run all options at once
-online = T
+online = F
 encode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
 rt_predict = T # predicts next response based on signal and behavioral variables
 # random = T # whether to use data from analyses where behavioral variables have both fixed and random effects
@@ -77,7 +77,7 @@ if (encode) {
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste("meg_time_clock_uncorrected_n63", termstr, ".pdf", sep = "")
+    fname = paste("meg_time_clock_uncorrected_n63_test", termstr, ".pdf", sep = "")
     message(fname)
     pdf(fname, width = 30, height = 16)
     print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
@@ -86,7 +86,7 @@ if (encode) {
             scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
-    fname = paste("meg_time_clock_FDR_n63", termstr, ".pdf", sep = "")
+    fname = paste("meg_time_clock_FDR_n63_test", termstr, ".pdf", sep = "")
     pdf(fname, width = 30, height = 16)
     print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = abs(estimate), alpha = p_level_fdr)) + 
             facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
@@ -101,7 +101,8 @@ if (encode) {
 if(rt_predict) {
   # plots ----
   setwd(rt_plot_dir)
-  rdf <- readRDS("meg_mixed_by_time_rdf.RDS")
+  # rdf <- readRDS("meg_mixed_by_time_rdf.RDS")
+  rdf <- as_tibble(readRDS("meg_mixed_by_time_rdf_combined_feedback.RDS"))
   terms <- unique(rdf$term[rdf$effect=="fixed"])
   terms <- terms[grepl("signal", terms)]
   rdf <- rdf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
@@ -109,12 +110,14 @@ if(rt_predict) {
                                                       `p.value` < .01 & `p.value` > .001 ~ '3',
                                                       `p.value` <.001 ~ '4')),
                         t  = as.numeric(Time),
-                        sensor = as.character(sensor))
+                        lobe = stringr::str_extract(.filename, "[^_]+"),
+                        hemi = substr(stringr::str_extract(.filename, "_l_|_r_"), 2,2))
+                        # sensor = as.character(sensor))
   rdf$p_value <- factor(rdf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   terms <- unique(rdf$term[rdf$effect=="fixed"])
   terms <- terms[grepl("signal", terms)]
   # FDR labeling ----
-  rdf <- rdf  %>% filter(t>-1) %>% mutate(p_fdr = padj_fdr_term,
+  rdf <- rdf  %>% filter(t>-4) %>% mutate(p_fdr = padj_BY_term,
                          p_level_fdr = as.factor(case_when(
                            # p_fdr > .1 ~ '0',
                            # p_fdr < .1 & p_fdr > .05 ~ '1',
@@ -128,28 +131,28 @@ if(rt_predict) {
   rdf$`p, FDR-corrected` = rdf$p_level_fdr
   
   # drop the *1 sensors
-  rdf <- rdf %>% filter(!grepl("1$", sensor))
+  # rdf <- rdf %>% filter(!grepl("1$", sensor))
   # add sensor labels
-  rdf <- rdf %>% merge(sensor_map)
+  # rdf <- rdf %>% merge(sensor_map)
   # ggplot(rdf %>% filter(term==terms[1]), aes(t, newlab)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
-  facet_grid(lobe  ~ hemi, scales = "free")
+  # facet_grid(lobe  ~ hemi, scales = "free")
   for (fe in terms) {
     edf <- rdf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste("meg_time_clock_uncorrected_n63", termstr, ".pdf", sep = "")
-    pdf(fname, width = 20, height = 16)
-    print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
-            facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
+    fname = paste("meg_time_combined_feedback_uncorrected_n63", termstr, ".pdf", sep = "")
+    pdf(fname, width = 10, height = 4)
+    print(ggplot(edf, aes(t, lobe)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
+            facet_wrap(~hemi, nrow = 1, scales = "free") +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Lobe") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
-    fname = paste("meg_time_clock_FDR_n63", termstr, ".pdf", sep = "")
-    pdf(fname, width = 20, height = 16)
-    print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
-            facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
+    fname = paste("meg_time_combined_feedback_FDR_n63", termstr, ".pdf", sep = "")
+    pdf(fname, width = 10, height = 4)
+    print(ggplot(edf, aes(t, lobe)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
+            facet_wrap(~hemi, nrow = 1, scales = "free") +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Sensor") +
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Lobe") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
   }
