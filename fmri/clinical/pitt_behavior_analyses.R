@@ -173,15 +173,18 @@ if (explore) {
                                           v_entropy_cluster_9_3mm_overlap, asdf)))
   # differences in clusters 8 (R inf. parietal supramarginal gyrus) and 10 (left fusiform/parahippocampal g.)
   export2html(h1, "explore_clock_h_clusters_by_group.html")
-
+  summary(cm1 <- lm(AH_h_neg ~ GroupNEW, sdf))
+  summary(cm2 <- lm(AH_h_neg ~ GroupNEW + age + female + edu, sdf))
+  
   # plot betas by group
-  pdf("explore_ph_betas_by_group.pdf", height = 4, width = 4)
+  group_labels <- c("Suicide \nattempters", "Depressed, \nhigh-ideation", "Depressed, \nlow-ideation", "Controls")
+  pdf("explore_ph_betas_by_group.pdf", height = 3, width = 4)
   ggplot(sdf, aes(GroupNEW, PH_pe, color = GroupNEW)) + geom_boxplot() + geom_jitter() +
-    ylab("Post. hipp. RPE signal") + xlab("") + theme(legend.position = "none")
+    ylab("Post. hipp. RPE signal") + xlab("") + theme(legend.position = "none") + scale_x_discrete(labels = group_labels)
   dev.off()
-  pdf("explore_ah_betas_by_group.pdf", height = 4, width = 4)
-  ggplot(sdf, aes(GroupNEW, AH_h_neg_o, color = GroupNEW)) + geom_boxplot() + geom_jitter()+
-    ylab("Ant. hipp. global max signal") + xlab("") + theme(legend.position = "none")
+  pdf("explore_ah_betas_by_group.pdf", height = 3, width = 4)
+  ggplot(sdf, aes(GroupNEW, AH_h_neg, color = GroupNEW)) + geom_boxplot() + geom_jitter()+
+    ylab("Ant. hipp. global max signal") + xlab("") + theme(legend.position = "none") + scale_x_discrete(labels = group_labels)
   dev.off()
   }
 
@@ -297,6 +300,12 @@ Anova(mf2, '3')
 vif(mf2)
 anova(mf1, mf2)
 
+mb2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + rt_vmax_lag_sc + entropy_wi + GroupNEW)^3 +
+              (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
+summary(mb2)
+Anova(mb2, '3')
+
+
 # just 2-way RTlag*grp interaction
 em <- as_tibble(emtrends(mf2,var = "rt_lag_sc", specs = c("GroupNEW", "rewFunc")), data = df %>% filter(!is.na(rt_vmax_lag_sc)))
 em$RT_swing = -em$rt_lag_sc.trend
@@ -366,21 +375,33 @@ Anova(embo2, '3')
 #                 rt_vmax_lag_sc:AH_h_neg:groupLeth +
 #                 # rt_vmax_lag_sc:trial_neg_inv_sc:PH_pe:groupLeth +
 #                 (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
-embo3 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag + PH_pe + GroupNEW) ^3 +
-                (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag + AH_h_neg_o + GroupNEW) ^3 +
+embo3 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag + PH_pe + GroupNEW) ^2 +
+                (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag + AH_h_neg_o + GroupNEW) ^2 +
                 rt_lag_sc:omission_lag:PH_pe +
                 # rt_lag_sc:omission_lag:AH_h_neg_o +
                 rt_vmax_lag_sc:trial_neg_inv_sc:AH_h_neg_o +
                 # rt_vmax_lag_sc:trial_neg_inv_sc:PH_pe +
-                rt_lag_sc:omission_lag:PH_pe:GroupNEW +
+                rt_lag_sc:PH_pe:GroupNEW +
                 # rt_lag_sc:omission_lag:AH_h_neg_o:GroupNEW +
                 rt_vmax_lag_sc:AH_h_neg_o:GroupNEW +
+                # rt_vmax_lag_sc:trial_neg_inv_sc:PH_pe:GroupNEW +
+                (rt_lag_sc + rt_vmax_lag_sc|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
+
+embo4 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + omission_lag ) ^2 +
+                rt_lag_sc:omission_lag:PH_pe +
+                # rt_lag_sc:omission_lag:AH_h_neg_o +
+                rt_vmax_lag_sc:trial_neg_inv_sc:AH_h_neg_o +
+                # rt_vmax_lag_sc:trial_neg_inv_sc:PH_pe +
+                rt_lag_sc*PH_pe*GroupNEW +
+                # rt_lag_sc:omission_lag:AH_h_neg_o:GroupNEW +
+                rt_vmax_lag_sc*AH_h_neg_o*GroupNEW +
                 # rt_vmax_lag_sc:trial_neg_inv_sc:PH_pe:GroupNEW +
                 (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 
 
-summary(embo3)
-screen.lmerTest(embo3, .01)
+anova(embo4, embo3)
+summary(embo4)
+screen.lmerTest(embo3, .05)
 Anova(embo3, '3')
 vif(embo3)
 anova(embo2, embo3)
