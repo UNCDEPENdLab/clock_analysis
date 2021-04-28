@@ -19,7 +19,7 @@ data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined/"
 
 clock_epoch_label = "Time relative to clock onset, seconds"
 rt_epoch_label = "Time relative to outcome, seconds"
-encode = F
+encode = T
 rt_predict = T
 
 sensor_map <- read.table("~/OneDrive/collected_letters/papers/meg/plots/meg_sensors_annotated.txt", header = T, colClasses = "character") %>%
@@ -31,7 +31,7 @@ sensor_map <- read.table("~/OneDrive/collected_letters/papers/meg/plots/meg_sens
   mutate(node = paste(lobe, hemi, sep = "_")) 
 
 #group_by(dan, hemi) %>% mutate(newlab=paste(dan[1], 1:n(), sep="_")) %>% ungroup()
-node_list <- unique(sensor_map$node) %>% sort()
+node_list <- unique(sensor_map$node[!grepl(pattern = "occip", x = sensor_map$node)]) %>% sort()
 setwd(data_dir)
 # plots ----
 if (encode) {  
@@ -109,6 +109,7 @@ if (encode) {
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe))
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
+    message(termstr)
     fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")
     pdf(fname, width = 10, height = 5)
     print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) +
@@ -117,10 +118,10 @@ if (encode) {
             geom_vline(xintercept = -5.3, lty = "dashed", color = "white", size = 1) +
             geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
             scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
-            facet_grid( ~ node) + 
-            geom_text(data = edf, x = -6, y = 3,aes(label = "Response(t)"), size = 3, color = "white", angle = 90) +
-            geom_text(data = edf, x = -4, y = 3,aes(label = "Outcome(t)"), size = 3, color = "white", angle = 90) +
-            geom_text(data = edf, x = 1, y = 3.5,aes(label = "Clock onset (t+1)"), size = 3, color = "black", angle = 90) +
+            facet_wrap( ~ node, ncol = 2) + 
+            geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
+            geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
+            geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) + theme_dark())
     dev.off()
     
@@ -132,10 +133,10 @@ if (encode) {
             geom_vline(xintercept = -5.3, lty = "dashed", color = "white", size = 1) +
             geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
             scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
-            facet_grid( ~ node) + 
-            geom_text(data = edf, x = -6, y = 3,aes(label = "Response(t)"), size = 3, color = "white", angle = 90) +
-            geom_text(data = edf, x = -4, y = 3,aes(label = "Outcome(t)"), size = 3, color = "white", angle = 90) +
-            geom_text(data = edf, x = 1, y = 3.5,aes(label = "Clock onset (t+1)"), size = 3, color = "black", angle = 90) +
+            facet_wrap( ~ node, ncol = 2) + 
+            geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
+            geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
+            geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
             labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)) + theme_dark())    # 
     dev.off()
   }
@@ -154,8 +155,7 @@ if(rt_predict) {
   crdf <- crdf %>% mutate(t  = as.numeric(Time), alignment = "clock",
                           term = case_when(
                             term=="scale(Pow)" ~ "Power",
-                            term=="rt_csv_sc:scale(Pow)" ~ "RT_t * Power",
-                            term== "scale(Pow):rt_lag_sc" ~ "RT_tMINUS1 * Power",
+                            term== "scale(Pow):rt_lag_sc" ~ "RT_t * Power",
                             term=="scale(Pow):scale(rt_vmax)" ~ "RT_Vmax_t * Power",
                             TRUE ~ term
                           )
@@ -177,7 +177,7 @@ if(rt_predict) {
   )
   
   rdf <- rbind(crdf, rrdf)
-  terms <- unique(rdf$term[rdf$effect=="fixed"])
+  terms <- unique(rdf$term[rdf$effect=="fixed" & grepl(rdf$term, "Power")])
   # rdf$sensor <- readr::parse_number(rdf$.filename, trim_ws = F)
   # rdf$sensor <- stringr::str_pad(rdf$sensor, 4, "0",side = "left")
   rdf <- rdf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
@@ -214,6 +214,7 @@ if(rt_predict) {
   for (fe in terms) {
     edf <- rdf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
+    message(termstr)
     fname = paste("meg_tf_RT_predict_uncorrected_", termstr, ".pdf", sep = "")      
     pdf(fname, width = 10, height = 5)
     print(ggplot(edf %>% filter(estimate < 0), aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) + 
@@ -227,10 +228,10 @@ if(rt_predict) {
       geom_vline(xintercept = -5, lty = "dashed", color = "black", size = 2) +
       geom_vline(xintercept = -5.3, lty = "dashed", color = "black", size = 1) +
       geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
-      facet_grid( ~ node) + 
-      geom_text(data = edf, x = -6, y = 3,aes(label = "Response(t)"), size = 3, color = "black", angle = 90) +
-      geom_text(data = edf, x = -4, y = 3,aes(label = "Outcome(t)"), size = 3, color = "black", angle = 90) +
-      geom_text(data = edf, x = 1, y = 3.5,aes(label = "Clock onset (t+1)"), size = 3, color = "black", angle = 90) +
+      facet_wrap( ~ node, ncol = 2) + 
+      geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "black", angle = 90) +
+      geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "black", angle = 90) +
+      geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
         labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) + scale_y_discrete(limits = rev(levels(rdf$p_level_fdr))) 
       
     dev.off()
@@ -247,10 +248,10 @@ if(rt_predict) {
       geom_vline(xintercept = -5, lty = "dashed", color = "black", size = 2) +
       geom_vline(xintercept = -5.3, lty = "dashed", color = "black", size = 1) +
       geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
-      facet_grid( ~ node) + 
-      geom_text(data = edf, x = -6, y = 3,aes(label = "Response(t)"), size = 3, color = "black", angle = 90) +
-      geom_text(data = edf, x = -4, y = 3,aes(label = "Outcome(t)"), size = 3, color = "black", angle = 90) +
-      geom_text(data = edf, x = 1, y = 3.5,aes(label = "Clock onset (t+1)"), size = 3, color = "black", angle = 90) +
+      facet_wrap( ~ node, ncol = 2) + 
+      geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "black", angle = 90) +
+      geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "black", angle = 90) +
+      geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
         labs(alpha = expression(italic(p)[FDR-corrected])) + ggtitle(paste(termstr))) + labs(fill = "Exploitation") 
       
     dev.off()
