@@ -38,11 +38,13 @@ if (encode) {
   message("Plotting encoding results")
   # epoch_label = "Time relative to outcome, seconds"
   epoch_label = "Time relative to clock onset, seconds"
+  alignment = "clock"
   # get clock-aligned data
   file_pattern <- "ddf_combined_clock"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   l <- lapply(files, readRDS)
-  names(l) <- node_list[1:length(files)]
+  names(l) <- node_list[parse_number(files)]
+  # names(l) <- node_list[1:length(files)]
   cddf <- data.table::rbindlist(l, idcol = "node")
   cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock",
                           term = case_when(
@@ -59,7 +61,7 @@ if (encode) {
   file_pattern <- "ddf_combined_RT"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   l <- lapply(files, readRDS)
-  names(l) <- node_list[1:length(files)]
+  names(l) <- node_list[parse_number(files)]
   rddf <- data.table::rbindlist(l, idcol = "node")
   rddf <- rddf %>% mutate(t  = Time - 5, 
                           alignment = "rt",
@@ -111,7 +113,7 @@ if (encode) {
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
     message(termstr)
     fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")
-    pdf(fname, width = 10, height = 5)
+    pdf(fname, width = 10, height = 7.5)
     print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
             geom_vline(xintercept = -5, lty = "dashed", color = "white", size = 2) +
@@ -126,7 +128,7 @@ if (encode) {
     dev.off()
     
     fname = paste("meg_tf_rt_all_dan_FDR_", termstr, ".pdf", sep = "")
-    pdf(fname, width = 10, height = 5)
+    pdf(fname, width = 10, height = 7.5)
     print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
             geom_vline(xintercept = -5, lty = "dashed", color = "white", size = 2) +
@@ -150,7 +152,7 @@ if(rt_predict) {
   file_pattern <- "rdf_combined_clock"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   l <- lapply(files, readRDS)
-  names(l) <- node_list[1:length(files)]
+  names(l) <- node_list[parse_number(files)]
   crdf <- data.table::rbindlist(l, idcol = "node") %>% filter(grepl('Pow', term))
   crdf <- crdf %>% mutate(t  = as.numeric(Time), alignment = "clock",
                           term = case_when(
@@ -164,7 +166,7 @@ if(rt_predict) {
   file_pattern <- "rdf_combined_RT"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   l <- lapply(files, readRDS)
-  names(l) <- node_list[1:length(files)]
+  names(l) <- node_list[parse_number(files)]
   rrdf <- data.table::rbindlist(l, idcol = "node") %>% filter(grepl('Pow', term))
   rrdf <- rrdf %>% mutate(t  = as.numeric(Time) - 5, alignment = "clock",
                           term = case_when(
@@ -216,7 +218,7 @@ if(rt_predict) {
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
     message(termstr)
     fname = paste("meg_tf_RT_predict_uncorrected_", termstr, ".pdf", sep = "")      
-    pdf(fname, width = 10, height = 5)
+    pdf(fname, width = 10, height = 7.5)
     print(ggplot(edf %>% filter(estimate < 0), aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) + 
             scale_fill_distiller(palette = "OrRd", direction = 1, name = "Exploration", limits = c(-.1, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 20)) + labs(fill = "Exploration") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
@@ -236,7 +238,7 @@ if(rt_predict) {
       
     dev.off()
     fname = paste("meg_tf_RT_predict_FDR_", termstr, ".pdf", sep = "")      
-    pdf(fname, width = 10, height = 5)
+    pdf(fname, width = 10, height = 7.5)
     print(ggplot(edf %>% filter(estimate < 0), aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) + 
             scale_fill_distiller(palette = "OrRd", direction = 1, name = "Exploration", limits = c(-.1, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 20)) + labs(fill = "Exploration") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
