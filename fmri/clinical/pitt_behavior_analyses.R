@@ -300,7 +300,7 @@ Anova(mf2, '3')
 vif(mf2)
 anova(mf1, mf2)
 
-mb2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + rt_vmax_lag_sc + entropy_wi + GroupNEW)^3 +
+mb2 <- lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rewFunc + omission_lag + rt_vmax_lag_sc + v_entropy_wi + GroupNEW)^3 +
               (1|id/run), df %>% filter(!is.na(rt_vmax_lag_sc)))
 summary(mb2)
 Anova(mb2, '3')
