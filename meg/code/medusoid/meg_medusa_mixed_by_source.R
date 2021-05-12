@@ -33,7 +33,9 @@ if (whoami::username() == "dombax" || whoami::username() == "alexdombrovski" || 
 }
 
 alignment <- Sys.getenv("alignment")
-medusa_dir <- paste0(cloud_dir, "source_", alignment, "_rds")
+domain = Sys.getenv("domain") # "time", "tf"
+
+medusa_dir <- paste0(cloud_dir, alignment, "_", domain)
 files <- list.files(medusa_dir, pattern = "censor")
 ids <- readr::parse_number(files)
 
@@ -56,26 +58,25 @@ if (rt_predict == "") {
   rt_predict <- as.logical(rt_predict) #support T/F or TRUE/FALSE
 }
 cat("Run rt prediction model: ", as.character(rt_predict), "\n")
-domain = Sys.getenv("domain") # "time", "tf"
 alignment <- Sys.getenv("alignment")
-if (encode == "") {
-  alignment <- "RT"
-} else {
-  stopifnot(alignment %in% c("RT", "clock", "feedback"))
-  medusa_dir <- paste0("/proj/mnhallqlab/projects/Clock_MEG/tfr_rds/", alignment, "/time_freq")
-  if (whoami::username() == "dombax") {
-    if (domain == "tf") {medusa_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/grouped_tf")
-    orig_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/time_freq")
-    } else if (domain == "time") {
-      medusa_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/grouped_time")
-      orig_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/downsamp_20Hz_mean")
-    } } else if (whoami::username() == "alexdombrovski" & domain == "time") {
-      if (alignment == "clock") {medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"} else if (alignment == "RT") {
-        medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"
-      }
-    } else {stop()
-      geterrmessage("Cannot find the data")}
-}
+# if (encode == "") {
+#   alignment <- "RT"
+# } else {
+#   stopifnot(alignment %in% c("RT", "clock", "feedback"))
+#   medusa_dir <- paste0("/proj/mnhallqlab/projects/Clock_MEG/tfr_rds/", alignment, "/time_freq")
+#   if (whoami::username() == "dombax") {
+#     if (domain == "tf") {medusa_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/grouped_tf")
+#     orig_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/time_freq")
+#     } else if (domain == "time") {
+#       medusa_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/grouped_time")
+#       orig_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/downsamp_20Hz_mean")
+#     } } else if (whoami::username() == "alexdombrovski" & domain == "time") {
+#       if (alignment == "clock") {medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"} else if (alignment == "RT") {
+#         medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"
+#       }
+#     } else {stop()
+#       geterrmessage("Cannot find the data")}
+# }
 cat("Alignment: ", as.character(alignment), "\n")
 cat("Domain: ", as.character(domain), "\n")
 
@@ -83,11 +84,11 @@ stopifnot(dir.exists(medusa_dir))
 setwd(medusa_dir)
 
 
-ncores <- 2
+ncores <- 4
 if (whoami::username()=="dombax" | whoami::username() == "alexdombrovski"  | whoami::username() == "Alex") {
   ncores <- floor(detectCores()*.9)
 }
- }
+ 
 group_rois = Sys.getenv("group_rois")
 # group ROIs into DAN nodes
 if (group_rois) {
@@ -113,13 +114,13 @@ if (group_rois) {
   group_data <- data.table::rbindlist(l)
   setwd(medusa_dir)
   group_data <- group_data %>% merge(short_labels)
-  group_data <- group_data %>% mutate(time_bin = cut(Time, breaks = 40))
+  group_data <- group_data %>% mutate(time_bin = cut(Time, seq(from = -2, to = 4, by = .05)))
   nodes <- unique(short_labels$node)
   for (n in nodes) {
     d <- group_data %>% filter(node == n)
     saveRDS(d, file = paste0(alignment, "_", n, ".rds"))}
 }
-files <- list.files(pattern = paste0(alignment))
+files <- list.files(pattern = paste0(alignment, "_"))
 
 # check that merging variables are named identically in MEG and behavior files
 
@@ -182,11 +183,11 @@ if (domain == "tf") {
   
 } else if (domain == "time") {
   splits = c("time_bin", ".filename")
-  #signal_outcome = "signal_scaled"
+  #signal_outcome = "source_est"
   signal_outcome = "source_est"
   trans_func <- function(x) { DescTools::Winsorize(x, probs=c(.001, .999), na.rm=TRUE) } #drop top and bottom 1%
-  rt_predict_formula = formula( ~ signal_scaled * rt_csv_sc * outcome  + signal_scaled * scale(rt_vmax)  +
-                                  signal_scaled * rt_lag_sc + (1|id) + (1|roinum))
+  rt_predict_formula = formula( ~ source_est * rt_csv_sc * outcome  + source_est * scale(rt_vmax)  +
+                                  source_est * rt_lag_sc + (1|id) + (1|roinum))
   
 }
 gc()
