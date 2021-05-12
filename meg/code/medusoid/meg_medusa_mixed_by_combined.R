@@ -72,11 +72,11 @@ if (encode == "") {
       medusa_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/grouped_time")
       orig_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/downsamp_20Hz_mean")
     } } else if (whoami::username() == "alexdombrovski" & domain == "time") {
-    if (alignment == "clock") {medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"} else if (alignment == "RT") {
-      medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"
-    }
+      if (alignment == "clock") {medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"} else if (alignment == "RT") {
+        medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"
+      }
     } else {stop()
-    geterrmessage("Cannot find the data")}
+      geterrmessage("Cannot find the data")}
 }
 cat("Alignment: ", as.character(alignment), "\n")
 cat("Domain: ", as.character(domain), "\n")
@@ -94,7 +94,7 @@ scale_winsor = F
 
 ncores <- 36
 if (whoami::username()=="dombax" | whoami::username() == "alexdombrovski") {
-  ncores <- detectCores()
+  ncores <- floor(detectCores()*.9)
 }
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
@@ -184,25 +184,35 @@ encode_formula_pe = formula(~ scale(rt_vmax_lag)*abs_pe_f2_early + scale(rt_vmax
 # preproc trial-df
 trial_df <- trial_df %>% mutate(Subject = as.integer(id), Trial = trial, Run = run)
 if (alignment == "RT" | alignment == "feedback") {
-  rt_outcome = "rt_next"} else if (alignment == "clock") {
-    rt_outcome = "rt_csv_sc"
-  }
+  rt_outcome = "rt_next"
+} else if (alignment == "clock") {
+  rt_outcome = "rt_csv_sc"
+}
 if (domain == "tf") {
   splits = c("Time", ".filename", "Freq")
   #signal_outcome = "pow_scaled"
   signal_outcome = "Pow"
   #new approach: transform outcome variable at the time of computation
-  trans_func <- function(x) { DescTools::Winsorize(x, probs=c(.005, 1), na.rm=TRUE) } #only drop bottom 0.5%
-  rt_predict_formula = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
-                                  scale(Pow) * rt_lag_sc + (1|id) + (1|sensor))
-  
+  trans_func <- function(x) { DescTools::Winsorize(x, probs=c(.005, 1), na.rm=TRUE) }
+  #only drop bottom 0.5%
+  if (alignment == "RT" | alignment == "feedback") {
+    rt_predict_formula = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
+                                    scale(Pow) * rt_lag_sc + (1|id) + (1|sensor))
+  } else {
+    rt_predict_formula = formula( ~ scale(Pow) * rt_lag_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
+                                    (1|id) + (1|sensor))}
 } else if (domain == "time") {
   splits = c("Time", ".filename")
   #signal_outcome = "signal_scaled"
   signal_outcome = "signal_scaled"
   trans_func <- function(x) { DescTools::Winsorize(x, probs=c(.01, .99), na.rm=TRUE) } #drop top and bottom 1%
-  rt_predict_formula = formula( ~ signal_scaled * rt_csv_sc * outcome  + signal_scaled * scale(rt_vmax)  +
-                                  signal_scaled * rt_lag_sc + (1|id) + (1|sensor))
+  if (alignment == "RT" | alignment == "feedback") {
+    rt_predict_formula = formula( ~ signal_scaled * rt_csv_sc * outcome  + signal_scaled * scale(rt_vmax)  +
+                                    signal_scaled * rt_lag_sc + (1|id) + (1|sensor))
+  } else {
+    rt_predict_formula = formula( ~ signal_scaled * rt_lag_sc * outcome  + signal_scaled * scale(rt_vmax)  +
+                                    (1|id) + (1|sensor))
+  }
   
 }
 gc()
@@ -221,7 +231,7 @@ if (encode) {
   } else if (domain == "tf") {
     # saveRDS(ddf, file = "meg_mixed_by_tf_ranefs_mult_interactions_e_ddf.RDS")
     # saveRDS(ddf, file = "meg_mixed_by_tf_clock_ddf.RDS")
-    saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_", alignment,files, ".RDS"))    
+    saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_", alignment,"_",filenum, ".RDS"))    
   }
 }  
 gc()
