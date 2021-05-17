@@ -33,7 +33,9 @@ if (whoami::username() == "dombax" || whoami::username() == "alexdombrovski" || 
 }
 
 alignment <- Sys.getenv("alignment")
-medusa_dir <- paste0(cloud_dir, "source_", alignment, "_rds")
+domain = Sys.getenv("domain") # "time", "tf"
+
+medusa_dir <- paste0(cloud_dir, alignment, "_", domain)
 files <- list.files(medusa_dir, pattern = "censor")
 ids <- readr::parse_number(files)
 
@@ -56,26 +58,7 @@ if (rt_predict == "") {
   rt_predict <- as.logical(rt_predict) #support T/F or TRUE/FALSE
 }
 cat("Run rt prediction model: ", as.character(rt_predict), "\n")
-domain = Sys.getenv("domain") # "time", "tf"
 alignment <- Sys.getenv("alignment")
-if (encode == "") {
-  alignment <- "RT"
-} else {
-  stopifnot(alignment %in% c("RT", "clock", "feedback"))
-  medusa_dir <- paste0("/proj/mnhallqlab/projects/Clock_MEG/tfr_rds/", alignment, "/time_freq")
-  if (whoami::username() == "dombax") {
-    if (domain == "tf") {medusa_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/grouped_tf")
-    orig_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/time_freq")
-    } else if (domain == "time") {
-      medusa_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/grouped_time")
-      orig_dir <- paste0("/Users/Shared/tfr_rds/", alignment, "/downsamp_20Hz_mean")
-    } } else if (whoami::username() == "alexdombrovski" & domain == "time") {
-      if (alignment == "clock") {medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"} else if (alignment == "RT") {
-        medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"
-      }
-    } else {stop()
-      geterrmessage("Cannot find the data")}
-}
 cat("Alignment: ", as.character(alignment), "\n")
 cat("Domain: ", as.character(domain), "\n")
 
@@ -83,14 +66,16 @@ stopifnot(dir.exists(medusa_dir))
 setwd(medusa_dir)
 
 
-ncores <- 2
+ncores <- 4
 if (whoami::username()=="dombax" | whoami::username() == "alexdombrovski"  | whoami::username() == "Alex") {
   ncores <- floor(detectCores()*.9)
 }
- }
+
 group_rois = Sys.getenv("group_rois")
+filenum <- as.numeric(Sys.getenv("filenum"))
+bin <- Sys.getenv("bin")
 # group ROIs into DAN nodes
-if (group_rois) {
+if (group_rois==TRUE & filenum <2) {
   labels <- as_tibble(readxl::read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx")) %>%
     select(c("roinum", "plot_label", "Stream", "Visuomotor_Gradient", "Stream_Gradient", "lobe")) %>% filter(!is.na(lobe))
   
@@ -105,22 +90,21 @@ if (group_rois) {
     stream_side = paste0(stream, "_", side),
     visuomotor_side = paste0(visuomotor_grad, "_", side)) %>% 
     select(c(label, label_short, side, roinum, stream, visuomotor_grad, stream_grad, stream_side, visuomotor_side, lobe))
-  
-
   labels <- labels %>% mutate(node = paste(lobe, side, sep = "_")) 
   short_labels <- labels %>% mutate(roinum = as.factor(roinum)) %>% select(roinum, node)
   l <- lapply(files, readRDS)
   group_data <- data.table::rbindlist(l)
   setwd(medusa_dir)
   group_data <- group_data %>% merge(short_labels)
-  group_data <- group_data %>% mutate(time_bin = cut(Time, breaks = 40))
+  if (domain == "time") {
+    group_data <- group_data %>% mutate(time_bin = cut(Time, seq(from = -2, to = 4, by = .05)))}
   nodes <- unique(short_labels$node)
   for (n in nodes) {
     d <- group_data %>% filter(node == n)
     saveRDS(d, file = paste0(alignment, "_", n, ".rds"))}
 }
-files <- list.files(pattern = paste0(alignment))
-
+files <- list.files(pattern = paste0(alignment, "_"))
+if (filenum > 0) {files <- files[filenum]}
 # check that merging variables are named identically in MEG and behavior files
 
 # mixed_by call
@@ -131,15 +115,6 @@ trial_df <- as.data.frame(lapply(trial_df, function(x) {
   if (inherits(x, "matrix")) { x <- as.vector(x) }
   return(x)
 }))
-
-
-# trial_df$Subject <- trial_df$id
-# trial_df$Run <- trial_df$run
-# trial_df$Trial <- trial_df$trial
-# trial_df$rt_next_sc <- scale(trial_df$rt_next)
-# # # save behavioral data with new variables
-# saveRDS(trial_df, behavioral_data_file)
-
 
 if (alignment=="RT" | alignment=="feedback") {
   encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
@@ -182,15 +157,16 @@ if (domain == "tf") {
   
 } else if (domain == "time") {
   splits = c("time_bin", ".filename")
-  #signal_outcome = "signal_scaled"
+  #signal_outcome = "source_est"
   signal_outcome = "source_est"
   trans_func <- function(x) { DescTools::Winsorize(x, probs=c(.001, .999), na.rm=TRUE) } #drop top and bottom 1%
-  rt_predict_formula = formula( ~ signal_scaled * rt_csv_sc * outcome  + signal_scaled * scale(rt_vmax)  +
-                                  signal_scaled * rt_lag_sc + (1|id) + (1|roinum))
+  rt_predict_formula = formula( ~ source_est * rt_csv_sc * outcome  + source_est * scale(rt_vmax)  +
+                                  source_est * rt_lag_sc + (1|id) + (1|roinum))
   
 }
 gc()
 if (encode) {
+  setwd(medusa_dir)
   ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula, split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func))
@@ -202,16 +178,19 @@ if (encode) {
   } else if (domain == "tf") {
     # saveRDS(ddf, file = "meg_mixed_by_tf_ranefs_mult_interactions_e_ddf.RDS")
     # saveRDS(ddf, file = "meg_mixed_by_tf_clock_ddf.RDS")
-    saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_source_", alignment,files, ".RDS"))    
+    setwd("~/OneDrive/collected_letters/papers/meg/plots/dual_source/")
+    saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_source_", alignment, filenum, ".RDS"))    
   }
 }  
 gc()
 if (rt_predict) {
+  setwd(medusa_dir)
   rdf <- as_tibble(mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = rt_predict_formula , split_on = splits, external_df = trial_df, external_merge_by=c("Subject", "Trial"),
                             padjust_by = "term", padjust_method = "BY", ncores = ncores, refit_on_nonconvergence = 5, outcome_transform=trans_func))
   if (domain == "time") {
     saveRDS(rdf, file = paste0("meg_mixed_by_time_rdf_source_", alignment, ".RDS"))
   } else if (domain == "tf") {
+    setwd("~/OneDrive/collected_letters/papers/meg/plots/dual_source/")
     saveRDS(rdf, file = paste0("meg_mixed_by_tf_rdf_source_", alignment, filenum, ".RDS"))
   }
 }
