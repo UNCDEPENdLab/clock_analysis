@@ -30,7 +30,6 @@ if (whoami::username() == "dombax" || whoami::username() == "alexdombrovski") {
   source("/proj/mnhallqlab/users/michael/fmri.pipeline/R/mixed_by.R")
 }
 
-
 #repo_directory <- "~/code/clock_analysis"
 # <- _dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"
 #diag_dir =  "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/diags/"
@@ -60,6 +59,8 @@ if (rt_predict == "") {
 cat("Run rt prediction model: ", as.character(rt_predict), "\n")
 domain = Sys.getenv("domain") # "time", "tf"
 alignment <- Sys.getenv("alignment")
+bin <- Sys.getenv("bin")
+
 if (encode == "") {
   alignment <- "RT"
 } else {
@@ -84,17 +85,13 @@ cat("Domain: ", as.character(domain), "\n")
 stopifnot(dir.exists(medusa_dir))  
 setwd(medusa_dir)
 
-# online = F # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
-# exclude_first_run = F
-# reg_diagnostics = F
-# start_time = -2
 label_sensors = F
 test = F
 scale_winsor = F
 
 ncores <- 36
 if (whoami::username()=="dombax" | whoami::username() == "alexdombrovski") {
-  ncores <- floor(detectCores()*.9)
+  ncores <- foor(detectCores()*.7)
 }
 # # Kai’s guidance on sensors is: ‘So for FEF, I say focus on 612/613, 543/542, 1022/1023, 
 # # For IPS, 1823, 1822, 2222,2223.’
@@ -217,7 +214,7 @@ if (domain == "tf") {
 }
 gc()
 if (encode) {
-  ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula, split_on = splits,
+  ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_e, split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func))
   # refit_on_nonconvergence = 5))
@@ -227,11 +224,11 @@ if (encode) {
   if (domain == "time") {
     # saveRDS(ddf, file = "meg_mixed_by_time_clock_ddf.RDS")
     # saveRDS(ddf, file = "meg_mixed_by_time_ranefs_mult_interactions_pe_ddf.RDS")
-    saveRDS(ddf, file = paste0("meg_mixed_by_time_ddf_combined_", alignment, ".RDS"))    
+    saveRDS(ddf, file = paste0("meg_mixed_by_time_ddf_combined_ranefs", alignment, ".RDS"))    
   } else if (domain == "tf") {
     # saveRDS(ddf, file = "meg_mixed_by_tf_ranefs_mult_interactions_e_ddf.RDS")
     # saveRDS(ddf, file = "meg_mixed_by_tf_clock_ddf.RDS")
-    saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_", alignment,"_",filenum, ".RDS"))    
+    saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_ranefs", alignment,files, ".RDS"))    
   }
 }  
 gc()
