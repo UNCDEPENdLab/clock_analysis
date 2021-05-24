@@ -6,34 +6,39 @@ library(lme4)
 library(ggpubr)
 library(car)
 library(viridis)
-library(ggnewscale)
 
-# library(psych)
-repo_directory <- "~/code/clock_analysis"
-data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined/"  
-# rt_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_encode/"  
-# clock_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"  
-# dual_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_encode/"  
-# 
-# rt_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt/"
-# clock_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_rt/"
-# dual_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_rt/"
-
-clock_epoch_label = "Time relative to clock onset, seconds"
-rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
 
-sensor_map <- read.table("~/OneDrive/collected_letters/papers/meg/plots/meg_sensors_annotated.txt", header = T, colClasses = "character") %>%
-  mutate(lobe=ordered(lobe, levels=c("frontal", "temporal", "parietal", "occipital")),
-         dan=factor(dan, levels=c("yes", "maybe", "no"), labels=c("1yes", "2maybe", "3no"))) %>%
-  #mutate(dan_grad=ordered(dan, levels=c("no", "maybe", "yes")))
-  group_by(hemi, dan, lobe) %>% mutate(sensor_lab=paste(substr(dan[1], 1,2), substr(lobe[1], 1,1), sprintf("%02d", 1:n()), sensor, sep="_"),
-                                       short_lab=paste(substr(dan[1], 1,2), substr(lobe[1], 1,1), sprintf("%02d", 1:n()), sep="_")) %>% ungroup() %>% 
-  mutate(node = paste(lobe, hemi, sep = "_")) 
+# library(psych)
+repo_directory <- "~/code/clock_analysis"
+data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/dual_source/"  
+dual_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_source/"  
 
-#group_by(dan, hemi) %>% mutate(newlab=paste(dan[1], 1:n(), sep="_")) %>% ungroup()
-node_list <- unique(sensor_map$node[!grepl(pattern = "occip", x = sensor_map$node)]) %>% sort()
+clock_epoch_label = "Time relative to clock onset, seconds"
+rt_epoch_label = "Time relative to outcome, seconds"
+
+labels <- as_tibble(readxl::read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx")) %>%
+  select(c("roinum", "plot_label", "Stream", "Visuomotor_Gradient", "Stream_Gradient", "lobe")) %>% filter(!is.na(lobe))
+
+names(labels) <- c("roinum","label_short", "stream", "visuomotor_grad", "stream_grad", "lobe")
+labels$stream_grad <- as.numeric(labels$stream_grad)
+labels <- labels %>% arrange(visuomotor_grad, stream_grad) %>% mutate(
+  side  = case_when(
+    grepl("L_", label_short) ~ "L",
+    grepl("R_", label_short) ~ "R"),
+  label_short = substr(label_short, 3, length(label_short)),
+  label = paste(visuomotor_grad, stream_grad, label_short, side, sep = "_"),
+  stream_side = paste0(stream, "_", side),
+  visuomotor_side = paste0(visuomotor_grad, "_", side)) %>% 
+  select(c(label, label_short, side, roinum, stream, visuomotor_grad, stream_grad, stream_side, visuomotor_side, lobe))
+labels <- labels %>% mutate(node = paste(lobe, side, sep = "_")) 
+short_labels <- labels %>% mutate(roinum = as.factor(roinum)) %>% select(roinum, node)
+node_list <- unique(labels$node) %>% sort()
+clock_epoch_label = "Time relative to clock onset, seconds"
+rt_epoch_label = "Time relative to outcome, seconds"
+
+
 setwd(data_dir)
 # plots ----
 if (encode) {  
@@ -42,12 +47,13 @@ if (encode) {
   epoch_label = "Time relative to clock onset, seconds"
   alignment = "clock"
   # get clock-aligned data
-  file_pattern <- "ddf_combined_clock"
+  file_pattern <- "tf_ddf_source_clock"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   l <- lapply(files, readRDS)
   names(l) <- node_list[parse_number(files)]
-  # names(l) <- node_list[1:length(files)]
-  cddf <- data.table::rbindlist(l, idcol = "node")
+  cddf <- data.table::rbindlist(l, idcol = "node") %>% filter(Time > -1.5)
+  # sanity check
+  # table(cddf$node, cddf$.filename)
   cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock",
                           term = case_when(
                             term=="rt_lag_sc" ~ "RT_t",
@@ -60,11 +66,11 @@ if (encode) {
                           )
   )
   # get RT-aligned
-  file_pattern <- "ddf_combined_RT"
+  file_pattern <- "tf_ddf_source_RT"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   l <- lapply(files, readRDS)
   names(l) <- node_list[parse_number(files)]
-  rddf <- data.table::rbindlist(l, idcol = "node")
+  rddf <- data.table::rbindlist(l, idcol = "node") %>% filter(Time > -1.5)
   rddf <- rddf %>% mutate(t  = Time - 5, 
                           alignment = "rt",
                           # get shared variables
@@ -98,9 +104,7 @@ if (encode) {
       padj_BY_term > .05 ~ '1',
       padj_BY_term < .05 & padj_BY_term > .01 ~ '2',
       padj_BY_term < .01 & padj_BY_term > .001 ~ '3',
-      padj_BY_term <.001 ~ '4'))
-  ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
-  # region = substr(as.character(label), 1, nchar(as.character(label))-2))
+      padj_BY_term <.001 ~ '4'))) %>% filter(Time < 3)
   ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
   ddf$`p, FDR-corrected` = ddf$p_level_fdr
   
@@ -114,7 +118,7 @@ if (encode) {
     edf <- ddf %>% filter(term == paste(fe))
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
     message(termstr)
-    fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")
+    fname = paste("meg_tf_source_uncorrected_", termstr, ".pdf", sep = "")
     pdf(fname, width = 10, height = 7.5)
     print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
@@ -129,7 +133,7 @@ if (encode) {
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) + theme_dark())
     dev.off()
     
-    fname = paste("meg_tf_rt_all_dan_FDR_", termstr, ".pdf", sep = "")
+    fname = paste("meg_tf_source_FDR_", termstr, ".pdf", sep = "")
     pdf(fname, width = 10, height = 7.5)
     print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
@@ -145,7 +149,7 @@ if (encode) {
     dev.off()
   }
 } 
-system("for i in *scaled*.pdf; do sips -s format png $i --out $i.png; done")
+# system("for i in *scaled*.pdf; do sips -s format png $i --out $i.png; done")
 
 if(rt_predict) {
   # plots ----

@@ -6,45 +6,51 @@ library(lme4)
 library(ggpubr)
 library(car)
 library(viridis)
+library(ggnewscale)
+
 # library(psych)
 
 # what to run
 # you can run all options at once
 online = T
-encode = F  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt_predict = T # predicts next response based on signal and behavioral variables
+encode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
+rt_predict = F # predicts next response based on signal and behavioral variables
 # random = T # whether to use data from analyses where behavioral variables have both fixed and random effects
 # uncorrected = F # whether to plot uncorrected data (FDR-corrected always plotted)
 
 repo_directory <- "~/code/clock_analysis"
-rt_data_directory <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"
-clock_data_directory <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"
+rt_data_directory <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/MEG/dan_source/RT_time/"
+clock_data_directory <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/MEG/dan_source/clock_time/"
 
-
-rt_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_encode/"  
-clock_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"  
-dual_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_encode/"  
-
-rt_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt/"
-clock_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_rt/"
-dual_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_rt/"
+dual_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_source/"  
 
 clock_epoch_label = "Time relative to clock onset, seconds"
 rt_epoch_label = "Time relative to outcome, seconds"
 
+labels <- as_tibble(readxl::read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx")) %>%
+  select(c("roinum", "plot_label", "Stream", "Visuomotor_Gradient", "Stream_Gradient", "lobe")) %>% filter(!is.na(lobe))
 
-sensor_map <- read.table("~/OneDrive/collected_letters/papers/meg/plots/meg_sensors_annotated.txt", header = T, colClasses = "character") %>%
-  mutate(lobe=ordered(lobe, levels=c("frontal", "temporal", "parietal", "occipital")),
-         dan=factor(dan, levels=c("yes", "maybe", "no"), labels=c("1yes", "2maybe", "3no"))) %>%
-  #mutate(dan_grad=ordered(dan, levels=c("no", "maybe", "yes")))
-  group_by(hemi, dan, lobe) %>% mutate(newlab=paste(substr(dan[1], 1,2), substr(lobe[1], 1,1), sprintf("%02d", 1:n()), sensor, sep="_")) %>% ungroup() #hemi[1], 
-#group_by(dan, hemi) %>% mutate(newlab=paste(dan[1], 1:n(), sep="_")) %>% ungroup()
-# plots ----
+names(labels) <- c("roinum","label_short", "stream", "visuomotor_grad", "stream_grad", "lobe")
+labels$stream_grad <- as.numeric(labels$stream_grad)
+labels <- labels %>% arrange(visuomotor_grad, stream_grad) %>% mutate(
+  side  = case_when(
+    grepl("L_", label_short) ~ "L",
+    grepl("R_", label_short) ~ "R"),
+  label_short = substr(label_short, 3, length(label_short)),
+  label = paste(visuomotor_grad, stream_grad, label_short, side, sep = "_"),
+  stream_side = paste0(stream, "_", side),
+  visuomotor_side = paste0(visuomotor_grad, "_", side)) %>% 
+  select(c(label, label_short, side, roinum, stream, visuomotor_grad, stream_grad, stream_side, visuomotor_side, lobe))
+labels <- labels %>% mutate(node = paste(lobe, side, sep = "_")) 
+short_labels <- labels %>% mutate(roinum = as.factor(roinum)) %>% select(roinum, node)
+
+## plots ----
 if (encode) {  
   message("Plotting decoding results")
   setwd(rt_data_directory)
-  rddf <- readRDS("meg_mixed_by_time_ddf_RT.RDS") %>% filter(Time > -2) %>%
-    mutate(t  = as.numeric(Time) - 3.5, alignment = "rt",
+  rddf <- readRDS("meg_mixed_by_time_ddf_source_RT.RDS") %>% 
+    mutate(Time = parse_number(gsub(",.*$", "", time_bin)),
+           t  = as.numeric(Time) - 4.5, alignment = "rt",
            # get shared variables
            term = case_when(
              term=="rt_csv_sc" ~ "RT_t",
@@ -55,11 +61,12 @@ if (encode) {
              TRUE ~ term
            )
     )
-  rddf$sensor <- readr::parse_number(rddf$.filename)
-  rddf$sensor <- stringr::str_pad(rddf$sensor, 4, pad = "0")
+  rddf$node <- sub(".rds", "", sub("RT_|clock_", "", rddf$.filename))
   setwd(clock_data_directory)
-  cddf <- readRDS("meg_mixed_by_time_ddf_clock.RDS") %>% filter(Time > -2 & Time < 3) %>%
-    mutate(t  = as.numeric(Time), alignment = "clock",
+  cddf <- readRDS("meg_mixed_by_time_ddf_source_clock.RDS") %>% 
+    mutate(Time = parse_number(gsub(",.*$", "", time_bin)),
+           t  = as.numeric(Time), alignment = "clock",
+           # get shared variables
            term = case_when(
              term=="rt_lag_sc" ~ "RT_t",
              term=="reward_lagReward" ~ "reward_t",
@@ -68,16 +75,17 @@ if (encode) {
              term=="v_entropy_wi_change_lag" ~ "V_entropy_change_t",
              TRUE ~ term
            )
-    )
-  cddf$sensor <- stringr::str_pad(cddf$sensor, 4, pad = "0")
+    ) %>% filter(t < 3.5)
+  cddf$node <- sub(".rds", "", sub("RT_|clock_", "", cddf$.filename))
   ddf <- rbind(rddf, cddf)
+  # ddf <- rddf
+  
   # ddf <- readRDS("meg_mixed_by_time_ranefs_mult_interactions_pe_ddf.RDS")
   terms <- unique(ddf$term[ddf$effect=="fixed"])
   ddf <- ddf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
                                                       `p.value` < .05 & `p.value` > .01 ~ '2',
                                                       `p.value` < .01 & `p.value` > .001 ~ '3',
-                                                      `p.value` <.001 ~ '4')),
-                        sensor = as.character(sensor))
+                                                      `p.value` <.001 ~ '4')))
   ddf$p_value <- factor(ddf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   # terms <- unique(ddf$term[ddf$effect=="fixed"])
   # terms <- terms[grepl(!"_f", terms)]
@@ -89,45 +97,41 @@ if (encode) {
                            p_fdr > .05 ~ '1',
                            p_fdr < .05 & p_fdr > .01 ~ '2',
                            p_fdr < .01 & p_fdr > .001 ~ '3',
-                           p_fdr <.001 ~ '4'))
-  ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
-  #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
+                           p_fdr <.001 ~ '4')),
+                         lobe = gsub("[_L|)R]", "", node),
+                         side = gsub("frontal_|parietal_|temporal_", "", node))
   ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
   ddf$`p, FDR-corrected` = ddf$p_level_fdr
   
-  # drop the *1 sensors
-  ddf <- ddf %>% filter(!grepl("1$", sensor))
-  # add sensor labels
-  ddf <- ddf %>% merge(sensor_map)
-  # ggplot(ddf %>% filter(term==terms[1]), aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
-  # facet_grid(lobe  ~ hemi, scales = "free")
-  setwd(dual_encode_plot_dir)
+  setwd(dual_plot_dir)
   for (fe in terms) {
     edf <- ddf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste("meg_time_dual_uncorrected_n63_short_", termstr, ".pdf", sep = "")
+    fname = paste("meg_time_dual_uncorrected_abs", termstr, ".pdf", sep = "")
     message(fname)
-    pdf(fname, width = 30, height = 10)
-    print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
-            facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
+    pdf(fname, width = 10, height = 3)
+    print(ggplot(edf, aes(t, 1)) + geom_tile(aes(fill = abs(estimate), alpha = p_value)) + 
+            facet_grid(lobe~side) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            geom_vline(xintercept = -3.5, lty = "dashed", color = "red", size = 2) +
-            geom_vline(xintercept = -3.8, lty = "dashed", color = "red", size = 1) +
+            geom_vline(xintercept = -4.5, lty = "dashed", color = "red", size = 2) +
+            geom_vline(xintercept = -4.8, lty = "dashed", color = "red", size = 1) +
             geom_vline(xintercept = -2.25, lty = "dotted", color = "grey", size = 1) +
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + ylab("Sensor") +
-            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + 
+            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) + theme(
+              axis.text.y = element_blank())
     dev.off()
-    fname = paste("meg_time_dual_FDR_n63_short_", termstr, ".pdf", sep = "")
-    pdf(fname, width = 30, height = 10)
-    print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
-            facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
+    fname = paste("meg_time_dual_FDR_abs", termstr, ".pdf", sep = "")
+    pdf(fname, width = 10, height = 3)
+    print(ggplot(edf, aes(t, 1)) + geom_tile(aes(fill = abs(estimate), alpha = p_level_fdr)) + 
+            facet_grid(lobe~side) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            geom_vline(xintercept = -3.5, lty = "dashed", color = "red", size = 2) +
-            geom_vline(xintercept = -3.8, lty = "dashed", color = "red", size = 1) +
-
+            geom_vline(xintercept = -4.5, lty = "dashed", color = "red", size = 2) +
+            geom_vline(xintercept = -4.8, lty = "dashed", color = "red", size = 1) +
+            
             geom_vline(xintercept = -2.25, lty = "dotted", color = "grey", size = 1) +
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + ylab("Sensor") +
-            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
+            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) +
+            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) + theme(
+              axis.text.y = element_blank())
     dev.off()
   }
 } 
@@ -137,85 +141,93 @@ if (encode) {
 if(rt_predict) {
   message("Plotting decoding results")
   # read in RT-aligned data
-  setwd(rt_rt_plot_dir)
-  rrdf <- readRDS("meg_mixed_by_time_rdf.RDS") %>% filter(Time > -2 & Time < 2) %>%
-    mutate(t  = as.numeric(Time) - 3.5, 
-           alignment = "rt",
+  setwd(rt_data_directory)
+  rrdf <- readRDS("meg_mixed_by_time_rdf_source_RT.RDS") %>% 
+    mutate(Time = parse_number(gsub(",.*$", "", time_bin)),
+           t  = as.numeric(Time) - 4.5, alignment = "rt",
            term = case_when(
-             term=="signal_scaled:rt_csv_sc" ~ "signal_scaled:RT_t",
-             term=="signal_scaled:rt_csv_sc:v_entropy_wi" ~ "signal_scaled:RT_t:v_entropy_wi",
+             term=="source_est:rt_csv_sc" ~ "source_est:RT_t",
+             term=="source_est:rt_csv_sc:v_entropy_wi" ~ "source_est:RT_t:v_entropy_wi",
              TRUE ~ term))
+  rrdf$node <- sub(".rds", "", sub("RT_|clock_", "", rrdf$.filename))
   # read in clock-aligned data
-  setwd(clock_rt_plot_dir)
-  crdf <- readRDS("meg_mixed_by_time_rdf.RDS") %>% filter(Time > -2 & Time < 2) %>%
-    mutate(t  = as.numeric(Time), 
+  setwd(clock_data_directory)
+  crdf <- readRDS("meg_mixed_by_time_rdf_source_clock.RDS") %>% 
+    mutate(Time = parse_number(gsub(",.*$", "", time_bin)),
+           t  = as.numeric(Time), 
            alignment = "clock",
            term = case_when(
-           term=="signal_scaled:rt_lag_sc" ~ "signal_scaled:RT_t",
-           term=="signal_scaled:rt_lag_sc:v_entropy_wi" ~ "signal_scaled:RT_t:v_entropy_wi",
-           TRUE ~ term)
-           ) %>% select(-.filename)
+             term=="source_est:rt_lag_sc" ~ "source_est:RT_t",
+             term=="source_est:rt_lag_sc:v_entropy_wi" ~ "source_est:RT_t:v_entropy_wi",
+             TRUE ~ term)
+    ) 
+  crdf$node <- sub(".rds", "", sub("RT_|clock_", "", crdf$.filename))
   rdf <- rbind(rrdf, crdf)
   # ddf <- readRDS("meg_mixed_by_time_ranefs_mult_interactions_pe_ddf.RDS")
   terms <- unique(rdf$term[rdf$effect=="fixed"])
-  terms <- terms[grepl("signal", terms)]
-  rdf <- rdf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
+  terms <- terms[grepl("source", terms)]
+  rdf <- rdf %>%  mutate(p_fdr = padj_BY_term,
+                         p_level_fdr = as.factor(case_when(
+                           # p_fdr > .1 ~ '0',
+                           # p_fdr < .1 & p_fdr > .05 ~ '1',
+                           p_fdr > .05 ~ '1',
+                           p_fdr < .05 & p_fdr > .01 ~ '2',
+                           p_fdr < .01 & p_fdr > .001 ~ '3',
+                           p_fdr <.001 ~ '4')),
+                         lobe = gsub("[_L|)R]", "", node),
+                         side = gsub("frontal_|parietal_|temporal_", "", node),
+                         p_value = as.factor(case_when(`p.value` > .05 ~ '1',
                                                       `p.value` < .05 & `p.value` > .01 ~ '2',
                                                       `p.value` < .01 & `p.value` > .001 ~ '3',
-                                                      `p.value` <.001 ~ '4')),
-                        t  = t,
-                        sensor = as.character(sensor)) %>% filter(term %in% terms)
+                                                      `p.value` <.001 ~ '4')))
+  
   rdf$p_value <- factor(rdf$p_value, labels = c("NS", "p < .05", "p < .01", "p < .001"))
   terms <- unique(rdf$term[rdf$effect=="fixed"])
-  terms <- terms[grepl("signal", terms)]
-  # FDR labeling ----
-  rdf <- rdf %>% mutate(p_fdr = padj_fdr_term,
-                                          p_level_fdr = as.factor(case_when(
-                                            # p_fdr > .1 ~ '0',
-                                            # p_fdr < .1 & p_fdr > .05 ~ '1',
-                                            p_fdr > .05 ~ '1',
-                                            p_fdr < .05 & p_fdr > .01 ~ '2',
-                                            p_fdr < .01 & p_fdr > .001 ~ '3',
-                                            p_fdr <.001 ~ '4'))
-  ) %>% ungroup() #%>% mutate(side = substr(as.character(label), nchar(as.character(label)), nchar(as.character(label))),
-  #          region = substr(as.character(label), 1, nchar(as.character(label))-2))
-  rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
+  terms <- terms[grepl("source", terms)]
+    rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
   rdf$`p, FDR-corrected` = rdf$p_level_fdr
   
-  # drop the *1 sensors
-  rdf <- rdf %>% filter(!grepl("1$", sensor))
-  # add sensor labels
-  rdf <- rdf %>% merge(sensor_map)
-  # edf <- rdf %>% filter(term=="signal_scaled:rt_lag_sc") # TEST
-  setwd(dual_rt_plot_dir)
+  setwd(dual_plot_dir)
   for (fe in terms) {
     edf <- rdf %>% filter(term == paste(fe)) 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-    fname = paste("meg_time_dual_uncorrected_n63_short_", termstr, ".pdf", sep = "")
+    fname = paste("meg_time_dual_uncorrected_source_", termstr, ".pdf", sep = "")
     message(fname)
-    pdf(fname, width = 30, height = 10)
-    print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
-            facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
+    pdf(fname, width = 15, height = 6)
+    print(ggplot(edf, aes(t, 1)) + geom_tile(aes(fill = estimate, alpha = p_value)) + 
+            facet_grid(lobe~side) + 
+            scale_fill_distiller(palette = "OrRd", direction = 1, name = "Exploration", limits = c(-.3, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 20)) + labs(fill = "Exploration") +
+            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
+            new_scale_fill() +
+            geom_tile(data = edf %>% filter(estimate > 0), aes(t, 1, fill = estimate, alpha = p_value), size = .01) + theme_dark() +
+            geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) + theme_bw() + 
+            scale_fill_distiller(palette = "GnBu", direction = -1, name = "Exploitation", limits = c(0, .3))+ scale_color_grey() + xlab(clock_epoch_label) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            geom_vline(xintercept = -3.5, lty = "dashed", color = "red", size = 2) +
-            geom_vline(xintercept = -3.8, lty = "dashed", color = "red", size = 1) +
+            geom_vline(xintercept = -4.5, lty = "dashed", color = "black", size = 2) +
+            geom_vline(xintercept = -4.8, lty = "dashed", color = "black", size = 1) +
             geom_vline(xintercept = -2.25, lty = "dotted", color = "grey", size = 1) +
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + ylab("Sensor") +
+            # scale_fill_distiller(palette = "RdBu", limits = c(-.05,.05)) + scale_color_grey() + xlab(clock_epoch_label) + 
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
     dev.off()
-    fname = paste("meg_time_dual_FDR_n63_short_", termstr, ".pdf", sep = "")
-    pdf(fname, width = 30, height = 10)
-    print(ggplot(edf, aes(t, newlab)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
-            facet_wrap(~lobe * hemi, nrow = 2, scales = "free") +
+    fname = paste("meg_time_dual_FDR_source_", termstr, ".pdf", sep = "")
+    pdf(fname, width = 15, height = 6)
+    print(ggplot(edf, aes(t, 1)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr)) + 
+            facet_grid(lobe~side) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            geom_vline(xintercept = -3.5, lty = "dashed", color = "red", size = 2) +
-            geom_vline(xintercept = -3.8, lty = "dashed", color = "red", size = 1) +
+            geom_vline(xintercept = -4.5, lty = "dashed", color = "black", size = 2) +
+            geom_vline(xintercept = -4.8, lty = "dashed", color = "black", size = 1) +
             geom_vline(xintercept = -2.25, lty = "dotted", color = "grey", size = 1) +
-            scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(clock_epoch_label) + ylab("Sensor") +
-            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)))
+            scale_fill_distiller(palette = "OrRd", direction = 1, name = "Exploration", limits = c(-.3, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 20)) + labs(fill = "Exploration") +
+            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
+            new_scale_fill() +
+            geom_tile(data = edf %>% filter(estimate > 0), aes(t, 1, fill = estimate, alpha = p_value), size = .01) + theme_dark() +
+            geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) + theme_bw() + 
+            scale_fill_distiller(palette = "GnBu", direction = -1, name = "Exploitation", limits = c(0, .3))+ scale_color_grey() + xlab(clock_epoch_label) + 
+            
+            labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)))
     dev.off()
   }
   
   # convert to PNG for Word
-  system("for i in *signal_scaled*.pdf; do sips -s format png $i --out $i.png; done")
+  # system("for i in *source_est*.pdf; do sips -s format png $i --out $i.png; done")
 }
