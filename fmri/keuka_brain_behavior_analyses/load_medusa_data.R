@@ -1,12 +1,20 @@
 # reads in data
 
+library(tidyverse)
+
+newmask = FALSE
+reprocess = FALSE
+AndrewComp = TRUE
+unsmoothed = FALSE
+smooth_in_mask = FALSE
+
 if (unsmoothed) {
   medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_unsmoothed"
   cache_dir="~/Box/SCEPTIC_fMRI/var/unsmoothed"
 } else if (smooth_in_mask) {
   medusa_dir = "~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_smooth_in_mask_harvardoxford/"
   cache_dir = "~/Box/SCEPTIC_fMRI/var/smooth_in_mask"
-  } else {
+  } else if (!AndrewComp) {
   medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked"
   cache_dir="~/Box/SCEPTIC_fMRI/var"}
 
@@ -16,6 +24,9 @@ if (newmask) {
   medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_smooth_in_mask_pct_change"
   # medusa_dir="~/Box/SCEPTIC_fMRI/deconvolved_evt_locked_smooth_in_mask_demean_only"  
   cache_dir="~/Box/SCEPTIC_fMRI/var/newmask"
+} else if (AndrewComp){
+  medusa_dir = "~/clock_analysis/"
+  cache_dir = "/Users/andypapale/vmPFC/deconvolved_evt_locked_smooth_in_mask_harvardoxford"
 }
 
 stopifnot(dir.exists(medusa_dir))  
@@ -48,17 +59,18 @@ if (!reprocess) {
     r <- read_csv("long_axis_r_cobra_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'r')
     rtvmax <- rbind(l,r)
   } else {
-  l <- read_csv("long_axis_l_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
-  r <- read_csv("long_axis_r_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'r')
-  clock <- rbind(l,r) 
+    setwd(cache_dir)
+    l <- read_csv("long_axis_l_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
+    r <- read_csv("long_axis_r_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'r')
+    clock <- rbind(l,r) 
     # load feedback, SWITCH TO LONG
-  l <- read_csv("long_axis_l_2.3mm_feedback_long_decon_locked.csv.gz") %>% mutate(side = 'l')
-  r <- read_csv("long_axis_r_2.3mm_feedback_long_decon_locked.csv.gz") %>% mutate(side = 'r')
-  fb <- rbind(l,r)
+    l <- read_csv("long_axis_l_2.3mm_feedback_long_decon_locked.csv.gz") %>% mutate(side = 'l')
+    r <- read_csv("long_axis_r_2.3mm_feedback_long_decon_locked.csv.gz") %>% mutate(side = 'r')
+    fb <- rbind(l,r)
     # load RT(vmax)
-  l <- read_csv("long_axis_l_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'l')
-  r <- read_csv("long_axis_r_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'r')
-  rtvmax <- rbind(l,r)
+    l <- read_csv("long_axis_l_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'l')
+    r <- read_csv("long_axis_r_2.3mm_rt_vmax_cum_decon_locked.csv.gz") %>% mutate(side = 'r')
+    rtvmax <- rbind(l,r)
   }
   #   # load V1 clock
   # l <- read_csv("l_v1_2.3mm_clock_long_decon_locked.csv.gz") %>% mutate(side = 'l')
@@ -77,7 +89,7 @@ if (!reprocess) {
   # m1L_fb <- read_csv("l_motor_2.3mm_feedback_onset_decon_locked.csv.gz")
 
   message("Loading trial-level data")
-  trial_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")) %>%
+  trial_df <- read_csv(file.path(medusa_dir, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")) %>%
     mutate(trial=as.numeric(trial)) %>%
     group_by(id, run) %>%  
     dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))), #compute rt_swing within run and subject
@@ -148,7 +160,7 @@ if (!reprocess) {
   
   
     # add parameters
-  params <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv"))
+  params <- read_csv(file.path(medusa_dir, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv"))
   
   trial_df <- inner_join(trial_df, params, by = "id")
   
@@ -352,12 +364,12 @@ if (!reprocess) {
   
   slices <- names(fb_wide)[5:28]
   # fb_wide_t <- dcast(setDT(fb_wide), id + run + run_trial ~ evt_time, value.var = slices)
-  fb_wide_t <- fb_wide %>% pivot_wider(names_from = evt_time, values_from = slices)
+  # fb_wide_t <- fb_wide %>% pivot_wider(names_from = evt_time, values_from = slices)
   
   message("Saving to cache")
   save(fb_wide, fb_wide_ex, fb_wide6, fb_wide6_ex, fb_wide_bl, file = file.path(cache_dir, "feedback_hipp_wide_ts.Rdata"))
   save(fb_comb, file = file.path(cache_dir, "feedback_hipp_tall_ts.Rdata"))
-  save(fb_wide_t, fb_wide_bl, file = file.path(cache_dir, 'feedback_hipp_widest_by_timepoint_decon.Rdata'))
+  # save(fb_wide_t, fb_wide_bl, file = file.path(cache_dir, 'feedback_hipp_widest_by_timepoint_decon.Rdata'))
   rtvmax_comb <- rtvmax_comb %>% group_by(id,run,run_trial,evt_time,side) %>% mutate(bin_num = rank(bin_center)) %>% ungroup()
   
   save(rtvmax_comb, file = file.path(cache_dir, "rtvmax_hipp_tall_ts.Rdata"))

@@ -29,8 +29,8 @@ unsmoothed = F      # no smoothing whatsoever
 newmask = F         # sensivitivy analysis: restrictive COBRA mask (default: Harvard-Oxford)
 reprocess = F
 if (!reprocess) {
-  wide_only = T  
-  tall_only = F
+  wide_only = F  
+  tall_only = T
 }
 
 repo_directory <- "~/code/clock_analysis"
@@ -52,23 +52,23 @@ rt_comb <- rt_comb %>%
   ))
 
 ##### plot RT-aligned signals --
-# p <- ggplot(rt_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(evt_time, decon_interp, color = label, group = label)) + 
-#   geom_smooth(method = "gam", formula = y~splines::ns(x,3),  se = F, size = 1.2) + 
-#   # scale_color_gradientn(colors = pal, guide = 'none') + 
-#   xlab('Time after feedback') + ylab('DAN response (AU)') +
-#   theme_bw(base_size=13) +
-#   theme(legend.title = element_blank(),
-#         panel.grid.major = element_line(colour = "grey45"), 
-#         panel.grid.minor = element_line(colour = "grey45"), 
-#         panel.background = element_rect(fill = 'grey40'),
-#         axis.title.y = element_text(margin=margin(r=6)),
-#         axis.title.x = element_text(margin=margin(t=6))) +
-#   scale_y_continuous(breaks=c(0.3, 0.4, 0.50, 0.6)) + 
-#   scale_x_continuous(expansion(add = 0.5)) + geom_vline(xintercept = 0, color = 'red', size = 1.5, lty = "dashed", alpha = .5) + 
-#   scale_colour_discrete(guide = 'none') + facet_wrap(~region)
-# pdf("DAN_rt_locked_signals_all_regions.pdf", width = 12, height = 12)
-#  direct.label(p,list(cex = 1,"angled.boxes"))
-# dev.off()
+p <- ggplot(rt_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(evt_time, decon_interp, color = label, group = label)) + 
+  geom_smooth(method = "gam", formula = y~splines::ns(x,3),  se = F, size = 1.2) + 
+  # scale_color_gradientn(colors = pal, guide = 'none') + 
+  xlab('Time after feedback') + ylab('DAN response (AU)') +
+  theme_bw(base_size=13) +
+  theme(legend.title = element_blank(),
+        panel.grid.major = element_line(colour = "grey45"), 
+        panel.grid.minor = element_line(colour = "grey45"), 
+        panel.background = element_rect(fill = 'grey40'),
+        axis.title.y = element_text(margin=margin(r=6)),
+        axis.title.x = element_text(margin=margin(t=6))) +
+  scale_y_continuous(breaks=c(0.3, 0.4, 0.50, 0.6)) + 
+  scale_x_continuous(expansion(add = 0.5)) + geom_vline(xintercept = 0, color = 'red', size = 1.5, lty = "dashed", alpha = .5) + 
+  scale_colour_discrete(guide = 'none') + facet_wrap(~region)
+pdf("DAN_rt_locked_signals_all_regions.pdf", width = 12, height = 12)
+ direct.label(p,list(cex = 1,"angled.boxes"))
+dev.off()
 
 
  ################
