@@ -10,7 +10,7 @@ library(ggnewscale)
 
 # library(psych)
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined/"  
+data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_comb_ranef/"  
 # rt_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_encode/"  
 # clock_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"  
 # dual_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_encode/"  
@@ -38,44 +38,41 @@ setwd(data_dir)
 # plots ----
 if (encode) {  
   message("Plotting encoding results")
-  # epoch_label = "Time relative to outcome, seconds"
+  
+  # encode_formula_e = formula(~ scale(rt_vmax_lag)*echange_f1_early + scale(rt_vmax_lag)*echange_f2_late + scale(rt_vmax_lag)*e_f1 +
+  #                              scale(abs_pe)*echange_f1_early + scale(abs_pe)*echange_f2_late + scale(abs_pe)*e_f1 +
+  #                              outcome*echange_f1_early + outcome*echange_f2_late + outcome*e_f1 +
+  #                              rt_csv_sc*echange_f1_early + rt_csv_sc*echange_f2_late + rt_csv_sc*e_f1 +
+  #                              trial_neg_inv_sc*echange_f1_early + trial_neg_inv_sc*echange_f2_late + trial_neg_inv_sc*e_f1 +
+  #                              v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + v_entropy_wi*e_f1 + rt_lag_sc*e_f1 + (1|Subject) + (1|sensor))
+  
   epoch_label = "Time relative to clock onset, seconds"
   alignment = "clock"
   # get clock-aligned data
-  file_pattern <- "ddf_combined_clock"
+  file_pattern <- "ddf_combined_ranefsclock"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
-  l <- lapply(files, readRDS)
-  names(l) <- node_list[parse_number(files)]
+  cl <- lapply(files, readRDS)
+  names(cl) <- node_list[parse_number(files)]
   # names(l) <- node_list[1:length(files)]
-  cddf <- data.table::rbindlist(l, idcol = "node")
+  cddf <- data.table::rbindlist(cl, idcol = "node")
   cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock",
-                          term = case_when(
-                            term=="rt_lag_sc" ~ "RT_t",
-                            term=="rt_csv_sc" ~ "RT_tPLUS1",
-                            term=="reward_lagReward" ~ "reward_t",
-                            term=="rt_vmax" ~ "RT_Vmax_t",
-                            term=="scale(rt_vmax_change)" ~ "RT_Vmax_change_t",
-                            term=="v_entropy_wi_change_lag" ~ "V_entropy_change_t",
-                            TRUE ~ term
-                          )
+                          term = str_replace(term, "rt_lag_sc", "RT_t"),
+                          term = str_replace(term, "reward_lagReward", "reward_t"),
+                          term = str_replace(term, "scale\\(rt_vmax_lag\\)", "RT_Vmax_t*"),
+                          term = str_replace(term, "scale\\(abs_pe_lag\\)", "absPE_t")
   )
   # get RT-aligned
-  file_pattern <- "ddf_combined_RT"
+  file_pattern <- "ddf_combined_ranefsRT"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
-  l <- lapply(files, readRDS)
-  names(l) <- node_list[parse_number(files)]
-  rddf <- data.table::rbindlist(l, idcol = "node")
+  rl <- lapply(files, readRDS)
+  names(rl) <- node_list[parse_number(files)]
+  rddf <- data.table::rbindlist(rl, idcol = "node")
   rddf <- rddf %>% mutate(t  = Time - 5, 
                           alignment = "rt",
-                          # get shared variables
-                          term = case_when(
-                            term=="rt_csv_sc" ~ "RT_t",
-                            term=="outcomeReward" ~ "reward_t",
-                            term=="scale(rt_vmax_lag)" ~ "RT_Vmax_t",
-                            term=="scale(rt_vmax_change)" ~ "RT_Vmax_change_t",
-                            term=="v_entropy_wi_change" ~ "V_entropy_change_t",
-                            TRUE ~ term
-                          )
+                          term = str_replace(term, "rt_csv_sc", "RT_t"),
+                          term = str_replace(term, "outcomeReward", "reward_t"),
+                          term = str_replace(term, "scale\\(rt_vmax_lag\\)", "RT_Vmax_t*"),
+                          term = str_replace(term, "scale\\(abs_pe\\)", "absPE_t")
   )
   
   ddf <- rbind(cddf, rddf)
@@ -145,7 +142,7 @@ if (encode) {
     dev.off()
   }
 } 
-system("for i in *scaled*.pdf; do sips -s format png $i --out $i.png; done")
+system("for i in *FDR*.pdf; do sips -s format png $i --out $i.png; done")
 
 if(rt_predict) {
   # plots ----
