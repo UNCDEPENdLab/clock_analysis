@@ -261,7 +261,7 @@ gc()
 if (encode) {
   ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
-                            refit_on_nonconvergence = 5, outcome_transform=trans_func))
+                            refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "random"), conf.int=TRUE)))
   # refit_on_nonconvergence = 5))
   # ddf$sensor <- readr::parse_number(ddf$.filename)
   # save output

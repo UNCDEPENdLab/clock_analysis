@@ -1,7 +1,7 @@
 #!/bin/bash
 
 epochs="RT clock"
-basedir="/bgfs/adombrovski/tfr_rds1/
+basedir="/bgfs/adombrovski/tfr_rds1/"
 encode=FALSE
 rt_predict=TRUE
 alignment=RT
@@ -9,8 +9,8 @@ domain=tf
 group_sensors=FALSE
 for e in $epochs; do
 slist=$( find ${basedir}/${e}/grouped_tf -type f -iname "*_group.RDS" )
-
-for ss in $slist; do
+arr=($slist)
+for ss in ${arr(1)}; do
 encode=TRUE
 rt_predict=TRUE
 alignment=${e}
