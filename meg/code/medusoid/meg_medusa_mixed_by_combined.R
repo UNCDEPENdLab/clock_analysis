@@ -107,27 +107,28 @@ filenum <- as.numeric(Sys.getenv("filenum"))
 files <- files[filenum] } else if (whoami::username() == "ayd1") {
   files <- Sys.getenv("ss")}
 group_sensors = as.logical(Sys.getenv("group_sensors"))
+Message(group_sensors)
 # group sensors into DAN nodes
-if (group_sensors) {
-  sensor_map <- sensor_map %>% filter(sensor %in% sensor_list)
-  if (domain=="time") {sensor_map$filename <- file.path(orig_dir, paste0("MEG", sensor_list, "_20Hz.rds"))} else if 
-  (domain=="tf") {sensor_map$filename <- file.path(orig_dir, paste0("MEG", sensor_list, "_tf.rds"))}
-  
-  sensor_map <- sensor_map %>% mutate(node = paste(lobe, hemi, sep = "_")) 
-  sensor_map <- split(sensor_map, sensor_map$node)
-  cl <- makeCluster(ncores)
-  registerDoParallel(cl)
-  on.exit(try(stopCluster(cl)))
-  foreach(d = iter(sensor_map), .packages=c("data.table", "tidyverse")) %dopar% {
-    message(paste(unique(d$node)))
-    l <- lapply(d$filename, readRDS)
-    names(l) <- d$sensor
-    group_data <- data.table::rbindlist(l, idcol = "sensor")
-    setwd(medusa_dir)
-    saveRDS(group_data, file = paste0(unique(d$node), "_group.RDS"))
-    return(NULL)}
-  files <- paste0(names(sensor_map), "_group.RDS")
-}
+# if (group_sensors) {
+#   sensor_map <- sensor_map %>% filter(sensor %in% sensor_list)
+#   if (domain=="time") {sensor_map$filename <- file.path(orig_dir, paste0("MEG", sensor_list, "_20Hz.rds"))} else if 
+#   (domain=="tf") {sensor_map$filename <- file.path(orig_dir, paste0("MEG", sensor_list, "_tf.rds"))}
+#   
+#   sensor_map <- sensor_map %>% mutate(node = paste(lobe, hemi, sep = "_")) 
+#   sensor_map <- split(sensor_map, sensor_map$node)
+#   cl <- makeCluster(ncores)
+#   registerDoParallel(cl)
+#   on.exit(try(stopCluster(cl)))
+#   foreach(d = iter(sensor_map), .packages=c("data.table", "tidyverse")) %dopar% {
+#     message(paste(unique(d$node)))
+#     l <- lapply(d$filename, readRDS)
+#     names(l) <- d$sensor
+#     group_data <- data.table::rbindlist(l, idcol = "sensor")
+#     setwd(medusa_dir)
+#     saveRDS(group_data, file = paste0(unique(d$node), "_group.RDS"))
+#     return(NULL)}
+#   files <- paste0(names(sensor_map), "_group.RDS")
+# }
 # check that merging variables are named identically in MEG and behavior files
 
 # mixed_by call
