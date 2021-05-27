@@ -67,8 +67,7 @@ if (encode == "") {
     } } else if (whoami::username() == "alexdombrovski" & domain == "time") {
       if (alignment == "clock") {medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"} else if (alignment == "RT") {
         medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"
-      } else if (whoami::username() == "ayd1") {medusa_dir <- paste0("/bgfs/adombrovski/tfr_rds1/", alignment, "/grouped_tf")}
-    } else {stop()
+      }} else if (whoami::username() == "ayd1") {medusa_dir <- paste0("/bgfs/adombrovski/tfr_rds1/", alignment, "/grouped_tf")} else {stop()
       geterrmessage("Cannot find the data")}
 }
 cat("Alignment: ", as.character(alignment), "\n")
