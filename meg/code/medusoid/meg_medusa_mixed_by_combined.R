@@ -105,7 +105,7 @@ if (domain == "time") {
 if (whoami::username() == "dombax") {
 filenum <- as.numeric(Sys.getenv("filenum"))
 files <- files[filenum] } else if (whoami::username() == "ayd1") {
-  files <- Sys.getenv("sid")}
+  files <- paste0(Sys.getenv("sid"),".RDS") }
 # group_sensors = as.logical(Sys.getenv("group_sensors"))
 # group sensors into DAN nodes
 # if (group_sensors) {
