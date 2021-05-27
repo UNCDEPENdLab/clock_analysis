@@ -106,7 +106,7 @@ if (whoami::username() == "dombax") {
 filenum <- as.numeric(Sys.getenv("filenum"))
 files <- files[filenum] } else if (whoami::username() == "ayd1") {
   files <- Sys.getenv("ss")}
-group_sensors = Sys.getenv("group_sensors")
+group_sensors = as.logical(Sys.getenv("group_sensors"))
 # group sensors into DAN nodes
 if (group_sensors) {
   sensor_map <- sensor_map %>% filter(sensor %in% sensor_list)
