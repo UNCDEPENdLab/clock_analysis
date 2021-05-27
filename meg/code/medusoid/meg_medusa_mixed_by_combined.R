@@ -13,7 +13,7 @@ library(foreach)
 library(doParallel)
 library(psych)
 
-if (whoami::username() == "dombax" || whoami::username() == "alexdombrovski") {
+if (whoami::username() == "dombax" || whoami::username() == "alexdombrovski" || whoami::username() == "ayd1" || whoami::username() == "tsb31") {
   sensor_list <- read.table("~/code/clock_analysis/meg/code/meg_sensors_annotated.txt", header=TRUE, colClasses="character") %>%
     filter(dan != "no") %>% pull(sensor)
   sensor_map <- read.table("~/code/clock_analysis/meg/code/meg_sensors_annotated.txt", header=TRUE, colClasses="character")
@@ -30,14 +30,6 @@ if (whoami::username() == "dombax" || whoami::username() == "alexdombrovski") {
   source("/proj/mnhallqlab/users/michael/fmri.pipeline/R/mixed_by.R")
 }
 
-#repo_directory <- "~/code/clock_analysis"
-# <- _dir = "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"
-#diag_dir =  "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/diags/"
-#behavioral_data_file = "~/Box/SCEPTIC_fMRI/sceptic_model_fits/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
-#source("~/code/fmri.pipeline/R/mixed_by.R")
-
-# options, files ----
-plots = F
 
 # main analysis analogous to Fig. 4 E-G in NComm 2020
 encode <- Sys.getenv("encode")
@@ -75,7 +67,7 @@ if (encode == "") {
     } } else if (whoami::username() == "alexdombrovski" & domain == "time") {
       if (alignment == "clock") {medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63_clockalign/"} else if (alignment == "RT") {
         medusa_dir <- "~/Box/SCEPTIC_fMRI/MEG_20Hz_n63/"
-      }
+      } else if (whoami::username() == "ayd1") {medusa_dir <- paste0("/bgfs/adombrovski/tfr_rds1/", alignment, "/grouped_tf")}
     } else {stop()
       geterrmessage("Cannot find the data")}
 }
@@ -110,8 +102,10 @@ if (domain == "time") {
   #build list from preferred sensors
   # files <- file.path(medusa_dir, paste0("MEG", sensor_list, "_tf.rds"))
 }
+if (whoami::username() == "dombax") {
 filenum <- as.numeric(Sys.getenv("filenum"))
-files <- files[filenum]
+files <- files[filenum] } else if (whoami::username() == "ayd1") {
+  files <- Sys.getenv("ss")}
 group_sensors = Sys.getenv("group_sensors")
 # group sensors into DAN nodes
 if (group_sensors) {
