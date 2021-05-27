@@ -50,7 +50,7 @@ if (rt_predict == "") {
 }
 cat("Run rt prediction model: ", as.character(rt_predict), "\n")
 domain = Sys.getenv("domain") # "time", "tf"
-alignment <- Sys.getenv("alignment")
+alignment <- Sys.getenv("epoch")
 bin <- Sys.getenv("bin")
 
 if (encode == "") {
