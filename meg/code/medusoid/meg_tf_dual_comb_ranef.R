@@ -49,7 +49,7 @@ if (encode) {
   epoch_label = "Time relative to clock onset, seconds"
   alignment = "clock"
   # get clock-aligned data
-  file_pattern <- "ddf_combined_ranefsclock"
+  file_pattern <- "entropy_rsclock"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   cl <- lapply(files, readRDS)
   names(cl) <- node_list[parse_number(files)]
