@@ -10,7 +10,7 @@ library(ggnewscale)
 
 # library(psych)
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_comb_ranef/"  
+data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined_rs/"  
 # rt_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_encode/"  
 # clock_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"  
 # dual_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_encode/"  
@@ -49,7 +49,7 @@ if (encode) {
   epoch_label = "Time relative to clock onset, seconds"
   alignment = "clock"
   # get clock-aligned data
-  file_pattern <- "ddf_combined_ranefsclock"
+  file_pattern <- "entropy_rsclock"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   cl <- lapply(files, readRDS)
   names(cl) <- node_list[parse_number(files)]

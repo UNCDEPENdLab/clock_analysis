@@ -23,7 +23,7 @@ source("~/code/fmri.pipeline/R/mixed_by.R")
 debug = F
 
 
-encode  <- F
+encode  <- TRUE
 rt_predict <- TRUE
 cat("Run encoding model: ", as.character(encode), "\n")
 cat("Run rt prediction model: ", as.character(rt_predict), "\n")
@@ -148,6 +148,12 @@ if (encode) {
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
   saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_entropy_change_rs_", alignment, basename(files)))
+  
+  ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
+                            external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
+                            refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
+  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_entropy_rs_", alignment, basename(files)))
+  
 }  
 gc()
 if (rt_predict) {
