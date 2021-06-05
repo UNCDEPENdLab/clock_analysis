@@ -10,7 +10,7 @@ library(ggnewscale)
 
 # library(psych)
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_comb_ranef/"  
+data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined_rs/"  
 # rt_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_encode/"  
 # clock_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"  
 # dual_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_encode/"  
