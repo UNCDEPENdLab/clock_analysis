@@ -23,8 +23,8 @@ source("~/code/fmri.pipeline/R/mixed_by.R")
 debug = F
 
 
-encode  <- TRUE
-rt_predict <- TRUE
+encode  <- F
+rt_predict <- T
 cat("Run encoding model: ", as.character(encode), "\n")
 cat("Run rt prediction model: ", as.character(rt_predict), "\n")
 domain = "tf"
@@ -97,6 +97,13 @@ if (alignment=="RT" | alignment=="feedback") {
   # random slope of v_entropy
   encode_formula_rs_ec = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                    v_entropy_wi_change + scale(abs_pe) + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|sensor))
+  rt_predict_formula = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
+                                  scale(Pow) * rt_lag_sc + (1|id) + (1|sensor))
+  # random slopes or RT_csv and RT_Vmax
+  rt_predict_formula_rs = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
+                                     scale(Pow) * rt_lag_sc + 
+                                     (scale(Pow) + rt_lag_sc + scale(rt_vmax)|id) + (scale(Pow) + rt_lag_sc + scale(rt_vmax)|sensor))
+  rt_outcome = "rt_next"
   
 } else if (alignment=="clock") {
   encode_formula = formula(~ rt_vmax + reward_lag + rt_csv_sc + rt_lag_sc + v_max_wi + trial_neg_inv_sc + 
@@ -107,14 +114,14 @@ if (alignment=="RT" | alignment=="feedback") {
   # random slope of entropy_change
   encode_formula_rs_ec = formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + 
                                    v_entropy_wi_change_lag + (v_entropy_wi_change_lag|Subject) + (v_entropy_wi_change_lag|sensor))
-  
-}
-
-if (alignment == "RT" | alignment == "feedback") {
-  rt_outcome = "rt_next"
-} else if (alignment == "clock") {
+  rt_predict_formula = formula( ~ scale(Pow) * rt_lag_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
+                                  (1|id) + (1|sensor))
+  # random slopes
+  rt_predict_formula_rs = formula( ~ scale(Pow) * rt_lag_sc * outcome  + scale(Pow) * rt_vmax_lag_sc  +
+                                     (scale(Pow) + rt_lag_sc + rt_vmax_lag_sc|id) + (scale(Pow) + rt_lag_sc + rt_vmax_lag_sc|sensor))
   rt_outcome = "rt_csv_sc"
-}
+  }
+
 # preproc trial-df
 trial_df <- trial_df %>% mutate(Subject = as.integer(id), Trial = trial, Run = run) %>% group_by(id, run) %>%
   mutate(abs_pe_lag = lag(abs_pe),
@@ -128,20 +135,7 @@ signal_outcome = "Pow"
 #new approach: transform outcome variable at the time of computation
 trans_func <- function(x) { DescTools::Winsorize(x, probs=c(.005, 1), na.rm=TRUE) }
 #only drop bottom 0.5%
-if (alignment == "RT" | alignment == "feedback") {
-  rt_predict_formula = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
-                                  scale(Pow) * rt_lag_sc + (1|id) + (1|sensor))
-  # random slopes or RT_csv and RT_Vmax
-  rt_predict_formula_rs = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
-                                     scale(Pow) * rt_lag_sc + (rt_csv_sc + scale(rt_vmax)|id) + (rt_csv_sc + scale(rt_vmax)|sensor))
-  
-} else {
-  rt_predict_formula = formula( ~ scale(Pow) * rt_lag_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
-                                  (1|id) + (1|sensor))
-  # random slopes
-  rt_predict_formula_rs = formula( ~ scale(Pow) * rt_lag_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
-                                     (rt_lag_sc + scale(rt_vmax)|id) + (rt_lag_sc + scale(rt_vmax)|sensor))}
-
+setwd(paste0(medusa_dir, "/results"))
 gc()
 if (encode) {
   ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_ec, split_on = splits,
@@ -149,16 +143,17 @@ if (encode) {
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
   saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_entropy_change_rs_", alignment, basename(files)))
   
-  ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
-                            external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
-                            refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
-  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_entropy_rs_", alignment, basename(files)))
+  #ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
+  #                          external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
+  #                          refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
+  #saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_entropy_rs_", alignment, basename(files)))
   
 }  
 gc()
 if (rt_predict) {
   rdf <- as_tibble(mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = rt_predict_formula_rs , split_on = splits, external_df = trial_df,
-                            padjust_by = "term", padjust_method = "BY", ncores = ncores, refit_on_nonconvergence = 5, outcome_transform=trans_func))
+                            padjust_by = "term", padjust_method = "BY", ncores = ncores, refit_on_nonconvergence = 5, outcome_transform=trans_func, 
+                            tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
   # rdf$sensor <- readr::parse_number(rdf$.filename)
-  saveRDS(rdf, file = paste0("meg_mixed_by_tf_ddf_combined_rt_rs_", alignment, basename(files)))
+  saveRDS(rdf, file = paste0("meg_mixed_by_tf_rdf_combined_rt_rs_", alignment, basename(files)))
 }
