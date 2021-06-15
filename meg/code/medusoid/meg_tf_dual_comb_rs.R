@@ -22,9 +22,10 @@ plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined_rs/"
 
 clock_epoch_label = "Time relative to clock onset, seconds"
 rt_epoch_label = "Time relative to outcome, seconds"
-encode = T
-rt_predict = F
+encode = F
+rt_predict = T
 plots = F
+diags = F
 setwd(data_dir)
 # plots ----
 if (encode) {  
@@ -38,7 +39,6 @@ if (encode) {
   #                              v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + v_entropy_wi*e_f1 + rt_lag_sc*e_f1 + (1|Subject) + (1|sensor))
   
   epoch_label = "Time relative to clock onset, seconds"
-  alignment = "clock"
   # get clock-aligned data
   file_pattern <- "ddf_combined_entropy_rs_clock|ddf_combined_entropy_change_rs_clock"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
@@ -49,6 +49,7 @@ if (encode) {
   # cddf <- data.table::rbindlist(cl, idcol = "node")
   cddf <- data.table::rbindlist(cl)
   cddf$node <- sub("_group.*", "", cddf$.filename)
+  cddf$alignment <- "clock"
   cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock",
                           term = str_replace(term, "rt_lag_sc", "RT_t"),
                           term = str_replace(term, "reward_lagReward", "reward_t"),
@@ -61,7 +62,7 @@ if (encode) {
   rl <- lapply(files, readRDS)
   rddf <- data.table::rbindlist(rl)
   rddf$node <- sub("_group.*", "", rddf$.filename)
-  
+  rddf$alignment <- "RT"
   rddf <- rddf %>% mutate(t  = Time - 5, 
                           alignment = "rt",
                           term = str_replace(term, "rt_csv_sc", "RT_t"),
@@ -153,13 +154,12 @@ if(rt_predict) {
   crdf <- data.table::rbindlist(cl) %>% filter(grepl('Pow', term))
   crdf$node <- sub("_group.*", "", crdf$.filename)
   crdf <- crdf %>% mutate(t  = as.numeric(Time), alignment = "clock",
-                          term = case_when(
-                            term=="scale(Pow)" ~ "Power",
-                            term== "scale(Pow):rt_lag_sc" ~ "RT_t * Power",
-                            term=="scale(Pow):scale(rt_vmax)" ~ "RT_Vmax_t * Power",
-                            TRUE ~ term
+                          term = str_replace_all(term, "[^[:alnum:]]", ""),
+                          term = str_replace(term, "scalePow", "Power"),
+                          term = str_replace(term, "rtlagsc", "*RT_t"),
+                          term = str_replace(term, "rtvmaxlagsc", "*RT_Vmax_t"),
+                          term = str_replace(term, "outcomeReward", "*Reward_t")
                           )
-  )
   # get RT-aligned
   message("Processed clock-aligned")
   file_pattern <- "rdf_combined_rt_rs_RT"
@@ -167,18 +167,17 @@ if(rt_predict) {
   rl <- lapply(files, readRDS)
   rrdf <- data.table::rbindlist(rl) %>% filter(grepl('Pow', term))
   rrdf$node <- sub("_group.*", "", rrdf$.filename)
-  rrdf <- rrdf %>% mutate(t  = as.numeric(Time) - 5, alignment = "clock",
-                          term = case_when(
-                            term=="scale(Pow)" ~ "Power",
-                            term=="scale(Pow):rt_csv_sc"  ~ "RT_t * Power",
-                            term== "scale(Pow):rt_lag_sc" ~ "RT_tMINUS1 * Power",
-                            term=="scale(Pow):scale(rt_vmax)" ~ "RT_Vmax_t * Power",
-                            TRUE ~ term
-                          )
+  rrdf <- rrdf %>% mutate(t  = as.numeric(Time) - 5, alignment = "RT",
+                          term = str_replace_all(term, "[^[:alnum:]]", ""),
+                          term = str_replace(term, "scalePow", "Power"),
+                          term = str_replace(term, "rtcsvsc", "*RT_t"),
+                          term = str_replace(term, pattern = "scalertvmax", replacement = "*RT_Vmax_t"),
+                          term = str_replace(term, "rtlagsc", "*RT_tMINUS1")
   )
   message("Processed RT-aligned, merging")
   rdf <- rbind(crdf, rrdf)
-  terms <- unique(rdf$term[rdf$effect=="fixed" && grepl(rdf$term, "Power")])
+  terms <- unique(rdf$term[rdf$effect=="fixed"])
+
   # rdf$sensor <- readr::parse_number(rdf$.filename, trim_ws = F)
   # rdf$sensor <- stringr::str_pad(rdf$sensor, 4, "0",side = "left")
   rdf <- rdf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
@@ -209,42 +208,42 @@ if(rt_predict) {
   # drop magnetometers (if any)
   # rdf <- rdf %>% filter(!grepl("1$", sensor))
   # add sensor labels
-  setwd(data_dir)
+  setwd(plot_dir)
   
   
   for (fe in terms) {
     edf <- rdf %>% filter(term == paste(fe) & effect=="fixed") 
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
     message(termstr)
-    fname = paste("RT_predict_uncorrected_", termstr, ".pdf", sep = "")      
-    pdf(fname, width = 10, height = 7.5)
-    print(ggplot(edf %>% filter(estimate < 0), aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) + 
-            scale_fill_distiller(palette = "OrRd", direction = 1, name = "Exploration", limits = c(-.03, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 20)) + labs(fill = "Exploration") +
-            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
-            new_scale_fill() +
-            geom_tile(data = edf %>% filter(estimate > 0), aes(t, Freq, fill = estimate, alpha = p_value), size = .01) + theme_dark() +
-            geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) + theme_bw() + 
-            scale_fill_distiller(palette = "GnBu", direction = -1, name = "Exploitation", limits = c(0, .05))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + 
-            geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            geom_vline(xintercept = -5, lty = "dashed", color = "black", size = 2) +
-            geom_vline(xintercept = -5.3, lty = "dashed", color = "black", size = 1) +
-            geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
-            facet_wrap( ~ node, ncol = 2) + 
-            geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "black", angle = 90) +
-            geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "black", angle = 90) +
-            geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
-            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) + scale_y_discrete(limits = rev(levels(rdf$p_level_fdr))) 
-    
-    dev.off()
+    # fname = paste("RT_predict_uncorrected_", termstr, ".pdf", sep = "")      
+    # pdf(fname, width = 10, height = 7.5)
+    # print(ggplot(edf %>% filter(estimate < 0), aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) + 
+    #         scale_fill_distiller(palette = "OrRd", direction = 1, name = "Exploration", limits = c(-.03, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 20)) + labs(fill = "Exploration") +
+    #         labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
+    #         new_scale_fill() +
+    #         geom_tile(data = edf %>% filter(estimate > 0), aes(t, Freq, fill = estimate, alpha = p_value), size = .01) + theme_dark() +
+    #         geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) + theme_bw() + 
+    #         scale_fill_distiller(palette = "GnBu", direction = -1, name = "Exploitation", limits = c(0, .05))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + 
+    #         geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
+    #         geom_vline(xintercept = -5, lty = "dashed", color = "black", size = 2) +
+    #         geom_vline(xintercept = -5.3, lty = "dashed", color = "black", size = 1) +
+    #         geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
+    #         facet_wrap( ~ node, ncol = 2) + 
+    #         geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "black", angle = 90) +
+    #         geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "black", angle = 90) +
+    #         geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
+    #         labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) + scale_y_discrete(limits = rev(levels(rdf$p_level_fdr))) 
+    # 
+    # dev.off()
     fname = paste("RT_predict_FDR_", termstr, ".pdf", sep = "")      
     pdf(fname, width = 10, height = 7.5)
     print(ggplot(edf %>% filter(estimate < 0), aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) + 
-            scale_fill_distiller(palette = "OrRd", direction = 1, name = "Exploration", limits = c(-.03, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 20)) + labs(fill = "Exploration") +
+            scale_fill_distiller(palette = "OrRd", direction = 1, name = "Exploration", limits = c(-.05, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 20)) + labs(fill = "Exploration") +
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
             new_scale_fill() +
             geom_tile(data = edf %>% filter(estimate > 0), aes(t, Freq, fill = estimate, alpha = p_value), size = .01) + theme_dark() +
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) + theme_bw() + 
-            scale_fill_distiller(palette = "GnBu", direction = -1, name = "Exploitation", limits = c(0, .05))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + 
+            scale_fill_distiller(palette = "GnBu", direction = -1, name = "Exploitation", limits = c(0, .06))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + 
             geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
             geom_vline(xintercept = -5, lty = "dashed", color = "black", size = 2) +
             geom_vline(xintercept = -5.3, lty = "dashed", color = "black", size = 1) +
