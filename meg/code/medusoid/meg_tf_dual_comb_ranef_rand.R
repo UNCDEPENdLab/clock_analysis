@@ -10,7 +10,7 @@ library(ggnewscale)
 
 # library(psych)
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined_rs/"  
+data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined_ranef_rand/"  
 # rt_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_encode/"  
 # clock_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"  
 # dual_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_encode/"  
@@ -49,7 +49,7 @@ if (encode) {
   epoch_label = "Time relative to clock onset, seconds"
   alignment = "clock"
   # get clock-aligned data
-  file_pattern <- "entropy_rsclock"
+  file_pattern <- "ranefs_rand_clock"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   cl <- lapply(files, readRDS)
   names(cl) <- node_list[parse_number(files)]
@@ -62,7 +62,7 @@ if (encode) {
                           term = str_replace(term, "scale\\(abs_pe_lag\\)", "absPE_t")
   )
   # get RT-aligned
-  file_pattern <- "ddf_combined_ranefsRT"
+  file_pattern <- "ranefs_rand_RT"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   rl <- lapply(files, readRDS)
   names(rl) <- node_list[parse_number(files)]
@@ -111,20 +111,20 @@ if (encode) {
     edf <- ddf %>% filter(term == paste(fe))
     termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
     message(termstr)
-    fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")
-    pdf(fname, width = 10, height = 7.5)
-    print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) +
-            geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-            geom_vline(xintercept = -5, lty = "dashed", color = "white", size = 2) +
-            geom_vline(xintercept = -5.3, lty = "dashed", color = "white", size = 1) +
-            geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
-            scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
-            facet_wrap( ~ node, ncol = 2) + 
-            geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
-            geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
-            geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
-            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) + theme_dark())
-    dev.off()
+    # fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")
+    # pdf(fname, width = 10, height = 7.5)
+    # print(ggplot(edf, aes(t, freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) +
+    #         geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
+    #         geom_vline(xintercept = -5, lty = "dashed", color = "white", size = 2) +
+    #         geom_vline(xintercept = -5.3, lty = "dashed", color = "white", size = 1) +
+    #         geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
+    #         scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+    #         facet_wrap( ~ node, ncol = 2) + 
+    #         geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
+    #         geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
+    #         geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
+    #         labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) + theme_dark())
+    # dev.off()
     
     fname = paste("meg_tf_rt_all_dan_FDR_", termstr, ".pdf", sep = "")
     pdf(fname, width = 10, height = 7.5)
