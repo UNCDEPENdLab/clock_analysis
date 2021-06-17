@@ -10,7 +10,7 @@ group_sensors=FALSE
 for e in $epochs; do
 slist=$( find ${basedir}/${e}/grouped_tf -type f -iname "*_group.RDS" )
 arr=($slist)
-for ss in ${arr(1)}; do
+for ss in ${arr(2)}; do
 encode=TRUE
 rt_predict=TRUE
 alignment=${e}
