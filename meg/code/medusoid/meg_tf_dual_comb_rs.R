@@ -27,6 +27,7 @@ rt_epoch_label = "Time relative to outcome, seconds"
 encode = F
 rt_predict = T
 plots = F
+diags = F
 setwd(data_dir)
 # plots ----
 if (encode) {  
@@ -40,7 +41,6 @@ if (encode) {
   #                              v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + v_entropy_wi*e_f1 + rt_lag_sc*e_f1 + (1|Subject) + (1|sensor))
   
   epoch_label = "Time relative to clock onset, seconds"
-  alignment = "clock"
   # get clock-aligned data
   file_pattern <- "ddf_combined_entropy_rs_clock|ddf_combined_entropy_change_rs_clock"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
@@ -51,6 +51,7 @@ if (encode) {
   # cddf <- data.table::rbindlist(cl, idcol = "node")
   cddf <- data.table::rbindlist(cl)
   cddf$node <- sub("_group.*", "", cddf$.filename)
+  cddf$alignment <- "clock"
   cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock",
                           term = str_replace(term, "rt_lag_sc", "RT_t"),
                           term = str_replace(term, "reward_lagReward", "reward_t"),
@@ -63,7 +64,7 @@ if (encode) {
   rl <- lapply(files, readRDS)
   rddf <- data.table::rbindlist(rl)
   rddf$node <- sub("_group.*", "", rddf$.filename)
-  
+  rddf$alignment <- "RT"
   rddf <- rddf %>% mutate(t  = Time - 5, 
                           alignment = "rt",
                           term = str_replace(term, "rt_csv_sc", "RT_t"),
@@ -155,13 +156,13 @@ if (rt_predict) {
   crdf <- data.table::rbindlist(cl) %>% filter(grepl('Pow', term))
   crdf$node <- sub("_group.*", "", crdf$.filename)
   crdf <- crdf %>% mutate(t  = as.numeric(Time), alignment = "clock",
-                          term = case_when(
-                            term=="scale(Pow)" ~ "Power",
-                            term== "scale(Pow):rt_lag_sc" ~ "RT_t * Power",
-                            term=="scale(Pow):rt_vmax_lag_sc" ~ "RT_Vmax_t * Power",
-                            TRUE ~ term
+
+                          term = str_replace_all(term, "[^[:alnum:]]", ""),
+                          term = str_replace(term, "scalePow", "Power"),
+                          term = str_replace(term, "rtlagsc", "*RT_t"),
+                          term = str_replace(term, "rtvmaxlagsc", "*RT_Vmax_t"),
+                          term = str_replace(term, "outcomeReward", "*Reward_t")
                           )
-  )
   # get RT-aligned
   message("Processed clock-aligned")
   file_pattern <- "meg_mixed_by_tf_rdf_combined_rt_rs_RT"
@@ -169,14 +170,12 @@ if (rt_predict) {
   rl <- lapply(files, readRDS)
   rrdf <- data.table::rbindlist(rl) %>% filter(grepl('Pow', term))
   rrdf$node <- sub("_group.*", "", rrdf$.filename)
-  rrdf <- rrdf %>% mutate(t  = as.numeric(Time) - 5, alignment = "clock",
-                          term = case_when(
-                            term=="scale(Pow)" ~ "Power",
-                            term=="scale(Pow):rt_csv_sc"  ~ "RT_t * Power",
-                            term== "scale(Pow):rt_lag_sc" ~ "RT_tMINUS1 * Power",
-                            term=="scale(Pow):scale(rt_vmax)" ~ "RT_Vmax_t * Power",
-                            TRUE ~ term
-                          )
+  rrdf <- rrdf %>% mutate(t  = as.numeric(Time) - 5, alignment = "RT",
+                          term = str_replace_all(term, "[^[:alnum:]]", ""),
+                          term = str_replace(term, "scalePow", "Power"),
+                          term = str_replace(term, "rtcsvsc", "*RT_t"),
+                          term = str_replace(term, pattern = "scalertvmax", replacement = "*RT_Vmax_t"),
+                          term = str_replace(term, "rtlagsc", "*RT_tMINUS1")
   )
   message("Processed RT-aligned, merging")
   rdf <- rbind(crdf, rrdf)
