@@ -222,7 +222,7 @@ if(rt_predict) {
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
             new_scale_fill() +
             geom_tile(data = edf %>% filter(estimate > 0), aes(t, freq, fill = estimate, alpha = p_value), size = .01) + theme_dark() +
-            geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) + theme_bw() + 
+            geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) + 
             scale_fill_distiller(palette = "GnBu", direction = -1, name = "Exploitation", limits = c(0, .15))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + 
       geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
       geom_vline(xintercept = -5, lty = "dashed", color = "black", size = 2) +
@@ -242,7 +242,7 @@ if(rt_predict) {
             labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
             new_scale_fill() +
             geom_tile(data = edf %>% filter(estimate > 0), aes(t, freq, fill = estimate, alpha = p_value), size = .01) + theme_dark() +
-            geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) + theme_bw() + 
+            geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) + 
             scale_fill_distiller(palette = "GnBu", direction = -1, name = "Exploitation", limits = c(0, .15))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + 
       geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
       geom_vline(xintercept = -5, lty = "dashed", color = "black", size = 2) +
