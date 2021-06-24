@@ -151,7 +151,7 @@ if (rt_predict) {
   # plots ----
   epoch_label = "Time relative to clock onset, seconds"
   # get clock-aligned data
-  file_pattern <- "meg_mixed_by_tf_rdf_combined_rt_rs_clock"
+  file_pattern <- "meg_tf_rdf_combined_rt_rs_intclock"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   cl <- lapply(files, readRDS)
   crdf <- data.table::rbindlist(cl) %>% filter(grepl('Pow', term))
@@ -162,11 +162,12 @@ if (rt_predict) {
                           term = str_replace(term, "scalePow", "Power"),
                           term = str_replace(term, "rtlagsc", "*RT_t"),
                           term = str_replace(term, "rtvmaxlagsc", "*RT_Vmax_t"),
-                          term = str_replace(term, "outcomeReward", "*Reward_t")
+                          term = str_replace(term, "rewardlagReward", "*Reward_t"),
+                          term = str_replace(term, "rtlag2sc", "*RT_tMINUS1")
                           )
   # get RT-aligned
   message("Processed clock-aligned")
-  file_pattern <- "meg_mixed_by_tf_rdf_combined_rt_rs_RT"
+  file_pattern <- "meg_tf_rdf_combined_rt_rs_intRT"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   rl <- lapply(files, readRDS)
   rrdf <- data.table::rbindlist(rl) %>% filter(grepl('Pow', term))
@@ -176,7 +177,8 @@ if (rt_predict) {
                           term = str_replace(term, "scalePow", "Power"),
                           term = str_replace(term, "rtcsvsc", "*RT_t"),
                           term = str_replace(term, pattern = "scalertvmax", replacement = "*RT_Vmax_t"),
-                          term = str_replace(term, "rtlagsc", "*RT_tMINUS1")
+                          term = str_replace(term, "rtlagsc", "*RT_tMINUS1"),
+                          term = str_replace(term, "outcomeReward", "*Reward_t")
   )
   message("Processed RT-aligned, merging")
   rdf <- rbind(crdf, rrdf)
@@ -205,9 +207,6 @@ if (rt_predict) {
   # region = substr(as.character(label), 1, nchar(as.character(label))-2))
   rdf$p_level_fdr <- factor(rdf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
   rdf$`p, FDR-corrected` = rdf$p_level_fdr
-  # add numeric time
-  rdf$tim
-  
   levels(rdf$Freq) <- signif(as.numeric(substr(levels(rdf$Freq), 3,6)), 2)
   rdf$Freq <- fct_rev(rdf$Freq)
   rdf$numFreq <- as.numeric(paste(rdf$Freq))
@@ -241,34 +240,45 @@ if (rt_predict) {
     #         labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr))) + scale_y_discrete(limits = rev(levels(rdf$p_level_fdr))) 
     # 
     # dev.off()
-    fname = paste("RT_predict_FDR_", termstr, ".pdf", sep = "")      
-    if (termstr=="Power") {lolim = -.2; hilim = .15; hilabel = "Suppression"; lolabel = "Synchronization"
-    } else if (termstr=="RTtPower") {lolim = -.025; hilim = .04; hilabel = "Suppression"; lolabel = "Synchronization"
-    } else if (termstr=="RTVmaxtPower") {lolim = -.01; hilim = .023; hilabel = "Synchronization"; lolabel = "Suppression"
-    } else  {lolim = -.03; hilim = .02} 
+    fname = paste("RT_predict_FDR_", termstr, ".pdf", sep = "")
+    if (termstr=="Power") {lolim = -.1; hilim = .075; hilabel = "Suppression"; lolabel = "Synchronization"
+    } else if (termstr=="PowerRTt") {lolim = -.03; hilim = .1; hilabel = "Suppression"; lolabel = "Synchronization"
+    } else if (termstr=="PowerRTVmaxt") {lolim = -.01; hilim = .023; hilabel = "Synchronization"; lolabel = "Suppression"
+    } else if (termstr=="PowerRTtMINUS1") {lolim = -.01; hilim = .023; hilabel = "Synchronization"; lolabel = "Suppression"
+    } else if (termstr=="PowerRewardt") {lolim = -.01; hilim = .023; hilabel = "Synchronization"; lolabel = "Suppression"
+    } else if (termstr=="PowerRTtRewardt") {lolim = -.02; hilim = .04; hilabel = "Synchronization"; lolabel = "Suppression"
+    } else  {lolim = -.03; hilim = .02}
     pdf(fname, width = 10, height = 9)
     print(ggplot(edf %>% filter(estimate < 0), aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) + 
           scale_fill_distiller(palette = "Oranges", direction = 1, name = lolabel, limits = c(lolim, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 5)) + labs(fill = lolabel) +
-            labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) +
             new_scale_fill() +
-            geom_tile(data = edf %>% filter(estimate > 0), aes(t, Freq, fill = estimate, alpha = p_value), size = .01) + theme_dark() +
+            geom_tile(data = edf %>% filter(estimate > 0), aes(t, Freq, fill = estimate, alpha = p_level_fdr), size = .01) +
+            scale_y_discrete(breaks = levels(edf$Freq)) +
+            scale_fill_distiller(palette = "YlGnBu", direction = -1, name = hilabel, limits = c(0, hilim)) + 
+            scale_color_grey() + xlab(epoch_label) + ylab("Frequency") +
+            facet_wrap( ~ node, ncol = 2) + 
             geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 1) + theme_black() + 
-            scale_fill_distiller(palette = "YlGnBu", direction = -1, name = hilabel, limits = c(0, hilim))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + 
             geom_vline(xintercept = -5, lty = "dashed", color = "white", size = 1) +
             geom_vline(xintercept = -5.3, lty = "dashed", color = "white", size = .5) +
             geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = .5) +
-            facet_wrap( ~ node, ncol = 2) + 
             geom_text(data = edf, x = -6, y = 5,aes(label = "Response(t)"), size = 3, color = "grey", angle = 90) +
             geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 3, color = "grey", angle = 90) +
             geom_text(data = edf, x = -0.75, y = 7.5 ,aes(label = "Clock onset (t+1)"), size = 3, color = "grey", angle = 90) +
-            labs(alpha = expression(italic(p)[FDR-corrected])) + ggtitle(paste(termstr))) + labs(fill = hilabel) 
-    
+            labs(alpha = expression(italic(p)[FDR-corrected]), fill = hilabel) + ggtitle(paste(termstr)))
     dev.off()
   }
+  # legend:
+  # Power           - main effect of power predicting sooner/later responses
+  # PowerRTt        - power predicting RT swings
+  # PowerRewardt    - power predicting post-reward RT shortening
+  # PowerRTVmaxt    - power predicting convergence on RT_Vmax
+  # PowerRTtMINUS1  - power predicting reselection/swing away from RT(t-1)
+  # PowerRTtRewardt - power predicting win-stay/lose-shift
   
   # convert to PNG for Word
   # system("for i in *meg_tf*.pdf; do sips -s format png $i --out $i.png; done")
-  
+  # save rdf
+  saveRDS(rdf, "meg_tf_rs_RT_prediction_rdf.rds")
 }
 
 # diagnostics on random slopes
