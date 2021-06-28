@@ -252,7 +252,7 @@ if (rt_predict) {
           scale_fill_distiller(palette = "Oranges", direction = 1, name = lolabel, limits = c(lolim, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 5)) + labs(fill = lolabel) +
             new_scale_fill() +
             geom_tile(data = edf %>% filter(estimate > 0), aes(t, Freq, fill = estimate, alpha = p_level_fdr), size = .01) +
-            scale_y_discrete(breaks = levels(edf$Freq)) +
+            scale_y_discrete(limits = levels(edf$Freq)) +
             scale_fill_distiller(palette = "YlGnBu", direction = -1, name = hilabel, limits = c(0, hilim)) + 
             scale_color_grey() + xlab(epoch_label) + ylab("Frequency") +
             facet_wrap( ~ node, ncol = 2) + 
