@@ -28,6 +28,7 @@ encode = F
 rt_predict = T
 plots = F
 diags = F
+average = F
 setwd(data_dir)
 # plots ----
 if (encode) {  
@@ -325,3 +326,36 @@ if (diags) {
   ggplot(rdfv_subject, aes(estimate)) + geom_histogram() + facet_wrap(~node, ncol = 2)
   
 }
+
+if (average) {
+# average RT*power effect across rewards and punishments
+  # take the fixed effects of interest
+  rtdf <- rdf %>% filter(effect=="fixed" & (term == "Power*RT_t" |  term == "Power*RT_trewardlagReward" ))
+  # make it wide
+  
+  wdf <- rtdf %>% pivot_wider(names_from = "term", values_from = c(estimate, conf.low, conf.high, p_level_fdr), id_cols = c(Freq, t, alignment, node))
+  wdf <- wdf %>% rowwise() %>% mutate(
+    coef_power_rt_mean = as.matrix(mean(`estimate_Power*RT_t`, `estimate_Power*RT_trewardlagReward`, trim = 0, na.rm = TRUE)),
+    p_level_fdr = min(ordered(`p_level_fdr_Power*RT_t`), ordered(`p_level_fdr_Power*RT_trewardlagReward`), na.rm = T)
+  )
+  # crude plot
+  lolim = -.025; hilim = .04; hilabel = "Suppression"; lolabel = "Synchronization"
+  ggplot(wdf %>% filter(coef_power_rt_mean < 0) , aes(t, Freq)) + geom_tile(aes(fill = coef_power_rt_mean, alpha = p_level_fdr), size = .01) + 
+    scale_fill_distiller(palette = "Oranges", direction = 1, name = lolabel, limits = c(lolim, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 5)) + labs(fill = lolabel) +
+    new_scale_fill() +
+    geom_tile(data = wdf %>% filter(coef_power_rt_mean > 0), aes(t, Freq, fill = coef_power_rt_mean, alpha = p_level_fdr), size = .01) + theme_dark() +
+    geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 1) + theme_black() + 
+    scale_fill_distiller(palette = "YlGnBu", direction = -1, name = hilabel, limits = c(0, hilim))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + 
+    geom_vline(xintercept = -5, lty = "dashed", color = "white", size = 1) +
+    geom_vline(xintercept = -5.3, lty = "dashed", color = "white", size = .5) +
+    geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = .5) +
+    facet_wrap( ~ node, ncol = 2) + 
+    geom_text(data = edf, x = -6, y = 5,aes(label = "Response(t)"), size = 3, color = "grey", angle = 90) +
+    geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 3, color = "grey", angle = 90) +
+    geom_text(data = edf, x = -0.75, y = 7.5 ,aes(label = "Clock onset (t+1)"), size = 3, color = "grey", angle = 90) + 
+    labs(alpha = expression(italic(p)[FDR-corrected]))
+    
+
+          
+}
+
