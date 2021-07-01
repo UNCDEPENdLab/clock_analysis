@@ -21,10 +21,9 @@ source("~/code/fmri.pipeline/R/mixed_by.R")
 # main analysis analogous to Fig. 4 E-G in NComm 2020
 
 debug = F
-
-
 encode  <- T
 rt_predict <- F
+finish <- T
 cat("Run encoding model: ", as.character(encode), "\n")
 cat("Run rt prediction model: ", as.character(rt_predict), "\n")
 domain = "tf"
@@ -58,10 +57,22 @@ ncores <- as.numeric(future::availableCores())
 # ips_sensors <- c("1823", "1822", "2222","2223")
 # dan_sensors <- c(fef_sensors,ips_sensors)
 
-all_files <- list.files(pattern = "freq_t", full.names = T)
 sourcefilestart <- as.numeric(Sys.getenv("sourcefilestart"))
 incrementby <- as.numeric(Sys.getenv("incrementby"))
-files <- all_files[sourcefilestart:min((sourcefilestart + incrementby), length(all_files))]
+
+if (finish) {
+  setwd("/bgfs/adombrovski/tfr_rds1/RT/results")
+  temp <- readRDS("meg_ddf_wholebrain_ec_rs.rds")
+  finished_files <- unique(temp$.filename)
+  setwd("/bgfs/adombrovski/tfr_rds1/RT")
+  all_files <- as.vector(list.files(pattern = "freq_t_all"))
+  remaining_files <- setdiff(all_files, finished_files)
+  files <- remaining_files[sourcefilestart:min((sourcefilestart + incrementby), length(remaining_files))]
+} else {
+  all_files <- list.files(pattern = "freq_t", full.names = T)
+   files <- all_files[sourcefilestart:min((sourcefilestart + incrementby), length(all_files))]
+}
+
 if (debug) {
   files <- "/bgfs/adombrovski/tfr_rds1/RT/temporal_l_group_freq_split_f_03.536.rds"
 }
@@ -128,7 +139,7 @@ if (alignment=="RT" | alignment=="feedback") {
   rt_predict_formula_rs = formula( ~ scale(Pow) * rt_lag_sc * reward_lag  + scale(Pow) * rt_vmax_lag_sc  + scale(Pow) * rt_lag2_sc +
                                      (rt_lag_sc + rt_vmax_lag_sc|id) + (scale(Pow) * rt_lag_sc + scale(Pow) * rt_vmax_lag_sc|Sensor))
   rt_outcome = "rt_csv_sc"
-  }
+}
 
 
 
@@ -145,14 +156,13 @@ if (encode) {
   ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_ec, split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
-  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_", alignment, sourcefilestart)
-  
-  #ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
-  #                          external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
-  #                          refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
-  #saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_entropy_rs_", alignment, basename(files)))
-  
-}  
+  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_", alignment, sourcefilestart))
+}
+# ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
+#                          external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
+#                          refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
+# saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_entropy_rs_", alignment, basename(files)))
+
 
 if (rt_predict) {
   gc()
