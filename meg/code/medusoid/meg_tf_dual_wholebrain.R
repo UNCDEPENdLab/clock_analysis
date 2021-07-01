@@ -24,15 +24,17 @@ plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined_rs/"
 
 clock_epoch_label = "Time relative to clock onset, seconds"
 rt_epoch_label = "Time relative to outcome, seconds"
-encode = F
-rt_predict = T
-plots = F
+encode = T
+rt_predict = F
+plots = T
 diags = F
 average = F
+noclock = T
 setwd(data_dir)
 # plots ----
 if (encode) {  
   message("Processing encoding results")
+  epoch_label = "Time relative to feedback, seconds"
   
   # encode_formula_e = formula(~ scale(rt_vmax_lag)*echange_f1_early + scale(rt_vmax_lag)*echange_f2_late + scale(rt_vmax_lag)*e_f1 +
   #                              scale(abs_pe)*echange_f1_early + scale(abs_pe)*echange_f2_late + scale(abs_pe)*e_f1 +
@@ -40,40 +42,46 @@ if (encode) {
   #                              rt_csv_sc*echange_f1_early + rt_csv_sc*echange_f2_late + rt_csv_sc*e_f1 +
   #                              trial_neg_inv_sc*echange_f1_early + trial_neg_inv_sc*echange_f2_late + trial_neg_inv_sc*e_f1 +
   #                              v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + v_entropy_wi*e_f1 + rt_lag_sc*e_f1 + (1|Subject) + (1|sensor))
-  
-  epoch_label = "Time relative to clock onset, seconds"
-  # get clock-aligned data
-  file_pattern <- "ddf_combined_entropy_rs_clock|ddf_combined_entropy_change_rs_clock"
-  files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
-  cl <- lapply(files, readRDS)
-  # names(cl) <- 
-  # names(cl) <- node_list[parse_number(files)]
-  # # names(l) <- node_list[1:length(files)]
-  # cddf <- data.table::rbindlist(cl, idcol = "node")
-  cddf <- data.table::rbindlist(cl)
-  cddf$node <- sub("_group.*", "", cddf$.filename)
-  cddf$alignment <- "clock"
-  cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock",
-                          term = str_replace(term, "rt_lag_sc", "RT_t"),
-                          term = str_replace(term, "reward_lagReward", "reward_t"),
-                          term = str_replace(term, "v_entropy_wi_change_lag", "entropy_change_t")
-  )
-  message("Processed clock-aligned")
+  if (!noclock) {
+    epoch_label = "Time relative to clock onset, seconds"
+    # get clock-aligned data
+    # file_pattern <- "ddf_combined_entropy_rs_clock|ddf_combined_entropy_change_rs_clock"
+    file_pattern <- "*wholebrain*clock*"
+    files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
+    cl <- lapply(files, readRDS)
+    # names(cl) <- 
+    # names(cl) <- node_list[parse_number(files)]
+    # # names(l) <- node_list[1:length(files)]
+    # cddf <- data.table::rbindlist(cl, idcol = "node")
+    cddf <- data.table::rbindlist(cl)
+    cddf$node <- sub("_group.*", "", cddf$.filename)
+    cddf$alignment <- "clock"
+    cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock",
+                            term = str_replace(term, "rt_lag_sc", "RT_t"),
+                            term = str_replace(term, "reward_lagReward", "reward_t"),
+                            term = str_replace(term, "v_entropy_wi_change_lag", "entropy_change_t")
+    )
+    message("Processed clock-aligned")}
   # get RT-aligned
-  file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
+  # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
+  file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   rl <- lapply(files, readRDS)
   rddf <- data.table::rbindlist(rl)
   rddf$node <- sub("_group.*", "", rddf$.filename)
   rddf$alignment <- "RT"
-  rddf <- rddf %>% mutate(t  = Time - 5, 
+  if (!noclock) {offset = 5} else {offset = 0}
+  rddf <- rddf %>% mutate(t  = Time - offset, 
                           alignment = "rt",
                           term = str_replace(term, "rt_csv_sc", "RT_t"),
                           term = str_replace(term, "outcomeReward", "reward_t"),
                           term = str_replace(term, "v_entropy_wi_change", "entropy_change_t")
   )
   message("Processed RT-aligned, merging")
-  ddf <- rbind(cddf, rddf)
+  if (!noclock) {ddf <- rbind(cddf, rddf)} else {
+    ddf <- rddf  
+  }
+  
   terms <- unique(ddf$term[ddf$effect=="fixed"])
   # ddf$sensor <- readr::parse_number(ddf$.filename, trim_ws = F)
   # ddf$sensor <- stringr::str_pad(ddf$sensor, 4, "0",side = "left")
@@ -105,7 +113,8 @@ if (encode) {
   # ddf <- ddf %>% filter(!grepl("1$", sensor))
   # add sensor labels
   setwd(plot_dir)
-  saveRDS(ddf, file = "meg_ddf_e_ec_rs.rds")
+  # saveRDS(ddf, file = "meg_ddf_e_ec_rs.rds")
+  saveRDS(ddf, file = "meg_ddf_wholebrain_ec_rs.rds")
   if (plots) {
     message("Plotting encoding results")
     setwd(plot_dir)
@@ -121,7 +130,7 @@ if (encode) {
               geom_vline(xintercept = -5.3, lty = "dashed", color = "white", size = 1) +
               geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
               scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
-              facet_wrap( ~ node, ncol = 2) +
+              # facet_wrap( ~ node, ncol = 2) +
               geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
               geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
               geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
@@ -136,7 +145,7 @@ if (encode) {
               geom_vline(xintercept = -5.3, lty = "dashed", color = "white", size = 1) +
               geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
               scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
-              facet_wrap( ~ node, ncol = 2) + 
+              # facet_wrap( ~ node, ncol = 2) + 
               geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
               geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
               geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
@@ -157,14 +166,14 @@ if (rt_predict) {
   crdf <- data.table::rbindlist(cl) %>% filter(grepl('Pow', term))
   crdf$node <- sub("_group.*", "", crdf$.filename)
   crdf <- crdf %>% mutate(t  = as.numeric(Time), alignment = "clock",
-
+                          
                           term = str_replace_all(term, "[^[:alnum:]]", ""),
                           term = str_replace(term, "scalePow", "Power"),
                           term = str_replace(term, "rtlagsc", "*RT_t"),
                           term = str_replace(term, "rtvmaxlagsc", "*RT_Vmax_t"),
                           term = str_replace(term, "rewardlagReward", "*Reward_t"),
                           term = str_replace(term, "rtlag2sc", "*RT_tMINUS1")
-                          )
+  )
   # get RT-aligned
   message("Processed clock-aligned")
   file_pattern <- "meg_tf_rdf_combined_rt_rs_intRT"
@@ -250,7 +259,7 @@ if (rt_predict) {
     } else  {lolim = -.03; hilim = .02}
     pdf(fname, width = 10, height = 9)
     print(ggplot(edf %>% filter(estimate < 0), aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) + 
-          scale_fill_distiller(palette = "Oranges", direction = 1, name = lolabel, limits = c(lolim, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 5)) + labs(fill = lolabel) +
+            scale_fill_distiller(palette = "Oranges", direction = 1, name = lolabel, limits = c(lolim, 0)) + scale_x_continuous(breaks = pretty(edf$t, n = 5)) + labs(fill = lolabel) +
             new_scale_fill() +
             geom_tile(data = edf %>% filter(estimate > 0), aes(t, Freq, fill = estimate, alpha = p_level_fdr), size = .01) +
             scale_y_discrete(limits = levels(edf$Freq)) +
@@ -328,7 +337,7 @@ if (diags) {
 }
 
 if (average) {
-# average RT*power effect across rewards and punishments
+  # average RT*power effect across rewards and punishments
   # take the fixed effects of interest
   rtdf <- rdf %>% filter(effect=="fixed" & (term == "Power*RT_t" |  term == "Power*RT_trewardlagReward" ))
   # make it wide
@@ -354,8 +363,8 @@ if (average) {
     geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 3, color = "grey", angle = 90) +
     geom_text(data = edf, x = -0.75, y = 7.5 ,aes(label = "Clock onset (t+1)"), size = 3, color = "grey", angle = 90) + 
     labs(alpha = expression(italic(p)[FDR-corrected]))
-    
-
-          
+  
+  
+  
 }
 
