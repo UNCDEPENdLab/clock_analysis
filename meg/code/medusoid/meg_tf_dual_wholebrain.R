@@ -46,7 +46,7 @@ if (encode) {
     epoch_label = "Time relative to clock onset, seconds"
     # get clock-aligned data
     # file_pattern <- "ddf_combined_entropy_rs_clock|ddf_combined_entropy_change_rs_clock"
-    file_pattern <- "*wholebrain*clock*"
+    file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_clock*"
     files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
     cl <- lapply(files, readRDS)
     # names(cl) <- 
@@ -54,7 +54,7 @@ if (encode) {
     # # names(l) <- node_list[1:length(files)]
     # cddf <- data.table::rbindlist(cl, idcol = "node")
     cddf <- data.table::rbindlist(cl)
-    cddf$node <- sub("_group.*", "", cddf$.filename)
+    # cddf$node <- sub("_group.*", "", cddf$.filename)
     cddf$alignment <- "clock"
     cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock",
                             term = str_replace(term, "rt_lag_sc", "RT_t"),
@@ -64,11 +64,11 @@ if (encode) {
     message("Processed clock-aligned")}
   # get RT-aligned
   # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
-  file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT"
+  file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   rl <- lapply(files, readRDS)
   rddf <- data.table::rbindlist(rl)
-  rddf$node <- sub("_group.*", "", rddf$.filename)
+  # rddf$node <- sub("_group.*", "", rddf$.filename)
   rddf$alignment <- "RT"
   if (!noclock) {offset = 5} else {offset = 0}
   rddf <- rddf %>% mutate(t  = Time - offset, 
