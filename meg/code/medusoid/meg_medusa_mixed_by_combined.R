@@ -277,6 +277,7 @@ if (encode) {
 }  
 gc()
 if (rt_predict) {
+  splits = c("Time", ".filename", "Freq", "sensor")
   rdf <- as_tibble(mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = rt_predict_formula , split_on = splits, external_df = trial_df,
                             padjust_by = "term", padjust_method = "BY", ncores = ncores, refit_on_nonconvergence = 5, outcome_transform=trans_func))
   # rdf$sensor <- readr::parse_number(rdf$.filename)
