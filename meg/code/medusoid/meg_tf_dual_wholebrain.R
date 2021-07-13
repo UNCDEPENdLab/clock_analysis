@@ -12,8 +12,8 @@ source("~/code/Rhelpers/theme_black.R")
 
 # library(psych)
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined_rs/output"
-plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined_rs/"
+data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/output"
+plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/"
 # rt_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_encode/"  
 # clock_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"  
 # dual_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_encode/"  
@@ -30,6 +30,7 @@ plots = T
 diags = F
 average = F
 noclock = T
+load_complete = T
 setwd(data_dir)
 # plots ----
 if (encode) {  
@@ -64,19 +65,23 @@ if (encode) {
     message("Processed clock-aligned")}
   # get RT-aligned
   # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
-  file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
-  files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
-  rl <- lapply(files, readRDS)
-  rddf <- data.table::rbindlist(rl)
-  # rddf$node <- sub("_group.*", "", rddf$.filename)
-  rddf$alignment <- "RT"
-  if (!noclock) {offset = 5} else {offset = 0}
-  rddf <- rddf %>% mutate(t  = Time - offset, 
-                          alignment = "rt",
-                          term = str_replace(term, "rt_csv_sc", "RT_t"),
-                          term = str_replace(term, "outcomeReward", "reward_t"),
-                          term = str_replace(term, "v_entropy_wi_change", "entropy_change_t")
-  )
+  if (load_complete) {
+    setwd(data_dir)
+    rddf <- readRDS("meg_rddf_wholebrain_ec_rs_almost_complete.rds")
+  } else {
+    file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
+    files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
+    rl <- lapply(files, readRDS)
+    rddf <- data.table::rbindlist(rl)
+    # rddf$node <- sub("_group.*", "", rddf$.filename)
+    rddf$alignment <- "RT"
+    if (!noclock) {offset = 5} else {offset = 0}
+    rddf <- rddf %>% mutate(t  = Time - offset, 
+                            alignment = "rt",
+                            term = str_replace(term, "rt_csv_sc", "RT_t"),
+                            term = str_replace(term, "outcomeReward", "reward_t"),
+                            term = str_replace(term, "v_entropy_wi_change", "entropy_change_t")
+    )}
   message("Processed RT-aligned, merging")
   if (!noclock) {ddf <- rbind(cddf, rddf)} else {
     ddf <- rddf  
@@ -85,6 +90,7 @@ if (encode) {
   terms <- unique(ddf$term[ddf$effect=="fixed"])
   # ddf$sensor <- readr::parse_number(ddf$.filename, trim_ws = F)
   # ddf$sensor <- stringr::str_pad(ddf$sensor, 4, "0",side = "left")
+  if (!load_complete) {
   ddf <- ddf %>% mutate(p_value = as.factor(case_when(`p.value` > .05 ~ '1',
                                                       `p.value` < .05 & `p.value` > .01 ~ '2',
                                                       `p.value` < .01 & `p.value` > .001 ~ '3',
@@ -108,13 +114,14 @@ if (encode) {
   ddf$`p, FDR-corrected` = ddf$p_level_fdr
   
   levels(ddf$Freq) <- signif(as.numeric(substr(levels(ddf$Freq), 3,6)), 2)
-  ddf$Freq <- fct_rev(ddf$Freq)
+  ddf$Freq <- fct_rev(ddf$Freq)}
   # drop magnetometers (if any)
   # ddf <- ddf %>% filter(!grepl("1$", sensor))
   # add sensor labels
+  ddf$Freq <- fct_rev(ddf$Freq)
   setwd(plot_dir)
   # saveRDS(ddf, file = "meg_ddf_e_ec_rs.rds")
-  saveRDS(ddf, file = "meg_ddf_wholebrain_ec_rs.rds")
+  # saveRDS(ddf, file = "meg_ddf_wholebrain_ec_rs.rds")
   if (plots) {
     message("Plotting encoding results")
     setwd(plot_dir)
@@ -126,13 +133,13 @@ if (encode) {
       pdf(fname, width = 10, height = 7.5)
       print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) +
               geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-              geom_vline(xintercept = -5, lty = "dashed", color = "white", size = 2) +
-              geom_vline(xintercept = -5.3, lty = "dashed", color = "white", size = 1) +
+              geom_vline(xintercept = -4.7, lty = "dashed", color = "white", size = 2) +
+              geom_vline(xintercept = -5, lty = "dashed", color = "white", size = 1) +
               geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
               scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
-              # facet_wrap( ~ node, ncol = 2) +
-              geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
-              geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
+              # facet_wrap( ~ node, ncol = 2) + 
+              geom_text(data = edf, x = -5.2, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
+              geom_text(data = edf, x = -4.2, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
               geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
               labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) + theme_dark())
       dev.off()
@@ -141,13 +148,13 @@ if (encode) {
       pdf(fname, width = 10, height = 7.5)
       print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) +
               geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
-              geom_vline(xintercept = -5, lty = "dashed", color = "white", size = 2) +
-              geom_vline(xintercept = -5.3, lty = "dashed", color = "white", size = 1) +
+              geom_vline(xintercept = -4.7, lty = "dashed", color = "white", size = 2) +
+              geom_vline(xintercept = -5, lty = "dashed", color = "white", size = 1) +
               geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = 1) +
               scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
               # facet_wrap( ~ node, ncol = 2) + 
-              geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
-              geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
+              geom_text(data = edf, x = -5.2, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
+              geom_text(data = edf, x = -4.2, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
               geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
               labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)) + theme_dark())    # 
       dev.off()
