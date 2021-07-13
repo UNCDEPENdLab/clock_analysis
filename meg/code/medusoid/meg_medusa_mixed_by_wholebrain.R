@@ -23,7 +23,7 @@ source("~/code/fmri.pipeline/R/mixed_by.R")
 debug = F
 encode  <- T
 rt_predict <- F
-finish <- T
+finish <- F
 cat("Run encoding model: ", as.character(encode), "\n")
 cat("Run rt prediction model: ", as.character(rt_predict), "\n")
 domain = "tf"
@@ -32,8 +32,11 @@ if (debug) {alignment = "RT"}
 # bin <- Sys.getenv("bin")
 # 
 stopifnot(alignment %in% c("RT", "clock", "feedback"))
-
+if (whoami::username()=="ayd1") {
 medusa_dir <- paste0("/bgfs/adombrovski/tfr_rds1/", alignment)
+} else if (whoami::username()=="dnpl") {
+  medusa_dir <- paste0("/proj/mnhallqlab/projects/Clock_MEG/atfr_rds/", alignment)
+}
 
 
 cat("Alignment: ", as.character(alignment), "\n")
@@ -59,52 +62,37 @@ ncores <- as.numeric(future::availableCores())
 
 sourcefilestart <- as.numeric(Sys.getenv("sourcefilestart"))
 incrementby <- as.numeric(Sys.getenv("incrementby"))
-
-if (finish) {
-  setwd("/bgfs/adombrovski/tfr_rds1/RT/results")
-  temp <- readRDS("meg_ddf_wholebrain_ec_rs.rds")
-  finished_files <- unique(temp$.filename)
-  setwd("/bgfs/adombrovski/tfr_rds1/RT")
-  all_files <- as.vector(list.files(pattern = "freq_t_all"))
-  remaining_files <- setdiff(all_files, finished_files)
-  files <- remaining_files[sourcefilestart:min((sourcefilestart + incrementby), length(remaining_files))]
-} else {
-  all_files <- list.files(pattern = "freq_t", full.names = T)
-   files <- all_files[sourcefilestart:min((sourcefilestart + incrementby), length(all_files))]
-}
-
 if (debug) {
-  files <- "/bgfs/adombrovski/tfr_rds1/RT/temporal_l_group_freq_split_f_03.536.rds"
+sourcefilestart = 1
+#  files <- "/bgfs/adombrovski/tfr_rds1/RT/temporal_l_group_freq_split_f_03.536.rds"
 }
+#if (finish) {
+#  setwd("/bgfs/adombrovski/tfr_rds1/RT/results")
+#  temp <- readRDS("meg_ddf_wholebrain_ec_rs.rds")
+#  finished_files <- unique(temp$.filename)
+#  setwd("/bgfs/adombrovski/tfr_rds1/RT")
+#  all_files <- as.vector(list.files(pattern = "freq_t_all"))
+#  remaining_files <- setdiff(all_files, finished_files)
+#  files <- remaining_files[sourcefilestart:min((sourcefilestart + incrementby), length(remaining_files))]
+#} else {
+  setwd(medusa_dir)
+  all_files <- list.files(pattern = "freq_t", full.names = T)
+  files <- all_files[sourcefilestart]
+#}
+
+
 message(paste0("Processing files "))
 cat(files)
-# get behavioral data
-trial_df <- readRDS(behavioral_data_file)
-
-#for simplicity, change all matrix columns (wi-centering and scaling) to numeric
-trial_df <- as.data.frame(lapply(trial_df, function(x) {
+# get, preprocess behavioral data
+# for simplicity, change all matrix columns (wi-centering and scaling) to numeric
+trial_df <- readRDS(behavioral_data_file) %>% as.data.frame(lapply(trial_df, function(x) {
   if (inherits(x, "matrix")) { x <- as.vector(x) }
   return(x)
-}))
-
-# write random subject-level vectors for sanity checks
-# preproc trial-df
-trial_df <- trial_df %>% mutate(Subject = as.integer(id), Trial = trial, Run = run) %>% group_by(id, run) %>%
+})) %>% mutate(Subject = as.integer(id), Trial = trial, Run = run) %>% group_by(id, run) %>%
   mutate(abs_pe_lag = lag(abs_pe),
          v_entropy_wi_lag = lag(v_entropy_wi),
          rt_lag2_sc = lag(rt_lag_sc)
-  ) %>% ungroup() %>% group_by(id) %>%
-  mutate(rand1 = rnorm(1),
-         rand2 = rnorm(1),
-         rand3 = rnorm(1),
-         rand4 = rnorm(1))
-#message(str(trial_df))
-# trial_df$Subject <- trial_df$id
-# trial_df$Run <- trial_df$run
-# trial_df$Trial <- trial_df$trial
-# trial_df$rt_next_sc <- scale(trial_df$rt_next)
-# # # save behavioral data with new variables
-# saveRDS(trial_df, behavioral_data_file)
+  ) %>% ungroup() 
 
 
 if (alignment=="RT" | alignment=="feedback") {
@@ -118,10 +106,10 @@ if (alignment=="RT" | alignment=="feedback") {
                                    v_entropy_wi_change + scale(abs_pe) + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|Sensor))
   rt_predict_formula = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
                                   scale(Pow) * rt_lag_sc + (1|id) + (1|Sensor))
-  # random slopes or RT_csv and RT_Vmax
+  # random slopes or RT_csv and RT_Vmax, note: no random slope of power
   rt_predict_formula_rs = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
                                      scale(Pow) * rt_lag_sc + 
-                                     (rt_csv_sc + scale(rt_vmax)|id) + (scale(Pow) * rt_csv_sc + scale(Pow) * scale(rt_vmax)|Sensor))
+                                     (rt_csv_sc + scale(rt_vmax)|id))
   rt_outcome = "rt_next"
   
 } else if (alignment=="clock") {
@@ -137,7 +125,7 @@ if (alignment=="RT" | alignment=="feedback") {
                                   (1|id) + (1|Sensor))
   # random slopes
   rt_predict_formula_rs = formula( ~ scale(Pow) * rt_lag_sc * reward_lag  + scale(Pow) * rt_vmax_lag_sc  + scale(Pow) * rt_lag2_sc +
-                                     (rt_lag_sc + rt_vmax_lag_sc|id) + (scale(Pow) * rt_lag_sc + scale(Pow) * rt_vmax_lag_sc|Sensor))
+                                     (rt_lag_sc + rt_vmax_lag_sc|id))
   rt_outcome = "rt_csv_sc"
 }
 
@@ -156,7 +144,7 @@ if (encode) {
   ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_ec, split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
-  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_", alignment, sourcefilestart))
+  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_single", alignment, sourcefilestart))
 }
 # ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
 #                          external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
