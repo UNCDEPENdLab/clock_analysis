@@ -61,7 +61,7 @@ ncores <- as.numeric(future::availableCores())
 # dan_sensors <- c(fef_sensors,ips_sensors)
 
 sourcefilestart <- as.numeric(Sys.getenv("sourcefilestart"))
-incrementby <- as.numeric(Sys.getenv("incrementby"))
+# incrementby <- as.numeric(Sys.getenv("incrementby"))
 if (debug) {
 sourcefilestart = 1
 #  files <- "/bgfs/adombrovski/tfr_rds1/RT/temporal_l_group_freq_split_f_03.536.rds"
@@ -141,10 +141,10 @@ trans_func <- function(x) { DescTools::Winsorize(x, probs=c(.005, 1), na.rm=TRUE
 
 if (encode) {
   gc()
-  ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_ec, split_on = splits,
+  ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
-  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_single", alignment, sourcefilestart))
+  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_entropy_rs_single", alignment, sourcefilestart))
 }
 # ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
 #                          external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
