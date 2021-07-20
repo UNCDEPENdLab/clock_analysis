@@ -12,8 +12,8 @@ source("~/code/Rhelpers/theme_black.R")
 
 # library(psych)
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined_rs/output"
-plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined_rs/"
+data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/output"
+plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/"
 # rt_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_encode/"  
 # clock_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"  
 # dual_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_encode/"  
@@ -29,7 +29,7 @@ rt_predict = F
 plots = T
 diags = F
 average = F
-noclock = T
+noclock = F
 setwd(data_dir)
 # plots ----
 if (encode) {  
@@ -46,7 +46,7 @@ if (encode) {
     epoch_label = "Time relative to clock onset, seconds"
     # get clock-aligned data
     # file_pattern <- "ddf_combined_entropy_rs_clock|ddf_combined_entropy_change_rs_clock"
-    file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_clock*"
+    file_pattern <- "_entropy_rs_clock|_entropy_rs_singleclock"
     files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
     cl <- lapply(files, readRDS)
     # names(cl) <- 
@@ -64,7 +64,8 @@ if (encode) {
     message("Processed clock-aligned")}
   # get RT-aligned
   # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
-  file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
+  # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
+  file_pattern <- "entropy_rs_singleRT"
   files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
   rl <- lapply(files, readRDS)
   rddf <- data.table::rbindlist(rl)
@@ -77,6 +78,7 @@ if (encode) {
                           term = str_replace(term, "outcomeReward", "reward_t"),
                           term = str_replace(term, "v_entropy_wi_change", "entropy_change_t")
   )
+  saveRDS(rddf, file = "meg_ddf_wholebrain_ec_rs_rt.rds")
   message("Processed RT-aligned, merging")
   if (!noclock) {ddf <- rbind(cddf, rddf)} else {
     ddf <- rddf  
