@@ -168,7 +168,7 @@ msdf <- merge(mdf, mvudf)
 msdf$trial <- as.numeric(msdf$trial)
 msdf$timestep <- msdf$y_chosen
 # get within-subject and within-trial value and uncertainty
-msdf <- msdf %>% group_by(ID) %>% mutate(value_wi = scale(v),
+msdf <- msdf %>% group_by(ID, run) %>% mutate(value_wi = scale(v),
                                          uncertainty_wi = scale(u),
                                          value_b = mean(v),
                                          uncertainty_b = mean(u), 
@@ -180,11 +180,18 @@ msdf <- msdf %>% group_by(ID) %>% mutate(value_wi = scale(v),
 
 # filter out no-go zones at the edges
 # censoring the entire first second seems too harsh, remove first 500 ms
-mfdf <- msdf %>% filter(bin > 10 & bin <35)
+mfdf <- msdf %>% filter(bin > 5 & bin <35)
 
 # diagnostics on uncertainty and value distributions
+setwd('~/OneDrive/collected_letters/papers/meg/plots/uv')
+pdf("meg_v_diagnostics.pdf", height = 6, width = 10)
+ggplot(msdf %>% filter(bin >5 & bin <35), aes(timestep, value_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
+dev.off()
+pdf("meg_u_diagnostics.pdf", height = 6, width = 10)
+ggplot(msdf %>% filter(bin >5 & bin <35), aes(timestep, uncertainty_wi_t, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
+dev.off()
 
-# ggplot(msdf %>% filter(bin >10 & bin <35), aes(time, value_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
+
 # ggplot(msdf %>% filter(bin >10 & bin <35), aes(time, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2))
 # corr.test(fdf$value_wi, fdf$uncertainty_wi)
 # corr.test(fdf$value, fdf$uncertainty)
@@ -276,7 +283,7 @@ mfbb <- mbb %>% filter(bin >10 & bin <35)
 # use approx to interpolate
 
 # save w/o MEDUSA
-save(file = "fMRI_MEG_coxme_objects_no_MEDUSA_Nov23_2020", bb, fbb, mbb, mfbb)
+save(file = "fMRI_MEG_coxme_objects_no_MEDUSA_Nov23_2020.Rdata", bb, fbb, mbb, mfbb)
 
 library(zoo)
 if (medusa) {
@@ -298,4 +305,4 @@ if (medusa) {
   medbb <- medbb %>% filter(!is.na(response)) %>% select(-labels)
   medfbb <- medbb %>% filter(bin > 10 & bin < 35)
 }
-save(file = "fMRI_MEG_coxme_objects_with_medusa_Nov24_2020", medbb, medfbb)
+save(file = "fMRI_MEG_coxme_objects_with_medusa_Nov24_2020.Rdata", medbb, medfbb)
