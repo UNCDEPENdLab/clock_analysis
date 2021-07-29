@@ -1,32 +1,49 @@
 # R script for handling requeuing
 
-#epochs <- c("RT", "clock")
 epochs <- c("clock")
-regressors_of_interest <- c("entropy_change")
-basedir <- "/proj/mnhallqlab/projects/Clock_MEG/atfr_rds"
-setwd(basedir)
 
+# FINISHING UP CLOCK ENTROPY CHANGE
+# epochs <- c( "clock")
+
+# effectively 3rd run of 1-sensor RT prediciton
+# for fourth run, consider increasing number of cores/job to 4 or 8
+# epochs <- c("RT")
+regressors_of_interest <- c("entropy_change")
+# regressors_of_interest <- c("rt")
+basedir <- "/proj/mnhallqlab/projects/Clock_MEG/atfr_rds"
+sbatch_dir <- "/nas/longleaf/home/dnpl/code/clock_analysis/meg/code/medusoid/sbatch_scripts"
+setwd(basedir)
+test <- F
 step_up <- tibble::tribble(
   ~gb, ~time,
-  20, "7:00:00",
-  30, "18:00:00",
-  35, "4-00:00:00",
-  50, "4-00:00:00"
+  15, "7:00:00",
+  15, "4-00:00:00",
+  40, "4-00:00:00",
+  40, "4-00:00:00",
+  40, "4-00:00:00"
 )
 
 for (ee in epochs) {
   epochdir <- file.path(basedir, ee)
   flist <- list.files(pattern = ".*freq_t.*", path = epochdir)
   fnum <- seq_along(flist)
+  #file.create(paste0(epochdir,"/","tempfile.csv"))
+  #this_f <- "tempfile.csv"
+  #writeLines(as.character(1), this_f)
   for (rr in regressors_of_interest) {
     # out_exists <- list.files(pattern = paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_rs.*"), path = epochdir)
-    out_expect <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_rs_single_", ee, fnum))
+    #out_expect <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_single_", rr, "_rs_single_", ee, fnum))
+    out_expect <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_rs_single", ee, fnum))
+
     compute_expect <- file.path(epochdir, paste0(".", rr, "_it", fnum, "_compute"))
     out_exists <- file.exists(out_expect)
     if (any(out_exists)) {
-      message("The following files have been analyzed: ")
-      print(flist[out_exists])
-      
+      #message("The following files have been analyzed: ")
+      #print(flist[out_exists])
+      message("Number of files analyzed: ")
+      print(length(flist[out_exists]))
+      message("Number remaining: ")
+      print(length(flist[!out_exists]))
     }
     
     to_run <- flist[!out_exists]
@@ -49,16 +66,21 @@ for (ee in epochs) {
           warning("Maximum compute used for: ", to_run[ff])
           next
         }
-
-        #system(
-        #  paste0(
-        #    "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
-        #    " --export=epoch=", ee, ",sourcefilestart=", it_run[ff],
-        #    " sbatch_meg_mixed_wholebrain_ll_single.bash"
-        #  )
-        #)
-
-        cat(
+        if (!test) {
+          system(
+          paste0(
+            "cd /nas/longleaf/home/dnpl/code/clock_analysis/meg/code/medusoid/sbatch_scripts; ",
+            "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
+            " --export=epoch=", ee, ",sourcefilestart=", it_run[ff],
+            " sbatch_meg_mixed_wholebrain_ll_single.bash"
+          )
+        )
+        #write compute level to temporary file
+        setwd(epochdir)
+        writeLines(as.character(level), this_f)
+        }
+        
+         cat(
            paste0(
              "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
              " --export=epoch=", ee, ",sourcefilestart=", it_run[ff],
@@ -66,8 +88,7 @@ for (ee in epochs) {
            )
          )
 
-        #write compute level to temporary file
-        writeLines(as.character(level), this_f)
+        
       }
       
     } else {
@@ -76,4 +97,5 @@ for (ee in epochs) {
     }
 
   }
+  #file.remove(paste0(epochdir,"/","tempfile.csv"))
 }
