@@ -6,6 +6,8 @@ library(lme4)
 library(ggpubr)
 library(car)
 library(viridis)
+library(ggnewscale)
+
 # library(psych)
 repo_directory <- "~/code/clock_analysis"
 data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined/"  
@@ -20,7 +22,7 @@ data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/tf_combined/"
 clock_epoch_label = "Time relative to clock onset, seconds"
 rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
-rt_predict = T
+rt_predict = F
 
 sensor_map <- read.table("~/OneDrive/collected_letters/papers/meg/plots/meg_sensors_annotated.txt", header = T, colClasses = "character") %>%
   mutate(lobe=ordered(lobe, levels=c("frontal", "temporal", "parietal", "occipital")),
@@ -211,7 +213,6 @@ if(rt_predict) {
   # add sensor labels
   setwd(data_dir)
   
-  library(ggnewscale)
   
   for (fe in terms) {
     edf <- rdf %>% filter(term == paste(fe)) 
