@@ -9,9 +9,9 @@ setwd(basedir)
 
 step_up <- tibble::tribble(
   ~gb, ~time,
-  10, "7:00:00",
-  20, "18:00:00",
-  35, "4-00:00:00",
+  20, "7:00:00",
+  30, "18:00:00",
+  40, "4-00:00:00",
   50, "4-00:00:00"
 )
 
@@ -41,6 +41,7 @@ for (ee in epochs) {
     if (length(to_run) > 0) {
       for (ff in seq_along(to_run)) {
         #look at prior compute file
+        this_f <- compute_run[ff]
         if (file.exists(compute_run[ff])) {
           curLevel <- as.integer(readLines(this_f, n = 1))
           level <- curLevel + 1 
@@ -69,6 +70,7 @@ for (ee in epochs) {
         # )
 
         #write compute level to temporary file
+        setwd(epochdir)
         writeLines(as.character(level), this_f)
       }
       
