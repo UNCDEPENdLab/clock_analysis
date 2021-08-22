@@ -17,6 +17,7 @@ sensor_list <- read.table("~/code/clock_analysis/meg/code/meg_sensors_annotated.
 sensor_map <- read.table("~/code/clock_analysis/meg/code/meg_sensors_annotated.txt", header=TRUE, colClasses="character")
 repo_directory <- "~/code/clock_analysis"
 behavioral_data_file <- "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
+uv_censored_data_file <- "~/code/clock_analysis/meg/data/meg_n63_uv_behav_ends_censored_Jul2021.Rds"
 source("~/code/fmri.pipeline/R/mixed_by.R")
 # main analysis analogous to Fig. 4 E-G in NComm 2020
 
@@ -116,6 +117,7 @@ trial_df <- trial_df %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% m
                                              kld4_cum2 = kld4 + kld4_lag
   ) %>%
   ungroup() 
+uv_df <- readRDS(uv_censored_data_file)
 
 if (alignment=="RT" | alignment=="feedback") {
   encode_formula = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + scale(rt_vmax_lag)  + scale(rt_vmax_change) + 
@@ -169,10 +171,10 @@ trans_func <- function(x) { DescTools::Winsorize(x, probs=c(.005, 1), na.rm=TRUE
 
 if (encode) {
   gc()
-  ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e_kld, split_on = splits,
+  ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
-  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_entropy_kld_rs_single_", alignment, sourcefilestart))
+  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_entropy_rs_single_", alignment, sourcefilestart))
 }
 # ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
 #                          external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,

@@ -13,13 +13,13 @@ regressors_of_interest <- c("entropy", "entropy_kld")
 basedir <- "/bgfs/adombrovski/tfr_rds1"
 sbatch_dir <- "~/code/clock_analysis/meg/code/medusoid/sbatch_scripts"
 setwd(basedir)
-test <- F
+test <- T
 step_up <- tibble::tribble(
   ~gb, ~time,
   15, "7:00:00",
   15, "4-00:00:00",
-  40, "4-00:00:00",
-  40, "4-00:00:00",
+  30, "4-00:00:00",
+  30, "4-00:00:00",
   40, "4-00:00:00"
 )
 
@@ -73,7 +73,7 @@ for (ee in epochs) {
           paste0(
             "cd ~/code/clock_analysis/meg/code/medusoid/sbatch_scripts; ",
             "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
-            " --export=epoch=", ee, ",sourcefilestart=", it_run[ff],
+            " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
              " sbatch_meg_mixed_wholebrain.bash"
           )
         )
@@ -85,7 +85,7 @@ for (ee in epochs) {
          cat(
            paste0(
              "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
-             " --export=epoch=", ee, ",sourcefilestart=", it_run[ff],
+             " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
              " sbatch_meg_mixed_wholebrain.bash\n"
            )
          )
