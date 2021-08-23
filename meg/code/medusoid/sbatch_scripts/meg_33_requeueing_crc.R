@@ -9,18 +9,21 @@ epochs <- c("RT", "clock")
 # for fourth run, consider increasing number of cores/job to 4 or 8
 # epochs <- c("RT")
 # regressors_of_interest <- c("entropy")
-regressors_of_interest <- c("entropy", "entropy_kld")
+regressors_of_interest <- c("entropy")
 basedir <- "/bgfs/adombrovski/tfr_rds1"
 sbatch_dir <- "~/code/clock_analysis/meg/code/medusoid/sbatch_scripts"
 setwd(basedir)
-test <- T
+test <- F
 step_up <- tibble::tribble(
   ~gb, ~time,
   15, "7:00:00",
-  15, "4-00:00:00",
-  30, "4-00:00:00",
-  30, "4-00:00:00",
-  40, "4-00:00:00"
+  15, "1-00:00:00",
+  30, "1-00:00:00",
+  30, "1-00:00:00",
+  40, "1-00:00:00",
+    40, "1-00:00:00",
+      40, "1-00:00:00"
+
 )
 
 for (ee in epochs) {
