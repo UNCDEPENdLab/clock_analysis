@@ -27,10 +27,11 @@ rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
 regressors = c("kld")
-# regressors = c("entropy_change", "entropy", "kld")
+# regressors = c("entropy", "kld", "entropy_change)
 
 print_filenames = F
 fixed_only = F
+
 plots = T
 diags = F
 average = F
@@ -71,7 +72,7 @@ if (encode) {
       # names(cl) <- node_list[parse_number(files)]
       # # names(l) <- node_list[1:length(files)]
       # cddf <- data.table::rbindlist(cl, idcol = "node")
-      cddf <- data.table::rbindlist(cl) %>% unique()
+      cddf <- data.table::rbindlist(cl) %>% unique() %>% distinct(Time, Freq, term, effect, group, level, .keep_all = TRUE)
       # cddf$node <- sub("_group.*", "", cddf$.filename)
       cddf$alignment <- "clock"
       cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock",
@@ -99,7 +100,7 @@ if (encode) {
 #      df <- df %>% filter(effect=="fixed")
       return(df)
     })
-    rddf <- data.table::rbindlist(rl)  %>% unique()
+    rddf <- data.table::rbindlist(rl)  %>% unique()  %>% distinct(Time, Freq, term, effect, group, level, .keep_all = TRUE)
     # rddf$node <- sub("_group.*", "", rddf$.filename)
     rddf$alignment <- "RT"
     if (!noclock) {offset = 5} else {offset = 0}
