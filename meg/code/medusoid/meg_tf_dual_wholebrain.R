@@ -8,26 +8,20 @@ library(car)
 library(viridis)
 library(ggnewscale)
 library(RColorBrewer)
+# library(psych)
 source("~/code/Rhelpers/theme_black.R")
 
-# library(psych)
 repo_directory <- "~/code/clock_analysis"
 data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/output"
 plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/"
-# rt_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_encode/"  
-# clock_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_encode/"  
-# dual_encode_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_encode/"  
-# 
-# rt_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/rt_rt/"
-# clock_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/clock_rt/"
-# dual_rt_plot_dir = "~/OneDrive/collected_letters/papers/meg/plots/dual_rt/"
 
 clock_epoch_label = "Time relative to clock onset, seconds"
 rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
-regressors = c("kld")
-# regressors = c("entropy", "kld", "entropy_change)
+regressors = c("entropy_change_pos")
+p_adjust_method = "bonferroni"
+# regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 
 print_filenames = F
 fixed_only = F
@@ -56,7 +50,9 @@ if (encode) {
       if (regressor=="entropy_change") {
         file_pattern <- "*_change_rs_single_.*clock"} else if (regressor=="entropy") {
           file_pattern <- "_entropy_rs.*clock"} else if (regressor=="kld") {
-            file_pattern <- ".*kld.*clock"}
+            file_pattern <- ".*kld.*clock"} else if (regressor=="entropy_change_pos") {
+              file_pattern <- ".*entropy_change_pos_rs.*clock"} else if (regressor=="entropy_change_neg") {
+                file_pattern <- ".*entropy_change_neg_rs.*clock"} 
       files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
       message(paste0("Found ", length(files), " files."))
       cl <- lapply(files, function(x) {
@@ -78,14 +74,19 @@ if (encode) {
       cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock",
                               term = str_replace(term, "rt_lag_sc", "RT_t"),
                               term = str_replace(term, "reward_lagReward", "reward_t"),
-                              term = str_replace(term, "v_entropy_wi_change_lag", "entropy_change_t")
+                              term = str_replace(term, "v_entropy_wi_change_lag", "entropy_change_t"),
+                              term = str_replace(term, "entropy_change_neg_lag", "entropy_change_neg_t"),
+                              term = str_replace(term, "entropy_change_pos_lag", "entropy_change_pos_t")
+                              
       )
       message("Processed clock-aligned. \n")}
     # get RT-aligned
     if (regressor=="entropy_change") {
       file_pattern <- "*_change_rs_single_.*RT"} else if (regressor=="entropy") {
         file_pattern <- "_entropy_rs.*RT"} else if (regressor=="kld") {
-          file_pattern <- ".*kld.*RT"}
+          file_pattern <- ".*kld.*RT"} else if (regressor=="entropy_change_pos") {
+            file_pattern <- ".*entropy_change_pos_rs.*RT"} else if (regressor=="entropy_change_neg") {
+              file_pattern <- ".*entropy_change_neg_rs.*RT"} 
     # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
     # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
     # file_pattern <- "entropy_rs_singleRT"
@@ -108,7 +109,10 @@ if (encode) {
                             alignment = "rt",
                             term = str_replace(term, "rt_csv_sc", "RT_t"),
                             term = str_replace(term, "outcomeReward", "reward_t"),
-                            term = str_replace(term, "v_entropy_wi_change", "entropy_change_t")
+                            term = str_replace(term, "v_entropy_wi_change", "entropy_change_t"),
+                            term = str_replace(term, "entropy_change_neg_wi", "entropy_change_neg_t"),
+                            term = str_replace(term, "entropy_change_pos_wi", "entropy_change_pos_t")
+                            
     )
     # saveRDS(rddf, file = "meg_ddf_wholebrain_ec_rs_rt.rds")
     message("Processed RT-aligned, merging.  \n")
@@ -128,8 +132,8 @@ if (encode) {
     
     
     # entropy change seems to not have been adjusted
-    if (regressor=="entropy_change" | regressor=="entropy" | regressor=="kld") {
-    ddf <- ddf  %>% ungroup() %>% group_by(term, alignment) %>% mutate(p_fdr = p.adjust(p.value, method = 'fdr', ),
+    
+    ddf <- ddf  %>% ungroup() %>% group_by(term, alignment) %>% mutate(p_fdr = p.adjust(p.value, method = p_adjust_method),
                                                                p_level_fdr = as.factor(case_when(
                                                                  # p_fdr > .1 ~ '0',
                                                                  # p_fdr < .1 & p_fdr > .05 ~ '1',
@@ -137,15 +141,6 @@ if (encode) {
                                                                  p_fdr < .05 & p_fdr > .01 ~ '2',
                                                                  p_fdr < .01 & p_fdr > .001 ~ '3',
                                                                  p_fdr <.001 ~ '4'))) %>% ungroup()
-    } else {
-    # FDR labeling ----
-    ddf <- ddf  %>% mutate(
-      p_level_fdr = as.factor(case_when(
-        padj_BY_term > .05 ~ '1',
-        padj_BY_term < .05 & padj_BY_term > .01 ~ '2',
-        padj_BY_term < .01 & padj_BY_term > .001 ~ '3',
-        padj_BY_term <.001 ~ '4'))
-    ) %>% ungroup() }
     
     ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
     ddf$`p, FDR-corrected` = ddf$p_level_fdr
@@ -188,7 +183,7 @@ if (encode) {
                 geom_text(data = edf, x = -5.5, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
                 geom_text(data = edf, x = -4.5, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
                 geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
-                labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)) + theme_dark())    # 
+                labs(alpha = expression(italic(p)[corrected])) + ggtitle(paste(termstr)) + theme_dark())    # 
         dev.off()
       }}
   }
