@@ -18,11 +18,16 @@ sensor_map <- read.table("~/code/clock_analysis/meg/code/meg_sensors_annotated.t
 repo_directory <- "~/code/clock_analysis"
 behavioral_data_file <- "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
 source("~/code/fmri.pipeline/R/mixed_by.R")
+
 # main analysis analogous to Fig. 4 E-G in NComm 2020
+debug = F #VERY CAREFUL, THIS MAKES IT RUN ON THE FIRST FILE ONLY
+if (debug) {
+  Sys.setenv(epoch = "RT")
+  Sys.setenv(regressor = "entropy_change_pos")
+}
 alignment <- Sys.getenv("epoch")
 regressor <- Sys.getenv("regressor")
 message(paste0("Regressor: ", regressor))
-debug = F
 if (regressor=="entropy_change" | regressor == "entropy" | regressor=="abs_pe" |
     regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg") {
   encode  <- T
@@ -87,10 +92,13 @@ get_kldsum <- function(v1, v2) {
   kk <- KLD(v1, v2)
   return(kk$sum.KLD.px.py)
 }
-trial_df <- readRDS(behavioral_data_file) %>% as.data.frame(lapply(trial_df, function(x) {
-  if (inherits(x, "matrix")) { x <- as.vector(x) }
-  return(x)
-})) %>% mutate(Subject = as.integer(id), Trial = trial, Run = run) %>% group_by(id, run) %>%
+trial_df <- readRDS(behavioral_data_file) 
+trial_df <- trial_df %>% 
+#   as.data.frame(lapply(trial_df, function(x) {
+#   if (inherits(x, "matrix")) { x <- as.vector(x) }
+#   return(x)
+# })) %>% 
+  mutate(Subject = as.integer(id), Trial = trial, Run = run) %>% group_by(id, run) %>%
   mutate(abs_pe_lag = lag(abs_pe),
          v_entropy_wi_lag = lag(v_entropy_wi),
          rt_lag2_sc = lag(rt_lag_sc)
@@ -163,7 +171,10 @@ if (alignment=="RT" | alignment=="feedback") {
                                    v_entropy_wi + (1|Subject) + (v_entropy_wi|Sensor))
   } else if (regressor=="entropy_change_pos") {
     encode_formula_rs =  formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + kld3 +
-                                   v_entropy_wi + (1|Subject) + (v_entropy_wi|Sensor))
+                                   entropy_change_pos_lag + (1|Subject) + (entropy_change_pos_lag|Sensor))
+  } else if (regressor=="entropy_change_neg") {
+    encode_formula_rs =  formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + kld3 +
+                                   entropy_change_neg_lag + (1|Subject) + (entropy_change_neg_lag|Sensor))
   }
   
   rt_predict_formula = formula( ~ scale(Pow) * rt_lag_sc * reward_lag  + scale(Pow) * scale(rt_vmax)  +

@@ -1,24 +1,28 @@
 # R script for handling requeuing
 epochs <- c("clock", "RT")
+# epochs <- c("RT")
 
 # epochs <- c("RT", "clock")
 # last queued: 318
 # epochs <- "clock"
-regressors_of_interest <- c("entropy_kld")
+# regressors_of_interest <- c("entropy_change_neg")
+regressors_of_interest <- c("entropy_change_pos", "entropy_change_neg")
 basedir <- "/bgfs/adombrovski/tfr_rds1"
 sbatch_dir <- "~/code/clock_analysis/meg/code/medusoid/sbatch_scripts"
 setwd(basedir)
-test <- T
-# Remaining for KLD:
+test <- F
+silent <- F
+# Remaining for pos/neg:
 start_at = 1
-end_at = 1848
+# try and run everything in increments of 125 to track only one parameter.
+end_at = 1849
 step_up <- tibble::tribble(
   ~gb, ~time,
-  15, "7:00:00",
-  15, "4-00:00:00",
+  20, "23:00:00", 
+  20, "23:00:00", 
+  30, "4-00:00:00",
   40, "4-00:00:00",
-  40, "4-00:00:00",
-  40, "4-00:00:00"
+  70, "4-00:00:00"
 )
 
 for (ee in epochs) {
@@ -43,7 +47,7 @@ for (ee in epochs) {
     if (any(out_exists)) {
       #message("The following files have been analyzed: ")
       #print(flist[out_exists])
-      message("Number of files to re-run: ")
+      message("Total number of files to re-run: ")
       print(sum(!out_exists))
     }
   # for i in meg_mixed_by_tf_ddf_combined*; do [[ -e ${i/__/_freq_t_all_} ]] || mv "$i" "${i/__/_freq_t_all_}"; done 
@@ -53,6 +57,9 @@ for (ee in epochs) {
     compute_run <- compute_expect[!out_exists & !run_already]
 
     if (length(to_run) > 0) {
+     message("Number of files to re-run in this batch: ")
+      print(length(to_run))
+    
       for (ff in seq_along(to_run)) {
         #look at prior compute file
 	this_f <- compute_run[ff]
@@ -76,22 +83,23 @@ for (ee in epochs) {
           paste0(
             "cd ~/code/clock_analysis/meg/code/medusoid/sbatch_scripts; ",
              "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
-             " --export=epoch=", ee, ",sourcefilestart=", it_run[ff],
+            " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
              " sbatch_meg_mixed_wholebrain.bash"
            )
          )
         #write compute level to temporary file
         writeLines(as.character(level), this_f)
         }
+        if (!silent) {
         cat(
            paste0(
              "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
-            " --export=epoch=", ee, ",sourcefilestart=", it_run[ff],
-             " sbatch_meg_mixed_wholebrain_single.bash\n",
+            " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
+             " sbatch_meg_mixed_wholebrain.bash\n",
              to_run[ff], "\n"
            )
          )
-        #}
+        }
         
       }
       
