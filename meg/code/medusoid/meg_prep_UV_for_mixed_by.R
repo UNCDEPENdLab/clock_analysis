@@ -26,10 +26,10 @@ mudf <- megu$u_df %>% pivot_longer(-c(id, run, trial, rewFunc, y_chosen), names_
 # ggplot(mudf, aes(bin, u, color = rewFunc)) + geom_smooth()
 mvudf <- as_tibble(merge(mvdf, mudf)) %>% arrange(id, run, trial, bin) %>% mutate (
   ID = as.integer(substr(id, 1,5))
-) %>% select(-id) %>% rename(id = ID)
+) %>% select(-id, rewFunc) %>% rename(id = ID)
 
 # write time variable
-mvudf$Time <- mvudf$bin/10
+mvudf$timestep <- mvudf$bin/10
 mvudf$response <- mvudf$y_chosen==mvudf$bin
 
 ################
@@ -40,22 +40,26 @@ trial_df <- readRDS(behavioral_data_file) %>% as.data.frame(lapply(trial_df, fun
 })) %>% mutate(Subject = as.integer(id), Trial = trial, Run = run) %>% group_by(id, run) %>%
   mutate(abs_pe_lag = lag(abs_pe),
          v_entropy_wi_lag = lag(v_entropy_wi),
-         rt_lag2_sc = lag(rt_lag_sc)
-  ) %>% ungroup() 
+         rt_lag2_sc = lag(rt_lag_sc), 
+         rewFunc = as.character(rewFunc)
+  ) %>% select(-rewFunc) %>% ungroup() 
 
+# pdf('sanity_trial.pdf')
+# ggplot(trial_df, aes(rt_csv, ev, color = rewFunc)) + geom_smooth()
+# dev.off()
+# 
+# pdf('sanity_uv.pdf')
+# ggplot(mvudf, aes(Time, v, color = rewFunc)) + geom_smooth()
+# dev.off()
 # load("../fmri/keuka_brain_behavior_analyses/trial_df_and_vh_pe_clusters_u.Rdata")
 msdf <- inner_join(trial_df, mvudf)
-# ggplot(msdf, aes(bin, v, color = rewFunc)) + geom_smooth()
-
-msdf$trial <- as.numeric(msdf$trial)
-# msdf$timestep <- msdf$y_chosen
 # get within-subject and within-trial value and uncertainty
 msdf <- msdf %>% group_by(id, run) %>% mutate(value_wi = scale(v),
                                               uncertainty_wi = scale(u),
                                               value_b = mean(v),
                                               uncertainty_b = mean(u), 
                                               trial_neg_inv_sc = scale(-1/run_trial)) %>% ungroup() %>%
-  group_by(ID, run, run_trial) %>% mutate(value_wi_t = scale(v),
+  group_by(id, run, run_trial) %>% mutate(value_wi_t = scale(v),
                                           uncertainty_wi_t = scale(u),
                                           value_b_t = mean(v),
                                           uncertainty_b_t = mean(u)) %>% ungroup()
@@ -66,12 +70,22 @@ mfdf <- msdf %>% filter(bin > 5 & bin <35)
 
 # diagnostics on uncertainty and value distributions
 setwd(plotdir)
+library(ggpubr)
+p1 <- ggplot(msdf %>% filter(bin >5 & bin <35), aes(timestep, value_wi_t, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
+p2 <- ggplot(msdf %>% filter(bin >5 & bin <35), aes(timestep, value_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
 pdf("meg_v_diagnostics.pdf", height = 6, width = 10)
-ggplot(msdf %>% filter(bin >5 & bin <35), aes(timestep, value_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
+ggarrange(p1,p2)
 dev.off()
+p1 <- ggplot(msdf %>% filter(bin >5 & bin <35), aes(timestep, uncertainty_wi_t, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
+p2 <- ggplot(msdf %>% filter(bin >5 & bin <35), aes(timestep, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
 pdf("meg_u_diagnostics.pdf", height = 6, width = 10)
-ggplot(msdf %>% filter(bin >5 & bin <35), aes(timestep, uncertainty_wi_t, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2)) 
+ggarrange(p1, p2)
 dev.off()
+
+# save for mixed_by
+setwd("~/code/clock_analysis/meg/data")
+saveRDS(msdf, file = "meg_n63_uv_behav_uncensored_Jul2021.Rds")
+saveRDS(mfdf, file = "meg_n63_uv_behav_ends_censored_Jul2021.Rds")
 
 
 # ggplot(msdf %>% filter(bin >10 & bin <35), aes(time, uncertainty_wi, color = rewFunc)) + geom_smooth(method = 'gam', formula = y~splines::ns(x,2))

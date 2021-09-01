@@ -19,7 +19,7 @@ clock_epoch_label = "Time relative to clock onset, seconds"
 rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
-regressors = c("entropy_change_pos")
+regressors = c("entropy_change")
 p_adjust_method = "bonferroni"
 # regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 
@@ -57,9 +57,10 @@ if (encode) {
       message(paste0("Found ", length(files), " files."))
       cl <- lapply(files, function(x) {
         if (print_filenames) { print(x) }
-        df <- readRDS(x) 
-        if (ncol(df)==3) {
-          df <- df$coef_df_reml
+        temp <- readRDS(x) 
+        if (ncol(temp)==3) {
+          message(x)
+          df <- temp$fit_df
         }
 #        df <- df %>% filter(effect=="fixed")
         return(df)
@@ -68,16 +69,10 @@ if (encode) {
       # names(cl) <- node_list[parse_number(files)]
       # # names(l) <- node_list[1:length(files)]
       # cddf <- data.table::rbindlist(cl, idcol = "node")
-      cddf <- data.table::rbindlist(cl) %>% unique() %>% distinct(Time, Freq, term, effect, group, level, .keep_all = TRUE)
+      cddf <- data.table::rbindlist(cl) %>% unique() %>% distinct(Time, Freq, .keep_all = TRUE)
       # cddf$node <- sub("_group.*", "", cddf$.filename)
       cddf$alignment <- "clock"
-      cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock",
-                              term = str_replace(term, "rt_lag_sc", "RT_t"),
-                              term = str_replace(term, "reward_lagReward", "reward_t"),
-                              term = str_replace(term, "v_entropy_wi_change_lag", "entropy_change_t"),
-                              term = str_replace(term, "entropy_change_neg_lag", "entropy_change_neg_t"),
-                              term = str_replace(term, "entropy_change_pos_lag", "entropy_change_pos_t")
-                              
+      cddf <- cddf %>% mutate(t  = as.numeric(Time), alignment = "clock"
       )
       message("Processed clock-aligned. \n")}
     # get RT-aligned
@@ -91,28 +86,23 @@ if (encode) {
     # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
     # file_pattern <- "entropy_rs_singleRT"
     files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
-    message(paste0("Found ", length(files), " files."))
+    message(paste0("Found a total of ", length(files), " files. \n"))
     rl <- lapply(files, function(x) {
       if (print_filenames) { print(x) }
-      df <- readRDS(x) 
-      if (ncol(df)==3) {
-        df <- df$coef_df_reml
+      temp <- readRDS(x) 
+      if (ncol(temp)==3) {
+        message(x)
+        df <- temp$fit_df
       }
 #      df <- df %>% filter(effect=="fixed")
       return(df)
     })
-    rddf <- data.table::rbindlist(rl)  %>% unique()  %>% distinct(Time, Freq, term, effect, group, level, .keep_all = TRUE)
+    rddf <- data.table::rbindlist(rl)  %>% unique()  %>% distinct(Time, Freq, .keep_all = TRUE)
     # rddf$node <- sub("_group.*", "", rddf$.filename)
     rddf$alignment <- "RT"
     if (!noclock) {offset = 5} else {offset = 0}
     rddf <- rddf %>% mutate(t  = Time - offset, 
-                            alignment = "rt",
-                            term = str_replace(term, "rt_csv_sc", "RT_t"),
-                            term = str_replace(term, "outcomeReward", "reward_t"),
-                            term = str_replace(term, "v_entropy_wi_change", "entropy_change_t"),
-                            term = str_replace(term, "entropy_change_neg_wi", "entropy_change_neg_t"),
-                            term = str_replace(term, "entropy_change_pos_wi", "entropy_change_pos_t")
-                            
+                            alignment = "rt"
     )
     # saveRDS(rddf, file = "meg_ddf_wholebrain_ec_rs_rt.rds")
     message("Processed RT-aligned, merging.  \n")

@@ -35,9 +35,12 @@ psych::corr.test(as.numeric(trial_df$outcome), trial_df$entropy_change_neg_wi, m
 # 0.39
 psych::corr.test(as.numeric(trial_df$outcome), trial_df$entropy_change_pos_wi, method = "spearman")
 # -0.05
-
 # No major multi-colinearity problems 
 
 # check plots: 
 ggplot(trial_df, aes(run_trial, entropy_change_pos_wi, color = rewFunc)) + geom_smooth()
 ggplot(trial_df, aes(run_trial, entropy_change_neg_wi, color = rewFunc)) + geom_smooth()
+# nothing criminal
+
+# OK to save updated df
+saveRDS(object = trial_df, file = behavioral_data_file)

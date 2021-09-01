@@ -28,7 +28,9 @@ if (debug) {
 alignment <- Sys.getenv("epoch")
 regressor <- Sys.getenv("regressor")
 message(paste0("Regressor: ", regressor))
-if (regressor=="entropy_change" | regressor == "entropy" | regressor=="abs_pe" |
+
+if (regressor=="entropy_change" | regressor == "entropy" | regressor=="abs_pe" | regressor == "entropy_change_full" | regressor == "entropy_change_sel" |
+
     regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg") {
   encode  <- T
   rt_predict <- F
@@ -108,7 +110,8 @@ trial_df <- trial_df %>%
     rt_lag4 = lag(rt_lag3),
     rt_lag5 = lag(rt_lag4),
     entropy_change_pos_lag = lag(entropy_change_pos_wi),
-    entropy_change_neg_lag = lag(entropy_change_neg_wi)
+    entropy_change_neg_lag = lag(entropy_change_neg_wi),
+    entropy_wi_change_lag_full = lag(v_entropy_wi_change_full)
   ) %>% ungroup() %>%
   rowwise() %>% mutate(
     kld4 = get_kldsum(c(rt_lag4, rt_lag3, rt_lag2, rt_lag), c(rt_lag5, rt_lag4, rt_lag3, rt_lag2)),
@@ -142,6 +145,12 @@ if (alignment=="RT" | alignment=="feedback") {
   } else if (regressor=="entropy_change_neg") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + kld3 +
                                   entropy_change_neg_wi + scale(abs_pe) + outcome + (1|Subject) + (entropy_change_neg_wi|Sensor))
+  } else if (regressor == "entropy_change_sel") { # version without subject random slope for speed
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change + scale(abs_pe) + outcome + (1|Subject) + (v_entropy_wi_change|Sensor))
+  } else if (regressor == "entropy_change_full") { # version without subject random slope for speed
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change_full + scale(abs_pe) + outcome + (1|Subject) + (v_entropy_wi_change_full|Sensor))
   }
   rt_predict_formula = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
                                   scale(Pow) * rt_lag_sc + (1|id) + (1|Sensor))
@@ -175,6 +184,15 @@ if (alignment=="RT" | alignment=="feedback") {
   } else if (regressor=="entropy_change_neg") {
     encode_formula_rs =  formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + kld3 +
                                    entropy_change_neg_lag + (1|Subject) + (entropy_change_neg_lag|Sensor))
+                                   v_entropy_wi + (1|Subject) + (v_entropy_wi|Sensor))
+  } else if (regressor=="entropy_change_sel") {
+    encode_formula_rs = formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + 
+                                  v_entropy_wi_change_lag + (1|Subject) + (v_entropy_wi_change_lag|Sensor))
+  } else if (regressor=="entropy_change_full") {
+    encode_formula_rs = formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + 
+                                  entropy_wi_change_lag_full + (1|Subject) + (entropy_wi_change_lag_full|Sensor))
+  
+    
   }
   
   rt_predict_formula = formula( ~ scale(Pow) * rt_lag_sc * reward_lag  + scale(Pow) * scale(rt_vmax)  +
@@ -199,7 +217,8 @@ if (encode) {
   message(paste0("Using RHS formula: ", encode_formula_rs))
   ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs, split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
-                            refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
+                            refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE,
+                                                                                                      calculate =c("parameter_estimates_ml","fit_statistics"))))
   saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_rs_single_", alignment, sourcefilestart))
 }
 # ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
