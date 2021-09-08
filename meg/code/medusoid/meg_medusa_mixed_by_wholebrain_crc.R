@@ -31,8 +31,7 @@ regressor <- Sys.getenv("regressor")
 message(paste0("Regressor: ", regressor))
 
 if (regressor=="entropy_change" | regressor == "entropy" | regressor=="abs_pe" | regressor == "entropy_change_full" | regressor == "entropy_change_sel" |
-
-    regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg") {
+    regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg" | regressor == "vmax") {
   encode  <- T
   rt_predict <- F
 } else if (regressor=="rt") {
@@ -152,6 +151,10 @@ if (alignment=="RT" | alignment=="feedback") {
   } else if (regressor == "entropy_change_full") { # version without subject random slope for speed
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change_full + scale(abs_pe) + outcome + (1|Subject) + (v_entropy_wi_change_full|Sensor))
+  } else if (regressor == "v_max") {
+    # run the strongest version of the model
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + reward_lag +
+                                   v_entropy_wi_change + scale(abs_pe) + outcome + (v_max_wi|Subject) + (v_max_wi|Sensor))
   }
   rt_predict_formula = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
                                   scale(Pow) * rt_lag_sc + (1|id) + (1|Sensor))
@@ -185,14 +188,16 @@ if (alignment=="RT" | alignment=="feedback") {
   } else if (regressor=="entropy_change_neg") {
     encode_formula_rs =  formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + kld3 +
                                    entropy_change_neg_lag + (1|Subject) + (entropy_change_neg_lag|Sensor))
+                                   
   } else if (regressor=="entropy_change_sel") {
     encode_formula_rs = formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + 
                                   v_entropy_wi_change_lag + (1|Subject) + (v_entropy_wi_change_lag|Sensor))
   } else if (regressor=="entropy_change_full") {
     encode_formula_rs = formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + 
                                   entropy_wi_change_lag_full + (1|Subject) + (entropy_wi_change_lag_full|Sensor))
-  
-    
+  } else if (regressor == "v_max") {
+    encode_formula_rs = formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + scale(abs_pe_lag) + v_max_wi + 
+                                  v_entropy_wi_change_lag + (v_max_wi|Subject) + (v_max_wi|Sensor))
   }
   
   rt_predict_formula = formula( ~ scale(Pow) * rt_lag_sc * reward_lag  + scale(Pow) * scale(rt_vmax)  +
