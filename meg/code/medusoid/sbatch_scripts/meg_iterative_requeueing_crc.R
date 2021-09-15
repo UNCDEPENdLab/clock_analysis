@@ -12,9 +12,9 @@ setwd(basedir)
 test <- F
 silent <- F
 # Remaining for pos/neg:
-start_at =   1
+start_at =   1000
 # try and run everything in increments of 125 to track only one parameter.
-end_at = 1849
+end_at = 1428
 step_up <- tibble::tribble(
   ~gb, ~time,
   20, "23:00:00", 

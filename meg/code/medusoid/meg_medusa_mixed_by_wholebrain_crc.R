@@ -31,7 +31,7 @@ regressor <- Sys.getenv("regressor")
 message(paste0("Regressor: ", regressor))
 
 if (regressor=="entropy_change" | regressor == "entropy" | regressor=="abs_pe" | regressor == "entropy_change_full" | regressor == "entropy_change_sel" |
-    regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg" | regressor == "vmax") {
+    regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg" | regressor == "v_max") {
   encode  <- T
   rt_predict <- F
 } else if (regressor=="rt") {
