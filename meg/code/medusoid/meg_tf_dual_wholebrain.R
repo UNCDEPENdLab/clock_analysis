@@ -20,15 +20,15 @@ encode = T
 rt_predict = F
 # regressors = c("reward")
 p_adjust_method = "fdr"
-regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
+regressors = c("v_max")
 # regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 print_filenames = F
 fixed_only = F
-reprocess = F
+reprocess = T
 plots = T
 diags = F
 average = F
-noclock = F
+noclock = T
 setwd(data_dir)
 # plots ----
 if (encode) {  
@@ -47,15 +47,17 @@ if (encode) {
               file_pattern <- ".*kld.*clock"} else if (regressor=="entropy_change_pos") {
                 file_pattern <- ".*entropy_change_pos_rs.*clock"} else if (regressor=="entropy_change_neg") {
                   file_pattern <- ".*entropy_change_neg_rs.*clock"} else if (regressor=="reward") {
-                    file_pattern <- ".*reward_rs.*clock"} 
+                    file_pattern <- ".*reward_rs.*clock"} else if (regressor == "v_max") {
+                      file_pattern <- ".*v_max_rs.*clock"
+                    }
         files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
         message(paste0("Found ", length(files), " files."))
         cl <- lapply(files, function(x) {
           if (print_filenames) { print(x) }
           df <- readRDS(x) 
-          if (ncol(df)==3) {
+          # if (ncol(df)==3) {
             df <- df$coef_df_reml
-          }
+          # }
           #        df <- df %>% filter(effect=="fixed")
           return(df)
         })
@@ -76,7 +78,9 @@ if (encode) {
             file_pattern <- ".*kld.*RT"} else if (regressor=="entropy_change_pos") {
               file_pattern <- ".*entropy_change_pos_rs.*RT"} else if (regressor=="entropy_change_neg") {
                 file_pattern <- ".*entropy_change_neg_rs.*RT"}  else if (regressor=="reward") {
-                  file_pattern <- ".*reward_rs.*RT"} 
+                  file_pattern <- ".*reward_rs.*RT"} else if (regressor=="v_max"){
+                    file_pattern <- ".*v_max_rs.*RT"
+                  }
       # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
       # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
       # file_pattern <- "entropy_rs_singleRT"
@@ -85,9 +89,9 @@ if (encode) {
       rl <- lapply(files, function(x) {
         if (print_filenames) { print(x) }
         df <- readRDS(x) 
-        if (ncol(df)==3) {
+        # if (ncol(df)==3) {
           df <- df$coef_df_reml
-        }
+        # }
         #      df <- df %>% filter(effect=="fixed")
         return(df)
       })
