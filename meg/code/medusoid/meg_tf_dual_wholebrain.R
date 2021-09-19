@@ -18,17 +18,17 @@ clock_epoch_label = "Time relative to clock onset, seconds"
 rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
-# regressors = c("reward")
 p_adjust_method = "fdr"
-regressors = c("v_max")
+regressors = c("reward")
 # regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
-print_filenames = F
+print_filenames = T
 fixed_only = F
 reprocess = T
 plots = T
 diags = F
 average = F
 noclock = T
+freq_threshold = 40 # set to 40 for full-spectrum output
 setwd(data_dir)
 # plots ----
 if (encode) {  
@@ -74,13 +74,14 @@ if (encode) {
       # get RT-aligned
       if (regressor=="entropy_change") {
         file_pattern <- "*_change_rs_single_.*RT"} else if (regressor=="entropy") {
-          file_pattern <- "_entropy_rs.*RT"} else if (regressor=="kld") {
+          file_pattern <- ".*_entropy_rs.*RT"} else if (regressor=="kld") {
             file_pattern <- ".*kld.*RT"} else if (regressor=="entropy_change_pos") {
               file_pattern <- ".*entropy_change_pos_rs.*RT"} else if (regressor=="entropy_change_neg") {
                 file_pattern <- ".*entropy_change_neg_rs.*RT"}  else if (regressor=="reward") {
                   file_pattern <- ".*reward_rs.*RT"} else if (regressor=="v_max"){
-                    file_pattern <- ".*v_max_rs.*RT"
-                  }
+                    file_pattern <- ".*v_max_rs.*RT"} else if (regressor=="abs_pe") {
+                      file_pattern <- ".*abs_pe.*RT"
+                    }
       # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
       # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
       # file_pattern <- "entropy_rs_singleRT"
@@ -89,9 +90,9 @@ if (encode) {
       rl <- lapply(files, function(x) {
         if (print_filenames) { print(x) }
         df <- readRDS(x) 
-        # if (ncol(df)==3) {
+        if (ncol(df)<4) {
           df <- df$coef_df_reml
-        # }
+        }
         #      df <- df %>% filter(effect=="fixed")
         return(df)
       })
@@ -154,12 +155,15 @@ if (encode) {
       message("Plotting.  \n")
       if (!noclock) {offset = 4.3} else {offset = 0.3}
       for (fe in terms) {
-        edf <- ddf %>% filter(term == paste(fe) & effect=="fixed")
+        if (freq_threshold>0) {
+        edf <- ddf %>% filter(term == paste(fe) & effect=="fixed" & Freq < freq_threshold)} else {
+          edf <- ddf %>% filter(term == paste(fe) & effect=="fixed")
+        }
         termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
         message(termstr)
         fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")
         if (!noclock) { # plots both
-          pdf(fname, width = 10, height = 5)
+          pdf(fname, width = 6, height = 3)
           print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) +
                   geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
                   geom_vline(xintercept = -offset + 0.3, lty = "dashed", color = "white", size = 2) +
@@ -173,7 +177,7 @@ if (encode) {
                   labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) + theme_dark())
           dev.off()
           fname = paste("meg_tf_rt_all_dan_FDR_", termstr, ".pdf", sep = "")
-          pdf(fname, width = 10, height = 5)
+          pdf(fname, width = 6, height = 3)
           print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) +
                   geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
                   geom_vline(xintercept = -offset + 0.3, lty = "dashed", color = "white", size = 2) +
