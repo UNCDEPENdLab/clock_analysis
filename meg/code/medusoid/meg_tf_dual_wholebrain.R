@@ -18,12 +18,12 @@ clock_epoch_label = "Time relative to clock onset, seconds"
 rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
-p_adjust_method = "fdr"
+p_adjust_method = "bonferroni"
 regressors = c("reward")
 # regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 print_filenames = T
 fixed_only = F
-reprocess = T
+reprocess = F
 plots = T
 diags = F
 average = F
@@ -199,7 +199,7 @@ if (encode) {
                   scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
                   geom_text(data = edf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
                   geom_text(data = edf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
-                  scale_x_continuous(limits = c(-1,1.7), breaks = c(0, 0.2, 0.4, 0.6, 0.6, 1, 1.5)) +
+                  scale_x_continuous(limits = c(-1,1.3), breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2)) +
                   labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) + theme_dark())
           dev.off() 
           fname = paste("meg_tf_rt_all_dan_FDR_", termstr, ".pdf", sep = "")
@@ -211,7 +211,7 @@ if (encode) {
                   # facet_wrap( ~ node, ncol = 2) + 
                   geom_text(data = edf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
                   geom_text(data = edf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
-                  scale_x_continuous(limits = c(-1,1.7), breaks = c(0, 0.2, 0.4, 0.6, 0.6, 1, 1.5)) +
+                  scale_x_continuous(limits = c(-1,1.3), breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2)) +
                   labs(alpha = expression(italic(p)[corrected])) + ggtitle(paste(termstr)) + theme_dark())    # 
           dev.off() }
       }
