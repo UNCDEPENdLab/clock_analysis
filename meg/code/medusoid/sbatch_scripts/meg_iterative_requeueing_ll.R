@@ -84,7 +84,7 @@ for (ee in epochs) {
             "cd /nas/longleaf/home/dnpl/code/clock_analysis/meg/code/medusoid/sbatch_scripts; ",
             "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
             " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
-            " sbatch_meg_mixed_wholebrain_ll.bash"
+            " sbatch_meg_mixed_wholebrain_ll_single.bash"
           )
         )
         #write compute level to temporary file
@@ -95,8 +95,8 @@ for (ee in epochs) {
          cat(
            paste0(
              "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
-             " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
-             " sbatch_meg_mixed_wholebrain_ll.bash\n"
+            " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
+             " sbatch_meg_mixed_wholebrain_ll_single.bash\n"
            )
          )
 

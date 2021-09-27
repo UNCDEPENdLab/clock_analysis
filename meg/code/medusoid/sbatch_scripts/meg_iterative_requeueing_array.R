@@ -1,9 +1,10 @@
-# R script for handling requeuing
-epochs <- c("RT")
+# R script for running the initial array of MEG TF analysis jobs on CRC
+
+epochs <- c("clock")
 # epochs <- c("RT")
 
 # epochs <- c("RT", "clock")
-regressors_of_interest <- c("v_max")
+regressors_of_interest <- c("rt")
 # regressors_of_interest <- c("entropy_change_sel")
 
 basedir <- "/bgfs/adombrovski/tfr_rds1"
@@ -12,9 +13,9 @@ setwd(basedir)
 test <- F
 silent <- F
 # Remaining for pos/neg:
-start_at =   1000
+start_at =  999
 # try and run everything in increments of 125 to track only one parameter.
-end_at = 1428
+end_at = 1429
 step_up <- tibble::tribble(
   ~gb, ~time,
   20, "23:00:00", 
@@ -59,7 +60,7 @@ for (ee in epochs) {
       print(length(to_run))
     
       for (ff in seq_along(to_run)) {
-        #look at prior compute file
+        #look at prior compute files
 	this_f <- compute_run[ff]
         if (file.exists(compute_run[ff])) {
           curLevel <- as.integer(readLines(this_f, n = 1))
@@ -72,17 +73,25 @@ for (ee in epochs) {
           warning("Maximum compute used for: ", to_run[ff])
           next
         }
-        
-    #  njobs <- as.integer(system("squeue --m | wc -l", intern=T)) - 1
-    #    while (njobs < 1000)
-    #    {
-        if (!test) {
+      }
+
+       if (!test) {
+         if (it_run[1]>1000){
+           start_num = it_run[1] - 1000
+           stop_num = it_run[length(it_run)] - 1000
+           base_num = 1000
+         } else {
+           start_num = it_run[1]
+           stop_num = it_run[length(it_run)]
+           base_num = 0
+         }
         system(
           paste0(
             "cd ~/code/clock_analysis/meg/code/medusoid/sbatch_scripts; ",
-             "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
-            " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
-             " sbatch_meg_mixed_wholebrain.bash"
+	    "sbatch -vvv --array=", start_num, "-", stop_num,
+             " -t ", step_up$time[1], " --mem=", step_up$gb[1], "g",
+            " --export=epoch=", ee, ",regressor=", rr, ",base_num=", base_num,
+             " sbatch_meg_mixed_wholebrain_array.bash |& grep array"
            )
          )
         #write compute level to temporary file
@@ -91,15 +100,19 @@ for (ee in epochs) {
         if (!silent) {
         cat(
            paste0(
-             "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
-            " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
-             " sbatch_meg_mixed_wholebrain.bash\n",
-             to_run[ff], "\n"
+"sbatch -vvv --array=", start_num, "-", stop_num,
+             " -t ", step_up$time[1], " --mem=", step_up$gb[1], "g",
+            " --export=epoch=", ee, ",regressor=", rr, ",base_num=", base_num,
+             " sbatch_meg_mixed_wholebrain_array.bash |& grep array\n"
            )
          )
         }
+    #  njobs <- as.integer(system("squeue --m | wc -l", intern=T)) - 1
+    #    while (njobs < 1000)
+    #    {
+       
         
-      }
+      
       
     } else {
       message("All files have been analyzed for this iteration")
