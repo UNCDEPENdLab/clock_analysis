@@ -1,6 +1,6 @@
 # R script for handling requeuing
 
-epochs <- c("RT", "clock")
+epochs <- c("RT")
 
 # FINISHING UP CLOCK ENTROPY CHANGE
 # epochs <- c( "clock")
@@ -16,13 +16,13 @@ setwd(basedir)
 test <- F
 step_up <- tibble::tribble(
   ~gb, ~time,
-  15, "4-00:00:00",
-  15, "4-00:00:00",
+  25, "4-00:00:00",
+  30, "4-00:00:00",
   30, "4-00:00:00",
   40, "4-00:00:00",
   40, "4-00:00:00", 
+  40, "4-00:00:00",
   70, "4-00:00:00",
-    70, "4-00:00:00",
   70, "4-00:00:00",
   70, "4-00:00:00",
   70, "4-00:00:00"
