@@ -23,8 +23,8 @@ source("~/code/fmri.pipeline/R/mixed_by.R")
 # main analysis analogous to Fig. 4 E-G in NComm 2020
 debug = F #VERY CAREFUL, THIS MAKES IT RUN ON THE FIRST FILE ONLY
 if (debug) {
-  Sys.setenv(epoch = "RT")
-  Sys.setenv(regressor = "entropy_change_sel")
+  Sys.setenv(epoch = "clock")
+  Sys.setenv(regressor = "rt")
 }
 alignment <- Sys.getenv("epoch")
 regressor <- Sys.getenv("regressor")
@@ -42,8 +42,6 @@ cat("Run encoding model: ", as.character(encode), "\n")
 cat("Run rt prediction model: ", as.character(rt_predict), "\n")
 domain = "tf"
 
-if (debug) {alignment = "RT"}
-# bin <- Sys.getenv("bin")
 # 
 stopifnot(alignment %in% c("RT", "clock", "feedback"))
 if (whoami::username()=="ayd1") {
@@ -77,7 +75,7 @@ ncores <- as.numeric(future::availableCores())
 sourcefilestart <- as.numeric(Sys.getenv("sourcefilestart"))
 incrementby <- as.numeric(Sys.getenv("incrementby"))
 if (debug) {
-  sourcefilestart = 1
+  sourcefilestart = 9
 }
 setwd(medusa_dir)
 all_files <- list.files(pattern = "freq_t", full.names = T)
@@ -159,11 +157,18 @@ if (alignment=="RT" | alignment=="feedback") {
   rt_predict_formula = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
                                   scale(Pow) * rt_lag_sc + (1|id) + (1|Sensor))
   # random slopes or RT_csv and RT_Vmax, note: no random slope of power
-  rt_predict_formula_rs = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
-                                     scale(Pow) * rt_lag_sc + 
-                                     (rt_csv_sc + scale(rt_vmax)|id))
+  rt_predict_formula_ri = formula( ~ Pow * rt_csv_sc * outcome  + Pow * rt_vmax  +
+                                     Pow * rt_lag_sc + 
+                                     (1|id))
+
+  rt_predict_formula_rs = formula( ~ Pow * rt_csv_sc * outcome  + Pow * rt_vmax  +
+                                     Pow * rt_lag_sc + 
+                                     (rt_csv_sc + rt_vmax|id))
+
   rt_outcome = "rt_next"
-  
+  emtrend_rt = "rt_csv_sc"
+  emtrend_rtvmax = "rt_vmax"
+  emtrend_reward = "outcome"
 } else if (alignment=="clock") {
   encode_formula = formula(~ rt_vmax + reward_lag + rt_csv_sc + rt_lag_sc + v_max_wi + trial_neg_inv_sc + 
                              v_entropy_wi + v_entropy_wi_change_lag + (1|Subject) + (1|Sensor))
@@ -200,12 +205,17 @@ if (alignment=="RT" | alignment=="feedback") {
                                   v_entropy_wi_change_lag + (v_max_wi|Subject) + (v_max_wi|Sensor))
   }
   
-  rt_predict_formula = formula( ~ scale(Pow) * rt_lag_sc * reward_lag  + scale(Pow) * scale(rt_vmax)  +
+  rt_predict_formula = formula( ~ Pow * rt_lag_sc * reward_lag  + Pow * rt_vmax  +
                                   (1|id) + (1|Sensor))
   # random slopes
-  rt_predict_formula_rs = formula( ~ scale(Pow) * rt_lag_sc * reward_lag  + scale(Pow) * rt_vmax_lag_sc  + scale(Pow) * rt_lag2_sc +
+  rt_predict_formula_ri = formula( ~ Pow * rt_lag_sc * reward_lag  + Pow * rt_vmax_lag_sc  + Pow * rt_lag2_sc +
+                                     (1|id))
+  rt_predict_formula_rs = formula( ~ Pow * rt_lag_sc * reward_lag  + Pow * rt_vmax_lag_sc  + Pow * rt_lag2_sc +
                                      (rt_lag_sc + rt_vmax_lag_sc|id))
   rt_outcome = "rt_csv_sc"
+  emtrend_rt = "rt_lag_sc"
+  emtrend_rtvmax = "rt_vmax_lag_sc"
+  emtrend_reward = "reward_lag"
 }
 
 
@@ -236,9 +246,22 @@ if (rt_predict) {
   splits = c("Time", ".filename", "Freq", "Sensor")
   gc()
   message(paste0("Using RHS formula: ", rt_predict_formula_rs))
-  rdf <- mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = rt_predict_formula_rs , split_on = splits, external_df = trial_df,
+  rsdf <- mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = list(rt_single_sensor_rs=rt_predict_formula_rs), split_on = splits, external_df = trial_df,
                             padjust_by = "term", padjust_method = "BY", ncores = ncores, refit_on_nonconvergence = 5, outcome_transform=trans_func, 
-                            tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE))
-  # rdf$sensor <- readr::parse_number(rdf$.filename)
-  saveRDS(rdf, file = paste0("meg_tf_rdf_wholebrain_rt_rs_single_sensor_", alignment, sourcefilestart))
+                            tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE, calculate=c("parameter_estimates_reml")), 
+                            emtrends_spec = list(
+                              list(outcome=rt_outcome, model_name="rt_single_sensor_rs", var=emtrend_rt, specs=c("Pow", emtrend_reward), at = list(Pow = c(-2,2))), 
+                           list(outcome=rt_outcome, model_name="rt_single_sensor_rs", var=emtrend_rtvmax, specs=c("Pow", emtrend_reward), at = list(Pow = c(-2,2)))
+                          ), scale_predictors = "Pow")
+  saveRDS(rsdf, file = paste0("meg_tf_rdf_wholebrain_rt_rs_single_sensor_", alignment, sourcefilestart))
+  message(paste0("Using RHS formula: ", rt_predict_formula_ri))
+  ridf <- mixed_by(files, outcomes = rt_outcome, rhs_model_formulae = list(rt_single_sensor_ri=rt_predict_formula_ri), split_on = splits, external_df = trial_df,
+                  padjust_by = "term", padjust_method = "BY", ncores = ncores, refit_on_nonconvergence = 5, outcome_transform=trans_func, 
+                  tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE, calculate=c("parameter_estimates_reml")), 
+                  emtrends_spec = list(
+                    list(outcome=rt_outcome, model_name="rt_single_sensor_ri", var=emtrend_rt, specs=c("Pow", emtrend_reward), at = list(Pow = c(-2,2))), 
+                    list(outcome=rt_outcome, model_name="rt_single_sensor_ri", var=emtrend_rtvmax, specs=c("Pow", emtrend_reward), at = list(Pow = c(-2,2)))
+                  ), scale_predictors = "Pow")
+  saveRDS(ridf, file = paste0("meg_tf_rdf_wholebrain_rt_ri_single_sensor_", alignment, sourcefilestart))
+  
 }
