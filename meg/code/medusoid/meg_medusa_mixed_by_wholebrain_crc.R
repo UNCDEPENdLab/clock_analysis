@@ -83,38 +83,39 @@ files <- all_files[sourcefilestart]
 message(paste0("Starting at number ", sourcefilestart))
 message(paste0("Processing file "))
 cat(files)
-# get, preprocess behavioral data
-# for simplicity, change all matrix columns (wi-centering and scaling) to numeric
-get_kldsum <- function(v1, v2) {
-  require(LaplacesDemon)
-  stopifnot(length(v1) == length(v2))
-  if (any(is.na(v1)) || any(is.na(v2))) { return(NA_real_) }
-  kk <- KLD(v1, v2)
-  return(kk$sum.KLD.px.py)
-}
+# get behavioral data
+## preprocessing has already been done, just historic here for documentation
+## for simplicity, change all matrix columns (wi-centering and scaling) to numeric
+# get_kldsum <- function(v1, v2) {
+#   require(LaplacesDemon)
+#   stopifnot(length(v1) == length(v2))
+#   if (any(is.na(v1)) || any(is.na(v2))) { return(NA_real_) }
+#   kk <- KLD(v1, v2)
+#   return(kk$sum.KLD.px.py)
+# }
 trial_df <- readRDS(behavioral_data_file) 
-trial_df <- trial_df %>% 
-  as.data.table(lapply(trial_df, function(x) {
-  if (inherits(x, "matrix")) { x <- as.vector(x) }
-  return(x)
-})) %>%
-  mutate(Subject = as.integer(id), Trial = trial, Run = run) %>% group_by(id, run) %>%
-  mutate(abs_pe_lag = lag(abs_pe),
-         v_entropy_wi_lag = lag(v_entropy_wi),
-         rt_lag2_sc = lag(rt_lag_sc)
-  ) %>% ungroup() %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(
-    rt_lag2 = lag(rt_lag),
-    rt_lag3 = lag(rt_lag2),
-    rt_lag4 = lag(rt_lag3),
-    rt_lag5 = lag(rt_lag4),
-    entropy_change_pos_lag = lag(entropy_change_pos_wi),
-    entropy_change_neg_lag = lag(entropy_change_neg_wi),
-    entropy_wi_change_lag_full = lag(v_entropy_wi_change_full)
-  ) %>% ungroup() %>%
-  rowwise() %>% mutate(
-    kld4 = get_kldsum(c(rt_lag4, rt_lag3, rt_lag2, rt_lag), c(rt_lag5, rt_lag4, rt_lag3, rt_lag2)),
-    kld3 = get_kldsum(c(rt_lag3, rt_lag2, rt_lag), c(rt_lag4, rt_lag3, rt_lag2))) %>%
-  ungroup()
+# trial_df <- trial_df %>% 
+#   as.data.table(lapply(trial_df, function(x) {
+#   if (inherits(x, "matrix")) { x <- as.vector(x) }
+#   return(x)
+# })) %>%
+#   mutate(Subject = as.integer(id), Trial = trial, Run = run) %>% group_by(id, run) %>%
+#   mutate(abs_pe_lag = lag(abs_pe),
+#          v_entropy_wi_lag = lag(v_entropy_wi),
+#          rt_lag2_sc = lag(rt_lag_sc)
+#   ) %>% ungroup() %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(
+#     rt_lag2 = lag(rt_lag),
+#     rt_lag3 = lag(rt_lag2),
+#     rt_lag4 = lag(rt_lag3),
+#     rt_lag5 = lag(rt_lag4),
+#     entropy_change_pos_lag = lag(entropy_change_pos_wi),
+#     entropy_change_neg_lag = lag(entropy_change_neg_wi),
+#     entropy_wi_change_lag_full = lag(v_entropy_wi_change_full)
+#   ) %>% ungroup() %>%
+#   rowwise() %>% mutate(
+#     kld4 = get_kldsum(c(rt_lag4, rt_lag3, rt_lag2, rt_lag), c(rt_lag5, rt_lag4, rt_lag3, rt_lag2)),
+#     kld3 = get_kldsum(c(rt_lag3, rt_lag2, rt_lag), c(rt_lag4, rt_lag3, rt_lag2))) %>%
+#   ungroup()
 
 
 if (alignment=="RT" | alignment=="feedback") {
