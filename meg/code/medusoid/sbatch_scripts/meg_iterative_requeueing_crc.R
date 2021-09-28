@@ -3,18 +3,18 @@ epochs <- c("RT")
 # epochs <- c("RT")
 
 # epochs <- c("RT", "clock")
-regressors_of_interest <- c("v_max")
+regressors_of_interest <- c("abs_pe")
 # regressors_of_interest <- c("entropy_change_sel")
 
 basedir <- "/bgfs/adombrovski/tfr_rds1"
 sbatch_dir <- "~/code/clock_analysis/meg/code/medusoid/sbatch_scripts"
 setwd(basedir)
-test <- F
+test <- T
 silent <- F
 # Remaining for pos/neg:
-start_at =   1000
+start_at =   0
 # try and run everything in increments of 125 to track only one parameter.
-end_at = 1428
+end_at = 2
 step_up <- tibble::tribble(
   ~gb, ~time,
   20, "23:00:00", 
