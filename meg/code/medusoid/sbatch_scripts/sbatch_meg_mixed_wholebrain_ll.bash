@@ -16,4 +16,4 @@
 #export filename=$fid
 
 cd ../ #sbatch scripts live in subdirectory
-R CMD BATCH --no-save --no-restore meg_medusa_mixed_by_wholebrain.R time_freq_${epoch}_${regressor}_${sourcefilestart}_$(date +%s).Rout
+R CMD BATCH --no-save --no-restore meg_medusa_mixed_by_wholebrain_crc.R time_freq_${epoch}_${regressor}_${sourcefilestart}_$(date +%s).Rout

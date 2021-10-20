@@ -9,24 +9,17 @@ epochs <- c("RT")
 # for fourth run, consider increasing number of cores/job to 4 or 8
 # epochs <- c("RT")
 # regressors_of_interest <- c("rt")
-regressors_of_interest <- c("reward", "abs_pe")
+regressors_of_interest <- c("abspe_by_rew")
 basedir <- "/proj/mnhallqlab/projects/Clock_MEG/atfr_rds"
 sbatch_dir <- "/nas/longleaf/home/dnpl/code/clock_analysis/meg/code/medusoid/sbatch_scripts"
 setwd(basedir)
 test <- F
 step_up <- tibble::tribble(
   ~gb, ~time,
-  25, "4-00:00:00",
-  30, "4-00:00:00",
   30, "4-00:00:00",
   40, "4-00:00:00",
-  40, "4-00:00:00", 
-  40, "4-00:00:00",
-  70, "4-00:00:00",
-  70, "4-00:00:00",
-  70, "4-00:00:00",
-  70, "4-00:00:00"
-
+  60, "4-00:00:00",
+  80, "4-00:00:00"
   )
 
 for (ee in epochs) {
@@ -84,7 +77,7 @@ for (ee in epochs) {
             "cd /nas/longleaf/home/dnpl/code/clock_analysis/meg/code/medusoid/sbatch_scripts; ",
             "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
             " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
-            " sbatch_meg_mixed_wholebrain_ll_single.bash"
+            " sbatch_meg_mixed_wholebrain_ll.bash"
           )
         )
         #write compute level to temporary file
@@ -96,11 +89,9 @@ for (ee in epochs) {
            paste0(
              "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
             " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
-             " sbatch_meg_mixed_wholebrain_ll_single.bash\n"
+             " sbatch_meg_mixed_wholebrain_ll.bash\n"
            )
          )
-
-        
       }
       
     } else {
