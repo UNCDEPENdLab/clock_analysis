@@ -93,7 +93,10 @@ cat(files)
 #   kk <- KLD(v1, v2)
 #   return(kk$sum.KLD.px.py)
 # }
-trial_df <- readRDS(behavioral_data_file) 
+trial_df <- readRDS(behavioral_data_file)
+# back-calculate PE_max
+# trial_df <- trial_df %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(pe_max = abs_pe*reward_centered*2,
+#                                                                                       pe_max_sc = scale(pe_max)) %>% ungroup()
 # trial_df <- trial_df %>% 
 #   as.data.table(lapply(trial_df, function(x) {
 #   if (inherits(x, "matrix")) { x <- as.vector(x) }
@@ -137,7 +140,10 @@ if (alignment=="RT" | alignment=="feedback") {
                                   v_entropy_wi_change + abs_pe_sc * reward_centered + (1|Subject) + (reward_centered + abs_pe_sc|Sensor))
     emtrend_encode = "abs_pe_sc"
     emtrend_reward_centered = "reward_centered"
-
+  } else if (regressor=="signed_pe") {
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change + pe_max_sc + (pe_max_sc|Subject) + (pe_max_sc|Sensor))
+    emtrend_encode = "pe_max_sc"
   } else if (regressor=="reward") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change + scale(abs_pe) + outcome + (outcome|Subject) + (outcome|Sensor))
@@ -237,12 +243,15 @@ if (encode) {
   splits = c("Time", ".filename", "Freq")
   gc()
   message(paste0("Using RHS formula: ", encode_formula_rs))
-  ddf <- mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = list(abspeBYrew = encode_formula_rs), split_on = splits,
+  # ddf <- mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = list(abspeBYrew = encode_formula_rs), split_on = splits,
+  ddf <- mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = list(signed_pe = encode_formula_rs), split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE,
                                                                                                       calculate =c("parameter_estimates_ml","fit_statistics")),
-                            emtrends_spec = list(
-                              list(outcome=signal_outcome, model_name="abspeBYrew", var=emtrend_encode, specs=c(emtrend_reward_centered), at = list(reward_centered = c(-0.5, 0.5)))))
+                            # emtrends_spec = list(
+                              # list(outcome=signal_outcome, model_name="abspeBYrew", var=emtrend_encode, specs=c(emtrend_reward_centered), at = list(reward_centered = c(-0.5, 0.5))))
+                  )
+                              
   saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_rs_single_", alignment, sourcefilestart))
 }
 # ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
