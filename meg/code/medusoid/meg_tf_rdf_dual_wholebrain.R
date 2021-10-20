@@ -24,10 +24,11 @@ models = c("random_slope") # random RT intercepts vs. random slopes of RT_lag an
 print_filenames = T # print names of output files being imported
 fixed_only = F # save only fixed effects statistics
 reprocess = F # T = re-import output files, F = used cached .Rds objects
-plots = T
+plots = F
 by_sensor = T # make plots by sensor (otherwise, only average z stat)
-noclock = F # process RT-aligned models only
+noclock = T # process RT-aligned models only
 freq_threshold = 40 # set to 40 for full-spectrum output
+coefficients_only = F # only return df of REML coefficients, not emtrends
 setwd(data_dir)
 # plots ----
 for (model in models) 
@@ -79,19 +80,25 @@ if (reprocess) {
     if (print_filenames) { print(x) }
     df <- readRDS(x) 
     # Brief version, just the z-stats for plotting
-    df1 <- df$emtrends_list$emt_1 %>% 
-      setNames(make.names(names(.), unique = TRUE)) %>%
+    if (coefficients_only) {
+      df <- df$coef_df_reml %>% 
+        setNames(make.names(names(.), unique = TRUE)) %>% filter(effect=="fixed")
       # select(-matches("*\\.[1-9]+$")) %>%
-      rename(emtrend = rt_csv_sc.trend, reward = outcome...2)
-    df1$regressor <- "RT_t"
-    df2 <- df$emtrends_list$emt_2 %>%
-      setNames(make.names(names(.), unique = TRUE)) %>%
-      # select(-matches("*\\.[1-9]+$")) %>% 
-      rename(emtrend  = rt_vmax.trend, reward = outcome...2)
-    df2$regressor <- "RT_Vmax_t"
-    df <- rbind(df1, df2) %>% dplyr::select(Freq, Time, Sensor, Pow, emtrend, std.error, reward, regressor)  %>%
-      pivot_wider(values_from=c(emtrend, std.error), names_from=c(Pow), id_cols=c(Freq, Time, Sensor, reward, regressor)) %>%
-      mutate(zhigh = emtrend_2/std.error_2, zlow=`emtrend_-2`/`std.error_-2`, zdiff=zhigh - zlow)
+    } else {
+      df1 <- df$emtrends_list$emt_1 %>% 
+        setNames(make.names(names(.), unique = TRUE)) %>%
+        # select(-matches("*\\.[1-9]+$")) %>%
+        rename(emtrend = rt_csv_sc.trend, reward = outcome...2)
+      df1$regressor <- "RT_t"
+      df2 <- df$emtrends_list$emt_2 %>%
+        setNames(make.names(names(.), unique = TRUE)) %>%
+        # select(-matches("*\\.[1-9]+$")) %>% 
+        rename(emtrend  = rt_vmax.trend, reward = outcome...2)
+      df2$regressor <- "RT_Vmax_t"
+      df <- rbind(df1, df2) %>% dplyr::select(Freq, Time, Sensor, Pow, emtrend, std.error, reward, regressor)  %>%
+        pivot_wider(values_from=c(emtrend, std.error), names_from=c(Pow), id_cols=c(Freq, Time, Sensor, reward, regressor)) %>%
+        mutate(zhigh = emtrend_2/std.error_2, zlow=`emtrend_-2`/`std.error_-2`, zdiff=zhigh - zlow)
+    }
     # }
     #        df <- df %>% filter(effect=="fixed")
     return(df)
@@ -102,7 +109,7 @@ if (reprocess) {
   if (!noclock) {offset = 4.3} else {offset = 0.3}
   rrdf <- rrdf %>% mutate(t  = Time - offset, 
                           alignment = "RT"
-  ) %>% rename(reward_t = reward)
+  ) # %>% rename(reward_t = reward)
   # saveRDS(rddf, file = "meg_ddf_wholebrain_ec_rs_rt.rds")
   message("Processed RT-aligned, merging.  \n")
   if (!noclock) {rdf <- rbind(crdf, rrdf)} else {
@@ -114,7 +121,10 @@ if (reprocess) {
   # deal with different sensor labels: remove leading 0s
   rdf$Sensor <- as.character(as.integer(rdf$Sensor))
   setwd(plot_dir)
-  saveRDS(rdf, file = paste0("meg_rdf_wholebrain_zstats_", model, ".rds")) 
+  if (coefficients_only) {
+    saveRDS(rdf, file = paste0("meg_rdf_wholebrain_fixef", model, ".rds"))
+  } else {
+    saveRDS(rdf, file = paste0("meg_rdf_wholebrain_zstats_", model, ".rds")) }
 }
 if (!reprocess) {
   setwd(plot_dir)
@@ -167,7 +177,7 @@ if (plots) {
         filename = (paste0("meg_tf_rt_predict_all_", reg, "_", model, ".pdf"))
       }
       pdf(file = filename, height = 3, width = 5)
-      print(ggplot(sdf, aes(t, Freq)) + geom_tile(aes(fill = z_diff_mean, alpha = abs(z_diff_mean)>1), size = .01) +
+      print(ggplot(sdf, aes(t, Freq)) + geom_tile(aes(fill = z_diff_mean, alpha = abs(z_diff_mean)>2), size = .01) +
               geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
               geom_vline(xintercept = -offset + 0.3, lty = "dashed", color = "white", size = 2) +
               geom_vline(xintercept = -offset, lty = "dashed", color = "white", size = 1) +
@@ -184,12 +194,3 @@ if (plots) {
   }
   
 }
-
-# no signal in sensors < 1000: investigate
-setwd(data_dir)
-df <- readRDS("freq_t_all_sensors14.142_1.29.rds")
-
-setwd(plot_dir)
-pdf("Sensor_diagnostics.pdf")
-ggplot(df, aes(Pow)) + geom_histogram() + facet_wrap(~Sensor)
-
