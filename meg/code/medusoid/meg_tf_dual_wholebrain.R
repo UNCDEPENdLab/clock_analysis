@@ -19,7 +19,7 @@ rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
 p_adjust_method = "bonferroni"
-regressors = c("reward")
+regressors = c("abs_pe")
 # regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 print_filenames = T
 fixed_only = F
@@ -28,7 +28,7 @@ plots = T
 diags = F
 average = F
 noclock = T
-freq_threshold = 40 # set to 40 for full-spectrum output
+freq_threshold = 19 # set to 40 Hz (19th band) for full-spectrum output
 setwd(data_dir)
 # plots ----
 if (encode) {  
@@ -156,7 +156,7 @@ if (encode) {
       if (!noclock) {offset = 4.3} else {offset = 0.3}
       for (fe in terms) {
         if (freq_threshold>0) {
-        edf <- ddf %>% filter(term == paste(fe) & effect=="fixed" & Freq < freq_threshold)} else {
+        edf <- ddf %>% filter(term == paste(fe) & effect=="fixed" & as.numeric(Freq) < freq_threshold)} else {
           edf <- ddf %>% filter(term == paste(fe) & effect=="fixed")
         }
         termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
