@@ -30,8 +30,8 @@ alignment <- Sys.getenv("epoch")
 regressor <- Sys.getenv("regressor")
 message(paste0("Regressor: ", regressor))
 
-if (regressor=="entropy_change" | regressor == "entropy" | regressor=="abs_pe" | regressor == "entropy_change_full" | regressor == "entropy_change_sel" |
-    regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg" | regressor == "v_max" | regressor == "abspe_by_rew") {
+if (regressor=="entropy_change" | regressor=="entropy_change_ri" | regressor == "entropy" | regressor=="abs_pe" | regressor == "entropy_change_full" | regressor == "entropy_change_sel" |
+    regressor=="reward" | regressor=="reward_ri" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg" | regressor == "v_max" | regressor == "abspe_by_rew") {
   encode  <- T
   rt_predict <- F
 } else if (regressor=="rt") {
@@ -129,6 +129,9 @@ if (alignment=="RT" | alignment=="feedback") {
   } else if (regressor=="entropy_change") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change + scale(abs_pe) + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|Sensor))
+  } else if (regressor=="entropy_change_ri") {
+    encode_formula_ri = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change + scale(abs_pe) + outcome + (1|Subject) + (v_entropy_wi_change|Sensor))
   } else if (regressor=="abs_pe") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change + scale(abs_pe) + outcome + (scale(abs_pe)|Subject) + (scale(abs_pe)|Sensor))
@@ -141,14 +144,17 @@ if (alignment=="RT" | alignment=="feedback") {
   } else if (regressor=="reward") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change + scale(abs_pe) + outcome + (outcome|Subject) + (outcome|Sensor))
+  } else if (regressor=="reward_ri") {
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change + scale(abs_pe) + outcome + (1|Subject) + (outcome|Sensor))
   } else if (regressor=="entropy_kld") {
-    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + kld3 +
+    encode_formula_ri = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + kld3 +
                                   v_entropy_wi + scale(abs_pe) + outcome + (1|Subject) + (v_entropy_wi|Sensor))
   } else if (regressor=="entropy_change_pos") {
-    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + kld3 +
+    encode_formula_ri = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + kld3 +
                                   entropy_change_pos_wi + scale(abs_pe) + outcome + (1|Subject) + (entropy_change_pos_wi|Sensor))
   } else if (regressor=="entropy_change_neg") {
-    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + kld3 +
+    encode_formula_ri = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + kld3 +
                                   entropy_change_neg_wi + scale(abs_pe) + outcome + (1|Subject) + (entropy_change_neg_wi|Sensor))
   } else if (regressor == "entropy_change_sel") { # version without subject random slope for speed
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
@@ -185,6 +191,9 @@ if (alignment=="RT" | alignment=="feedback") {
   } else if (regressor=="entropy_change") {
     encode_formula_rs = formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + 
                                   v_entropy_wi_change_lag + (v_entropy_wi_change_lag|Subject) + (v_entropy_wi_change_lag|Sensor))
+  } else if (regressor=="entropy_change_ri") {
+    encode_formula_rs = formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + 
+                                  v_entropy_wi_change_lag + (1|Subject) + (v_entropy_wi_change_lag|Sensor))
   } else if (regressor=="abs_pe") {
     encode_formula_rs = formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + scale(abs_pe_lag) +
                                   v_entropy_wi_change_lag + (scale(abs_pe_lag)|Subject) + (scale(abs_pe_lag)|Sensor))
@@ -236,14 +245,20 @@ trans_func <- function(x) { DescTools::Winsorize(x, probs=c(.005, 1), na.rm=TRUE
 if (encode) {
   splits = c("Time", ".filename", "Freq")
   gc()
-  message(paste0("Using RHS formula: ", encode_formula_rs))
-  ddf <- mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = list(abspeBYrew = encode_formula_rs), split_on = splits,
+  if (str_detect(regressor, "_ri")) {
+      message(paste0("Using RHS formula: ", encode_formula_ri))
+  } else {
+  message(paste0("Using RHS formula: ", encode_formula_rs))}
+  ddf <- mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = list(ri = encode_formula_ri), split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE,
-                                                                                                      calculate =c("parameter_estimates_ml","fit_statistics")),
-                            emtrends_spec = list(
-                              list(outcome=signal_outcome, model_name="abspeBYrew", var=emtrend_encode, specs=c(emtrend_reward_centered), at = list(reward_centered = c(-0.5, 0.5)))))
-  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_rs_single_", alignment, sourcefilestart))
+                                                                                                      calculate =c("parameter_estimates_reml","fit_statistics")) #,
+                            #emtrends_spec = list(
+                            #  list(outcome=signal_outcome, model_name="ri", var=emtrend_encode, specs=c(emtrend_reward_centered), at = list(reward_centered = c(-0.5, 0.5))))
+                              )
+    if (str_detect(regressor, "_ri")) {
+  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_single_", alignment, sourcefilestart))} else {
+  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_rs_single_", alignment, sourcefilestart))}
 }
 # ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
 #                          external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,

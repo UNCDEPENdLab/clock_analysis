@@ -9,18 +9,28 @@ epochs <- c("RT")
 # for fourth run, consider increasing number of cores/job to 4 or 8
 # epochs <- c("RT")
 # regressors_of_interest <- c("rt")
-regressors_of_interest <- c("abspe_by_rew")
+regressors_of_interest <- c("entropy_change_ri")
 basedir <- "/proj/mnhallqlab/projects/Clock_MEG/atfr_rds"
 sbatch_dir <- "/nas/longleaf/home/dnpl/code/clock_analysis/meg/code/medusoid/sbatch_scripts"
 setwd(basedir)
 test <- F
+# try random-intercept models with lower RAM
+ if (stringr::str_detect(regressors_of_interest, "_ri")){
+step_up <- tibble::tribble(
+  ~gb, ~time,
+  15, "4-00:00:00",
+  20, "4-00:00:00",
+  30, "4-00:00:00",
+  40, "4-00:00:00"
+  )
+} else {
 step_up <- tibble::tribble(
   ~gb, ~time,
   30, "4-00:00:00",
   40, "4-00:00:00",
   60, "4-00:00:00",
   80, "4-00:00:00"
-  )
+  )}
 
 for (ee in epochs) {
   epochdir <- file.path(basedir, ee)
@@ -38,7 +48,11 @@ for (ee in epochs) {
     if (rr=="rt") {
     out_expect <- file.path(epochdir, paste0("meg_tf_rdf_wholebrain_", rr, "_rs_single_sensor_", ee, fnum))
     } else {
+      if (stringr::str_detect(rr, "_ri")){
+    out_expect <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_single_", ee, fnum))  
+      } else {
      out_expect <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_rs_single_", ee, fnum))  
+      }
     }
     compute_expect <- file.path(epochdir, paste0(".", rr, "_it", fnum, "_compute"))
     out_exists <- file.exists(out_expect)
