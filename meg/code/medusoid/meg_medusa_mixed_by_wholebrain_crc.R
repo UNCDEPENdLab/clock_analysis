@@ -30,8 +30,14 @@ alignment <- Sys.getenv("epoch")
 regressor <- Sys.getenv("regressor")
 message(paste0("Regressor: ", regressor))
 
+<<<<<<< HEAD
 if (regressor=="entropy_change" | regressor=="entropy_change_ri" | regressor == "entropy" | regressor=="abs_pe" | regressor == "entropy_change_full" | regressor == "entropy_change_sel" |
     regressor=="reward" | regressor=="reward_ri" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg" | regressor == "v_max" | regressor == "abspe_by_rew") {
+=======
+if (regressor=="entropy_change" | regressor == "entropy" | regressor=="abs_pe" | regressor == "entropy_change_full" | regressor == "entropy_change_sel" |
+    regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg" | regressor == "v_max" | 
+    regressor == "abspe_by_rew" | regressor = "signed_pe") {
+>>>>>>> e8da4b277597590eccabf5913765b757f3c426d1
   encode  <- T
   rt_predict <- F
 } else if (regressor=="rt") {
@@ -93,7 +99,10 @@ cat(files)
 #   kk <- KLD(v1, v2)
 #   return(kk$sum.KLD.px.py)
 # }
-trial_df <- readRDS(behavioral_data_file) 
+trial_df <- readRDS(behavioral_data_file)
+# back-calculate PE_max
+# trial_df <- trial_df %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(pe_max = abs_pe*reward_centered*2,
+#                                                                                       pe_max_sc = scale(pe_max)) %>% ungroup()
 # trial_df <- trial_df %>% 
 #   as.data.table(lapply(trial_df, function(x) {
 #   if (inherits(x, "matrix")) { x <- as.vector(x) }
@@ -140,7 +149,10 @@ if (alignment=="RT" | alignment=="feedback") {
                                   v_entropy_wi_change + abs_pe_sc * reward_centered + (1|Subject) + (reward_centered + abs_pe_sc|Sensor))
     emtrend_encode = "abs_pe_sc"
     emtrend_reward_centered = "reward_centered"
-
+  } else if (regressor=="signed_pe") {
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change + pe_max_sc + (pe_max_sc|Subject) + (pe_max_sc|Sensor))
+    emtrend_encode = "pe_max_sc"
   } else if (regressor=="reward") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change + scale(abs_pe) + outcome + (outcome|Subject) + (outcome|Sensor))
@@ -259,11 +271,6 @@ if (encode) {
     if (str_detect(regressor, "_ri")) {
   saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_single_", alignment, sourcefilestart))} else {
   saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_rs_single_", alignment, sourcefilestart))}
-}
-# ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
-#                          external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
-#                          refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
-# saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_entropy_rs_", alignment, basename(files)))
 
 
 if (rt_predict) {
