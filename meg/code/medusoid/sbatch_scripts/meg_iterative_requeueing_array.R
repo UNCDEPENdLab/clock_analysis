@@ -1,10 +1,10 @@
 # R script for running the initial array of MEG TF analysis jobs on CRC
 
-epochs <- c("clock")
+epochs <- c("RT")
 # epochs <- c("RT")
 
 # epochs <- c("RT", "clock")
-regressors_of_interest <- c("rt")
+regressors_of_interest <- c("signed_pe")
 # regressors_of_interest <- c("entropy_change_sel")
 
 basedir <- "/bgfs/adombrovski/tfr_rds1"
@@ -13,9 +13,10 @@ setwd(basedir)
 test <- F
 silent <- F
 # Remaining for pos/neg:
-start_at =  1000
+start_at =  0
 # try and run everything in increments of 125 to track only one parameter.
-end_at = 1429
+# final pre-40Hz band: 1429
+end_at = 1430
 step_up <- tibble::tribble(
   ~gb, ~time,
   20, "23:00:00", 
@@ -76,7 +77,7 @@ for (ee in epochs) {
       }
 
        if (!test) {
-         if (it_run[1]>1000){
+         if (it_run[1]>999){
            start_num = it_run[1] - 1000
            stop_num = it_run[length(it_run)] - 1000
            base_num = 1000

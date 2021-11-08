@@ -32,7 +32,7 @@ message(paste0("Regressor: ", regressor))
 
 if (regressor=="entropy_change" | regressor == "entropy" | regressor=="abs_pe" | regressor == "entropy_change_full" | regressor == "entropy_change_sel" |
     regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg" | regressor == "v_max" | 
-    regressor == "abspe_by_rew" | regressor = "signed_pe") {
+    regressor == "abspe_by_rew" | regressor == "signed_pe") {
   encode  <- T
   rt_predict <- F
 } else if (regressor=="rt") {
@@ -143,7 +143,7 @@ if (alignment=="RT" | alignment=="feedback") {
     emtrend_reward_centered = "reward_centered"
   } else if (regressor=="signed_pe") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
-                                  v_entropy_wi_change + pe_max_sc + (pe_max_sc|Subject) + (pe_max_sc|Sensor))
+                                  v_entropy_wi_change + pe_max_sc + (1|Subject) + (pe_max_sc|Sensor))
     emtrend_encode = "pe_max_sc"
   } else if (regressor=="reward") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
@@ -248,7 +248,7 @@ if (encode) {
   ddf <- mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = list(signed_pe = encode_formula_rs), split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE,
-                                                                                                      calculate =c("parameter_estimates_ml","fit_statistics")),
+                                                                                                      calculate =c("parameter_estimates_ml","fit_statistics"))#,
                             # emtrends_spec = list(
                               # list(outcome=signal_outcome, model_name="abspeBYrew", var=emtrend_encode, specs=c(emtrend_reward_centered), at = list(reward_centered = c(-0.5, 0.5))))
                   )
