@@ -19,7 +19,7 @@ rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
 p_adjust_method = "fdr"
-regressors = c("v_max_ri")
+regressors = c("entropy_change_fmri")
 # regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 print_filenames = T
 fixed_only = F
@@ -86,7 +86,9 @@ if (encode) {
                         file_pattern <- ".*signed_pe.*"} else if(regressor =="abspe_by_rew") {
                           file_pattern <- ".*abspe_by_rew.*"} else if (regressor=="v_max_ri"){
                             file_pattern <- ".*v_max_ri.*RT"} else if (regressor == "entropy_change_fmri") {
-                              file_pattern <- ".*entropy_change_fmri.*RT"
+                              file_pattern <- ".*entropy_change_fmri.*RT"} else if (regressor == "entropy_change_fmr1") {
+                                file_pattern <- ".*entropy_change_fmr1.*RT"} else if (regressor == "entropy_change_fmr2") {
+                                  file_pattern <- ".*entropy_change_fmr2.*RT"
                             }
       # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
       # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"

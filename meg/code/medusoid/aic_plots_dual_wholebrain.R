@@ -23,11 +23,12 @@ regressor = c("entropy_change")
 # regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 print_filenames = T
 fixed_only = F
-reprocess = F
+reprocess = T
 plots = T
 aic_threshold = 100
 diags = F
-noclock = F
+noclock = T
+freq_threshold = 18 # set to 40 Hz (18th band) for full-spectrum output
 setwd(data_dir)
 # plots ----
 
@@ -110,10 +111,13 @@ if (reprocess) {
   )
   message("Processed RT-aligned full. \n")
   rddf <- rbind(rfdf, rsdf)
-  if (!noclock) {offset = 4.3} else {offset = 0.3}
+  
   rddf <- rddf %>% mutate(t  = Time - offset
   )
+  if (!noclock) {offset = 4.3
   ddf <- rbind(rddf, cddf)
+  } else {offset = 0.3}
+  ddf <- rddf
   ddf$Freq <- gsub("f_", "", ddf$Freq)
   ddf$Freq <- ordered(as.numeric(substr(as.character(ddf$Freq), 1,4)))    
   ddf <- ddf %>% arrange(Time, Freq, alignment, model) %>% mutate(row = row_number()) 
@@ -145,7 +149,8 @@ if (plots) {
   wddf <- wddf %>% mutate(AIC_diff_thresholded  = case_when(
     abs(AIC_diff) > aic_threshold ~ AIC_diff,
     TRUE ~ NA_real_
-  ))
+  )) %>% filter(as.numeric(Freq)<freq_threshold)
+  if (!noclock){
   pdf(fname, width = 10, height = 5)
   ggplot(wddf , aes(t, Freq)) + geom_tile(aes(fill = AIC_diff_thresholded)) + 
     geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
@@ -159,4 +164,17 @@ if (plots) {
     scale_x_continuous(limits = c(-5.3,1.7), breaks = c(0-offset+0.3, 0.20-offset+0.3, 0.4-offset+0.3, 0.60-offset+0.3, 1-offset+0.3, 1.5-offset+0.3, 0, 1), labels = c("0", "0.2", "0.4", "0.6", "1", "1.5",  "0", "1")) +
     labs(fill = expression("AIC"["full"] - AIC["selective"])) + ggtitle("Evidence of value compression") + theme_dark()
   dev.off()
+  } else { # RT only
+    pdf(fname, width = 7, height = 4.5)
+    ggplot(wddf , aes(t, Freq)) + geom_tile(aes(fill = AIC_diff_thresholded)) + 
+      geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 2) +
+      geom_vline(xintercept = -0.3, lty = "dashed", color = "white", size = 1) +
+      scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+      # facet_wrap( ~ node, ncol = 2) + 
+      geom_text(data = wddf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
+      geom_text(data = wddf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
+      scale_x_continuous(limits = c(-1,1.3), breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2)) +
+      labs(fill = expression("AIC"["full"] - AIC["selective"])) + ggtitle("Evidence of value compression") + theme_dark()
+    dev.off()
+  }
 }
