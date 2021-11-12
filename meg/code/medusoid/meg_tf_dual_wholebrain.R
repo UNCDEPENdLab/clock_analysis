@@ -87,7 +87,8 @@ if (encode) {
                           file_pattern <- ".*abspe_by_rew.*"} else if (regressor=="v_max_ri"){
                             file_pattern <- ".*v_max_ri.*RT"} else if (regressor == "entropy_change_fmri") {
                               file_pattern <- ".*entropy_change_fmri.*RT"} else if (regressor == "entropy_change_fmr1") {
-                                file_pattern <- ".*entropy_change_fmr1.*RT"
+                                file_pattern <- ".*entropy_change_fmr1.*RT"} else if (regressor == "entropy_change_fmr2") {
+                                  file_pattern <- ".*entropy_change_fmr2.*RT"
                             }
       # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
       # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
