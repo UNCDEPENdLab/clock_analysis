@@ -3,7 +3,11 @@
 
 get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
   checkmate::assert_directory_exists(repo_directory)
-  trial_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")) %>%
+  #trial_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")) %>%
+  
+  trial_df <- read.csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_fixedparams_ffx_trial_statistics.csv.gz")) %>%
+    arrange(id, run, trial) %>% # make sure trials are consecutive
+    
     # group-level mutations
     mutate(
       trial = as.numeric(trial),
@@ -26,20 +30,19 @@ get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
     dplyr::mutate(
       rt_swing = abs(c(NA, diff(rt_csv))), # compute rt_swing within run and subject
       rt_swing_lr = abs(log(rt_csv / lag(rt_csv))),
-      clock_onset_prev = dplyr::lag(clock_onset, 1, by = "run"),
+      clock_onset_prev = dplyr::lag(clock_onset, 1, order_by = "run_trial"),
       rt_next = lead(rt_csv),
       rt_next_sc = lead(rt_csv_sc),
       rt_lag = dplyr::lag(rt_csv),
       rt_lag_sc = dplyr::lag(rt_csv_sc),
       rt_lag2_sc = dplyr::lag(rt_csv_sc, 2),
       rt_lag3_sc = dplyr::lag(rt_csv_sc, 3),
-      reward = case_when( # redundant with outcome, but leaving here for now
+      reward = factor(case_when( # redundant with outcome, but leaving here for now
         score_csv > 0 ~ "reward",
         score_csv == 0 ~ "omission",
         TRUE ~ NA_character_
-      ),
+      )),
       last_outcome = dplyr::lag(outcome),
-      reward = as.factor(reward),
       reward_lag = dplyr::lag(reward),
       iti_prev = lag(iti_ideal),
       omission_lag = lag(score_csv == 0),
@@ -91,36 +94,38 @@ get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
     mutate(total_earnings = sum(score_csv)) %>%
     ungroup()
 
+  
   u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz")) %>%
     dplyr::select(
       id, run, trial, u_chosen, u_chosen_quantile, u_chosen_lag,
       u_chosen_quantile_lag, u_chosen_change, u_chosen_quantile_change
     )
 
-  trial_df <- inner_join(trial_df, u_df, by=c("id", "trial", "run"))
+  trial_df <- inner_join(trial_df, u_df, by=c("id", "run", "trial"))
 
-  # load fixed entropy and RT_vmax
-  fixed <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
-  fixed <- as_tibble(fixed) %>%
+  # load full entropy and RT_vmax
+  full <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
+  full <- as_tibble(full) %>%
     dplyr::select(c(id, run, trial, v_entropy, rt_vmax, pe_max)) %>%
-    dplyr::rename(v_entropy_fixed = v_entropy, rt_vmax_fixed = rt_vmax, pe_max_fixed = pe_max) %>%
+    mutate(rt_vmax = rt_vmax / 10) %>% # put into seconds
+    dplyr::rename(v_entropy_full = v_entropy, rt_vmax_full = rt_vmax, pe_max_full = pe_max) %>%
     group_by(id, run) %>%
     mutate(
-      rt_vmax_lag_fixed = lag(rt_vmax_fixed),
-      rt_vmax_change_fixed = rt_vmax_fixed - rt_vmax_lag_fixed,
-      rt_vmax_next_fixed = lead(rt_vmax_fixed),
-      rt_vmax_change_next_fixed = rt_vmax_next_fixed - rt_vmax_fixed,
-      v_entropy_wi_fixed = as.vector(scale(v_entropy_fixed)),
-      v_entropy_wi_lead_fixed = lead(v_entropy_wi_fixed),
-      v_entropy_wi_change_fixed = v_entropy_wi_lead_fixed - v_entropy_wi_fixed,
+      rt_vmax_lag_full = lag(rt_vmax_full),
+      rt_vmax_change_full = rt_vmax_full - rt_vmax_lag_full,
+      rt_vmax_next_full = lead(rt_vmax_full),
+      rt_vmax_change_next_full = rt_vmax_next_full - rt_vmax_full,
+      v_entropy_wi_full = as.vector(scale(v_entropy_full)),
+      v_entropy_wi_lead_full = lead(v_entropy_wi_full),
+      v_entropy_wi_change_full = v_entropy_wi_lead_full - v_entropy_wi_full,
     ) %>%
     ungroup()
 
-  trial_df <- inner_join(trial_df, fixed, by = c("id", "trial", "run"))
+  trial_df <- inner_join(trial_df, full, by = c("id", "run", "trial"))
 
   params <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv"))
 
-  trial_df <- inner_join(trial_df, params, by = c("dataset", "model", "id"))
+  trial_df <- inner_join(trial_df, params, by = c("dataset", "id"))
 
   return(trial_df)
 }
