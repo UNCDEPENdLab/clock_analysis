@@ -24,7 +24,7 @@ models = c("random_slope") # random RT intercepts vs. random slopes of RT_lag an
 print_filenames = T # print names of output files being imported
 fixed_only = F # save only fixed effects statistics
 reprocess = F # T = re-import output files, F = used cached .Rds objects
-plots = F
+plots = T
 by_sensor = T # make plots by sensor (otherwise, only average z stat)
 noclock = T # process RT-aligned models only
 freq_threshold = 40 # set to 40 for full-spectrum output
