@@ -21,10 +21,10 @@ behavioral_data_file <- "~/code/clock_analysis/meg/MEG_n63_behavioral_data_prepr
 source("~/code/fmri.pipeline/R/mixed_by.R")
 
 # main analysis analogous to Fig. 4 E-G in NComm 2020
-debug = F #VERY CAREFUL, THIS MAKES IT RUN ON THE FIRST FILE ONLY
+debug = F #VERY CAREFUL, RUNs ON THE FIRST FILE ONLY !! recommend changing back to "F" immediately after sourcing the script
 if (debug) {
   Sys.setenv(epoch = "RT")
-  Sys.setenv(regressor = "abspe_by_rew")
+  Sys.setenv(regressor = "entropy_change_fmri")
 }
 alignment <- Sys.getenv("epoch")
 regressor <- Sys.getenv("regressor")
@@ -33,8 +33,8 @@ message(paste0("Regressor: ", regressor))
 
 
 if (regressor=="entropy_change" | regressor == "entropy" | regressor=="abs_pe" | regressor == "entropy_change_full" | regressor == "entropy_change_sel" |
-    regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg" | regressor == "v_max" | 
-    regressor == "abspe_by_rew" | regressor = "signed_pe") {
+    regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg" | regressor == "v_max" | regressor == "v_max_ri" | 
+    regressor == "abspe_by_rew" | regressor == "signed_pe" | regressor == "entropy_change_fmri") {
   encode  <- T
   rt_predict <- F
 } else if (regressor=="rt") {
@@ -135,6 +135,9 @@ if (alignment=="RT" | alignment=="feedback") {
   } else if (regressor=="entropy_change") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change + scale(abs_pe) + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|Sensor))
+  } else if (regressor=="entropy_change_fmri") {
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + scale(abs_pe) + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|Sensor))
   } else if (regressor=="entropy_change_ri") {
     encode_formula_ri = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change + scale(abs_pe) + outcome + (1|Subject) + (v_entropy_wi_change|Sensor))
@@ -173,8 +176,12 @@ if (alignment=="RT" | alignment=="feedback") {
                                   v_entropy_wi_change_full + scale(abs_pe) + outcome + (1|Subject) + (v_entropy_wi_change_full|Sensor))
   } else if (regressor == "v_max") {
     # run the strongest version of the model
-    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + reward_lag +
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + reward_lag + v_entropy_wi +
                                    v_entropy_wi_change + scale(abs_pe) + outcome + (v_max_wi|Subject) + (v_max_wi|Sensor))
+  } else if (regressor == "v_max_ri") {
+    # run the strongest version of the model
+    encode_formula_ri = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + reward_lag + v_entropy_wi +
+                                   v_entropy_wi_change + scale(abs_pe) + outcome + (1|Subject) + (v_max_wi|Sensor))
   }
   rt_predict_formula = formula( ~ scale(Pow) * rt_csv_sc * outcome  + scale(Pow) * scale(rt_vmax)  +
                                   scale(Pow) * rt_lag_sc + (1|id) + (1|Sensor))
@@ -228,6 +235,9 @@ if (alignment=="RT" | alignment=="feedback") {
   } else if (regressor == "v_max") {
     encode_formula_rs = formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + scale(abs_pe_lag) + v_max_wi + 
                                   v_entropy_wi_change_lag + (v_max_wi|Subject) + (v_max_wi|Sensor))
+  } else if (regressor == "v_max_ri") {
+    encode_formula_ri = formula(~ reward_lag + rt_csv_sc + rt_lag_sc + trial_neg_inv_sc + scale(abs_pe_lag) + v_max_wi + v_entropy_wi +
+                                  v_entropy_wi_change_lag + (1|Subject) + (v_max_wi|Sensor))
   }
   
   rt_predict_formula = formula( ~ Pow * rt_lag_sc * reward_lag  + Pow * rt_vmax  +
@@ -251,29 +261,20 @@ signal_outcome = "Pow"
 trans_func <- function(x) { DescTools::Winsorize(x, probs=c(.005, 1), na.rm=TRUE) }
 #only drop bottom 0.5%
 
+# whether to run a random-slope or random-intercept model
+
 if (encode) {
   splits = c("Time", ".filename", "Freq")
   gc()
   if (str_detect(regressor, "_ri")) {
       message(paste0("Using RHS formula: ", encode_formula_ri))
+      formula <- encode_formula_ri
   } else {
-  message(paste0("Using RHS formula: ", encode_formula_rs))}
-  ddf <- mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = list(ri = encode_formula_ri), split_on = splits,
+  message(paste0("Using RHS formula: ", encode_formula_rs))
+  formula <- encode_formula_rs}
+  ddf <- mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = list(ri = formula), split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE,
-<<<<<<< HEAD
-                                                                                                      calculate =c("parameter_estimates_ml","fit_statistics"))#,
-                            # emtrends_spec = list(
-                              # list(outcome=signal_outcome, model_name="abspeBYrew", var=emtrend_encode, specs=c(emtrend_reward_centered), at = list(reward_centered = c(-0.5, 0.5))))
-                  )
-                              
-  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_rs_single_", alignment, sourcefilestart))
-}
-# ddf <- as_tibble(mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = encode_formula_rs_e, split_on = splits,
-#                          external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
-#                          refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE)))
-# saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_combined_entropy_rs_", alignment, basename(files)))
-=======
                                                                                                       calculate =c("parameter_estimates_reml","fit_statistics")) #,
                             #emtrends_spec = list(
                             #  list(outcome=signal_outcome, model_name="ri", var=emtrend_encode, specs=c(emtrend_reward_centered), at = list(reward_centered = c(-0.5, 0.5))))
@@ -281,7 +282,7 @@ if (encode) {
     if (str_detect(regressor, "_ri")) {
   saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_single_", alignment, sourcefilestart))} else {
   saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_rs_single_", alignment, sourcefilestart))}
->>>>>>> 0e8ae1bab61822489681694cdc9232b0e7a3572d
+}
 
 
 if (rt_predict) {
