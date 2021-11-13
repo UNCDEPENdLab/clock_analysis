@@ -21,10 +21,10 @@ behavioral_data_file <- "~/code/clock_analysis/meg/MEG_n63_behavioral_data_prepr
 source("~/code/fmri.pipeline/R/mixed_by.R")
 
 # main analysis analogous to Fig. 4 E-G in NComm 2020
-debug = F #VERY CAREFUL, RUNs ON THE FIRST FILE ONLY !! recommend changing back to "F" immediately after sourcing the script
+debug = F #VERY CAREFUL, RUNs ON THE FIRST FILE ONLY !! recommend changing back to "F" *IMMEDIATELY* after sourcing the script
 if (debug) {
   Sys.setenv(epoch = "RT")
-  Sys.setenv(regressor = "entropy_change_fmri")
+  Sys.setenv(regressor = "entropy_change_fmr2")
 }
 alignment <- Sys.getenv("epoch")
 regressor <- Sys.getenv("regressor")
@@ -34,7 +34,8 @@ message(paste0("Regressor: ", regressor))
 
 if (regressor=="entropy_change" | regressor == "entropy" | regressor=="abs_pe" | regressor == "entropy_change_full" | regressor == "entropy_change_sel" |
     regressor=="reward" | regressor=="entropy_kld" | regressor == "entropy_change_pos" | regressor == "entropy_change_neg" | regressor == "v_max" | regressor == "v_max_ri" | 
-    regressor == "abspe_by_rew" | regressor == "signed_pe" | regressor == "entropy_change_fmri") {
+    regressor == "abspe_by_rew" | regressor == "signed_pe" | regressor == "entropy_change_fmri" | regressor == "entropy_change_fmr1" | regressor == "entropy_change_fmr2" | 
+    regressor == "entropy_change_fmri_beta") {
   encode  <- T
   rt_predict <- F
 } else if (regressor=="rt") {
@@ -138,6 +139,12 @@ if (alignment=="RT" | alignment=="feedback") {
   } else if (regressor=="entropy_change_fmri") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + scale(abs_pe) + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|Sensor))
+  } else if (regressor=="entropy_change_fmr1") {
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change*echange_f1_early + scale(abs_pe) + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|Sensor))
+  } else if (regressor=="entropy_change_fmr2") {
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change*echange_f2_late + scale(abs_pe) + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|Sensor))  
   } else if (regressor=="entropy_change_ri") {
     encode_formula_ri = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change + scale(abs_pe) + outcome + (1|Subject) + (v_entropy_wi_change|Sensor))
