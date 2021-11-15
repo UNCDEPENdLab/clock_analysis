@@ -97,7 +97,7 @@ cat(files)
 #   kk <- KLD(v1, v2)
 #   return(kk$sum.KLD.px.py)
 # }
-trial_df <- readRDS(behavioral_data_file)
+trial_df <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_meg", groupfixed = T)
 # back-calculate PE_max
 # trial_df <- trial_df %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(pe_max = abs_pe*reward_centered*2,
 #                                                                                       pe_max_sc = scale(pe_max)) %>% ungroup()
