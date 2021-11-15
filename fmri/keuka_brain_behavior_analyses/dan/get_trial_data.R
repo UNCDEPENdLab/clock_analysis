@@ -10,11 +10,38 @@ get_kldsum <- function(v1, v2) {
   return(kk$sum.KLD.px.py)
 }
 
-get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
+get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfixed=TRUE) {
   checkmate::assert_directory_exists(repo_directory)
-  #trial_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")) %>%
   
-  trial_df <- read.csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_fixedparams_ffx_trial_statistics.csv.gz")) %>%
+  if (dataset=="mmclock_fmri") {
+    trials_per_run=50
+    full <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
+    u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
+    
+    if (isTRUE(groupfixed)) {
+      trial_df <- read.csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_fixedparams_ffx_trial_statistics.csv.gz"))
+    } else {
+      trial_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
+    }
+  } else if (dataset == "mmclock_meg") {
+    trials_per_run <- 63
+    full <- read_csv(file.path(repo_directory, "meg/data/mmclock_meg_fixed_fixedparams_meg_ffx_trial_statistics.csv.gz"))
+    u_df <- read_csv(file.path(repo_directory, "meg/data/mmclock_meg_fixed_uv_ureset_fixedparams_meg_ffx_trial_statistics.csv.gz"))
+    
+    if (isTRUE(groupfixed)) {
+      trial_df <- read.csv(file.path(repo_directory, "meg/data/mmclock_meg_decay_factorize_selective_psequate_fixedparams_meg_ffx_trial_statistics.csv.gz"))
+    } else {
+      trial_df <- read_csv(file.path(repo_directory, "meg/data/mmclock_meg_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
+    }
+    
+    trial_df <- trial_df %>% dplyr::rename(clock_onset = starttime) %>%
+      mutate(iti_ideal = 0, feedback_onset = 0)
+  } else {
+    stop("Don't know how to interpret dataset")
+  }
+  
+  trial_df <- trial_df %>%
+  
     arrange(id, run, trial) %>% # make sure trials are consecutive
     
     # group-level mutations
@@ -128,7 +155,7 @@ get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
       kld4_cum2 = kld4 + kld4_lag
     ) %>% ungroup()
   
-  u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz")) %>%
+  u_df <- u_df %>%
     dplyr::select(
       id, run, trial, u_chosen, u_chosen_quantile, u_chosen_lag,
       u_chosen_quantile_lag, u_chosen_change, u_chosen_quantile_change
@@ -137,7 +164,6 @@ get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
   trial_df <- inner_join(trial_df, u_df, by=c("id", "run", "trial"))
 
   # load full entropy and RT_vmax
-  full <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
   full <- as_tibble(full) %>%
     dplyr::select(c(id, run, trial, v_entropy, rt_vmax, pe_max)) %>%
     mutate(rt_vmax = rt_vmax / 10) %>% # put into seconds
@@ -156,10 +182,17 @@ get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
 
   trial_df <- inner_join(trial_df, full, by = c("id", "run", "trial"))
 
-  params <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")) %>%
-    dplyr::select(-model)
-
-  trial_df <- inner_join(trial_df, params, by = c("dataset", "id"))
+  if (dataset=="mmclock_meg") {
+    trial_df <- trial_df %>% 
+      tidyr::separate(id, sep="_", into=c("id", "date")) %>%
+      mutate(Subject=as.integer(id)) %>%
+      dplyr::select(-feedback_onset, -iti_ideal)
+  }
+  
+  # params <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")) %>%
+  #   dplyr::select(-model)
+  # 
+  # trial_df <- inner_join(trial_df, params, by = c("dataset", "id"))
 
   return(trial_df)
 }
