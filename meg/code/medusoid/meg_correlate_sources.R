@@ -74,14 +74,27 @@ plot(pos_1$avg, neg_2$avg)
 ################
 # same for subjects' betas
 # load  models
-regressors = c("entropy_change", "signed_pe", "v_max")
+regressors = c("entropy_change", "v_max")
+regressors = c("entropy_change_ri", "v_max_ri", "abspe_by_rew", "entropy_change_pos", "kld")
 all_ress <- lapply(regressors, function(rr) {
   cd <- file.path(plot_dir, rr)
   dfile <- file.path(cd, paste0("meg_ddf_wholebrain_", rr, ".rds"))
   ddf <- readRDS(dfile) %>% 
-    filter(effect=="ran_vals" & term != "(Intercept)" & group == "Subject") %>% droplevels() %>% 
+    # filter(effect=="ran_vals" & term != "(Intercept)" & group == "Subject") %>% droplevels() %>% 
+    filter(effect=="ran_vals" & group == "Subject") %>% droplevels() %>% 
     dplyr::select(t, Freq, level, term, estimate, std.error, conf.low, conf.high)
   return(ddf)
 })
 
 all_dfs <- data.table::rbindlist(all_ress)
+
+# extract entropy change "betas"
+ecdf <- all_dfs %>% filter(term=="entropy_change_t")
+ec1 <- all_dfs %>% filter(term == "entropy_change_t" & t >= 0.4 & t <= 0.8 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+  group_by(level) %>%
+  summarize(avg=mean(estimate))
+
+vm1 <- all_dfs %>% filter(term == "v_max_wi" & t >= 0.4 & t <= 0.8 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+  group_by(level) %>%
+  summarize(avg=mean(estimate))
+
