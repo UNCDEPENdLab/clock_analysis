@@ -31,8 +31,8 @@ source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_d
 df <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_meg", groupfixed = T)
 
 # add meg data
-wbetas <- readRDS("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/MEG_betas_wide_echange_vmax_reward_Nov15_2021.RDS")
-
+wbetas <- readRDS("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/MEG_betas_wide_echange_vmax_reward_Nov15_2021.RDS") %>% 
+  mutate(omission_early_theta = - reward_early_theta)
 # merge
 df <- df %>% inner_join(wbetas, by = "id")
 ############# Main analysis using Schaeffer-based betas
@@ -72,13 +72,13 @@ df <- df %>% inner_join(wbetas, by = "id")
 # Effect of DAN on exploration
 mb_meg1 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
                                 v_entropy_wi + entropy_change_late_beta + vmax_late_beta + 
-                                reward_early_theta)^2 + 
+                                  omission_early_theta)^2 + 
                    rt_lag_sc:last_outcome:entropy_change_late_beta + 
                    rt_lag_sc:last_outcome:vmax_late_beta +
-                   rt_lag_sc:last_outcome:reward_early_theta +
+                   rt_lag_sc:last_outcome:omission_early_theta +
                    rt_vmax_lag_sc:trial_neg_inv_sc:entropy_change_late_beta + 
                    rt_vmax_lag_sc:trial_neg_inv_sc:vmax_late_beta  +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:reward_early_theta  +
+                   rt_vmax_lag_sc:trial_neg_inv_sc:omission_early_theta  +
                    (1|id/run), df %>% filter(rt_csv<4000))
 screen.lmerTest(mb_meg1, .01)
 summary(mb_meg1)
@@ -90,21 +90,22 @@ fdf <- fdf %>% mutate(id = as.character(id)) %>% inner_join(wbetas, by = "id")
 
 fmb_meg1 <-  lme4::lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
                                 v_entropy_wi + entropy_change_late_beta + vmax_late_beta + 
-                                reward_early_theta)^2 + 
+                                omission_early_theta)^2 + 
                    rt_lag_sc:last_outcome:entropy_change_late_beta + 
                    rt_lag_sc:last_outcome:vmax_late_beta +
-                   rt_lag_sc:last_outcome:reward_early_theta +
+                   rt_lag_sc:last_outcome:omission_early_theta +
                    rt_vmax_lag_sc:trial_neg_inv_sc:entropy_change_late_beta + 
                    rt_vmax_lag_sc:trial_neg_inv_sc:vmax_late_beta  +
-                   rt_vmax_lag_sc:trial_neg_inv_sc:reward_early_theta  +
+                   rt_vmax_lag_sc:trial_neg_inv_sc:omission_early_theta  +
                    (1|id/run), fdf %>% filter(rt_csv<4000))
 screen.lmerTest(fmb_meg1, .01)
 summary(fmb_meg1)
 Anova(fmb_meg1, '3')
 
-em1 <- as_tibble(emtrends(mb_meg1, var = "rt_lag_sc", specs = c("entropy_change_late_beta", "last_outcome"), at = list(entropy_change_late_beta = c(-.2, .2)), options = list()))
+# late beta to entropy change
+em1 <- as_tibble(emtrends(mb_meg1, data = df,  var = "rt_lag_sc", specs = c("entropy_change_late_beta", "last_outcome"), at = list(entropy_change_late_beta = c(-.14, .12)), options = list()))
 em1$study = 'MEG'
-em2 <- as_tibble(emtrends(fmb_meg1, var = "rt_lag_sc", specs = c("entropy_change_late_beta", "last_outcome"), at = list(entropy_change_late_beta = c(-.2, .2)), options = list()))
+em2 <- as_tibble(emtrends(fmb_meg1, data = fdf, var = "rt_lag_sc", specs = c("entropy_change_late_beta", "last_outcome"), at = list(entropy_change_late_beta = c(-.14, .12)), options = list()))
 em2$study = 'fMRI replication'
 em1 <- rbind(em1, em2)
 p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta))) + 
@@ -123,8 +124,32 @@ p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=as
         axis.text=element_text(size=8.5, color="grey10")) + 
   scale_y_reverse(limits = c(.7, -.1)) 
 
-
-emtrends(ms, ~rewFunc, var="rt_lag_sc")
+# early theta to reward omission
+rem1 <- as_tibble(emtrends(mb_meg1, data = df,  var = "rt_lag_sc", specs = c("omission_early_theta", "last_outcome"), at = list(omission_early_theta = c(-.33, .3)), options = list()))
+rem1$study = 'MEG'
+rem2 <- as_tibble(emtrends(fmb_meg1, data = fdf, var = "rt_lag_sc", specs = c("omission_early_theta", "last_outcome"), at = list(omission_early_theta = c(-.33, .3)), options = list()))
+rem2$study = 'fMRI replication'
+rem1 <- rbind(rem1, rem2)
+rp1 <- ggplot(rem1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) + 
+  #shape = as.factor(pe_f2_hipp), 
+  #p1 <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_wrap(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
+  #scale_shape_manual(values=c(15,16), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("PH RPE\nresponse", palette="Set1", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Reward omission\nearly theta\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.7, -.1)) 
+ggarrange(p1, rp1)
+setwd("~/OneDrive/collected_letters/papers/meg/plots/wholebrain")
+pdf(file = "MEG_to_behavior.pdf", height = 4, width = 12)
+print(ggarrange(p1, rp1))
+dev.off()
 
 ################
 # Entropy change

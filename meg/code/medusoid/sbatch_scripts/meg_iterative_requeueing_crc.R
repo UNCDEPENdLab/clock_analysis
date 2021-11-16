@@ -4,24 +4,24 @@ epochs <- c("RT")
 
 # epochs <- c("RT", "clock")
 #regressors_of_interest <- c("signed_pe")
-regressors_of_interest <- c("entropy_change_fmr1", "entropy_change_fmr2")
+# regressors_of_interest <- c("entropy_change_ri", "entropy_change")
+regressors_of_interest <- c("abspe_by_rew")
 # regressors_of_interest <- c("entropy_change_fmr2")
 
 basedir <- "/bgfs/adombrovski/tfr_rds1"
 sbatch_dir <- "~/code/clock_analysis/meg/code/medusoid/sbatch_scripts"
 setwd(basedir)
 test <- F
-silent <- F
+silent <- T
 # Remaining for abspe_by_rew: so far done only 258 on longleaf, starting at 600 here (check LL periodically as this runs):
-start_at = 1214
+start_at = 0
 # try and run everything in increments of 125 to track only one parameter.
-end_at = 1430
+end_at = 685
 step_up <- tibble::tribble(
   ~gb, ~time,
-  # 20, "23:00:00", 
+  20, "4-00:00:00",
   30, "4-00:00:00",
   40, "4-00:00:00",
-  70, "4-00:00:00",
   70, "4-00:00:00"
 )
 
