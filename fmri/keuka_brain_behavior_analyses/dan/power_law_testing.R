@@ -57,7 +57,7 @@ plot(exp(EV/10), type="l")
 plot(exp(EV/200), type="l")
 
 exp_renorm <- function(x, beta=1) {
-  trans <- exp(x/beta)
+  trans <- exp((x-max(x))/beta) #avoid floating point overflow
 
   #https://www.ibm.com/support/pages/transforming-different-likert-scales-common-scale
   trans <- (max(x) - min(x))*(trans - min(trans))/(max(trans) - min(trans)) + min(x)
@@ -69,7 +69,12 @@ exp_renorm <- function(x, beta=1) {
 }
 
 #plot(exp_renorm(EV), type="l")
-plot(exp_renorm(EV, beta=1), type="l")
+exp_renorm(c(rnorm(100)/1e6, 0), beta=1)
+
+exp_renorm(rep(10, 100), beta=1)
+
+plot(exp_renorm(EV, beta=.1), type="l", main="SCEPTIC value compression", xlab = "Time", ylab = "Value")
+lines(exp_renorm(EV, beta=1), type="l", col="red")
 lines(exp_renorm(EV, beta=3), type="l", col="green")
 lines(exp_renorm(EV, beta=10), type="l", col="gray")
 lines(exp_renorm(EV, beta=20), type="l", col="blue")

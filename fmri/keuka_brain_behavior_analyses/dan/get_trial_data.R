@@ -1,9 +1,49 @@
 # centralize this for readability
 # note that the VBA outputs contain a variable called 'rt_next' that is actually the *lagged* RT -- amend this right off the bat.
 
-get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
+
+get_kldsum <- function(v1, v2) {
+  require(LaplacesDemon)
+  stopifnot(length(v1) == length(v2))
+  if (any(is.na(v1)) || any(is.na(v2))) { return(NA_real_) }
+  kk <- KLD(v1, v2)
+  return(kk$sum.KLD.px.py)
+}
+
+get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfixed=TRUE) {
   checkmate::assert_directory_exists(repo_directory)
-  trial_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz")) %>%
+  
+  if (dataset=="mmclock_fmri") {
+    trials_per_run=50
+    full <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
+    u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
+    
+    if (isTRUE(groupfixed)) {
+      trial_df <- read.csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_fixedparams_ffx_trial_statistics.csv.gz"))
+    } else {
+      trial_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
+    }
+  } else if (dataset == "mmclock_meg") {
+    trials_per_run <- 63
+    full <- read_csv(file.path(repo_directory, "meg/data/mmclock_meg_fixed_fixedparams_meg_ffx_trial_statistics.csv.gz"))
+    u_df <- read_csv(file.path(repo_directory, "meg/data/mmclock_meg_fixed_uv_ureset_fixedparams_meg_ffx_trial_statistics.csv.gz"))
+    
+    if (isTRUE(groupfixed)) {
+      trial_df <- read.csv(file.path(repo_directory, "meg/data/mmclock_meg_decay_factorize_selective_psequate_fixedparams_meg_ffx_trial_statistics.csv.gz"))
+    } else {
+      trial_df <- read_csv(file.path(repo_directory, "meg/data/mmclock_meg_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
+    }
+    
+    trial_df <- trial_df %>% dplyr::rename(clock_onset = starttime) %>%
+      mutate(iti_ideal = 0, feedback_onset = 0)
+  } else {
+    stop("Don't know how to interpret dataset")
+  }
+  
+  trial_df <- trial_df %>%
+  
+    arrange(id, run, trial) %>% # make sure trials are consecutive
+    
     # group-level mutations
     mutate(
       trial = as.numeric(trial),
@@ -26,23 +66,33 @@ get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
     dplyr::mutate(
       rt_swing = abs(c(NA, diff(rt_csv))), # compute rt_swing within run and subject
       rt_swing_lr = abs(log(rt_csv / lag(rt_csv))),
-      clock_onset_prev = dplyr::lag(clock_onset, 1, by = "run"),
+      clock_onset_prev = dplyr::lag(clock_onset, 1, order_by = run_trial),
       rt_next = lead(rt_csv),
       rt_next_sc = lead(rt_csv_sc),
-      rt_lag = dplyr::lag(rt_csv),
+      rt_lag = dplyr::lag(rt_csv, order_by=run_trial),
+      rt_lag2 = dplyr::lag(rt_lag, order_by=run_trial),
+      rt_lag3 = dplyr::lag(rt_lag2, order_by=run_trial),
+      rt_lag4 = dplyr::lag(rt_lag3, order_by=run_trial),
+      rt_lag5 = dplyr::lag(rt_lag4, order_by=run_trial),
       rt_lag_sc = dplyr::lag(rt_csv_sc),
       rt_lag2_sc = dplyr::lag(rt_csv_sc, 2),
       rt_lag3_sc = dplyr::lag(rt_csv_sc, 3),
-      reward = case_when( # redundant with outcome, but leaving here for now
+      reward = factor(case_when( # redundant with outcome, but leaving here for now
         score_csv > 0 ~ "reward",
         score_csv == 0 ~ "omission",
         TRUE ~ NA_character_
-      ),
-      last_outcome = dplyr::lag(outcome),
-      reward = as.factor(reward),
+      )),
+      last_outcome = dplyr::lag(outcome, order_by=run_trial),
+      outcome_lag = dplyr::lag(outcome, order_by=run_trial), # synonym, but last_outcome is used in some code...
+      outcome_lag2 = dplyr::lag(outcome_lag),
       reward_lag = dplyr::lag(reward),
       iti_prev = lag(iti_ideal),
-      omission_lag = lag(score_csv == 0),
+      outcome_lag = dplyr::lag(outcome, order_by=run_trial),
+      omission_lag = dplyr::lag(score_csv == 0, order_by=run_trial),
+      omission_lag2 = dplyr::lag(omission_lag),
+      omission_lag3 = dplyr::lag(omission_lag2),
+      omission_lag4 = dplyr::lag(omission_lag3),
+      omission_lag5 = dplyr::lag(omission_lag4),
       rt_vmax_lag = lag(rt_vmax),
       rt_vmax_lag_sc = lag(rt_vmax_sc),
       rt_vmax_change = rt_vmax - rt_vmax_lag,
@@ -51,6 +101,7 @@ get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
       v_entropy_wi = as.vector(scale(v_entropy)),
       v_entropy_wi_lead = lead(v_entropy_wi),
       v_entropy_wi_change = v_entropy_wi_lead - v_entropy_wi,
+      v_entropy_wi_change_lag = lag(v_entropy_wi_change),
       entropy_split = case_when(
         v_entropy_wi > mean(v_entropy_wi, na.rm=TRUE) ~ "high",
         v_entropy_wi < mean(v_entropy_wi, na.rm=TRUE) ~ "low",
@@ -64,13 +115,13 @@ get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
       pe_max_lag = lag(pe_max),
       pe_max_lag2 = lag(pe_max_lag),
       pe_max_lag3 = lag(pe_max_lag2),
-      abs_pe_max_lag = abs(pe_max_lag),
+      abs_pe = abs(pe_max),
+      abs_pe_lag = lag(abs_pe),
       abs_pe_f = case_when(
-        abs(pe_max) > mean(abs(pe_max)) ~ "high abs. PE",
-        abs(pe_max) < mean(abs(pe_max)) ~ "low abs. PE",
+        abs_pe > mean(abs_pe) ~ "high abs. PE",
+        abs_pe < mean(abs_pe) ~ "low abs. PE",
         TRUE ~ NA_character_
       ),
-      abs_pe = abs(pe_max),
       rt_vmax_change = rt_vmax - rt_vmax_lag,
       feedback_onset_prev = lag(feedback_onset),
       v_max_above_median = v_max > median(na.omit(v_max)),
@@ -84,43 +135,66 @@ get_trial_data <- function(repo_directory=NULL, trials_per_run=50) {
       ),
       first10 = run_trial < 11,
       rt_vmax_cum = clock_onset + rt_vmax,
-      rt_vmax_cum_lag <- lag(rt_vmax_cum)
+      rt_vmax_cum_lag = lag(rt_vmax_cum)
     ) %>%
     ungroup() %>%
     group_by(id) %>%
     mutate(total_earnings = sum(score_csv)) %>%
     ungroup()
-
-  u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz")) %>%
+  
+  # handle KLD calculations
+  trial_df <- trial_df %>% rowwise() %>% 
+    mutate(
+      kld4 = get_kldsum(c(rt_lag4, rt_lag3, rt_lag2, rt_lag), c(rt_lag5, rt_lag4, rt_lag3, rt_lag2)),
+      kld3 = get_kldsum(c(rt_lag3, rt_lag2, rt_lag), c(rt_lag4, rt_lag3, rt_lag2))
+    ) %>%
+    ungroup() %>% 
+    group_by(id, run) %>%
+    mutate(
+      kld3_lag = dplyr::lag(kld3, order_by=run_trial),
+      kld4_lag = dplyr::lag(kld4, order_by=run_trial),
+      kld3_cum2 = kld3 + kld3_lag,
+      kld4_cum2 = kld4 + kld4_lag
+    ) %>% ungroup()
+  
+  u_df <- u_df %>%
     dplyr::select(
       id, run, trial, u_chosen, u_chosen_quantile, u_chosen_lag,
       u_chosen_quantile_lag, u_chosen_change, u_chosen_quantile_change
     )
 
-  trial_df <- inner_join(trial_df, u_df, by=c("id", "trial", "run"))
+  trial_df <- inner_join(trial_df, u_df, by=c("id", "run", "trial"))
 
-  # load fixed entropy and RT_vmax
-  fixed <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
-  fixed <- as_tibble(fixed) %>%
+  # load full entropy and RT_vmax
+  full <- as_tibble(full) %>%
     dplyr::select(c(id, run, trial, v_entropy, rt_vmax, pe_max)) %>%
-    dplyr::rename(v_entropy_fixed = v_entropy, rt_vmax_fixed = rt_vmax, pe_max_fixed = pe_max) %>%
+    mutate(rt_vmax = rt_vmax / 10) %>% # put into seconds
+    dplyr::rename(v_entropy_full = v_entropy, rt_vmax_full = rt_vmax, pe_max_full = pe_max) %>%
     group_by(id, run) %>%
     mutate(
-      rt_vmax_lag_fixed = lag(rt_vmax_fixed),
-      rt_vmax_change_fixed = rt_vmax_fixed - rt_vmax_lag_fixed,
-      rt_vmax_next_fixed = lead(rt_vmax_fixed),
-      rt_vmax_change_next_fixed = rt_vmax_next_fixed - rt_vmax_fixed,
-      v_entropy_wi_fixed = as.vector(scale(v_entropy_fixed)),
-      v_entropy_wi_lead_fixed = lead(v_entropy_wi_fixed),
-      v_entropy_wi_change_fixed = v_entropy_wi_lead_fixed - v_entropy_wi_fixed,
+      rt_vmax_lag_full = lag(rt_vmax_full),
+      rt_vmax_change_full = rt_vmax_full - rt_vmax_lag_full,
+      rt_vmax_next_full = lead(rt_vmax_full),
+      rt_vmax_change_next_full = rt_vmax_next_full - rt_vmax_full,
+      v_entropy_wi_full = as.vector(scale(v_entropy_full)),
+      v_entropy_wi_lead_full = lead(v_entropy_wi_full),
+      v_entropy_wi_change_full = v_entropy_wi_lead_full - v_entropy_wi_full,
     ) %>%
     ungroup()
 
-  trial_df <- inner_join(trial_df, fixed, by = c("id", "trial", "run"))
+  trial_df <- inner_join(trial_df, full, by = c("id", "run", "trial"))
 
-  params <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv"))
-
-  trial_df <- inner_join(trial_df, params, by = c("dataset", "model", "id"))
+  if (dataset=="mmclock_meg") {
+    trial_df <- trial_df %>% 
+      tidyr::separate(id, sep="_", into=c("id", "date")) %>%
+      mutate(Subject=as.integer(id)) %>%
+      dplyr::select(-feedback_onset, -iti_ideal)
+  }
+  
+  # params <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")) %>%
+  #   dplyr::select(-model)
+  # 
+  # trial_df <- inner_join(trial_df, params, by = c("dataset", "id"))
 
   return(trial_df)
 }

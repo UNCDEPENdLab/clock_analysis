@@ -18,17 +18,18 @@ clock_epoch_label = "Time relative to clock onset, seconds"
 rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
-p_adjust_method = "bonferroni"
-regressors = c("reward")
-# regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
+p_adjust_method = "fdr"
+regressors = c("entropy_change_fmri_ppc")
+# regressors = c("entropy", "kld","entropy_change_ri", "entropy_change_fmri", "entropy_change_fmr1", "entropy_change_fmr2"
+# "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 print_filenames = T
 fixed_only = F
-reprocess = F
+reprocess = T
 plots = T
 diags = F
 average = F
 noclock = T
-freq_threshold = 40 # set to 40 for full-spectrum output
+freq_threshold = 18 # set to 40 Hz (18th band) for full-spectrum output
 setwd(data_dir)
 # plots ----
 if (encode) {  
@@ -48,15 +49,17 @@ if (encode) {
                 file_pattern <- ".*entropy_change_pos_rs.*clock"} else if (regressor=="entropy_change_neg") {
                   file_pattern <- ".*entropy_change_neg_rs.*clock"} else if (regressor=="reward") {
                     file_pattern <- ".*reward_rs.*clock"} else if (regressor == "v_max") {
-                      file_pattern <- ".*v_max_rs.*clock"
-                    }
+                      file_pattern <- ".*v_max_rs.*clock"} else if (regressor == "v_max_ri") {
+                        file_pattern <- ".*v_max_ri.*clock"} else if (regressor == "entropy_change_fmri") {
+                          file_pattern <- ".*entropy_change_fmri.*clock"
+                        }
         files <-  gsub("//", "/", list.files(data_dir, pattern = file_pattern, full.names = F))
         message(paste0("Found ", length(files), " files."))
         cl <- lapply(files, function(x) {
           if (print_filenames) { print(x) }
           df <- readRDS(x) 
           # if (ncol(df)==3) {
-            df <- df$coef_df_reml
+          df <- df$coef_df_reml
           # }
           #        df <- df %>% filter(effect=="fixed")
           return(df)
@@ -73,15 +76,23 @@ if (encode) {
         message("Processed clock-aligned. \n")}
       # get RT-aligned
       if (regressor=="entropy_change") {
-        file_pattern <- "*_change_rs_single_.*RT"} else if (regressor=="entropy") {
-          file_pattern <- ".*_entropy_rs.*RT"} else if (regressor=="kld") {
-            file_pattern <- ".*kld.*RT"} else if (regressor=="entropy_change_pos") {
-              file_pattern <- ".*entropy_change_pos_rs.*RT"} else if (regressor=="entropy_change_neg") {
-                file_pattern <- ".*entropy_change_neg_rs.*RT"}  else if (regressor=="reward") {
-                  file_pattern <- ".*reward_rs.*RT"} else if (regressor=="v_max"){
-                    file_pattern <- ".*v_max_rs.*RT"} else if (regressor=="abs_pe") {
-                      file_pattern <- ".*abs_pe.*RT"
-                    }
+        file_pattern <- "*_change_rs_single_.*RT"}  else if (regressor=="entropy_change_ri") {
+          file_pattern <- ".*_entropy_change_ri.*RT"}  else if (regressor=="entropy") {
+            file_pattern <- ".*_entropy_rs.*RT"} else if (regressor=="kld") {
+              file_pattern <- ".*kld.*RT"} else if (regressor=="entropy_change_pos") {
+                file_pattern <- ".*entropy_change_pos_rs.*RT"} else if (regressor=="entropy_change_neg") {
+                  file_pattern <- ".*entropy_change_neg_rs.*RT"}  else if (regressor=="reward") {
+                    file_pattern <- ".*reward_rs.*RT"} else if (regressor=="v_max"){
+                      file_pattern <- ".*v_max_rs.*RT"} else if (regressor=="abs_pe") {
+                        file_pattern <- ".*abs_pe.*RT"} else if(regressor =="signed_pe") {
+                          file_pattern <- ".*signed_pe.*"} else if(regressor =="abspe_by_rew") {
+                            file_pattern <- ".*abspe_by_rew.*"} else if (regressor=="v_max_ri"){
+                              file_pattern <- ".*v_max_ri.*RT"} else if (regressor == "entropy_change_fmri") {
+                                file_pattern <- ".*entropy_change_fmri.*RT"} else if (regressor == "entropy_change_fmr1") {
+                                  file_pattern <- ".*entropy_change_fmr1.*RT"} else if (regressor == "entropy_change_fmr2") {
+                                    file_pattern <- ".*entropy_change_fmr2.*RT"} else if (regressor == "entropy_change_fmri_ppc") {
+                                      file_pattern <- ".*entropy_change_fmri_ppc.*RT"
+                                  }
       # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
       # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
       # file_pattern <- "entropy_rs_singleRT"
@@ -90,13 +101,14 @@ if (encode) {
       rl <- lapply(files, function(x) {
         if (print_filenames) { print(x) }
         df <- readRDS(x) 
-        if (ncol(df)<4) {
-          df <- df$coef_df_reml
-        }
+        if(class(df) == "list") {df <- df$coef_df_reml}
+        # if (ncol(df)<4) {
+        #   df <- df$coef_df_reml
+        # }
         #      df <- df %>% filter(effect=="fixed")
         return(df)
       })
-      rddf <- data.table::rbindlist(rl)  %>% unique()  %>% distinct(Time, Freq, term, effect, group, level, .keep_all = TRUE)
+      rddf <- data.table::rbindlist(rl)  %>% unique()  %>% distinct(Time, Freq, term, effect, group, level, rhs, .keep_all = TRUE)
       # rddf$node <- sub("_group.*", "", rddf$.filename)
       rddf$alignment <- "RT"
       if (!noclock) {offset = 4.3} else {offset = 0.3}
@@ -140,13 +152,13 @@ if (encode) {
         ddf <- ddf  %>% ungroup() %>% 
           filter((Time < 1.5 & Time > -1 & alignment=="rt") | (Time < 1.5 & Time > -2 & alignment=="clock")) %>% 
           group_by(term, alignment) %>% mutate(p_fdr = p.adjust(p.value, method = p_adjust_method),
-                                                                           p_level_fdr = as.factor(case_when(
-                                                                             # p_fdr > .1 ~ '0',
-                                                                             # p_fdr < .1 & p_fdr > .05 ~ '1',
-                                                                             p_fdr > .05 ~ '1',
-                                                                             p_fdr < .05 & p_fdr > .01 ~ '2',
-                                                                             p_fdr < .01 & p_fdr > .001 ~ '3',
-                                                                             p_fdr <.001 ~ '4'))) %>% ungroup()
+                                               p_level_fdr = as.factor(case_when(
+                                                 # p_fdr > .1 ~ '0',
+                                                 # p_fdr < .1 & p_fdr > .05 ~ '1',
+                                                 p_fdr > .05 ~ '1',
+                                                 p_fdr < .05 & p_fdr > .01 ~ '2',
+                                                 p_fdr < .01 & p_fdr > .001 ~ '3',
+                                                 p_fdr <.001 ~ '4'))) %>% ungroup()
         ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
         ddf$`p, FDR-corrected` = ddf$p_level_fdr
       }
@@ -156,9 +168,9 @@ if (encode) {
       if (!noclock) {offset = 4.3} else {offset = 0.3}
       for (fe in terms) {
         if (freq_threshold>0) {
-        edf <- ddf %>% filter(term == paste(fe) & effect=="fixed" & Freq < freq_threshold)} else {
-          edf <- ddf %>% filter(term == paste(fe) & effect=="fixed")
-        }
+          edf <- ddf %>% filter(term == paste(fe) & effect=="fixed" & as.numeric(Freq) < freq_threshold)} else {
+            edf <- ddf %>% filter(term == paste(fe) & effect=="fixed")
+          }
         termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
         message(termstr)
         fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")

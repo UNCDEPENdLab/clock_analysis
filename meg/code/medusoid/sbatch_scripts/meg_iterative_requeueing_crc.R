@@ -3,21 +3,23 @@ epochs <- c("RT")
 # epochs <- c("RT")
 
 # epochs <- c("RT", "clock")
-regressors_of_interest <- c("abs_pe")
-# regressors_of_interest <- c("entropy_change_sel")
+#regressors_of_interest <- c("signed_pe")
+# regressors_of_interest <- c("entropy_change_ri", "entropy_change")
+regressors_of_interest <- c("abspe_by_rew")
+# regressors_of_interest <- c("entropy_change_fmr2")
 
 basedir <- "/bgfs/adombrovski/tfr_rds1"
 sbatch_dir <- "~/code/clock_analysis/meg/code/medusoid/sbatch_scripts"
 setwd(basedir)
-test <- T
-silent <- F
-# Remaining for pos/neg:
-start_at =   0
+test <- F
+silent <- T
+# Remaining for abspe_by_rew: so far done only 258 on longleaf, starting at 600 here (check LL periodically as this runs):
+start_at = 0
 # try and run everything in increments of 125 to track only one parameter.
-end_at = 2
+end_at = 685
 step_up <- tibble::tribble(
   ~gb, ~time,
-  20, "23:00:00", 
+  20, "4-00:00:00",
   30, "4-00:00:00",
   40, "4-00:00:00",
   70, "4-00:00:00"
@@ -32,11 +34,13 @@ for (ee in epochs) {
   #this_f <- "tempfile.csv"
   #writeLines(as.character(1), this_f)
   for (rr in regressors_of_interest) {
+    if (stringr::str_detect(rr, "_ri")) {
+    out_exists <- file.exists(pattern = paste0("meg_mixed_by_tf_ddf_wholebrain_", rr), path = epochdir)
+    out_expect <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_single_", ee, fnum))} else {
     out_exists <- file.exists(pattern = paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_rs.*"), path = epochdir)
-    #out_expect1 <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_rs_single", ee, fnum))
-    #out_expect2 <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_combined_", rr, "_rs_", ee,"_", basename(flist[fnum])))
-    #out_exists <- file.exists(out_expect1) | file.exists(out_expect2)
     out_expect <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_rs_single_", ee, fnum))
+
+    }
 
     compute_expect <- file.path(epochdir, paste0(".", rr, "_it", fnum, "_compute"))
     out_exists <- file.exists(out_expect)

@@ -269,7 +269,7 @@ dev.off()
 
 # reward
 pdf('fb_medusa_reward.pdf', height = 8, width = 8)
-ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(as.numeric(evt_time_f), decon_interp, lty = rewom)) + 
+ggplot(fb_comb %>% filter (iti_prev>1 & iti_ideal>8 & evt_time < 9), aes(as.numeric(evt_time_f), decon_interp, lty = rew_om)) + 
   geom_smooth(method = "gam", formula = y~splines::ns(x,3), se = T, size = .75) + facet_wrap(~label)
 dev.off()
 
