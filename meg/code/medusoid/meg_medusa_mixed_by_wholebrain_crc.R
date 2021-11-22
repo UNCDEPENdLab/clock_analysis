@@ -23,7 +23,7 @@ source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_d
 
 
 # main analysis analogous to Fig. 4 E-G in NComm 2020
-debug = F #VERY CAREFUL, RUNs ON THE FIRST FILE ONLY !! recommend changing back to "F" *IMMEDIATELY* after sourcing the script
+debug = T #VERY CAREFUL, RUNs ON THE FIRST FILE ONLY !! recommend changing back to "F" *IMMEDIATELY* after sourcing the script
 if (debug) {
   Sys.setenv(epoch = "RT")
   Sys.setenv(regressor = "abspe_by_rew")

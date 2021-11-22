@@ -7,7 +7,7 @@ library(data.table)
 repo_directory <- "~/code/clock_analysis"
 behavioral_data_file <- "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
 
-trial_df <- readRDS(behavioral_data_file)
+# trial_df <- readRDS(behavioral_data_file)
 
 # read in the betas
 labels <- as_tibble(read_table2("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_DAN_order_manual.txt", col_names = F)) %>% 
@@ -38,7 +38,8 @@ fp.fa <- psych::fa(r = fp, nfactors=2, rotate = "oblimin", fm = "ml")
 
 # hbetas <- read_csv("/Volumes/GoogleDrive/.shortcut-targets-by-id/1ukjK6kTlaR-LXIqX6nylYOPWu1j3XGyF/SCEPTIC_fMRI/whole_brain/ebetas/L1m-entropy/Schaefer_DorsAttn_2.3mm_cope_l2.csv.gz")
 
-# just take the regional means for now
+# save parcel-wise and regional betas
+saveRDS(wbetas, file = "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/fmri_ec_betas.RDS")
 
-trial_df <- inner_join(trial_df, wbetas %>% select(c(ppc_ec_beta, pfc_ec_beta, mt_ec_beta, id)), by = "id")
-saveRDS(trial_df, file = behavioral_data_file)
+fmri_betas <- inner_join(trial_df, wbetas %>% select(c(ppc_ec_beta, pfc_ec_beta, mt_ec_beta, id)), by = "id")
+# saveRDS(trial_df, file = behavioral_data_file)
