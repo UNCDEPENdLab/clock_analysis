@@ -82,7 +82,9 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
         score_csv == 0 ~ "omission",
         TRUE ~ NA_character_
       )),
-      last_outcome = dplyr::lag(outcome),
+      last_outcome = dplyr::lag(outcome, order_by=run_trial),
+      outcome_lag = dplyr::lag(outcome, order_by=run_trial), # synonym, but last_outcome is used in some code...
+      outcome_lag2 = dplyr::lag(outcome_lag),
       reward_lag = dplyr::lag(reward),
       iti_prev = lag(iti_ideal),
       outcome_lag = dplyr::lag(outcome, order_by=run_trial),

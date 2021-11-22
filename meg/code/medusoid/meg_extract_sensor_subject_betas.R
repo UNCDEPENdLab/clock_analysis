@@ -60,11 +60,11 @@ ggplot(pe_echange, aes(x=t, y=Freq, fill=r)) + geom_tile() + scale_fill_viridis_
 hist(pe_echange$r)
 
 ###
-pos_1 <- all_df %>% filter(term != "abs_pe_sc" & t >= -2 & t <= -1.8 & Freq >= "16.8") %>% # & Freq < "16.8"
+pos_1 <- all_df %>% filter(term == "abs_pe_sc" & t >= .2 & t <= .4 & Freq >= "4.2" & Freq <= "7") %>%
   group_by(level) %>%
   summarize(avg=mean(estimate))
 
-neg_2 <- all_df %>% filter(term != "abs_pe_sc" & t >= .4 & t <= .8 & Freq >= "8.4" & Freq <= "16.8") %>%
+neg_2 <- all_df %>% filter(term == "abs_pe_sc" & t >= .4 & t <= .8 & Freq >= "8.4" & Freq <= "16.8") %>%
   group_by(level) %>%
   summarize(avg=mean(estimate))
 
