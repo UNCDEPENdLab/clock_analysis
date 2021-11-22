@@ -21,7 +21,7 @@ behavioral_data_file <- "~/code/clock_analysis/meg/MEG_n63_behavioral_data_prepr
 source("~/code/fmri.pipeline/R/mixed_by.R")
 
 # main analysis analogous to Fig. 4 E-G in NComm 2020
-debug = F #VERY CAREFUL, RUNs ON THE FIRST FILE ONLY !! recommend changing back to "F" *IMMEDIATELY* after sourcing the script
+debug = T #VERY CAREFUL, RUNs ON THE FIRST FILE ONLY !! recommend changing back to "F" *IMMEDIATELY* after sourcing the script
 if (debug) {
   Sys.setenv(epoch = "RT")
   Sys.setenv(regressor = "entropy_change_fmr2")
