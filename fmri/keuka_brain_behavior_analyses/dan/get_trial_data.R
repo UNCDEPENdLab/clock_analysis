@@ -130,6 +130,8 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
       pe_max_lag2 = lag(pe_max_lag),
       pe_max_lag3 = lag(pe_max_lag2),
       abs_pe = abs(pe_max),
+      abs_pe_c = abs_pe - mean(abs_pe, na.rm=TRUE), # run-centered absolute PE
+      abspexrew = abs_pe_c*rew_om_c, # interaction of abs PE and centered reward (0.5/-0.5 coding)
       abs_pe_lag = lag(abs_pe),
       abs_pe_f = case_when(
         abs_pe > mean(abs_pe) ~ "high abs. PE",
