@@ -14,7 +14,7 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
   checkmate::assert_directory_exists(repo_directory)
   
   if (dataset=="mmclock_fmri") {
-    trials_per_run=50
+    trials_per_run <- 50
     full <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
     u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
     
@@ -58,7 +58,9 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
       rewFunc = relevel(rewFunc, ref = "DEV"), # switch DEV to reference
       outcome = case_when(
         score_csv > 0 ~ 'Reward',
-        score_csv == 0 ~ "Omission")
+        score_csv == 0 ~ "Omission"),
+      rew_om = as.numeric(score_csv > 0), # 1/0 representation for fMRI GLMs
+      rew_om_c = rew_om - 0.5 # effect coding variant for interactions
     ) %>%
 
     #run-level mutations
@@ -100,8 +102,20 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
       rt_vmax_change_next = rt_vmax_next - rt_vmax,
       v_entropy_wi = as.vector(scale(v_entropy)),
       v_entropy_wi_lead = lead(v_entropy_wi),
-      v_entropy_wi_change = v_entropy_wi_lead - v_entropy_wi,
-      v_entropy_wi_change_lag = lag(v_entropy_wi_change),
+      v_entropy_wi_change = v_entropy_wi_lead - v_entropy_wi, # change in entropy after feedback on this trial (good for RT alignment)
+      v_entropy_wi_change_lag = lag(v_entropy_wi_change), # change in entropy following trial - 1 update -- good for clock alignment?
+      v_entropy_wi_change_lag2 = lag(v_entropy_wi_change_lag), # change in entropy following tria - 2 update
+      
+      v_entropy_lag = dplyr::lag(v_entropy, 1, order_by=run_trial), # lagged unscaled entropy
+      #v_entropy_change_old = v_entropy - v_entropy_lag, #change in entropy calculation used in get_mmy3_trial_df -- reflects change update after outcome on t-1
+      v_entropy_lead = lead(v_entropy),
+      v_entropy_change = v_entropy_lead - v_entropy, # no run z-scoring
+      v_entropy_change_lag = lag(v_entropy_change), # SAME AS v_entropy - v_entropy_lag
+      v_entropy_change_pos = v_entropy_change*(v_entropy_change >= 0),
+      v_entropy_change_neg = abs(v_entropy_change*(v_entropy_change < 0)),
+      v_entropy_wi_change_pos = v_entropy_wi_change*(v_entropy_wi_change >= 0),
+      v_entropy_wi_change_neg = abs(v_entropy_wi_change*(v_entropy_wi_change < 0)), # always scale upright so that 'hot' blobs indicate sensitivity to decrease
+      
       entropy_split = case_when(
         v_entropy_wi > mean(v_entropy_wi, na.rm=TRUE) ~ "high",
         v_entropy_wi < mean(v_entropy_wi, na.rm=TRUE) ~ "low",
@@ -116,6 +130,8 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
       pe_max_lag2 = lag(pe_max_lag),
       pe_max_lag3 = lag(pe_max_lag2),
       abs_pe = abs(pe_max),
+      abs_pe_c = abs_pe - mean(abs_pe, na.rm=TRUE), # run-centered absolute PE
+      abspexrew = abs_pe_c*rew_om_c, # interaction of abs PE and centered reward (0.5/-0.5 coding)
       abs_pe_lag = lag(abs_pe),
       abs_pe_f = case_when(
         abs_pe > mean(abs_pe) ~ "high abs. PE",
@@ -154,7 +170,9 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
       kld3_lag = dplyr::lag(kld3, order_by=run_trial),
       kld4_lag = dplyr::lag(kld4, order_by=run_trial),
       kld3_cum2 = kld3 + kld3_lag,
-      kld4_cum2 = kld4 + kld4_lag
+      kld4_cum2 = kld4 + kld4_lag,
+      log_kld3 = log(kld3 + .00001), # to handle large positive skew
+      log_kld3_cum2 = log(kld3_cum2 + .00001)
     ) %>% ungroup()
   
   u_df <- u_df %>%

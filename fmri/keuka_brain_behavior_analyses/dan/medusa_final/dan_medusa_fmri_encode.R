@@ -25,13 +25,19 @@ clock_visuomotor_long %>% group_by(evt_time) %>%
 
 clock_visuomotor_long <- clock_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_interp))
 
+clock_visuomotor_long_online %>% group_by(evt_time) %>%
+  summarise(isna=sum(is.na(decon_interp)))
+
+clock_visuomotor_long_online <- clock_visuomotor_long_online %>% filter(!is.na(decon_interp) & evt_time <= 4)
+
 rt_visuomotor_long %>% group_by(evt_time) %>%
   summarise(isna=sum(is.na(decon_interp)))
 
 rt_visuomotor_long <- rt_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_interp))
 
-#alignment <- "clock"
-alignment <- "rt"
+alignment <- "clock"
+#alignment <- "rt"
+#alignment <- "clock_online"
 
 setDT(trial_df)
 
@@ -39,12 +45,21 @@ message("Merging")
 if (alignment=="clock") {
   # subset to columns of interest
   trial_df <- trial_df %>%
-    dplyr::select(id, run, run_trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc,
+    dplyr::select(id, run, run_trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max_lag,
                   v_entropy_wi, v_entropy_wi_change_lag, kld3_lag, v_max_wi, abs_pe_lag, outcome_lag) %>%
     mutate(log_kld3_lag = log(kld3_lag + .00001))
   
   d <- merge(trial_df, clock_visuomotor_long, by = c("id", "run", "run_trial"))
   d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient", "side"), sep="_")  
+} else if (alignment == "clock_online") {
+  # subset to columns of interest
+  trial_df <- trial_df %>%
+    dplyr::select(id, run, run_trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max_lag,
+                  v_entropy_wi, v_entropy_wi_change_lag, kld3_lag, v_max_wi, abs_pe_lag, outcome_lag) %>%
+    mutate(log_kld3_lag = log(kld3_lag + .00001))
+  
+  d <- merge(trial_df, clock_visuomotor_long_online, by = c("id", "run", "run_trial"))
+  d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient", "side"), sep="_") 
 } else if (alignment == "rt") {
   # subset to columns of interest
   trial_df <- trial_df %>%
@@ -70,7 +85,7 @@ gc()
 # acf(vv$v_entropy_wi)
 
 
-if (alignment == "clock") {
+if (alignment == "clock" || alignment == "clock_online") {
   # basal analysis
   # vmax_wi: targeted analysis to demonstrate MT+ (vmax-positive) versus DAN (vmax-negative)
   enc_clock_base <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
@@ -92,12 +107,22 @@ if (alignment == "clock") {
                              v_entropy_wi + v_entropy_wi_change_lag + abs_pe_lag + outcome_lag + log_kld3_lag +
                              (1 | id) )
 
+  # signed PE
+  enc_clock_pe <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
+                         v_entropy_wi + v_entropy_wi_change_lag + pe_max_lag +
+                         (1 | id) )
+  
+  # abs_pe x outcome interaction
+  enc_clock_int <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
+                          v_entropy_wi + v_entropy_wi_change_lag + abs_pe_lag * outcome_lag +
+                          (1 | id) )
+  
   # trial interactions
   enc_clock_trial <- formula(~ v_max_wi*run_trial + v_entropy_wi*run_trial + v_entropy_wi_change_lag*run_trial + abs_pe_lag*run_trial +
                                rt_csv_sc*run_trial + rt_lag_sc + outcome_lag +
                                (1 | id) )
   
-  flist <- named_list(enc_clock_base, enc_clock_rslope, enc_clock_kld, enc_clock_logkld, enc_clock_trial)
+  flist <- named_list(enc_clock_base, enc_clock_rslope, enc_clock_kld, enc_clock_logkld, enc_clock_pe, enc_clock_int, enc_clock_trial)
 } else if (alignment == "rt") {
   # basal analysis
   enc_rt_base <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
@@ -133,7 +158,7 @@ if (alignment == "clock") {
                            v_entropy_wi*run_trial + v_entropy_wi_change*run_trial + abs_pe*run_trial + outcome +
                            (1 | id) )
   
-  flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_pe, enc_rt_int, enc_rt_trial)
+  flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_trial)
 }
 
 
@@ -141,7 +166,7 @@ splits <- c("vm_gradient", "side", "evt_time")
 
 message("Running mixed_by")
 ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist,
-                split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "run_trial"),
+                split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial"),
                 tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
                 calculate = c("parameter_estimates_reml"), ncores = 16, refit_on_nonconvergence = 5, padjust_by = "term")
 

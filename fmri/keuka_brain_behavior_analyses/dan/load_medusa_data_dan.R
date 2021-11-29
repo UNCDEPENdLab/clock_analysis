@@ -26,7 +26,7 @@ repo_directory <- "~/Data_Analysis/clock_analysis"
 
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R"))
 
-reprocess = FALSE # for troubleshooting only
+#reprocess = TRUE # for troubleshooting only
 if (!exists("reprocess") || !is.logical(reprocess)) {
   reprocess <- FALSE
 } # default
@@ -74,6 +74,7 @@ if (!reprocess) {
     load(file.path(cache_dir, "rt_dan_visuomotor.Rdata"))
   } else if (visuomotor_long) {
     load(file.path(cache_dir, "clock_dan_visuomotor_long.Rdata"))
+    load(file.path(cache_dir, "clock_dan_visuomotor_long_online.Rdata"))
     load(file.path(cache_dir, "rt_dan_visuomotor_long.Rdata"))
   } else {
     load(file.path(cache_dir, "clock_dan_wide_ts.Rdata"))
@@ -161,7 +162,7 @@ if (!reprocess) {
     select(
       id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
       swing_above_median, first10, reward, reward_lag, rt_above_1s, rt_bin, rt_csv, v_entropy_wi, entropy_split, entropy_split_lag,
-      gamma, total_earnings, u_chosen, u_chosen_lag, u_chosen_change
+      total_earnings, u_chosen, u_chosen_lag, u_chosen_change
     ) %>%
     mutate(rew_om = if_else(score_csv > 0, "rew", "om")) %>%
     group_by(id, run) %>%
@@ -176,7 +177,7 @@ if (!reprocess) {
     select(
       id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
       swing_above_median, first10, reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy_split, entropy_split_lag, abs_pe_f, rt_vmax_lag, rt_vmax_change,
-      gamma, total_earnings, ev, next_swing_above_median, u_chosen, u_chosen_lag, u_chosen_change, rt_vmax_change_next
+      total_earnings, ev, next_swing_above_median, u_chosen, u_chosen_lag, u_chosen_change, rt_vmax_change_next
     ) %>%
     mutate(rew_om = if_else(score_csv > 0, "rew", "om")) %>%
     group_by(id, run) %>%
@@ -269,6 +270,12 @@ if (!reprocess) {
     dplyr::summarise(decon_interp = mean(decon_interp, na.rm=TRUE)) %>%
     ungroup()
 
+  clock_visuomotor_long_online <- clock_comb_online %>%
+    select(id, run, run_trial, evt_time, visuomotor_side, decon_interp) %>%
+    group_by(id, run, run_trial, evt_time, visuomotor_side) %>%
+    dplyr::summarise(decon_interp = mean(decon_interp, na.rm=TRUE)) %>%
+    ungroup()
+
   # for coxme -- don't filter online times so that we can later interpolate
   clock_cox <- clock_comb %>%
     select(id, run, run_trial, evt_time, online, label, decon_interp) %>%
@@ -284,6 +291,7 @@ if (!reprocess) {
   save(clock_streams, file = file.path(cache_dir, "clock_dan_streams.Rdata"))
   save(clock_visuomotor, file = file.path(cache_dir, "clock_dan_visuomotor.Rdata"))
   save(clock_visuomotor_long, file = file.path(cache_dir, "clock_dan_visuomotor_long.Rdata"))
+  save(clock_visuomotor_long_online, file = file.path(cache_dir, "clock_dan_visuomotor_long_online.Rdata"))
 
   # save RT ----
   # take all preceding timepoints for RT_wide
