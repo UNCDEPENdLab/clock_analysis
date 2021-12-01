@@ -1,8 +1,8 @@
-
 library(dplyr)
 library(tidyr)
 library(haven)
 library(readxl)
+library(readr)
 # reads in data
 # normally called from medusa_event_locked_lmer_dan.R
 # if running separately, uncomment lines 4-8
@@ -26,7 +26,7 @@ repo_directory <- "~/Data_Analysis/clock_analysis"
 
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R"))
 
-reprocess = FALSE # for troubleshooting only
+#reprocess = TRUE # for troubleshooting only
 if (!exists("reprocess") || !is.logical(reprocess)) {
   reprocess <- FALSE
 } # default
@@ -74,6 +74,7 @@ if (!reprocess) {
     load(file.path(cache_dir, "rt_dan_visuomotor.Rdata"))
   } else if (visuomotor_long) {
     load(file.path(cache_dir, "clock_dan_visuomotor_long.Rdata"))
+    load(file.path(cache_dir, "clock_dan_visuomotor_long_online.Rdata"))
     load(file.path(cache_dir, "rt_dan_visuomotor_long.Rdata"))
   } else {
     load(file.path(cache_dir, "clock_dan_wide_ts.Rdata"))
@@ -161,7 +162,7 @@ if (!reprocess) {
     select(
       id, run, run_trial, iti_ideal, score_csv, clock_onset, clock_onset_prev, rt_lag, rewFunc,
       swing_above_median, first10, reward, reward_lag, rt_above_1s, rt_bin, rt_csv, v_entropy_wi, entropy_split, entropy_split_lag,
-      gamma, total_earnings, u_chosen, u_chosen_lag, u_chosen_change
+      total_earnings, u_chosen, u_chosen_lag, u_chosen_change
     ) %>%
     mutate(rew_om = if_else(score_csv > 0, "rew", "om")) %>%
     group_by(id, run) %>%
@@ -176,7 +177,7 @@ if (!reprocess) {
     select(
       id, run, run_trial, iti_ideal, score_csv, feedback_onset, feedback_onset_prev, rt_lag, rewFunc,
       swing_above_median, first10, reward, reward_lag, rt_above_1s, rt_bin, rt_csv, entropy_split, entropy_split_lag, abs_pe_f, rt_vmax_lag, rt_vmax_change,
-      gamma, total_earnings, ev, next_swing_above_median, u_chosen, u_chosen_lag, u_chosen_change, rt_vmax_change_next
+      total_earnings, ev, next_swing_above_median, u_chosen, u_chosen_lag, u_chosen_change, rt_vmax_change_next
     ) %>%
     mutate(rew_om = if_else(score_csv > 0, "rew", "om")) %>%
     group_by(id, run) %>%
@@ -194,18 +195,44 @@ if (!reprocess) {
   #   select(id, run, evt_time, rt_csv, iti_ideal, clock_onset, decon_interp, cens) %>%
   #   print(n = 100)
 
-  # 20% of clock- and 32% of feedback-aligned timepoints are from the next trial: censor
-  clock_comb$decon_interp[clock_comb$evt_time > clock_comb$rt_csv + clock_comb$iti_ideal + 0.9] <- NA
-  clock_comb$sd_interp[clock_comb$evt_time > clock_comb$rt_csv + clock_comb$iti_ideal + 0.9] <- NA
+  fb_time <- 0.91 # Feedback is 0.9 seconds. Lengthen slightly to allow for small rounding/duration error (keep more evt_time samples)
 
+  # LEFT CENSOR: About 19% of evt_time < 0 trials bleed into previous trial
+  #prop.table(table(clock_comb$evt_time < -1*clock_comb$iti_prev))
+  #summary(clock_comb$evt_time[clock_comb$evt_time < -1*clock_comb$iti_prev])
+  clock_comb$decon_interp[clock_comb$evt_time < -1*clock_comb$iti_prev] <- NA
+  clock_comb$sd_interp[clock_comb$evt_time < -1*clock_comb$iti_prev] <- NA
+  
+  # CLOCK VARIANT 1: right censor at onset of feedback with 100ms tolerance (so that a 900ms RT still gets evt_time 1.0)
+  clock_comb_online <- clock_comb
+  clock_comb_online$decon_interp[clock_comb$evt_time > clock_comb$rt_csv + .1] <- NA
+  clock_comb_online$sd_interp[clock_comb$evt_time > clock_comb$rt_csv + .1] <- NA
+  
+  # CLOCK VARIANT 2: right censor at onset of next trial
+  #prop.table(table(clock_comb$evt_time > clock_comb$rt_csv + clock_comb$iti_ideal + fb_time))
+  clock_comb$decon_interp[clock_comb$evt_time > clock_comb$rt_csv + clock_comb$iti_ideal + fb_time] <- NA
+  clock_comb$sd_interp[clock_comb$evt_time > clock_comb$rt_csv + clock_comb$iti_ideal + fb_time] <- NA
+
+  # ff <- clock_comb %>% dplyr::filter(is.na(decon_interp))
+  # hh <- clock_comb %>% dplyr::filter(!is.na(decon_interp))
+  # 
+  # xtabs(~evt_time, ff)
+  # xtabs(~evt_time, hh)
+  
   # code on- and offline periods and evt_time^2 for plotting models
   clock_comb <- clock_comb %>% mutate(online = evt_time > -1 & evt_time < rt_csv & evt_time < 4)
   clock_comb$online <- as.factor(clock_comb$online)
 
-  # fb_comb$decon_interp[fb_comb$evt_time > fb_comb$iti_ideal] <- NA
-  # fb_comb$sd_interp[fb_comb$evt_time > fb_comb$iti_ideal] <- NA
-  rt_comb$decon_interp[rt_comb$evt_time > rt_comb$iti_ideal + 0.9] <- NA # feedback is 0.9s fixed duration
-  rt_comb$sd_interp[rt_comb$evt_time > rt_comb$iti_ideal + 0.9] <- NA
+  # RIGHT CENSOR: any times after feedback + ITI period
+  #prop.table(table(rt_comb$evt_time > rt_comb$iti_ideal + fb_time))
+  rt_comb$decon_interp[rt_comb$evt_time > rt_comb$iti_ideal + fb_time] <- NA
+  rt_comb$sd_interp[rt_comb$evt_time > rt_comb$iti_ideal + fb_time] <- NA
+  
+  # LEFT CENSOR: any time before the RT + previous ITI
+  #prop.table(table(rt_comb$evt_time < -1*(rt_comb$iti_prev + rt_comb$rt_csv)))
+  rt_comb$decon_interp[rt_comb$evt_time < -1*(rt_comb$iti_prev + rt_comb$rt_csv)] <- NA
+  rt_comb$sd_interp[rt_comb$evt_time < -1*(rt_comb$iti_prev + rt_comb$rt_csv)] <- NA
+  
   rt_comb <- rt_comb %>% mutate(online = evt_time > -1 & evt_time < 1.1) # treat the 0 and 1 second bins as online for RT
   rt_comb$online <- as.factor(rt_comb$online)
 
@@ -243,6 +270,12 @@ if (!reprocess) {
     dplyr::summarise(decon_interp = mean(decon_interp, na.rm=TRUE)) %>%
     ungroup()
 
+  clock_visuomotor_long_online <- clock_comb_online %>%
+    select(id, run, run_trial, evt_time, visuomotor_side, decon_interp) %>%
+    group_by(id, run, run_trial, evt_time, visuomotor_side) %>%
+    dplyr::summarise(decon_interp = mean(decon_interp, na.rm=TRUE)) %>%
+    ungroup()
+
   # for coxme -- don't filter online times so that we can later interpolate
   clock_cox <- clock_comb %>%
     select(id, run, run_trial, evt_time, online, label, decon_interp) %>%
@@ -258,6 +291,7 @@ if (!reprocess) {
   save(clock_streams, file = file.path(cache_dir, "clock_dan_streams.Rdata"))
   save(clock_visuomotor, file = file.path(cache_dir, "clock_dan_visuomotor.Rdata"))
   save(clock_visuomotor_long, file = file.path(cache_dir, "clock_dan_visuomotor_long.Rdata"))
+  save(clock_visuomotor_long_online, file = file.path(cache_dir, "clock_dan_visuomotor_long_online.Rdata"))
 
   # save RT ----
   # take all preceding timepoints for RT_wide
