@@ -145,6 +145,11 @@ setwd("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/betas")
 saveRDS(betas, file = "MEG_betas_echange_vmax_reward_Nov30_2021.RDS")
 saveRDS(wbetas, file = "MEG_betas_wide_echange_vmax_reward_Nov30_2021.RDS")
 
+setwd("~/code/clock_analysis/meg/data")
+# saveRDS(betas, file = "MEG_betas_echange_vmax_reward_Nov15_2021.RDS")
+saveRDS(betas, file = "MEG_betas_echange_vmax_reward_Nov30_2021.RDS")
+saveRDS(wbetas, file = "MEG_betas_wide_echange_vmax_reward_Nov30_2021.RDS")
+
 
 # correlation between fMRI and MEG betas
 # get fMRI data
