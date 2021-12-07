@@ -15,22 +15,14 @@ sbatch_dir <- "/nas/longleaf/home/dnpl/code/clock_analysis/meg/code/medusoid/sba
 setwd(basedir)
 test <- F
 # try random-intercept models with lower RAM
- if (stringr::str_detect(regressors_of_interest, "_ri")){
-step_up <- tibble::tribble(
-  ~gb, ~time,
-  15, "4-00:00:00",
-  20, "4-00:00:00",
-  30, "4-00:00:00",
-  40, "4-00:00:00"
-  )
-} else {
+ 
 step_up <- tibble::tribble(
   ~gb, ~time,
   30, "4-00:00:00",
   40, "4-00:00:00",
   60, "4-00:00:00",
   80, "4-00:00:00"
-  )}
+  )
 
 for (ee in epochs) {
   epochdir <- file.path(basedir, ee)
