@@ -9,6 +9,8 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
     to_plot <- coef_obj$coef_df_reml
   } else if (checkmate::test_data_frame(coef_obj$coef_df_ml)) {
     to_plot <- coef_obj$coef_df_ml
+  } else if (checkmate::test_data_frame(coef_obj$emmeans_list$emm1)) {
+    to_plot <- coef_obj$emmeans_list$emm1
   }
   
   
@@ -50,13 +52,10 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
   
 }
 
-meg = T
-if (meg) {
-ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri_meg_simple.rds")
-} else {ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri.rds")}
+ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri_int_emm.rds")
+
 out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/"
-ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5 & effect=="fixed") %>% group_by(term) %>%
-  mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
+ddf$emmeans_list$emm1 <- ddf$emmeans_list$emm1 %>% dplyr::filter(evt_time <= 5) %>% 
   ungroup() %>% setDT()
 
 plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient", facet_by="side", 
