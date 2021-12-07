@@ -9,6 +9,8 @@ repo_directory <- "~/Data_Analysis/clock_analysis"
 visuomotor_long <- TRUE # what we want to load in load_medusa_data_dan.R
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
 
+emm = T # extract EMMEANS estimates, e.g. for hi/lo abs(PE)
+
 # mixed_by call
 source("~/Data_Analysis/r_packages/fmri.pipeline/R/mixed_by.R")
 
