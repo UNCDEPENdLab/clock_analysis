@@ -19,7 +19,7 @@ rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
 p_adjust_method = "fdr"
-regressors = c("v_max")
+regressors = c("entropy_change_pos_ri")
 # regressors = c("entropy_change","entropy_change_ri", "entropy_change_full_ri", "abspe_by_rew")
 # regressors = c("entropy", "kld","entropy_change_ri", "entropy_change_fmri", "entropy_change_fmr1", "entropy_change_fmr2"
 # "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
@@ -78,22 +78,23 @@ if (encode) {
       # get RT-aligned
       if (regressor=="entropy_change") {
         file_pattern <- "*_change_rs_single_.*RT"}  else if (regressor=="entropy_change_ri") {
-          file_pattern <- ".*_entropy_change_ri.*RT"}  else if (regressor=="entropy") {
-            file_pattern <- ".*_entropy_rs.*RT"} else if (regressor=="kld") {
-              file_pattern <- ".*kld.*RT"} else if (regressor=="entropy_change_pos_ri") {
-                file_pattern <- ".*entropy_change_pos_ri.*RT"} else if (regressor=="entropy_change_neg_ri") {
-                  file_pattern <- ".*entropy_change_neg_ri.*RT"}  else if (regressor=="reward") {
-                    file_pattern <- ".*reward_rs.*RT"} else if (regressor=="v_max"){
-                      file_pattern <- ".*v_max_rs.*RT"} else if (regressor=="abs_pe") {
-                        file_pattern <- ".*abs_pe.*RT"} else if(regressor =="signed_pe") {
-                          file_pattern <- ".*signed_pe.*"} else if(regressor =="abspe_by_rew") {
-                            file_pattern <- ".*abspe_by_rew.*"} else if (regressor=="v_max_ri"){
-                              file_pattern <- ".*v_max_ri.*RT"} else if (regressor == "entropy_change_fmri") {
-                                file_pattern <- ".*entropy_change_fmri.*RT"} else if (regressor == "entropy_change_fmr1") {
-                                  file_pattern <- ".*entropy_change_fmr1.*RT"} else if (regressor == "entropy_change_fmr2") {
-                                    file_pattern <- ".*entropy_change_fmr2.*RT"} else if (regressor == "entropy_change_fmri_ppc") {
-                                      file_pattern <- ".*entropy_change_fmri_ppc.*RT"
-                                  }
+          file_pattern <- ".*_entropy_change_ri.*RT"} else if (regressor=="entropy_change_full_ri") {
+            file_pattern <- ".*_entropy_change_full_ri.*RT"}  else if (regressor=="entropy") {
+              file_pattern <- ".*_entropy_rs.*RT"} else if (regressor=="kld") {
+                file_pattern <- ".*kld.*RT"} else if (regressor=="entropy_change_pos_ri") {
+                  file_pattern <- ".*entropy_change_pos_ri.*RT"} else if (regressor=="entropy_change_neg_ri") {
+                    file_pattern <- ".*entropy_change_neg_ri.*RT"}  else if (regressor=="reward") {
+                      file_pattern <- ".*reward_rs.*RT"} else if (regressor=="v_max"){
+                        file_pattern <- ".*v_max_rs.*RT"} else if (regressor=="abs_pe") {
+                          file_pattern <- ".*abs_pe.*RT"} else if(regressor =="signed_pe") {
+                            file_pattern <- ".*signed_pe.*"} else if(regressor =="abspe_by_rew") {
+                              file_pattern <- ".*abspe_by_rew.*"} else if (regressor=="v_max_ri"){
+                                file_pattern <- ".*v_max_ri.*RT"} else if (regressor == "entropy_change_fmri") {
+                                  file_pattern <- ".*entropy_change_fmri.*RT"} else if (regressor == "entropy_change_fmr1") {
+                                    file_pattern <- ".*entropy_change_fmr1.*RT"} else if (regressor == "entropy_change_fmr2") {
+                                      file_pattern <- ".*entropy_change_fmr2.*RT"} else if (regressor == "entropy_change_fmri_ppc") {
+                                        file_pattern <- ".*entropy_change_fmri_ppc.*RT"
+                                      }
       # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
       # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
       # file_pattern <- "entropy_rs_singleRT"
