@@ -287,9 +287,9 @@ if (encode) {
   ddf <- mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = list(ri = formula), split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE,
-                                                                                                      calculate =c("parameter_estimates_reml","fit_statistics"), scale_predictors = "abs_pe") #,
-                            #emtrends_spec = list(
-                            #  list(outcome=signal_outcome, model_name="ri", var=emtrend_encode, specs=c(emtrend_reward_centered), at = list(reward_centered = c(-0.5, 0.5))))
+                                                                                                      calculate =c("parameter_estimates_reml","fit_statistics"), scale_predictors = "abs_pe"),
+                            emtrends_spec = list(
+                            list(outcome=signal_outcome, model_name="ri", var=emtrend_encode, specs=c(emtrend_reward_centered), at = list(reward_centered = c(-0.5, 0.5))))
                               )
     if (str_detect(regressor, "_ri")) {
   saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_single_", alignment, sourcefilestart))} else {
