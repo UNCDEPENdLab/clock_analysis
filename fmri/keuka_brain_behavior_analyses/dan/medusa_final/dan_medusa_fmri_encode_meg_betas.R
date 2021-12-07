@@ -37,7 +37,14 @@ alignment <- "rt"
 setDT(trial_df)
 
 # add MEG betas from the repo
-meg_betas <- readRDS(file.path(repo_directory, "meg/data/MEG_betas_wide_echange_Nov21_2021.RDS")) %>% mutate(id = as.numeric(id))
+meg_betas <- readRDS(file.path(repo_directory, "meg/data/MEG_betas_wide_echange_vmax_reward_Nov30_2021.RDS")) %>% mutate(id = as.numeric(id)) %>%
+  mutate(omission_early_theta = - avg_reward_early_theta,
+         omission_late_delta = - avg_reward_late_delta) %>% 
+  mutate(entropy_change_early_beta_supp = -  avg_entropy_change_early_beta,
+         entropy_change_late_beta_supp = - avg_entropy_change_late_beta,
+         vmax_late_alpha = avg_vmax_late_beta) %>%
+  select(c(id, omission_early_theta, omission_late_delta, entropy_change_early_beta_supp, entropy_change_late_beta_supp, vmax_late_alpha))
+
 # idf <- unique(trial_df$id)
 # idm <- unique(meg_betas$id)
 # # check against Michael's Excel file
@@ -61,7 +68,8 @@ if (alignment=="clock") {
   # subset to columns of interest
   trial_df <- trial_df %>%
     dplyr::select(id, run, run_trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max,
-                  v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome, entropy_change_late_beta, entropy_change_early_beta) %>%
+                  v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome, 
+                  omission_early_theta, omission_late_delta, entropy_change_early_beta_supp, entropy_change_late_beta_supp, vmax_late_alpha) %>%
     mutate(log_kld3 = log(kld3 + .00001))
   
   d <- merge(trial_df, rt_visuomotor_long, by = c("id", "run", "run_trial"))
@@ -116,15 +124,20 @@ if (alignment == "clock") {
                            v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
                            (1 | id) )
   # killed: rt_vmax
-  enc_rt_base_meg <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
-                               v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
-                               v_entropy_wi*entropy_change_early_beta + v_entropy_wi*entropy_change_late_beta +
-                               v_entropy_wi_change*entropy_change_early_beta + v_entropy_wi_change*entropy_change_late_beta +
-                               abs_pe*entropy_change_early_beta + abs_pe*entropy_change_late_beta +
+  enc_rt_base_meg <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi * vmax_late_alpha +
+                               v_entropy_wi + v_entropy_wi_change + abs_pe + outcome * omission_early_theta +
+                               outcome * omission_late_delta +
+                               v_entropy_wi_change*entropy_change_early_beta_supp + v_entropy_wi_change*entropy_change_late_beta_supp +
                                (1 | id) )
-  enc_rt_base_meg_simple <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
+  enc_rt_base_meg_pe <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi * vmax_late_alpha +
+                               v_entropy_wi + v_entropy_wi_change + pe_max * omission_early_theta +
+                               pe_max * omission_late_delta +
+                               v_entropy_wi_change*entropy_change_early_beta_supp + v_entropy_wi_change*entropy_change_late_beta_supp +
+                               (1 | id) )
+  
+    enc_rt_base_meg_simple <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
                                v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
-                               v_entropy_wi_change*entropy_change_late_beta +
+                               v_entropy_wi_change*entropy_change_late_beta_supp +
                                (1 | id) )
   
     
@@ -133,17 +146,22 @@ if (alignment == "clock") {
                              v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
                              (abs_pe + v_entropy_wi + v_entropy_wi_change + v_max_wi | id) )
   
-  enc_rt_rslope_meg <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
-                                 v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
-                                 v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
-                                 v_entropy_wi*entropy_change_early_beta + v_entropy_wi*entropy_change_late_beta +
-                                 v_entropy_wi_change*entropy_change_early_beta + v_entropy_wi_change*entropy_change_late_beta +
-                                 (abs_pe + v_entropy_wi + v_entropy_wi_change + v_max_wi | id) )
+  enc_rt_rslope_meg <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi * vmax_late_alpha +
+                                 v_entropy_wi + v_entropy_wi_change + abs_pe + outcome * omission_early_theta +
+                                 outcome * omission_late_delta +
+                                 v_entropy_wi_change*entropy_change_early_beta_supp + v_entropy_wi_change*entropy_change_late_beta_supp +
+                                 (outcome + v_entropy_wi_change + v_max_wi | id) )
+
+  enc_rt_rslope_meg_pe <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi * vmax_late_alpha +
+                                 v_entropy_wi + v_entropy_wi_change + pe_max * omission_early_theta +
+                                 pe_max * omission_late_delta +
+                                 v_entropy_wi_change*entropy_change_early_beta_supp + v_entropy_wi_change*entropy_change_late_beta_supp +
+                                 (pe_max + v_entropy_wi_change + v_max_wi | id) )
   
   enc_rt_rslope_meg_simple <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
                                  v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
                                  v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
-                                 v_entropy_wi_change*entropy_change_late_beta +
+                                 v_entropy_wi_change*entropy_change_late_beta_supp +
                                  (abs_pe + v_entropy_wi + v_entropy_wi_change + v_max_wi | id) )
   
   enc_rt_kld <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
@@ -171,6 +189,7 @@ if (alignment == "clock") {
   
   flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_pe, enc_rt_int, enc_rt_trial)
   flist_meg <- named_list(enc_rt_base_meg, enc_rt_rslope_meg)
+  flist_meg_pe <- named_list(enc_rt_base_meg_pe, enc_rt_rslope_meg_pe)
   flist_meg_simple <- named_list(enc_rt_base_meg_simple, enc_rt_rslope_meg_simple)
   
 }
@@ -179,9 +198,9 @@ if (alignment == "clock") {
 splits <- c("vm_gradient", "side", "evt_time")
 
 message("Running mixed_by")
-ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist_meg_simple,
-                split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "run_trial"),
+ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist_meg_pe,
+                split_on = splits, scale_predictors = c("pe_max","abs_pe","run_trial"),
                 tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
-                calculate = c("parameter_estimates_reml"), ncores = 16, refit_on_nonconvergence = 5, padjust_by = "term")
+                calculate = c("parameter_estimates_reml"), ncores = 8, refit_on_nonconvergence = 5, padjust_by = "term")
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri_meg_simple.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri_meg_pe.rds")))

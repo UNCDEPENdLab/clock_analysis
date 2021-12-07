@@ -21,8 +21,8 @@ if (use_new_pipeline) {
 }
 # cache_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/cache"
 cache_dir <- file.path(medusa_dir, "cache")
-# repo_directory <- "~/code/clock_analysis"
-repo_directory <- "~/Data_Analysis/clock_analysis"
+repo_directory <- "~/code/clock_analysis"
+# repo_directory <- "~/Data_Analysis/clock_analysis"
 
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R"))
 
