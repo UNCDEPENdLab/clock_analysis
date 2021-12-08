@@ -112,7 +112,7 @@ ec2 <- all_dfs %>% filter(term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Fr
 betas <- rbind(ec1, ec2) %>% rename(id = level)
 # betas <- rbind(ec1, vm1, r1, r2) %>% rename(id = level)
 wbetas <- betas %>% pivot_wider(names_from = reg_region, values_from = avg)
-setwd("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/betas")
+setwd("~/code/clock_analysis/meg/data")
 # saveRDS(betas, file = "MEG_betas_echange_vmax_reward_Nov15_2021.RDS")
 saveRDS(betas, file = "MEG_betas_echange_Nov21_2021.RDS")
 saveRDS(wbetas, file = "MEG_betas_wide_echange_Nov21_2021.RDS")
