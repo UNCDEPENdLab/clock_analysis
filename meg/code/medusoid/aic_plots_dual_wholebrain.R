@@ -19,7 +19,7 @@ encode = T
 rt_predict = F
 # regressors = c("reward")
 p_adjust_method = "fdr"
-regressor = c("entropy_change")
+regressor = c("entropy_change_ri")
 # regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 print_filenames = T
 fixed_only = F
@@ -76,8 +76,8 @@ if (reprocess) {
     cddf <- rbind(csdf, cfdf)
   }
   # get RT-aligned
-  if (regressor=="entropy_change") {
-    sel_file_pattern <- "*_change_sel_.*RT"} 
+  if (regressor=="entropy_change_ri") {
+    sel_file_pattern <- "*_change_ri_.*RT"} 
   files <-  gsub("//", "/", list.files(data_dir, pattern = sel_file_pattern, full.names = F))
   message(paste0("Found ", length(files), " files."))
   rsl <- lapply(files, function(x) {
@@ -92,9 +92,9 @@ if (reprocess) {
   rsdf <- data.table::rbindlist(rsl) %>% unique() %>% distinct(Time, Freq, .keep_all = TRUE)
   rsdf <- rsdf %>% mutate(t  = as.numeric(Time), alignment = "rt", model = "selective",
   )
-  message("Processed clock-aligned selective. \n")
-  if (regressor=="entropy_change") {
-    full_file_pattern <- "*_change_full_.*RT"} 
+  message("Processed selective. \n")
+  if (regressor=="entropy_change_ri") {
+    full_file_pattern <- "*_change_full_ri.*RT"} 
   files <-  gsub("//", "/", list.files(data_dir, pattern = full_file_pattern, full.names = F))
   message(paste0("Found ", length(files), " files."))
   rfl <- lapply(files, function(x) {
@@ -112,11 +112,13 @@ if (reprocess) {
   message("Processed RT-aligned full. \n")
   rddf <- rbind(rfdf, rsdf)
   
-  rddf <- rddf %>% mutate(t  = Time - offset
-  )
+  
   if (!noclock) {offset = 4.3
+  rddf <- rddf %>% mutate(t  = Time - offset)
   ddf <- rbind(rddf, cddf)
   } else {offset = 0.3}
+  rddf <- rddf %>% mutate(t  = Time - offset
+  )
   ddf <- rddf
   ddf$Freq <- gsub("f_", "", ddf$Freq)
   ddf$Freq <- ordered(as.numeric(substr(as.character(ddf$Freq), 1,4)))    

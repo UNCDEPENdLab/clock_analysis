@@ -26,7 +26,7 @@ source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_d
 debug = F #VERY CAREFUL, RUNs ON THE FIRST FILE ONLY !! recommend changing back to "F" *IMMEDIATELY* after sourcing the script
 if (debug) {
   Sys.setenv(epoch = "RT")
-  Sys.setenv(regressor = "abspe_by_rew")
+  Sys.setenv(regressor = "entropy_change_fmri_ppc")
 }
 alignment <- Sys.getenv("epoch")
 regressor <- Sys.getenv("regressor")
@@ -108,6 +108,25 @@ entropy_change_pos_wi = case_when(
 entropy_change_neg_wi = case_when(
   v_entropy_wi_change > 0 ~ 0,
   v_entropy_wi_change < 0 ~ v_entropy_wi_change))
+
+labels <- as_tibble(read_table2("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_DAN_order_manual.txt", col_names = F)) %>% 
+  mutate(side = case_when(
+    str_detect(X2, "LH") ~ "L",
+    str_detect(X2, "RH") ~ "R"
+  ),
+  label = paste0(X3, "_", side)) %>% select(c(X1, X3, side)) %>% rename(mask_value = X1, label_sym = X3)
+betas <- read_csv("~/code/clock_analysis/fmri/data/fmri_betas_for_meg/L1m-echange/Schaefer_DorsAttn_2.3mm_cope_l2.csv.gz")  %>%
+  mutate(id  = as.character(id)) %>% select(id, l1_model, l1_cope_name, l2_cope_name, mask_value, value) %>% filter(l1_cope_name == "EV_entropy_change_feedback", l2_cope_name == "overall")  %>%
+  merge(labels) %>% as_tibble() %>% mutate(value = winsor(value, trim = .005))
+wbetas <- betas %>% select(id, value, label_sym, side) %>% group_by(id, label_sym) %>% summarize(beta_bl = mean(value)) %>% 
+  pivot_wider(names_from = label_sym, values_from = beta_bl) %>% ungroup() %>%
+  rowwise() %>%
+  mutate(ppc_ec_beta = mean(c(`2_ip_LIPd`,`2_ip_LIPv`,  `2_ip_VIP`, `3_sp_7AM`, `3_sp_7PC`)),
+         mt_ec_beta = mean(c(`4_MT/V5_FST`, `4_MT/V5_MST`)),
+         pfc_ec_beta = mean(c(`1_f_6a`, `1_f_FEF`, `1a_f_BA44`))) %>% select(id, ppc_ec_beta, mt_ec_beta, pfc_ec_beta)
+
+trial_df <- left_join(trial_df, wbetas, by = "id")
+         
 # back-calculate PE_max
 # trial_df <- trial_df %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% mutate(pe_max = abs_pe*reward_centered*2,
 #                                                                                       pe_max_sc = scale(pe_max)) %>% ungroup()
