@@ -37,9 +37,9 @@ rt_visuomotor_long %>% group_by(evt_time) %>%
 
 rt_visuomotor_long <- rt_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_interp))
 
-alignment <- "clock"
-#alignment <- "rt"
+#alignment <- "clock"
 #alignment <- "clock_online"
+alignment <- "rt"
 
 setDT(trial_df)
 
@@ -65,7 +65,7 @@ if (alignment=="clock") {
 } else if (alignment == "rt") {
   # subset to columns of interest
   trial_df <- trial_df %>%
-    dplyr::select(id, run, run_trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max,
+    dplyr::select(id, run, run_trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
                   v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
     mutate(log_kld3 = log(kld3 + .00001))
   
@@ -75,6 +75,7 @@ if (alignment=="clock") {
 
 rm(rt_visuomotor_long)
 rm(clock_visuomotor_long)
+rm(clock_visuomotor_long_online)
 gc()
 
 # cor(trial_df$v_entropy_wi, trial_df$v_entropy_wi_change, use="pairwise")
@@ -119,6 +120,11 @@ if (alignment == "clock" || alignment == "clock_online") {
                           v_entropy_wi + v_entropy_wi_change_lag + abs_pe_lag * outcome_lag +
                           (1 | id) )
   
+  # centered reward and abs pe to compute interaction
+  # enc_clock_int_cent <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
+  #                            v_entropy_wi + v_entropy_wi_change_lag + abs_pe_c + rew_om_c + abspexrew +
+  #                            (1 | id) )
+  
   # trial interactions
   enc_clock_trial <- formula(~ v_max_wi*run_trial + v_entropy_wi*run_trial + v_entropy_wi_change_lag*run_trial + abs_pe_lag*run_trial +
                                rt_csv_sc*run_trial + rt_lag_sc + outcome_lag +
@@ -155,12 +161,22 @@ if (alignment == "clock" || alignment == "clock_online") {
                            v_entropy_wi + v_entropy_wi_change + abs_pe * outcome +
                            (1 | id) )
   
+  enc_rt_int_cent <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
+                                  v_entropy_wi + v_entropy_wi_change + abs_pe_c + rew_om_c + abspexrew +
+                                  (1 | id) )
+  
+  # centered outcome approach to get absPE at average of reward/omissions
+  enc_rt_int <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
+                          v_entropy_wi + v_entropy_wi_change + abs_pe * outcome +
+                          (1 | id) )
+  
+  
   # trial interactions
   enc_rt_trial <- formula(~ rt_csv_sc*run_trial + rt_lag_sc + v_max_wi*run_trial +
                            v_entropy_wi*run_trial + v_entropy_wi_change*run_trial + abs_pe*run_trial + outcome +
                            (1 | id) )
   
-  flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_trial)
+  flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
 }
 
 
@@ -170,6 +186,15 @@ message("Running mixed_by")
 ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist,
                 split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial"),
                 tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
-                calculate = c("parameter_estimates_reml"), ncores = 16, refit_on_nonconvergence = 5, padjust_by = "term")
+                calculate = c("parameter_estimates_reml"), ncores = 16, refit_on_nonconvergence = 5, padjust_by = "term",
+                emtrends_spec = list(
+                  abspe = list(outcome = "decon_interp", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
+                ))
 
 saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri.rds")))
+
+dd <- ddf$emtrends_list$abspe
+dd <- dd[,c(-4, -5)]
+ggplot(dd, aes(x=evt_time, y=abs_pe.trend, ymin=abs_pe.trend-std.error, ymax=abs_pe.trend+std.error, color=vm_gradient)) + 
+  geom_pointrange() + geom_line() + geom_vline(xintercept = 0) + geom_hline(yintercept = 0) +
+  facet_grid(outcome...1 ~ side)
