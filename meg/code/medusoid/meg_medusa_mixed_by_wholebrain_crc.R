@@ -178,7 +178,7 @@ if (alignment=="RT" | alignment=="feedback") {
                                   v_entropy_wi_change + abs_pe + outcome + (abs_pe|Subject) + (abs_pe|Sensor))
   } else if (regressor=="abspe_by_rew") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
-                                  v_entropy_wi_change + abs_pe * reward_centered + (1|Subject) + (reward_centered + abs_pe|Sensor))
+                                  v_entropy_wi_change + abs_pe * reward_centered + (1|Subject) + (abs_pe|Sensor))
     emtrend_encode = "abs_pe"
     emtrend_reward_centered = "reward_centered"
   } else if (regressor=="signed_pe") {
