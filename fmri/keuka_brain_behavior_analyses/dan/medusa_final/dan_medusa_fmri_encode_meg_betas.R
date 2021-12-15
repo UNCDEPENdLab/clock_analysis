@@ -71,7 +71,14 @@ if (alignment=="clock") {
                   v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome, entropy_change_late_beta, entropy_change_early_beta) %>%
     mutate(log_kld3 = log(kld3 + .00001))  %>%
     mutate(reward_centered = as.numeric(outcome=="Reward") - 0.5,
-           reward = outcome)
+           reward = outcome,
+           pe_pos = case_when(
+             pe_max < 0 ~ 0,
+             pe_max > 0 ~ pe_max),
+           pe_neg = case_when(
+             pe_max < 0 ~ pe_max,
+             pe_max > 0 ~ 0
+           ))
   
   d <- merge(trial_df, rt_visuomotor_long, by = c("id", "run", "run_trial"))
   d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient", "side"), sep="_")
@@ -168,6 +175,11 @@ if (alignment == "clock") {
   enc_rt_pe <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
                          v_entropy_wi + v_entropy_wi_change + pe_max +
                          (1 | id) )
+
+  # positive and negative PE separately (correlated at 0.45)
+  enc_rt_pe_pos_neg <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
+                         v_entropy_wi + v_entropy_wi_change + pe_pos + pe_neg +
+                         (1 | id) )
   
   # abs_pe x outcome interaction
   enc_rt_int <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
@@ -183,6 +195,7 @@ if (alignment == "clock") {
   flist_meg <- named_list(enc_rt_base_meg, enc_rt_rslope_meg)
   flist_meg_simple <- named_list(enc_rt_base_meg_simple, enc_rt_rslope_meg_simple)
   flist_int <- named_list(enc_rt_int)
+  flist_pe_posneg <- named_list(enc_rt_pe_pos_neg)
 }  
 splits <- c("vm_gradient", "side", "evt_time")
 # splits <- c("vm_gradient", "evt_time") # combining sides
@@ -194,14 +207,15 @@ ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist_int,
                   calculate = c("parameter_estimates_reml"), ncores = 18, refit_on_nonconvergence = 5, padjust_by = "term",
                 emmeans_spec = list(
                 list(outcome="decon_interp", model_name="enc_rt_int", ~ abs_pe | reward, at = list(abs_pe = c(0.62, 26.33)))))
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri_int_emm.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri_int_emm.rds"))
+        )
 } else {
-  ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist_meg_simple,
+  ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist_pe_posneg,
                   split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "run_trial"),
                   tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
                   calculate = c("parameter_estimates_reml"), ncores = 18, refit_on_nonconvergence = 5, padjust_by = "term")
 saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri_meg_simple.rds")))
-  
+# saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri_pe_posneg.rds")))
   }
 
 
