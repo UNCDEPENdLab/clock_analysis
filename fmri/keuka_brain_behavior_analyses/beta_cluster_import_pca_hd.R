@@ -29,12 +29,12 @@ sort_names <- function(data) {
 }
 
 if (unsmoothed) {
-  setwd('~/Box/SCEPTIC_fMRI/')
-  meta <- read_csv("~/Box/SCEPTIC_fMRI/v_entropy_unsmoothed_cluster_metadata.csv")
+  setwd('~/Google Drive/SCEPTIC_fMRI/')
+  meta <- read_csv("~/Google Drive/SCEPTIC_fMRI/v_entropy_unsmoothed_cluster_metadata.csv")
   Hbetas <- read_csv("v_entropy_unsmoothed_subj_betas.csv")
 } else {
-  setwd('~/Box/SCEPTIC_fMRI/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/')
-  meta <- read_csv("~/Box/SCEPTIC_fMRI/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy_cluster_metadata.csv")
+  setwd('~/Google Drive/SCEPTIC_fMRI/whole_brain/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/')
+  meta <- read_csv("~/Google Drive/SCEPTIC_fMRI/whole_brain/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy_cluster_metadata.csv")
   Hbetas <- read_csv("v_entropy_roi_betas.csv")
 }
 meta$label <- substr(meta$label,22,100)
@@ -104,17 +104,17 @@ h_wide <- subset(h_wide, select = c("feat_input_id","h_f1_fp","h_f2_neg_paralimb
 
 #####
 # add Schaefer parcel-based DAN entropy betas
-schaefer <- as_tibble(read.csv('~/Box/SCEPTIC_fMRI/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/entropy_beta_bifactor_fscores.csv'))
+schaefer <- as_tibble(read.csv('~/Google Drive/SCEPTIC_fMRI/whole_brain/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/entropy_beta_bifactor_fscores.csv'))
 schaefer$feat_input_id <- schaefer$numid
 h_wide <- inner_join(h_wide, schaefer %>% select(-numid)) %>% mutate(entropy_vlPFC = `7 Right Middle Frontal Gyrus`) %>% dplyr::select(-`7 Right Middle Frontal Gyrus`)
 #####
 # add PE
 if (unsmoothed) {
-  setwd('~/Box/SCEPTIC_fMRI/')
+  setwd('~/Google Drive/SCEPTIC_fMRI/')
   pemeta <- read_csv("pe_max_unsmoothed_cluster_metadata.csv")
   pebetas <- read_csv("pe_max_unsmoothed_subj_betas.csv")
 } else {
-  setwd('~/Box/SCEPTIC_fMRI/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-pe_max-preconvolve_fse_groupfixed/pe_max/')
+  setwd('~/Google Drive/SCEPTIC_fMRI/whole_brain/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-pe_max-preconvolve_fse_groupfixed/pe_max/')
   # pemeta <- read_csv("pe_max_cluster_metadata.csv")
   pemeta <- read_delim("pe_clusters_z4p41_labels.txt", 
                        "\t", escape_double = FALSE, trim_ws = TRUE)
@@ -208,7 +208,7 @@ if (unsmoothed) {
 
 #####
 # add entropy change betas, dh, for "delta H"
-setwd('~/Box/skinner/projects_analyses/SCEPTIC/fMRI_paper/mmc/signals_review/compiled_outputs/change_betas/sceptic-clock-feedback-v_entropy_change-preconvolve_fse_groupfixed/v_entropy_change')
+setwd('~/OneDrive - University of Pittsburgh/Documents/skinner/projects_analyses/SCEPTIC/fMRI_paper/mmc/signals_review/compiled_outputs/change_betas/sceptic-clock-feedback-v_entropy_change-preconvolve_fse_groupfixed/v_entropy_change')
 hdmeta <- read_csv("v_entropy_change_cluster_metadata.csv")
 hdbetas <- read_csv("v_entropy_change_roi_betas.csv")
 
@@ -252,24 +252,24 @@ mhd <- nfactors(clust_cor, n=5, rotate = "oblimin", diagonal = FALSE,fm = "pa", 
 hd.fa = fa.sort(psych::fa(just_rois, nfactors=3, rotate = "varimax", fm = "pa"))
 fscores <- factor.scores(just_rois, hd.fa)$scores
 
-hd_wide$hd_f1_salience <- pefscores[,1]
-hd_wide$hd_f2_DAN <- pefscores[,2]
-hd_wide$hd_f3_rlPFC <- pefscores[,3]
+hd_wide$hd_f1_salience <- fscores[,1]
+hd_wide$hd_f2_DAN <- fscores[,2]
+hd_wide$hd_f3_rlPFC <- fscores[,3]
 hd_wide$hd_DAN_mean <- scale(rowMeans(cbind(hd_wide$`1 Right Precuneus`, hd_wide$`3 Right Middle Frontal Gyrus`, hd_wide$`5 Left Superior Frontal Gyrus`)))
 hpehd_wide <- inner_join(hpe_wide,hd_wide[,c("feat_input_id","hd_f1_salience", "hd_f2_DAN", "hd_f3_rlPFC", "hd_DAN_mean")])  
 #####
 # add ids
-map_df  <- as_tibble(read.csv("~/Box/SCEPTIC_fMRI/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy-Intercept_design.txt", sep=""))
+map_df  <- as_tibble(read.csv("~/Google Drive/SCEPTIC_fMRI/whole_brain/MMClock_aroma_preconvolve_fse_groupfixed/sceptic-clock-feedback-v_entropy-preconvolve_fse_groupfixed/v_entropy/v_entropy-Intercept_design.txt", sep=""))
 pc_scores <- inner_join(hpehd_wide,map_df[,c(1:2,4:15)])
 pc_scores$id <- pc_scores$ID
 
 
 # get trial_level data
 trial_df <- read_csv(file.path(clock_folder, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
-# trial_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_mfx_trial_statistics.csv.gz")
-# u_df <- read_csv("~/Box/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_ureset_mfx_trial_statistics.csv.gz")
+# trial_df <- read_csv("~/Google Drive/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_mfx_trial_statistics.csv.gz")
+# u_df <- read_csv("~/Google Drive/SCEPTIC_fMRI/mmclock_fmri_fixed_uv_ureset_mfx_trial_statistics.csv.gz")
 # use fixed-parameter U
-u_df <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz")
+u_df <- read_csv("~/Google Drive/SCEPTIC_fMRI/sceptic_model_fits/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz")
 
 trial_df <- trial_df %>%
   group_by(id, run) %>%  dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))),
@@ -391,7 +391,7 @@ df <- df %>% group_by(id, run) %>%  dplyr::mutate(last_outcome_lag2 = lag(last_o
 
 # add MEG behavioral data
 # mtdf = MEG trial df
-mtdf <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_meg_decay_factorize_selective_psequate_fixedparams_meg_ffx_trial_statistics.csv.gz")
+mtdf <- read_csv("~/Google Drive/SCEPTIC_fMRI/sceptic_model_fits/mmclock_meg_decay_factorize_selective_psequate_fixedparams_meg_ffx_trial_statistics.csv.gz")
 mtdf <- mtdf %>%
   group_by(id, run) %>%  dplyr::mutate(rt_swing = abs(c(NA, diff(rt_csv))),
                                        rt_swing_lr = abs(log(rt_csv/lag(rt_csv))),
@@ -438,7 +438,7 @@ mdf$learning_epoch <- 'trials 1-10'
 mdf$learning_epoch[df$run_trial>10] <- 'trials 11-50'
 mdf$h_HippAntL_neg <- -mdf$h_HippAntL
 
-mu_df <- read_csv("~/Box/SCEPTIC_fMRI/sceptic_model_fits/mmclock_meg_fixed_uv_ureset_fixedparams_meg_ffx_trial_statistics.csv.gz")
+mu_df <- read_csv("~/Google Drive/SCEPTIC_fMRI/sceptic_model_fits/mmclock_meg_fixed_uv_ureset_fixedparams_meg_ffx_trial_statistics.csv.gz")
 mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change,
                           u_chosen_quantile, u_chosen_quantile_lag, u_chosen_quantile_change) %>% mutate(id = as.integer(substr(id, 1, 5)))
 # mu_df <- mu_df %>% select(id, run, trial, u_chosen, u_chosen_lag, u_chosen_change) %>% mutate(
@@ -470,7 +470,7 @@ mdf <- mdf %>% mutate(pe_ips_resp = case_when(
     DAN > median(DAN) ~ 'high_h_dan'),
   dan_general_entropy_resp = case_when(
     general_entropy < median(general_entropy) ~ 'low_general_entropy_dan',
-    general_entropy > median(general_entropy) ~ 'high_general_entropy_dan'),
+    general_entropy > median(general_entropy) ~ 'high_general_entropy_dan'), 
   pe_f1_cort_hipp_resp = case_when(
     pe_f1_cort_hipp < median(pe_f1_cort_hipp) ~ 'low_pe_f1_cort_hipp',
     pe_f1_cort_hipp > median(pe_f1_cort_hipp) ~ 'high_pe_f1_cort_hipp'),
@@ -478,7 +478,7 @@ mdf <- mdf %>% mutate(pe_ips_resp = case_when(
     pe_f3_str < median(pe_f3_str) ~ 'low_pe_f3_str',
     pe_f3_str > median(pe_f3_str) ~ 'high_pe_f3_str'),
 )
-# checked box plots -- looks good
+# checked Google Drive plots -- looks good
 
 
 if (unsmoothed) {

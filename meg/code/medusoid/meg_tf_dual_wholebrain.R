@@ -19,10 +19,11 @@ rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
 p_adjust_method = "fdr"
-regressors = c("entropy_change_pos_ri")
-# regressors = c("entropy_change","entropy_change_ri", "entropy_change_full_ri", "abspe_by_rew")
+regressors = c("entropy_change_fmri_ppc")
+# regressors = c("entropy_change","entropy_change_ri", "entropy_change_full_ri", "abspe_by_rew", "entropy_change_fmri_ppc")
 # regressors = c("entropy", "kld","entropy_change_ri", "entropy_change_fmri", "entropy_change_fmr1", "entropy_change_fmr2"
 # "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
+emt1 = F # emtrends plots for the first set (ddf$emtrends_list$emt1)
 print_filenames = T
 fixed_only = F
 reprocess = T
@@ -59,10 +60,7 @@ if (encode) {
         cl <- lapply(files, function(x) {
           if (print_filenames) { print(x) }
           df <- readRDS(x) 
-          # if (ncol(df)==3) {
           df <- df$coef_df_reml
-          # }
-          #        df <- df %>% filter(effect=="fixed")
           return(df)
         })
         cddf <- data.table::rbindlist(cl) %>% unique() %>% distinct(Time, Freq, term, effect, group, level, .keep_all = TRUE)
@@ -93,7 +91,8 @@ if (encode) {
                                   file_pattern <- ".*entropy_change_fmri.*RT"} else if (regressor == "entropy_change_fmr1") {
                                     file_pattern <- ".*entropy_change_fmr1.*RT"} else if (regressor == "entropy_change_fmr2") {
                                       file_pattern <- ".*entropy_change_fmr2.*RT"} else if (regressor == "entropy_change_fmri_ppc") {
-                                        file_pattern <- ".*entropy_change_fmri_ppc.*RT"
+                                        file_pattern <- ".*wholebrain_entropy_change_fmri_ppc.*RT"} else if (regressor == "entropy_change_fmri_ppc_ec_sensors") {
+                                          file_pattern <- ".*ec_sensors_entropy_change_fmri_ppc.*RT"
                                       }
       # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
       # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
@@ -103,11 +102,7 @@ if (encode) {
       rl <- lapply(files, function(x) {
         if (print_filenames) { print(x) }
         df <- readRDS(x) 
-        if(class(df) == "list") {df <- df$coef_df_reml}
-        # if (ncol(df)<4) {
-        #   df <- df$coef_df_reml
-        # }
-        #      df <- df %>% filter(effect=="fixed")
+        df <- df$coef_df_reml
         return(df)
       })
       rddf <- data.table::rbindlist(rl)  %>% unique()  %>% distinct(Time, Freq, term, effect, group, level, rhs, .keep_all = TRUE)
@@ -122,7 +117,35 @@ if (encode) {
                               term = str_replace(term, "entropy_change_neg_wi", "entropy_change_neg_t"),
                               term = str_replace(term, "entropy_change_pos_wi", "entropy_change_pos_t")
       )
-      # saveRDS(rddf, file = "meg_ddf_wholebrain_ec_rs_rt.rds")
+      if (emt1) {
+        message("Importing EMTRENDS")
+        el <- lapply(files, function(x) {
+          if (print_filenames) { print(x) }
+          em <- readRDS(x) 
+          em <- em$emtrends_list$emt_1
+          return(em)
+        })
+        em <- data.table::rbindlist(el) %>% select(c(Time, Freq, rhs, reward_centered, abs_pe.trend, std.error, statistic, p.value)) %>% 
+          mutate(t  = Time - offset, 
+                 alignment = "RT",
+                 reward = as.factor(case_when(
+                   reward_centered == -0.5 ~ 'omission',
+                   reward_centered == 0.5 ~ 'reward')),
+                 p_fdr = p.adjust(p.value, method = p_adjust_method),
+                 p_level_fdr = as.factor(case_when(
+                   # p_fdr > .1 ~ '0',
+                   # p_fdr < .1 & p_fdr > .05 ~ '1',
+                   p_fdr > .05 ~ '1',
+                   p_fdr < .05 & p_fdr > .01 ~ '2',
+                   p_fdr < .01 & p_fdr > .001 ~ '3',
+                   p_fdr <.001 ~ '4'))) %>% ungroup()
+        em$p_level_fdr <- factor(em$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
+        em$Freq <- gsub("f_", "", em$Freq)
+        em$Freq <- ordered(as.numeric(substr(as.character(em$Freq), 1,4)))  
+        
+        
+      }
+      
       message("Processed RT-aligned, merging.  \n")
       if (!noclock) {ddf <- rbind(cddf, rddf)} else {
         ddf <- rddf  
@@ -145,7 +168,7 @@ if (encode) {
       ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
       ddf$`p, FDR-corrected` = ddf$p_level_fdr
       ddf$Freq <- gsub("f_", "", ddf$Freq)
-      ddf$Freq <- ordered(as.numeric(substr(as.character(ddf$Freq), 1,4)))    
+      ddf$Freq <- ordered(as.numeric(substr(as.character(ddf$Freq), 1,4)))  
       setwd(paste0(plot_dir, "/", regressor))
       # saveRDS(ddf, file = "meg_ddf_e_ec_rs.rds")
       saveRDS(ddf, file = paste0("meg_ddf_wholebrain_", regressor, ".rds"))} else {
@@ -229,6 +252,20 @@ if (encode) {
                   labs(alpha = expression(italic(p)[corrected])) + ggtitle(paste(termstr)) + theme_dark())    # 
           dev.off() }
       }
+    }
+    if (emt1) {
+      fname = paste("meg_tf_emtrends_", regressor, ".pdf", sep = "")
+      pdf(fname, width = 14, height = 4.5)
+      print(ggplot(em, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_level_fdr), size = .01) +
+              geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 2) +
+              geom_vline(xintercept = -0.3, lty = "dashed", color = "white", size = 1) +
+              scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+              geom_text(data = edf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
+              geom_text(data = edf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
+              scale_x_continuous(limits = c(-0.7,1.1), breaks = c(-0.3, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2)) +
+              labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)) + theme_dark() + facet_wrap(~reward))
+      dev.off() 
+      
     }
   }
 }
