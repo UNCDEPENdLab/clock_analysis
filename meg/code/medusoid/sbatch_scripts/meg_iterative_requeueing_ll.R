@@ -8,26 +8,30 @@ epochs <- c("RT")
 # effectively 3rd run of 1-sensor RT prediciton
 # for fourth run, consider increasing number of cores/job to 4 or 8
 # epochs <- c("RT")
-# regressors_of_interest <- c("rt")
-regressors_of_interest <- c("entropy_change_ri")
+# regressors_of_interest <- c("entropy_rs", "entropy_ri")
+# regressors_of_interest <- c("entropy_change_full_ri", "entropy_change_pos_ri", "entropy_change_neg_ri")
+regressors_of_interest <- c("abspe_by_rew") #negative is still running, only 77 done
 basedir <- "/proj/mnhallqlab/projects/Clock_MEG/atfr_rds"
 sbatch_dir <- "/nas/longleaf/home/dnpl/code/clock_analysis/meg/code/medusoid/sbatch_scripts"
 setwd(basedir)
-test <- F
+test <- T
 # try random-intercept models with lower RAM
- 
+# modified to run subsets based on CRC version
+start_at = 0
+end_at = 170
 step_up <- tibble::tribble(
   ~gb, ~time,
   30, "4-00:00:00",
+  35, "4-00:00:00",
   40, "4-00:00:00",
-  60, "4-00:00:00",
-  80, "4-00:00:00"
-  )
+  70, "4-00:00:00"
+)
 
 for (ee in epochs) {
   epochdir <- file.path(basedir, ee)
-  flist <- list.files(pattern = ".*freq_t.*", path = epochdir)
-  fnum <- seq_along(flist)
+  flist <- list.files(pattern = "^freq_t", path = epochdir)
+ fnum <- seq_along(flist)
+ run_already <- fnum <= start_at | fnum >= end_at
   #file.create(paste0(epochdir,"/","tempfile.csv"))
   #this_f <- "tempfile.csv"
   #writeLines(as.character(1), this_f)
@@ -56,12 +60,11 @@ for (ee in epochs) {
       message("Number remaining: ")
       print(length(flist[!out_exists]))
     }
+    to_run <- flist[!out_exists & !run_already]
+    it_run <- fnum[!out_exists  & !run_already]
+    compute_run <- compute_expect[!out_exists & !run_already]
+    # out_run <- out_expect[!out_exists]
     
-    to_run <- flist[!out_exists]
-    out_run <- out_expect[!out_exists]
-    it_run <- fnum[!out_exists]
-    compute_run <- compute_expect[!out_exists]
-
     if (length(to_run) > 0) {
       for (ff in seq_along(to_run)) {
         #look at prior compute file
