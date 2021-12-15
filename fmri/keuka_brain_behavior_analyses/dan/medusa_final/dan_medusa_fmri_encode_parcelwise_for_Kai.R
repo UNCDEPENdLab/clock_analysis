@@ -10,7 +10,7 @@ out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa"
 # repo_directory <- "~/Data_Analysis/clock_analysis"
 repo_directory <- "~/code/clock_analysis"
 
-visuomotor_long <- TRUE # what we want to load in load_medusa_data_dan.R
+visuomotor_long <- F # what we want to load in load_medusa_data_dan.R
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
 
 simple = F # only include the interaction between MEG late beta for echange and echange
@@ -32,25 +32,15 @@ clock_visuomotor_long %>% group_by(evt_time) %>%
 
 clock_visuomotor_long <- clock_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_interp))
 
-rt_visuomotor_long %>% group_by(evt_time) %>%
+rt_comb %>% group_by(evt_time) %>%
   summarise(isna=sum(is.na(decon_interp)))
 
-rt_visuomotor_long <- rt_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_interp))
+rt_long <- rt_comb %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_interp))
 
 #alignment <- "clock"
 alignment <- "rt"
 
 setDT(trial_df)
-
-# add MEG betas from the repo
-meg_betas <- readRDS(file.path(repo_directory, "meg/data/MEG_betas_wide_echange_Nov21_2021.RDS")) %>% mutate(id = as.numeric(id))
-# idf <- unique(trial_df$id)
-# idm <- unique(meg_betas$id)
-# # check against Michael's Excel file
-# id_check <- read_excel("~/code/clock_analysis/fmri/MMY3_DroppedSubjects.xlsx") %>% mutate(id = as.numeric(Luna_ID), 
-#                                                                                           MRI = `MRI?`== "Y", 
-#                                                                                           MEG = `MEG?` == "Y")
-# idc <- id_check %>% filter(MEG & MRI) %>% select(id) %>% .$id
 trial_df <- trial_df %>% left_join(meg_betas, by = "id")
 
 message("Merging")
@@ -68,17 +58,17 @@ if (alignment=="clock") {
   # subset to columns of interest
   trial_df <- trial_df %>%
     dplyr::select(id, run, run_trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max,
-                  v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome, entropy_change_late_beta, entropy_change_early_beta) %>%
+                  v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
     mutate(log_kld3 = log(kld3 + .00001))  %>%
     mutate(reward_centered = as.numeric(outcome=="Reward") - 0.5,
            reward = outcome)
   
-  d <- merge(trial_df, rt_visuomotor_long, by = c("id", "run", "run_trial"))
+  d <- merge(trial_df, rt_long, by = c("id", "run", "run_trial"))
   d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient", "side"), sep="_")
   if (emm & filter_abspe) {d <- d %>% filter(abs_pe < 30)}
 }
 
-rm(rt_visuomotor_long)
+rm(rt_long)
 rm(clock_visuomotor_long)
 gc()
 
@@ -179,12 +169,13 @@ if (alignment == "clock") {
                             v_entropy_wi*run_trial + v_entropy_wi_change*run_trial + abs_pe*run_trial + outcome +
                             (1 | id) )
   
-  flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_pe, enc_rt_int, enc_rt_trial)
+  # flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_pe, enc_rt_int, enc_rt_trial)
+  flist <- named_list(enc_rt_base)
   flist_meg <- named_list(enc_rt_base_meg, enc_rt_rslope_meg)
   flist_meg_simple <- named_list(enc_rt_base_meg_simple, enc_rt_rslope_meg_simple)
   flist_int <- named_list(enc_rt_int)
 }  
-splits <- c("vm_gradient", "side", "evt_time")
+splits <- c("atlas_value", "side", "evt_time")
 # splits <- c("vm_gradient", "evt_time") # combining sides
 
 if (emm) {
@@ -196,11 +187,11 @@ ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist_int,
                 list(outcome="decon_interp", model_name="enc_rt_int", ~ abs_pe | reward, at = list(abs_pe = c(0.62, 26.33)))))
 saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri_int_emm.rds")))
 } else {
-  ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist_meg_simple,
+  ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist,
                   split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "run_trial"),
                   tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
                   calculate = c("parameter_estimates_reml"), ncores = 18, refit_on_nonconvergence = 5, padjust_by = "term")
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri_meg_simple.rds")))
+saveRDS(ddf$coef_df_reml %>% filter(effect=="fixed"), file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri_rt_base_parcelwise_fixed.rds")))
   
   }
 
