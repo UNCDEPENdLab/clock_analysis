@@ -31,13 +31,17 @@ source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_d
 df <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_meg", groupfixed = T)
 
 # add meg data
-wbetas <- readRDS("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/betas/MEG_betas_wide_echange_vmax_reward_Nov30_2021.RDS") %>% 
-  mutate(omission_early_theta = - avg_reward_early_theta,
-         omission_late_delta = - avg_reward_late_delta) %>% 
-  mutate(entropy_change_early_beta_supp = -  avg_entropy_change_early_beta,
-         entropy_change_late_beta_supp = - avg_entropy_change_late_beta,
-         vmax_late_alpha = avg_vmax_late_beta) %>%
-  select(c(id, omission_early_theta, omission_late_delta, entropy_change_early_beta_supp, entropy_change_late_beta_supp, vmax_late_alpha))
+# wbetas <- readRDS("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/betas/MEG_betas_wide_echange_vmax_reward_Nov30_2021.RDS") %>% 
+wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_entropy_change_ec_sensors_v_max_reward_Dec15_2021.RDS") %>% 
+  mutate(omission_early_theta = - reward_early_theta,
+         omission_late_delta = - reward_late_delta) %>% 
+  mutate(entropy_change_early_beta_supp = -  entropy_change_early_beta_entropy_change,
+         entropy_change_late_beta_supp = - entropy_change_late_beta_entropy_change,
+         entropy_change_early_beta_supp_ec = -  entropy_change_early_beta_entropy_change_ec_sensors,
+         entropy_change_late_beta_supp_ec = - entropy_change_late_beta_entropy_change_ec_sensors,
+         vmax_late_alpha = vmax_late_beta) %>%
+  select(c(id, omission_early_theta, omission_late_delta, entropy_change_early_beta_supp, entropy_change_late_beta_supp,
+           entropy_change_early_beta_supp_ec, entropy_change_late_beta_supp_ec, vmax_late_alpha))
 # merge
 df <- df %>% inner_join(wbetas, by = "id")
 
@@ -137,6 +141,28 @@ mb_meg1delta <-
 summary(mb_meg1delta)
 Anova(mb_meg1delta, '3')
 
+mb_meg_ec_allsensors <-  
+  lme4::lmer(rt_csv_sc ~ 
+               rt_lag_sc * last_outcome * entropy_change_early_beta_supp + 
+               rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
+               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp + 
+               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp + 
+               (1|id/run), df %>% filter(rt_csv<4000))
+# screen.lmerTest(mb_meg1, .01)
+summary(mb_meg_ec_allsensors)
+Anova(mb_meg_ec_allsensors, '3')
+
+mb_meg_ec_ecsensors <-  
+  lme4::lmer(rt_csv_sc ~ 
+               rt_lag_sc * last_outcome * entropy_change_early_beta_supp_ec + 
+               rt_lag_sc * last_outcome * entropy_change_late_beta_supp_ec + 
+               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp_ec + 
+               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp_ec + 
+               (1|id/run), df %>% filter(rt_csv<4000))
+# screen.lmerTest(mb_meg1, .01)
+summary(mb_meg_ec_ecsensors)
+Anova(mb_meg_ec_ecsensors, '3')
+
 
 # load fmri data
 fdf <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_fmri", groupfixed = T)
@@ -169,6 +195,30 @@ fmb_meg1delta <- lme4::lmer(rt_csv_sc ~
 # screen.lmerTest(fmb_meg1, .01)
 summary(fmb_meg1delta)
 Anova(fmb_meg1delta, '3')
+
+# late betas suppression to EC from only the posterior "EC" sensors predicts as well as from all sensors
+mb_fmri_ec_allsensors <-  
+  lme4::lmer(rt_csv_sc ~ 
+               rt_lag_sc * last_outcome * entropy_change_early_beta_supp + 
+               rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
+               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp + 
+               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp + 
+               (1|id/run), fdf %>% filter(rt_csv<4000))
+# screen.lmerTest(mb_fmri1, .01)
+summary(mb_fmri_ec_allsensors)
+Anova(mb_fmri_ec_allsensors, '3')
+
+mb_fmri_ec_ecsensors <-  
+  lme4::lmer(rt_csv_sc ~ 
+               rt_lag_sc * last_outcome * entropy_change_early_beta_supp_ec + 
+               rt_lag_sc * last_outcome * entropy_change_late_beta_supp_ec + 
+               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp_ec + 
+               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp_ec + 
+               (1|id/run), fdf %>% filter(rt_csv<4000))
+# screen.lmerTest(mb_fmri1, .01)
+summary(mb_fmri_ec_ecsensors)
+Anova(mb_fmri_ec_ecsensors, '3')
+
 
 # late beta to entropy change
 em1 <- as_tibble(emtrends(mb_meg1theta, data = df,  var = "rt_lag_sc", specs = c("entropy_change_late_beta_supp", "last_outcome"), at = list(entropy_change_late_beta_supp = c(-.13, .12)), options = list()))
