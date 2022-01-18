@@ -19,14 +19,15 @@ rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
 p_adjust_method = "fdr"
-regressors = c("entropy_change_ec_sensors")
+regressors = c("signed_pe")
+# regressors = c("abspe_by_rew", "entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward")
 # regressors = c("entropy_change","entropy_change_ri", "entropy_change_full_ri", "abspe_by_rew", "entropy_change_fmri_ppc")
 # regressors = c("entropy", "kld","entropy_change_ri", "entropy_change_fmri", "entropy_change_fmr1", "entropy_change_fmr2"
 # "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 emt1 = F # emtrends plots for the first set (ddf$emtrends_list$emt1)
 print_filenames = T
 fixed_only = F
-reprocess = T
+reprocess = F
 plots = T
 diags = F
 average = F
@@ -93,7 +94,8 @@ if (encode) {
                                       file_pattern <- ".*entropy_change_fmr2.*RT"} else if (regressor == "entropy_change_fmri_ppc") {
                                         file_pattern <- ".*wholebrain_entropy_change_fmri_ppc.*RT"} else if (regressor == "entropy_change_fmri_ppc_ec_sensors") {
                                           file_pattern <- ".*ec_sensors_entropy_change_fmri_ppc.*RT"} else if (regressor == "entropy_change_ec_sensors") {
-                                            file_pattern <- ".*ec_sensors_entropy_change_ec.*RT"
+                                            file_pattern <- ".*ec_sensors_entropy_change_ec.*RT"} else if (regressor == "abspe_ec_sensors") {
+                                              file_pattern <- ".*ec_sensors_abspe_ec.*RT"
                                       }
       # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
       # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
@@ -231,7 +233,7 @@ if (encode) {
         else { # plots only feedback-aligned
           fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")
           pdf(fname, width = 7, height = 4.5)
-          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) +
+          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_value), size = .01) +
                   geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 2) +
                   geom_vline(xintercept = -0.3, lty = "dashed", color = "white", size = 1) +
                   scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
@@ -242,7 +244,7 @@ if (encode) {
           dev.off() 
           fname = paste("meg_tf_rt_all_dan_FDR_", termstr, ".pdf", sep = "")
           pdf(fname, width = 7, height = 4.5)
-          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) +
+          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_level_fdr), size = .01) +
                   geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 2) +
                   geom_vline(xintercept = -0.3, lty = "dashed", color = "white", size = 1) +
                   scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
