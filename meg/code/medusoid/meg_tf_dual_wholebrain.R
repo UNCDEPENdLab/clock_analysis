@@ -19,8 +19,9 @@ rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
 p_adjust_method = "fdr"
-regressors = c("signed_pe")
-# regressors = c("abspe_by_rew", "entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward")
+
+
+regressors = c("abspe_by_rew", "entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward")
 # regressors = c("entropy_change","entropy_change_ri", "entropy_change_full_ri", "abspe_by_rew", "entropy_change_fmri_ppc")
 # regressors = c("entropy", "kld","entropy_change_ri", "entropy_change_fmri", "entropy_change_fmr1", "entropy_change_fmr2"
 # "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
