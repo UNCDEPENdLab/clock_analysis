@@ -10,6 +10,8 @@ library(car)
 library(viridis)
 library(ggnewscale)
 library(RColorBrewer)
+library(psych)
+library(corrplot)
 source("~/code/Rhelpers/theme_black.R")
 
 repo_directory <- "~/code/clock_analysis"
@@ -21,7 +23,7 @@ fmri = T # whether to merge and correlate with fMRI betas
 ################
 # subjects' betas
 # load  models
-regressors = c("entropy_change", "entropy_change_ec_sensors", "v_max", "reward")
+regressors = c("entropy_change", "entropy_change_ec_sensors", "v_max", "reward", "abspe_ec_sensors", "abs_pe")
 # regressors = c("entropy_change", "v_max", "reward")
 all_ress <- lapply(regressors, function(rr) {
   cd <- file.path(plot_dir, rr)
@@ -61,9 +63,23 @@ r1 <- all_dfs %>% filter(term == "reward_t" & t >= 0.2 & t <= 0.4 & Freq >= "5" 
 r2 <- all_dfs %>% filter(term == "reward_t" & t >= 0.4 & t <= 0.8 &  Freq <= "4.2") %>% # & Freq < "16.8"
   group_by(level) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "reward_late_delta")
+
+a1 <- all_dfs %>% filter(term == "abs_pe" & regressor == "abspe_ec_sensors" & t >= 0.4 & t <= 0.75 &  Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+  group_by(level) %>%
+  summarize(avg=mean(estimate)) %>% mutate(reg_region = "abspe_ec_late_beta")
+
+
+a2 <- all_dfs %>% filter(term == "scale(abs_pe)" & regressor == "abs_pe" & t >= 0.4 & t <= 0.75 &  Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+  group_by(level) %>%
+  summarize(avg=mean(estimate)) %>% mutate(reg_region = "abspe_late_beta")
+
 # betas <- rbind(ec1, ec2) %>% rename(id = level) %>% ungroup()
-wholebrain_betas <- rbind(vm1, r1, r2) %>% rename(id = level) %>% pivot_wider(names_from = c(reg_region), values_from = avg) %>% ungroup()
+wholebrain_betas <- rbind(vm1, r1, r2, a1, a2) %>% rename(id = level) %>% pivot_wider(names_from = c(reg_region), values_from = avg) %>% ungroup()
 wbetas <- merge(ecs, wholebrain_betas)
+just_meg_betas <- wbetas %>% select(is.numeric)
+cormat <- corr.test(just_meg_betas, method = "pearson")
+# inspect corr structure to make sure it is not garbage
+corrplot(cormat$r, p.mat = cormat$p, order = "hclust", tl.cex = .8, insig = 'blank', method = 'number')
 setwd("~/code/clock_analysis/meg/data")
 # saveRDS(betas, file = "MEG_betas_echange_vmax_reward_Nov15_2021.RDS")
 
@@ -81,7 +97,7 @@ multi_betas <- inner_join(wbetas, fmri_ec_betas)
 
 just_betas <- multi_betas %>% select(is.numeric)
 cormat <- corr.test(just_betas, method = "pearson")
-corrplot(cormat$r, order = "hclust")
+corrplot(cormat$r, p.mat = cormat$p, order = "hclust", tl.cex = .5, method = 'number', sig.level = .1, insig = 'blank')
 }
 if (sensors) {
   # load all models
