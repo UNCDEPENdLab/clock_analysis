@@ -2,8 +2,8 @@ library(tidyverse)
 library(lme4)
 library(data.table)
 
-medusa_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/"
-cache_dir <- "~/Downloads"
+#medusa_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/"
+cache_dir <- "/Users/hallquist/OneDrive - University of North Carolina at Chapel Hill/medusa"
 #cache_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/cache"
 #repo_directory <- "~/code/clock_analysis"
 repo_directory <- "~/Data_Analysis/clock_analysis"

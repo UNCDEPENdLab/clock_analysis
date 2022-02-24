@@ -20,8 +20,8 @@ source('~/code/Rhelpers/screen.lmerTest.R')
 source('~/code/Rhelpers/vif.lme.R')
 # library(stringi)
 
-# clock_folder <- "~/Data_Analysis/clock_analysis" #michael
-clock_folder <- "~/code/clock_analysis" #alex
+clock_folder <- "~/Data_Analysis/clock_analysis" #michael
+# clock_folder <- "~/code/clock_analysis" #alex
 
 # source('~/code/Rhelpers/')
 setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/dan'))
