@@ -41,7 +41,11 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
   # for now, subset down to overall contrast at L2.
   
   cope_df <- fread(beta_csv) %>%
-    filter(l2_cope_name == "overall") %>%
+    filter(l2_cope_name == "overall") %>% # for not, ignore all other l2 contrasts
+    
+    # debugging only
+    #filter(mask_value %in% 1:2) %>%
+    #filter(l1_cope_name == "EV_clock") %>%
     #filter(l1_cope_name == "EV_entropy_change_feedback" & l2_cope_name == "overall") %>%
     #filter(l1_cope_name == "EV_entropy_wiz_clock" & l2_cope_name == "overall") %>%
     dplyr::select(-feat_dir, -img, -mask_name, -session, -l1_cope_number, -l2_cope_number, -l2_model) %>%
@@ -86,9 +90,11 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
                     tidy_args = list(effects = c("fixed"), conf.int = TRUE), 
                     calculate = c("parameter_estimates_reml"), ncores = ncores, refit_on_nonconvergence = 5, padjust_by = "term",
                     emtrends_spec = list(
-                      rt_lag = list(outcome = "rt_csv", model_name = "main", var = "rt_lag", specs = c("last_outcome", "fmri_beta"), 
-                                    at=list(fmri_beta = c(-2, 0, 2))) # z scores
-                    ))  
+                      rt_lag_int = list(outcome = "rt_csv", model_name = "int", var = "rt_lag", specs = c("last_outcome", "fmri_beta"), 
+                                    at=list(fmri_beta = c(-2, 0, 2))), # z scores
+                      rt_lag_slo = list(outcome = "rt_csv", model_name = "slo", var = "rt_lag", specs = c("last_outcome", "fmri_beta"), 
+                                        at=list(fmri_beta = c(-2, 0, 2))) # z scores
+                    ))
     
     rm(combo)
     saveRDS(ddf, file=out_file)

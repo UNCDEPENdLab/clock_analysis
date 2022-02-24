@@ -50,11 +50,26 @@ slo <- formula(~ (trial_neg_inv + rt_lag + v_max_wi_lag + v_entropy_wi + fmri_be
 efiles <- list.files(beta_dir, pattern = "Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz", 
                     recursive = TRUE, full.names = TRUE)
 
+save.image(file="parcel_input_snapshot.RData")
+
 #efiles <- efiles[3:6]
 for (ee in efiles) {
-  to_plot <- mixed_by_betas(ee, labels_200, trial_df, mask_file = "Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
-                            rhs_form = fmri.pipeline:::named_list(int, slo), 
-                            split_on = c("l1_cope_name", "l2_cope_name", "mask_value"))
+  job <- R_batch_job$new(
+    job_name = "parcel_bb", batch_directory = getwd(), scheduler = "slurm",
+    input_rdata_file = "parcel_input_snapshot.RData",
+    n_nodes = 1, n_cpus = 16, wall_time = "12:00:00",
+    mem_total = "64G",
+    r_code = "to_plot <- mixed_by_betas(ee, labels_200, trial_df, mask_file = 'Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
+                            rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16,
+                            split_on = c('l1_cope_name', 'l2_cope_name', 'mask_value'))",
+    r_packages = "fmri.pipeline",
+    batch_code = x("module use /proj/mnhallqlab/sw/modules", "module load r/4.0.3_depend")
+  )
+  
+  job$submit()
+  # to_plot <- mixed_by_betas(ee, labels_200, trial_df, mask_file = "Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
+  #                           rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16,
+  #                           split_on = c("l1_cope_name", "l2_cope_name", "mask_value"))
 }
 
 
