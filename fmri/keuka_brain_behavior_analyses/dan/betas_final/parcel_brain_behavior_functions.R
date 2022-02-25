@@ -13,13 +13,15 @@
 #' @param rhs_form The right-hand side formula used in the lmer() calls by mixed_by
 #' @param ncores The number of cores to use for parallel computation of splits (passed through to mixed_by)
 #' @param out_dir The output directory for statistic and image files
+#' @param afni_dir The directory containing AFNI commands/programs
 #'
 #' @details Note that by default, this function also computes the robust mean of betas/coefficients in each mask_value and provides
 #'   an overall map of means by parcel/mask value. This is usezful to see in which parcels whole-brain activation is robust and significant
 #'   and it provides a validation of the parcelwise beta extraction against the corresponding voxelwise maps from which the betas are drawn
 #' @return The data.frame containing coefficients by splits (incl. mask value)
 mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label_join_col = "mask_value", trial_join_col = "id", 
-                           split_on = c("mask_value", "l1_cope_name"), rhs_form=NULL, ncores = 16, out_dir = NULL, out_prefix = NULL) {
+                           split_on = c("mask_value", "l1_cope_name"), rhs_form=NULL, ncores = 16, 
+                           out_dir = NULL, out_prefix = NULL, afni_dir = "~/abin") {
   
   checkmate::assert_data_frame(label_df)
   checkmate::assert_file_exists(beta_csv)
@@ -36,6 +38,9 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
   if (is.null(out_prefix)) {
     out_prefix <- fmri.pipeline:::file_sans_ext(basename(beta_csv))
   }
+
+  checkmate::assert_directory_exists(afni_dir)
+  afni_dir <- normalizePath(afni_dir)
   
   # the big betas file has all of the L2 contrasts, which are largely uninteresting and make the dataset massive
   # for now, subset down to overall contrast at L2.
@@ -55,8 +60,6 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
   combo <- cope_df %>%
     merge(trial_df, by=trial_join_col, all.x = TRUE, allow.cartesian=TRUE) # trial_df and betas get crossed
   
-  #merge(trial_df, by=.EACHI, all.x = TRUE)
-  
   # %>%
   #   left_join(label_df, by=label_join_col) %>%
   #   left_join(trial_df, by=trial_join_col)
@@ -67,16 +70,11 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
   # } else {
   #   cope_split <- split(cope_df, by="l1_cope_name")
   # }
-  # 
-  # browser()
-  # # run mixed_by for every contrast combination
-  # for (df in cope_split) {
-  
   
   # run one-sample test statistics for each parcel to corroborate beta extraction against whole-brain voxelwise analysis
   onesamp_betas(cope_df, mask_file=mask_file, roi_column = "mask_value", 
                 nest_by = c("l1_model", "l1_cope_name", "l2_cope_name"),
-                out_dir = out_dir, img_prefix = "onesamp")
+                out_dir = out_dir, img_prefix = "onesamp", afni_dir = afni_dir)
   
   out_file <- file.path(out_dir, paste0(out_prefix, "_mixed_by.rds"))
   
@@ -112,7 +110,7 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
     setDT()
   
   fill_mask_with_stats(mask_file, mask_col = "mask_value", stat_dt = to_plot, subbrik_cols = c("t", "p", "logp", "p_FDR"),
-                       split_on=c("l1_cope_name", "l2_cope_name", "term", "model_name"), afni_dir="~/abin", out_dir = out_dir, img_prefix = NULL)
+                       split_on=c("l1_cope_name", "l2_cope_name", "term", "model_name"), afni_dir=afni_dir, out_dir = out_dir, img_prefix = NULL)
   
   #fwrite(to_plot, file="fmri_brainbehavior_parcel_entropy_betas_200.csv", row.names=FALSE)
   return(to_plot)
@@ -195,7 +193,7 @@ fill_mask_with_stats <- function(mask_file, mask_col = "mask_value", stat_dt, su
 }
 
 onesamp_betas <- function(cope_df, mask_file, dv = "fmri_beta", roi_column = "mask_value", nest_by = NULL, 
-                          out_dir = NULL, img_prefix = "onesamp") {
+                          out_dir = NULL, img_prefix = "onesamp", afni_dir = "~/abin") {
   require(tidyr)
   require(data.table)
   require(dplyr)
@@ -216,7 +214,7 @@ onesamp_betas <- function(cope_df, mask_file, dv = "fmri_beta", roi_column = "ma
   # write mean results to out_dir
   fill_mask_with_stats(mask_file, mask_col = "mask_value", stat_dt = res, subbrik_cols = c("t", "negp", "logp"), 
                        subbrik_labels = c("t", "1-p", "neglogp"),
-                       split_on=nest_by, afni_dir="~/abin", out_dir = out_dir, img_prefix = img_prefix)
+                       split_on=nest_by, afni_dir=afni_dir, out_dir = out_dir, img_prefix = img_prefix)
   
   return(res)
 }

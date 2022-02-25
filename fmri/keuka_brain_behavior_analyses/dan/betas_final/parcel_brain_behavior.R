@@ -9,24 +9,29 @@ library(dplyr)
 library(readr)
 library(tidyr)
 library(purrr)
-setwd("~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final")
+
+#analysis_dir <- "~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final"
+analysis_dir <- "/proj/mnhallqlab/projects/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final"
+setwd(analysis_dir)
 
 source("../get_trial_data.R")
 source("parcel_brain_behavior_functions.R")
 
 # location of whole brain betas for analysis
-beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas"
+# beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas"
+beta_dir <- file.path(analysis_dir, "wholebrain_betas")
 
 # MNH/AD internal labeling scheme
-labels <- readxl::read_excel("~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx") %>%
+labels <- readxl::read_excel(file.path(analysis_dir, "..", "MNH Dan Labels.xlsx")) %>%
   dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label)
 
 # BALSA parcel labels from whereami
-labels_200 <- read.csv("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas/schaefer_200_whereami.csv") %>%
+labels_200 <- read.csv(file.path(beta_dir, "schaefer_200_whereami.csv")) %>%
   dplyr::rename(mask_value = roi_num, plot_label = MNI_Glasser_HCP_v1.0) %>% dplyr::select(mask_value, plot_label) %>%
   mutate(plot_label = sub("Focus point:\\s+", "", plot_label, perl=TRUE))
 
-trial_df <- get_trial_data(repo_directory = "~/Data_Analysis/clock_analysis") %>%
+#trial_df <- get_trial_data(repo_directory = "~/Data_Analysis/clock_analysis") %>%
+trial_df <- get_trial_data(repo_directory = "/proj/mnhallqlab/projects/clock_analysis") %>%
   group_by(id, run) %>%
   mutate(v_max_wi_lag = lag(v_max_wi, order_by=run_trial)) %>%
   ungroup() %>%
@@ -59,14 +64,17 @@ for (ee in efiles) {
     input_rdata_file = "parcel_input_snapshot.RData",
     n_nodes = 1, n_cpus = 16, wall_time = "12:00:00",
     mem_total = "64G",
-    r_code = "to_plot <- mixed_by_betas(ee, labels_200, trial_df, mask_file = 'Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
-                            rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16,
-                            split_on = c('l1_cope_name', 'l2_cope_name', 'mask_value'))",
-    r_packages = "fmri.pipeline",
-    batch_code = x("module use /proj/mnhallqlab/sw/modules", "module load r/4.0.3_depend")
+    r_code = glue("to_plot <- mixed_by_betas('{ee}', labels_200, trial_df, mask_file = 'Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
+                            rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16, afni_dir = '/proj/mnhallqlab/sw/afni',
+                            split_on = c('l1_cope_name', 'l2_cope_name', 'mask_value'))"),
+    r_packages = c("fmri.pipeline", "tidyverse", "data.table", "sfsmisc"),
+    batch_code = c("module use /proj/mnhallqlab/sw/modules", "module load r/4.0.3_depend")
   )
   
   job$submit()
+
+
+  # local execution
   # to_plot <- mixed_by_betas(ee, labels_200, trial_df, mask_file = "Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
   #                           rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16,
   #                           split_on = c("l1_cope_name", "l2_cope_name", "mask_value"))
