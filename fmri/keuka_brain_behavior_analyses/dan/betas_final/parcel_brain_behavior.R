@@ -9,6 +9,7 @@ library(dplyr)
 library(readr)
 library(tidyr)
 library(purrr)
+library(glue)
 
 #analysis_dir <- "~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final"
 analysis_dir <- "/proj/mnhallqlab/projects/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final"
@@ -68,7 +69,7 @@ for (ee in efiles) {
                             rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16, afni_dir = '/proj/mnhallqlab/sw/afni',
                             split_on = c('l1_cope_name', 'l2_cope_name', 'mask_value'))"),
     r_packages = c("fmri.pipeline", "tidyverse", "data.table", "sfsmisc"),
-    batch_code = c("module use /proj/mnhallqlab/sw/modules", "module load r/4.0.3_depend")
+    batch_code = c("module use /proj/mnhallqlab/sw/modules", "module load r/4.1.2_depend")
   )
   
   job$submit()

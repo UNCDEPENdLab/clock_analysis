@@ -103,13 +103,13 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
     dplyr::rename(p = p.value, t = statistic) %>%
     mutate(logp = -1*log10(p)) %>%
     group_by(term, model_name) %>%
-    mutate(p_FDR=p.adjust(p, method="fdr")) %>%
+    mutate(p_FDR = 1 - p.adjust(p, method="fdr"), p = 1 - p) %>%
     ungroup() %>% 
     left_join(label_df, by=label_join_col) %>%
     select(-rhs, -effect) %>%
     setDT()
   
-  fill_mask_with_stats(mask_file, mask_col = "mask_value", stat_dt = to_plot, subbrik_cols = c("t", "p", "logp", "p_FDR"),
+  fill_mask_with_stats(mask_file, mask_col = "mask_value", stat_dt = to_plot, subbrik_cols = c("t", "negp", "logp", "negp_FDR"),
                        split_on=c("l1_cope_name", "l2_cope_name", "term", "model_name"), afni_dir=afni_dir, out_dir = out_dir, img_prefix = NULL)
   
   #fwrite(to_plot, file="fmri_brainbehavior_parcel_entropy_betas_200.csv", row.names=FALSE)
