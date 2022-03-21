@@ -21,12 +21,14 @@ repo_directory <- "~/code/clock_analysis"
 source("~/code/fmri.pipeline/R/mixed_by.R")
 source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R")
 
-
+debug = F
 # main analysis analogous to Fig. 4 E-G in NComm 2020
-debug = F #VERY CAREFUL, RUNs ON THE FIRST FILE ONLY !! recommend changing back to "F" *IMMEDIATELY* after sourcing the script
+# without inputs runs in debug mode
+if (is.na(as.numeric(Sys.getenv("sourcefilestart")))) {debug = T} else {debug = F} #VERY CAREFUL, RUNs ON THE FIRST FILE ONLY !! recommend changing back to "F" *IMMEDIATELY* after sourcing the script
+
 if (debug) {
   Sys.setenv(epoch = "RT")
-  Sys.setenv(regressor = "entropy_change_fmri_ppc")
+  Sys.setenv(regressor = "abs_pe")
 }
 alignment <- Sys.getenv("epoch")
 regressor <- Sys.getenv("regressor")
@@ -36,8 +38,8 @@ message(paste0("Regressor: ", regressor))
 
 if (regressor=="entropy_change" | regressor == "entropy" | regressor=="abs_pe" | regressor == "entropy_change_full_ri" | regressor == "entropy_change_sel" | regressor == "entropy_change_ri" |
     regressor=="reward" | regressor=="entropy_kld_ri" | regressor == "entropy_change_pos_ri" | regressor == "entropy_change_neg_ri" | regressor == "v_max" | regressor == "v_max_ri" | 
-    regressor == "abspe_by_rew" | regressor == "signed_pe" | regressor == "entropy_change_fmri" | regressor == "entropy_change_fmr1" | regressor == "entropy_change_fmr2" | 
-    regressor == "entropy_change_fmri_ppc") {
+    regressor == "abspe_by_rew_rs" | regressor == "signed_pe" | regressor == "signed_pe_rs" | regressor == "entropy_change_fmri" | regressor == "entropy_change_fmr1" | regressor == "entropy_change_fmr2" | 
+    regressor == "entropy_change_fmri_ppc" | regressor == "entropy_change_ec_sensors" | regressor == "abspe_ec_sensors") {
   encode  <- T
   rt_predict <- F
 } else if (regressor=="rt") {
@@ -84,8 +86,13 @@ if (debug) {
   sourcefilestart = 9
 }
 setwd(medusa_dir)
-all_files <- list.files(pattern = "freq_t", full.names = T)
+if (regressor == "entropy_change_fmri_ppc" | stringr::str_detect(regressor, "ec_sensors")) {
+all_files <- list.files(pattern = "freq_t_ec_sensors", full.names = T)
+files <- all_files[sourcefilestart] } else {
+all_files <- list.files(pattern = "freq_t_all_sensors", full.names = T)
 files <- all_files[sourcefilestart]
+}
+
 message(paste0("Starting at number ", sourcefilestart))
 message(paste0("Processing file "))
 cat(files)
@@ -165,6 +172,9 @@ if (alignment=="RT" | alignment=="feedback") {
   } else if (regressor=="entropy_change") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change + abs_pe + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|Sensor))
+  } else if (regressor=="entropy_change_ec_sensors") {
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change + abs_pe + outcome + (v_entropy_wi_change|Subject) + (1|Sensor))
   } else if (regressor=="entropy_change_fmri") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change*echange_f1_early + v_entropy_wi_change*echange_f2_late + abs_pe + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|Sensor))
@@ -176,22 +186,33 @@ if (alignment=="RT" | alignment=="feedback") {
                                   v_entropy_wi_change*echange_f2_late + abs_pe + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|Sensor))  
   } else if (regressor=="entropy_change_fmri_ppc") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
-                                  v_entropy_wi_change*ppc_ec_beta + abs_pe + outcome + (v_entropy_wi_change|Subject) + (v_entropy_wi_change|Sensor))                                    
+                                  v_entropy_wi_change*ppc_ec_beta + abs_pe + outcome + 
+                                  (v_entropy_wi_change|Subject) + (1|Sensor)) # since we have already selected sensors                          
   } else if (regressor=="entropy_change_ri") {
     encode_formula_ri = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change + abs_pe + outcome + (1|Subject) + (v_entropy_wi_change|Sensor))
   } else if (regressor=="abs_pe") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
-                                  v_entropy_wi_change + abs_pe + outcome + (abs_pe|Subject) + (abs_pe|Sensor))
-  } else if (regressor=="abspe_by_rew") {
+                                  v_entropy_wi_change + abs_pe + reward_centered + (abs_pe|Subject) + (abs_pe|Sensor))
+                                  to_scale = "abs_pe"
+  } else if (regressor=="abspe_ec_sensors") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
-                                  v_entropy_wi_change + abs_pe * reward_centered + (1|Subject) + (abs_pe|Sensor))
+                                  v_entropy_wi_change + abs_pe + reward_centered + (abs_pe|Subject) + (1|Sensor))
+  } else if (regressor=="abspe_by_rew_rs") {
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change + abs_pe * reward_centered + (abs_pe|Subject) + (abs_pe|Sensor))
     emtrend_encode = "abs_pe"
     emtrend_reward_centered = "reward_centered"
   } else if (regressor=="signed_pe") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
-                                  v_entropy_wi_change + pe_max_sc + (1|Subject) + (pe_max_sc|Sensor))
-    emtrend_encode = "pe_max_sc"
+                                  v_entropy_wi_change + pe_max + (1|Subject) + (pe_max|Sensor))
+    emtrend_encode = "pe_max"
+    to_scale = "pe_max"
+  }else if (regressor=="signed_pe_rs") {
+    encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
+                                  v_entropy_wi_change + pe_max + (pe_max|Subject) + (pe_max|Sensor))
+    emtrend_encode = "pe_max"
+    to_scale = "pe_max"
   } else if (regressor=="reward") {
     encode_formula_rs = formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
                                   v_entropy_wi_change + abs_pe + outcome + (outcome|Subject) + (outcome|Sensor))
@@ -310,16 +331,19 @@ if (encode) {
   } else {
   message(paste0("Using RHS formula: ", encode_formula_rs))
   formula <- encode_formula_rs}
-  ddf <- mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = list(ri = formula), split_on = splits,
+  ddf <- mixed_by(files, outcomes = signal_outcome, rhs_model_formulae = list(rs = formula), split_on = splits,
                             external_df = trial_df, external_merge_by=c("Subject", "Run", "Trial"), padjust_by = "term", padjust_method = "BY", ncores = ncores,
                             refit_on_nonconvergence = 5, outcome_transform=trans_func, tidy_args=list(effects=c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int=TRUE,
-                                                                                                      calculate =c("parameter_estimates_reml","fit_statistics"), scale_predictors = "abs_pe"),
-                            emtrends_spec = list(
-                            list(outcome=signal_outcome, model_name="ri", var=emtrend_encode, specs=c(emtrend_reward_centered), at = list(reward_centered = c(-0.5, 0.5))))
+                                                                                                      calculate =c("parameter_estimates_reml","fit_statistics"), scale_predictors = to_scale) #,
+                            #emtrends_spec = list(
+                            #list(outcome=signal_outcome, model_name="ri", var=emtrend_encode, specs=c(emtrend_reward_centered), at = list(reward_centered = c(-0.5, 0.5))))
                               )
-    if (str_detect(regressor, "_ri")) {
-  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_single_", alignment, sourcefilestart))} else {
-  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_rs_single_", alignment, sourcefilestart))}
+  if (str_detect(regressor, "_ri")) {
+  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_single_", alignment, sourcefilestart))} else if (regressor == "entropy_change_fmri_ppc" | 
+  str_detect(regressor, "ec_sensors")) {
+  saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_ec_sensors_", regressor, "_rs_single_", alignment, sourcefilestart))
+  } else {saveRDS(ddf, file = paste0("meg_mixed_by_tf_ddf_wholebrain_", regressor, "_rs_single_", alignment, sourcefilestart))
+  }
 }
 
 

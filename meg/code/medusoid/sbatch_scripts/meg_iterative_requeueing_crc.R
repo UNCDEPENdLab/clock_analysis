@@ -3,7 +3,7 @@ epochs <- c("RT")
 # epochs <- c("RT")
 
 # epochs <- c("RT", "clock")
-regressors_of_interest <- c("abspe_by_rew") # some duplication for v_max, of which 92 are still running
+regressors_of_interest <- c("abs_pe") # some duplication for v_max, of which 92 are still running
 # regressors_of_interest <- c("entropy_change_ri", "entropy_change",  "abspe_by_rew")
  # HAVEN'T yet done a second round on abspe*reward
 # regressors_of_interest <- c("entropy_change")
@@ -13,21 +13,27 @@ basedir <- "/bgfs/adombrovski/tfr_rds1"
 sbatch_dir <- "~/code/clock_analysis/meg/code/medusoid/sbatch_scripts"
 setwd(basedir)
 test <- F
-silent <- T
+silent <- F
+select_ec_sensors <- F
 # running in smaller batches since CRC queues up ≤1000 at a time
-start_at = 0
+# abspe*rewrd: 390 done with both random slopes, estimating the other 294 with only a random slope for
+start_at = 1
 end_at = 685
 step_up <- tibble::tribble(
   ~gb, ~time,
-  30, "4-00:00:00",
-  35, "4-00:00:00",
+#  8, "23:00:00",
+  20, "23:00:00",
+#  30, "4-00:00:00",
   40, "4-00:00:00",
+ # 40, "4-00:00:00",
   70, "4-00:00:00"
 )
 
 for (ee in epochs) {
   epochdir <- file.path(basedir, ee)
-  flist <- list.files(pattern = "^freq_t", path = epochdir)
+  if (select_ec_sensors) {
+  flist <- list.files(pattern = "^freq_t_ec_sensors", path = epochdir)} else {
+    flist <- list.files(pattern = "^freq_t_all_sensors", path = epochdir)}
  fnum <- seq_along(flist)
  run_already <- fnum <= start_at | fnum >= end_at
   #file.create(paste0(epochdir,"/","tempfile.csv"))
@@ -36,10 +42,12 @@ for (ee in epochs) {
   for (rr in regressors_of_interest) {
     if (stringr::str_detect(rr, "_ri")) {
     out_exists <- file.exists(pattern = paste0("meg_mixed_by_tf_ddf_wholebrain_", rr), path = epochdir)
-    out_expect <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_single_", ee, fnum))} else {
+    out_expect <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_single_", ee, fnum))} else if(select_ec_sensors) {
+    out_exists <- file.exists(pattern = paste0("meg_mixed_by_tf_ddf_ec_sensors_", rr), path = epochdir)
+    out_expect <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_ec_sensors_", rr, "_rs_single_", ee, fnum))
+    } else {
     out_exists <- file.exists(pattern = paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_rs.*"), path = epochdir)
     out_expect <- file.path(epochdir, paste0("meg_mixed_by_tf_ddf_wholebrain_", rr, "_rs_single_", ee, fnum))
-
     }
 
     compute_expect <- file.path(epochdir, paste0(".", rr, "_it", fnum, "_compute"))
