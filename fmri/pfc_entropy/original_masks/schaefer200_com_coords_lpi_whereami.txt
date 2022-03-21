@@ -1,0 +1,5620 @@
+++ Input coordinates orientation set by user to RAI
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -26 mm [L],  -53 mm [P],   -5 mm [I] {TLRC}
+    -26 mm [L],  -55 mm [P],   -9 mm [I] {MNI}
+    -26 mm [U],  -59 mm [P],   -4 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_VentroMedial_Visual_Area_2
+ * Within 1 mm: L_VentroMedial_Visual_Area_3
+ * Within 4 mm: L_Ventral_Visual_Complex
+            -AND-  L_ParaHippocampal_Area_3
+            -AND-  L_VentroMedial_Visual_Area_1
+            -AND-  L_Third_Visual_Area
+ * Within 5 mm: L_Fourth_Visual_Area
+ * Within 7 mm: L_ParaHippocampal_Area_1
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A37mv_left
+ * Within 1 mm: rLinG_left
+ * Within 6 mm: A20rv_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Fusiform Gyrus
+ * Within 1 mm: Left Lingual Gyrus
+ * Within 6 mm: Left Cerebellum (VI)
+ * Within 7 mm: Left Cerebellum (IV-V)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -24 mm [L],  -77 mm [P],   -7 mm [I] {TLRC}
+    -24 mm [L],  -79 mm [P],  -13 mm [I] {MNI}
+    -24 mm [U],  -83 mm [P],   -8 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Third_Visual_Area
+ * Within 1 mm: L_Fourth_Visual_Area
+ * Within 2 mm: L_Eighth_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A37mv_left
+ * Within 1 mm: cLinG_left
+ * Within 3 mm: iOccG_left
+ * Within 6 mm: rLinG_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Lingual Gyrus
+ * Within 1 mm: Left Fusiform Gyrus
+ * Within 3 mm: Left Inferior Occipital Gyrus
+ * Within 5 mm: Left Cerebellum (VI)
+ * Within 7 mm: Left Cerebellum (Crus 1)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -44 mm [L],  -70 mm [P],   -5 mm [I] {TLRC}
+    -44 mm [L],  -72 mm [P],  -10 mm [I] {MNI}
+    -44 mm [U],  -76 mm [P],   -5 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_PH
+ * Within 3 mm: L_Fusiform_Face_Complex
+ * Within 6 mm: L_Posterior_InferoTemporal
+            -AND-  L_Area_PHT
+ * Within 7 mm: L_Ventral_Visual_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  V5/MT+_left
+ * Within 1 mm: A37lv_left
+ * Within 4 mm: iOccG_left
+ * Within 5 mm: A37mv_left
+ * Within 7 mm: A37elv_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Occipital Gyrus
+ * Within 4 mm: Left Inferior Temporal Gyrus
+ * Within 5 mm: Left Fusiform Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -11 mm [L],  -65 mm [P],   -0 mm [I] {TLRC}
+    -11 mm [L],  -66 mm [P],   -4 mm [I] {MNI}
+    -11 mm [U],  -70 mm [P],    1 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Third_Visual_Area
+ * Within 1 mm: L_Second_Visual_Area
+ * Within 6 mm: L_VentroMedial_Visual_Area_1
+ * Within 7 mm: L_Primary_Visual_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  rLinG_left
+ * Within 6 mm: vmPOS_left
+ * Within 7 mm: rCunG_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Lingual Gyrus
+ * Within 4 mm: Left Cerebellum (VI)
+            -AND-  Left Cerebellum (IV-V)
+ * Within 7 mm: Cerebellar Vermis (4/5)
+            -AND-  Cerebellar Vermis (6)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -25 mm [L],  -94 mm [P],   -5 mm [I] {TLRC}
+    -25 mm [L],  -96 mm [P],  -12 mm [I] {MNI}
+    -25 mm [U], -100 mm [P],   -7 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 2 mm: L_Third_Visual_Area
+            -AND-  L_Primary_Visual_Cortex
+ * Within 3 mm: L_Second_Visual_Area
+ * Within 6 mm: L_Fourth_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  OPC_left
+ * Within 1 mm: iOccG_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Occipital Gyrus
+ * Within 1 mm: Left Lingual Gyrus
+ * Within 5 mm: Left Middle Occipital Gyrus
+ * Within 7 mm: Left Fusiform Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -15 mm [L],  -44 mm [P],   -0 mm [I] {TLRC}
+    -15 mm [L],  -45 mm [P],   -3 mm [I] {MNI}
+    -15 mm [U],  -49 mm [P],    2 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_PreSubiculum
+ * Within 1 mm: L_Second_Visual_Area
+ * Within 2 mm: L_ProStriate_Area
+ * Within 5 mm: L_Hippocampus
+ * Within 6 mm: L_ParaHippocampal_Area_1
+            -AND-  L_RetroSplenial_Complex
+ * Within 7 mm: L_Primary_Visual_Cortex
+            -AND-  L_Parieto-Occipital_Sulcus_Area_1
+            -AND-  L_VentroMedial_Visual_Area_1
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A23v_left
+ * Within 1 mm: vmPOS_left
+            -AND-  TH_left
+            -AND-  rLinG_left
+ * Within 5 mm: cHipp_left
+ * Within 7 mm: rHipp_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Lingual Gyrus
+ * Within 3 mm: Left Precuneus
+ * Within 5 mm: Left ParaHippocampal Gyrus
+            -AND-  Left Cerebellum (IV-V)
+ * Within 7 mm: Left Calcarine Gyrus
+            -AND-  Left Hippocampus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -6 mm [L],  -91 mm [P],    2 mm [S] {TLRC}
+     -6 mm [L],  -93 mm [P],   -4 mm [I] {MNI}
+     -6 mm [U],  -97 mm [P],    1 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Primary_Visual_Cortex
+ * Within 6 mm: L_Second_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  cCunG_left
+ * Within 4 mm: cLinG_left
+ * Within 6 mm: OPC_left
+ * Within 7 mm: rCunG_left
+            -AND-  iOccG_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Calcarine Gyrus
+ * Within 5 mm: Left Middle Occipital Gyrus
+ * Within 7 mm: Left Superior Occipital Gyrus
+            -AND-  Left Lingual Gyrus
+            -AND-  Left Inferior Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -45 mm [L],  -72 mm [P],    8 mm [S] {TLRC}
+    -46 mm [L],  -74 mm [P],    5 mm [S] {MNI}
+    -46 mm [U],  -78 mm [P],   10 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_FST
+ * Within 1 mm: L_Medial_Superior_Temporal_Area
+ * Within 2 mm: L_Area_V4t
+ * Within 3 mm: L_Area_PHT
+ * Within 5 mm: L_Middle_Temporal_Area
+            -AND-  L_Area_PH
+ * Within 7 mm: L_Area_Lateral_Occipital_1
+            -AND-  L_Area_Lateral_Occipital_3
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  V5/MT+_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Occipital Gyrus
+ * Within 4 mm: Left Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -23 mm [L],  -96 mm [P],    9 mm [S] {TLRC}
+    -23 mm [L],  -99 mm [P],    4 mm [S] {MNI}
+    -23 mm [U], -103 mm [P],    9 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Second_Visual_Area
+ * Within 1 mm: L_Third_Visual_Area
+ * Within 5 mm: L_Primary_Visual_Cortex
+ * Within 7 mm: L_Fourth_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  OPC_left
+ * Within 6 mm: mOccG_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -12 mm [L],  -69 mm [P],   11 mm [S] {TLRC}
+    -12 mm [L],  -71 mm [P],    8 mm [S] {MNI}
+    -12 mm [U],  -75 mm [P],   13 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Primary_Visual_Cortex
+ * Within 7 mm: L_Second_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  vmPOS_left
+ * Within 3 mm: rCunG_left
+ * Within 6 mm: rLinG_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Calcarine Gyrus
+ * Within 3 mm: Left Lingual Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -39 mm [L],  -84 mm [P],    8 mm [S] {TLRC}
+    -39 mm [L],  -87 mm [P],    4 mm [S] {MNI}
+    -39 mm [U],  -91 mm [P],    9 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_Lateral_Occipital_1
+ * Within 1 mm: L_Area_Lateral_Occipital_2
+            -AND-  L_Fourth_Visual_Area
+ * Within 3 mm: L_Area_V3CD
+ * Within 7 mm: L_Third_Visual_Area
+            -AND-  L_Area_FST
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  mOccG_left
+ * Within 2 mm: V5/MT+_left
+ * Within 3 mm: iOccG_left
+ * Within 6 mm: OPC_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -13 mm [L],  -70 mm [P],   25 mm [S] {TLRC}
+    -13 mm [L],  -73 mm [P],   23 mm [S] {MNI}
+    -13 mm [U],  -77 mm [P],   28 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Sixth_Visual_Area
+ * Within 1 mm: L_Second_Visual_Area
+ * Within 2 mm: L_Parieto-Occipital_Sulcus_Area_2
+ * Within 4 mm: L_Dorsal_Transitional_Visual_Area
+ * Within 5 mm: L_Third_Visual_Area
+            -AND-  L_Parieto-Occipital_Sulcus_Area_1
+ * Within 6 mm: L_Area_7m
+ * Within 7 mm: L_Primary_Visual_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  vmPOS_left
+ * Within 2 mm: dmPOS_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Cuneus
+ * Within 1 mm: Left Superior Occipital Gyrus
+ * Within 2 mm: Left Calcarine Gyrus
+ * Within 7 mm: Left Precuneus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -9 mm [L],  -84 mm [P],   29 mm [S] {TLRC}
+     -9 mm [L],  -88 mm [P],   27 mm [S] {MNI}
+     -9 mm [U],  -92 mm [P],   32 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: L_Area_V3A
+ * Within 3 mm: L_Third_Visual_Area
+ * Within 4 mm: L_Second_Visual_Area
+ * Within 6 mm: L_Sixth_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  msOccG_left
+ * Within 4 mm: rCunG_left
+ * Within 6 mm: vmPOS_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Cuneus
+ * Within 4 mm: Left Superior Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -24 mm [L],  -86 mm [P],   22 mm [S] {TLRC}
+    -25 mm [L],  -90 mm [P],   20 mm [S] {MNI}
+    -25 mm [U],  -94 mm [P],   25 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Fourth_Visual_Area
+ * Within 2 mm: L_Area_V3A
+ * Within 3 mm: L_Seventh_Visual_Area
+ * Within 5 mm: L_Area_PGp
+            -AND-  L_Area_V3B
+            -AND-  L_Area_IntraParietal_0
+ * Within 6 mm: L_Third_Visual_Area
+ * Within 7 mm: L_Area_V3CD
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  mOccG_left
+ * Within 4 mm: lsOccG_left
+ * Within 5 mm: A39c_left
+            -AND-  OPC_left
+            -AND-  msOccG_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Occipital Gyrus
+ * Within 2 mm: Left Superior Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -52 mm [L],   -6 mm [P],   -1 mm [I] {TLRC}
+    -52 mm [L],   -6 mm [P],   -1 mm [I] {MNI}
+    -52 mm [U],  -10 mm [P],    4 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_TA2
+ * Within 1 mm: L_Medial_Belt_Complex
+ * Within 3 mm: L_Auditory_4_Complex
+            -AND-  L_ParaBelt_Complex
+ * Within 4 mm: L_Area_STSd_anterior
+            -AND-  L_Auditory_5_Complex
+            -AND-  L_Area_43
+            -AND-  L_Frontal_Opercular_Area_1
+ * Within 7 mm: L_Para-Insular_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  TE1.0_1.2_left
+ * Within 3 mm: A22r_left
+ * Within 4 mm: A4tl_left
+ * Within 7 mm: dIg_left
+            -AND-  G_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Temporal Gyrus
+ * Within 3 mm: Left Rolandic Operculum
+ * Within 6 mm: Left Insula Lobe
+ * Within 7 mm: Left Heschls Gyrus
+            -AND-  Left Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -54 mm [L],  -24 mm [P],   10 mm [S] {TLRC}
+    -55 mm [L],  -26 mm [P],   10 mm [S] {MNI}
+    -55 mm [U],  -30 mm [P],   15 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_ParaBelt_Complex
+ * Within 3 mm: L_Primary_Auditory_Cortex
+            -AND-  L_Lateral_Belt_Complex
+ * Within 4 mm: L_Area_PFcm
+            -AND-  L_Auditory_4_Complex
+ * Within 6 mm: L_Area_OP4/PV
+            -AND-  L_Area_PF_opercular
+ * Within 7 mm: L_Area_OP1/SII
+            -AND-  L_Area_STSd_posterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A41/42_left
+ * Within 1 mm: TE1.0_1.2_left
+ * Within 2 mm: A40rv_left
+ * Within 6 mm: rpSTS_left
+            -AND-  A1/2/3tonIa_left
+ * Within 7 mm: A22c_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Temporal Gyrus
+ * Within 4 mm: Left SupraMarginal Gyrus
+ * Within 5 mm: Left Middle Temporal Gyrus
+ * Within 6 mm: Left Rolandic Operculum
+ * Within 7 mm: Left Postcentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -38 mm [L],  -20 mm [P],   16 mm [S] {TLRC}
+    -39 mm [L],  -21 mm [P],   16 mm [S] {MNI}
+    -39 mm [U],  -25 mm [P],   21 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_OP1/SII
+ * Within 1 mm: L_Area_OP2-3/VS
+            -AND-  L_Insular_Granular_Complex
+ * Within 3 mm: L_Primary_Auditory_Cortex
+ * Within 4 mm: L_Posterior_Insular_Area_2
+            -AND-  L_Medial_Belt_Complex
+ * Within 6 mm: L_Area_OP4/PV
+            -AND-  L_Area_52
+ * Within 7 mm: L_Area_Posterior_Insular_1
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  G_left
+ * Within 1 mm: A1/2/3tonIa_left
+ * Within 2 mm: A40rv_left
+ * Within 4 mm: TE1.0_1.2_left
+ * Within 5 mm: dIg_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Rolandic Operculum
+ * Within 1 mm: Left Insula Lobe
+ * Within 3 mm: Left Heschls Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -56 mm [L],   -5 mm [P],   10 mm [S] {TLRC}
+    -56 mm [L],   -5 mm [P],   11 mm [S] {MNI}
+    -56 mm [U],   -9 mm [P],   16 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_43
+ * Within 3 mm: L_Area_OP4/PV
+ * Within 4 mm: L_Area_3a
+ * Within 5 mm: L_Auditory_4_Complex
+            -AND-  L_ParaBelt_Complex
+ * Within 7 mm: L_Primary_Motor_Cortex
+            -AND-  L_Frontal_Opercular_Area_1
+            -AND-  L_Frontal_Opercular_Area_2
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A4tl_left
+ * Within 1 mm: A1/2/3tonIa_left
+ * Within 4 mm: A4hf_left
+            -AND-  A1/2/3ulhf_left
+ * Within 5 mm: TE1.0_1.2_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Rolandic Operculum
+ * Within 3 mm: Left Postcentral Gyrus
+ * Within 4 mm: Left Heschls Gyrus
+            -AND-  Left Superior Temporal Gyrus
+ * Within 7 mm: Left Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -54 mm [L],  -22 mm [P],   20 mm [S] {TLRC}
+    -55 mm [L],  -24 mm [P],   20 mm [S] {MNI}
+    -55 mm [U],  -28 mm [P],   25 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_PFcm
+ * Within 1 mm: L_Area_OP1/SII
+            -AND-  L_Area_OP4/PV
+ * Within 3 mm: L_Area_PF_opercular
+ * Within 6 mm: L_Area_PF_Complex
+ * Within 7 mm: L_ParaBelt_Complex
+            -AND-  L_Auditory_4_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40rv_left
+ * Within 4 mm: A1/2/3tonIa_left
+ * Within 7 mm: A40rd_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left SupraMarginal Gyrus
+ * Within 4 mm: Left Postcentral Gyrus
+            -AND-  Left Superior Temporal Gyrus
+ * Within 5 mm: Left Rolandic Operculum
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -57 mm [L],   -7 mm [P],   29 mm [S] {TLRC}
+    -58 mm [L],   -9 mm [P],   31 mm [S] {MNI}
+    -58 mm [U],  -13 mm [P],   36 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Primary_Sensory_Cortex
+ * Within 2 mm: L_Primary_Motor_Cortex
+ * Within 5 mm: L_Area_1
+            -AND-  L_Area_2
+ * Within 6 mm: L_Area_3a
+            -AND-  L_Area_PFt
+ * Within 7 mm: L_Ventral_Area_6
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A1/2/3ulhf_left
+ * Within 4 mm: A4hf_left
+            -AND-  A2_left
+ * Within 5 mm: A1/2/3tonIa_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Postcentral Gyrus
+ * Within 2 mm: Left Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -47 mm [L],   -8 mm [P],   44 mm [S] {TLRC}
+    -48 mm [L],  -10 mm [P],   47 mm [S] {MNI}
+    -48 mm [U],  -14 mm [P],   52 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 2 mm: L_Area_55b
+            -AND-  L_Frontal_Eye_Fields
+            -AND-  L_Primary_Motor_Cortex
+ * Within 6 mm: L_Primary_Sensory_Cortex
+ * Within 7 mm: L_Ventral_Area_6
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A4hf_left
+ * Within 3 mm: A6cdl_left
+ * Within 4 mm: A1/2/3ulhf_left
+ * Within 6 mm: A6cvl_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Postcentral Gyrus
+ * Within 2 mm: Left Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -7 mm [L],   -9 mm [P],   43 mm [S] {TLRC}
+     -7 mm [L],  -12 mm [P],   47 mm [S] {MNI}
+     -7 mm [U],  -16 mm [P],   52 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Dorsal_Area_24d
+ * Within 2 mm: L_Area_Posterior_24_prime
+ * Within 3 mm: L_Area_23d
+            -AND-  L_Area_23c
+ * Within 5 mm: L_Ventral_Area_24d
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6m_left
+ * Within 1 mm: A23c_left
+ * Within 4 mm: A4ll_left
+ * Within 5 mm: A24cd_left
+ * Within 7 mm: A23c_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Cingulate Cortex
+ * Within 1 mm: Left SMA
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -49 mm [L],  -25 mm [P],   52 mm [S] {TLRC}
+    -50 mm [L],  -28 mm [P],   55 mm [S] {MNI}
+    -50 mm [U],  -32 mm [P],   60 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_1
+ * Within 2 mm: L_Area_2
+ * Within 5 mm: L_Primary_Sensory_Cortex
+            -AND-  L_Area_IntraParietal_2
+ * Within 6 mm: L_Area_PF_Complex
+            -AND-  L_Anterior_IntraParietal_Area
+ * Within 7 mm: L_Area_PFt
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A2_left
+ * Within 4 mm: A1/2/3ulhf_left
+ * Within 5 mm: A40rd_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Postcentral Gyrus
+ * Within 4 mm: Left Inferior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -40 mm [L],  -21 mm [P],   52 mm [S] {TLRC}
+    -40 mm [L],  -24 mm [P],   56 mm [S] {MNI}
+    -40 mm [U],  -28 mm [P],   61 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Primary_Motor_Cortex
+ * Within 2 mm: L_Primary_Sensory_Cortex
+ * Within 5 mm: L_Area_3a
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A1/2/3ulhf_left
+ * Within 1 mm: A4ul_left
+ * Within 3 mm: A4hf_left
+ * Within 7 mm: A2_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Postcentral Gyrus
+ * Within 2 mm: Left Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -32 mm [L],  -40 mm [P],   59 mm [S] {TLRC}
+    -32 mm [L],  -44 mm [P],   62 mm [S] {MNI}
+    -32 mm [U],  -48 mm [P],   67 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_7PC
+ * Within 1 mm: L_Area_2
+ * Within 4 mm: L_Area_1
+            -AND-  L_Lateral_Area_7A
+ * Within 7 mm: L_Area_Lateral_IntraParietal_ventral
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A7pc_left
+ * Within 1 mm: A5l_left
+ * Within 3 mm: A2_left
+ * Within 4 mm: A1/2/3tru_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Postcentral Gyrus
+ * Within 1 mm: Left Superior Parietal Lobule
+ * Within 7 mm: Left Inferior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -32 mm [L],  -17 mm [P],   60 mm [S] {TLRC}
+    -33 mm [L],  -20 mm [P],   64 mm [S] {MNI}
+    -33 mm [U],  -24 mm [P],   69 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: L_Primary_Motor_Cortex
+ * Within 4 mm: L_Dorsal_area_6
+ * Within 6 mm: L_Primary_Sensory_Cortex
+ * Within 7 mm: L_Area_6_anterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+ * Within 1 mm: A4ul_left
+ * Within 4 mm: A6cdl_left
+ * Within 6 mm: A1/2/3ulhf_left
+            -AND-  A4hf_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Precentral Gyrus
+ * Within 7 mm: Left Postcentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -30 mm [L],  -31 mm [P],   62 mm [S] {TLRC}
+    -30 mm [L],  -36 mm [P],   66 mm [S] {MNI}
+    -30 mm [U],  -40 mm [P],   71 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_1
+ * Within 3 mm: L_Area_2
+ * Within 4 mm: L_Area_7PC
+ * Within 5 mm: L_Primary_Sensory_Cortex
+ * Within 6 mm: L_Lateral_Area_7A
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A1/2/3tru_left
+ * Within 3 mm: A2_left
+ * Within 6 mm: A1/2/3ulhf_left
+            -AND-  A7pc_left
+ * Within 7 mm: A4ul_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Postcentral Gyrus
+ * Within 6 mm: Left Precentral Gyrus
+ * Within 7 mm: Left Superior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -20 mm [L],  -11 mm [P],   63 mm [S] {TLRC}
+    -20 mm [L],  -14 mm [P],   68 mm [S] {MNI}
+    -20 mm [U],  -18 mm [P],   73 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_6mp
+ * Within 3 mm: L_Dorsal_area_6
+ * Within 5 mm: L_Area_6m_anterior
+ * Within 6 mm: L_Area_6_anterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6cdl_left
+ * Within 3 mm: A4t_left
+ * Within 4 mm: A6dl_left
+ * Within 6 mm: A4ul_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Precentral Gyrus
+ * Within 2 mm: Left Paracentral Lobule
+ * Within 4 mm: Left Superior Frontal Gyrus
+ * Within 5 mm: Left SMA
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -7 mm [L],  -28 mm [P],   63 mm [S] {TLRC}
+     -7 mm [L],  -32 mm [P],   67 mm [S] {MNI}
+     -7 mm [U],  -36 mm [P],   72 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 2 mm: L_Area_3a
+            -AND-  L_Primary_Motor_Cortex
+ * Within 5 mm: L_Area_5m
+ * Within 6 mm: L_Primary_Sensory_Cortex
+ * Within 7 mm: R_Primary_Motor_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A4ul_left
+ * Within 2 mm: A1/2/3ll_left
+            -AND-  A4t_left
+ * Within 3 mm: A4ll_left
+            -AND-  A1/2/3tru_left
+ * Within 7 mm: A4ll_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Paracentral Lobule
+ * Within 7 mm: Left Precuneus
+            -AND-  Right Paracentral Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -20 mm [L],  -27 mm [P],   64 mm [S] {TLRC}
+    -20 mm [L],  -31 mm [P],   68 mm [S] {MNI}
+    -20 mm [U],  -35 mm [P],   73 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Primary_Sensory_Cortex
+ * Within 2 mm: L_Primary_Motor_Cortex
+ * Within 4 mm: L_Area_1
+            -AND-  L_Area_2
+ * Within 6 mm: L_Area_3a
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A1/2/3tru_left
+ * Within 3 mm: A4ul_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Postcentral Gyrus
+ * Within 2 mm: Left Paracentral Lobule
+ * Within 5 mm: Left Precentral Gyrus
+ * Within 6 mm: Left Precuneus
+ * Within 7 mm: Left Superior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -43 mm [L],  -48 mm [P],  -14 mm [I] {TLRC}
+    -44 mm [L],  -49 mm [P],  -19 mm [I] {MNI}
+    -44 mm [U],  -53 mm [P],  -14 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Fusiform_Face_Complex
+ * Within 2 mm: L_Area_TE2_posterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A37lv_left
+ * Within 3 mm: A37elv_left
+ * Within 4 mm: A20iv_left
+ * Within 6 mm: A37mv_left
+            -AND-  A20cv_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Fusiform Gyrus
+ * Within 1 mm: Left Inferior Temporal Gyrus
+ * Within 7 mm: Left Cerebellum (VI)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -55 mm [L],  -61 mm [P],    1 mm [S] {TLRC}
+    -56 mm [L],  -63 mm [P],   -2 mm [I] {MNI}
+    -56 mm [U],  -67 mm [P],    3 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_PHT
+ * Within 4 mm: L_Area_TE1_posterior
+ * Within 5 mm: L_Area_PH
+ * Within 7 mm: L_Area_FST
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A37vl_left
+ * Within 2 mm: A37dl_left
+ * Within 7 mm: V5/MT+_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Temporal Gyrus
+ * Within 3 mm: Left Inferior Temporal Gyrus
+ * Within 5 mm: Left Inferior Occipital Gyrus
+ * Within 6 mm: Left Middle Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -27 mm [L],  -67 mm [P],   39 mm [S] {TLRC}
+    -27 mm [L],  -71 mm [P],   39 mm [S] {MNI}
+    -27 mm [U],  -75 mm [P],   44 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_IntraParietal_1
+ * Within 3 mm: L_IntraParietal_Sulcus_Area_1
+ * Within 6 mm: L_Medial_IntraParietal_Area
+ * Within 7 mm: L_Area_IntraParietal_0
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39c_left
+ * Within 2 mm: lsOccG_left
+ * Within 4 mm: A39rd_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Occipital Gyrus
+ * Within 1 mm: Left Superior Occipital Gyrus
+ * Within 2 mm: Left Inferior Parietal Lobule
+ * Within 3 mm: Left Superior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -54 mm [L],  -23 mm [P],   38 mm [S] {TLRC}
+    -55 mm [L],  -26 mm [P],   40 mm [S] {MNI}
+    -55 mm [U],  -30 mm [P],   45 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_2
+ * Within 2 mm: L_Area_1
+            -AND-  L_Area_PFt
+ * Within 5 mm: L_Area_PF_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40rd_left
+ * Within 1 mm: A2_left
+ * Within 6 mm: A1/2/3ulhf_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left SupraMarginal Gyrus
+ * Within 1 mm: Left Inferior Parietal Lobule
+ * Within 6 mm: Left Postcentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -39 mm [L],  -32 mm [P],   42 mm [S] {TLRC}
+    -40 mm [L],  -35 mm [P],   44 mm [S] {MNI}
+    -40 mm [U],  -39 mm [P],   49 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_2
+ * Within 1 mm: L_Anterior_IntraParietal_Area
+ * Within 5 mm: L_Area_7PC
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A2_left
+ * Within 2 mm: A40rd_left
+ * Within 5 mm: A5l_left
+ * Within 7 mm: A1/2/3ulhf_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Postcentral Gyrus
+ * Within 1 mm: Left Inferior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -36 mm [L],  -43 mm [P],   46 mm [S] {TLRC}
+    -37 mm [L],  -47 mm [P],   47 mm [S] {MNI}
+    -37 mm [U],  -51 mm [P],   52 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Anterior_IntraParietal_Area
+ * Within 2 mm: L_Area_PFm_Complex
+            -AND-  L_Area_IntraParietal_2
+ * Within 3 mm: L_Area_Lateral_IntraParietal_ventral
+            -AND-  L_Area_7PC
+ * Within 4 mm: L_Area_Lateral_IntraParietal_dorsal
+ * Within 7 mm: L_Area_2
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A5l_left
+ * Within 2 mm: A40rd_left
+            -AND-  A39rd_left
+ * Within 7 mm: A2_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -16 mm [L],  -67 mm [P],   54 mm [S] {TLRC}
+    -16 mm [L],  -71 mm [P],   55 mm [S] {MNI}
+    -16 mm [U],  -75 mm [P],   60 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: L_Lateral_Area_7P
+ * Within 3 mm: L_Medial_Area_7P
+ * Within 5 mm: L_Ventral_IntraParietal_Complex
+            -AND-  L_Medial_IntraParietal_Area
+ * Within 6 mm: L_Dorsal_Transitional_Visual_Area
+ * Within 7 mm: L_Parieto-Occipital_Sulcus_Area_2
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A7c_left
+ * Within 5 mm: A7r_left
+ * Within 7 mm: A7m_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Parietal Lobule
+ * Within 2 mm: Left Precuneus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -30 mm [L],  -53 mm [P],   58 mm [S] {TLRC}
+    -31 mm [L],  -58 mm [P],   60 mm [S] {MNI}
+    -31 mm [U],  -62 mm [P],   65 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_Lateral_IntraParietal_ventral
+ * Within 1 mm: L_Ventral_IntraParietal_Complex
+ * Within 4 mm: L_Area_7PC
+ * Within 5 mm: L_Lateral_Area_7A
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A7ip_left
+ * Within 4 mm: A5l_left
+            -AND-  A7r_left
+ * Within 6 mm: A39rd_left
+            -AND-  A7pc_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Parietal Lobule
+ * Within 3 mm: Left Inferior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -5 mm [L],  -55 mm [P],   55 mm [S] {TLRC}
+     -5 mm [L],  -59 mm [P],   57 mm [S] {MNI}
+     -5 mm [U],  -63 mm [P],   62 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Medial_Area_7A
+ * Within 5 mm: L_PreCuneus_Visual_Area
+            -AND-  L_Medial_Area_7P
+ * Within 6 mm: R_Medial_Area_7A
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A7m_left
+ * Within 3 mm: A5m_left
+ * Within 5 mm: A7r_left
+ * Within 6 mm: A7m_right
+            -AND-  A5m_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Precuneus
+ * Within 6 mm: Right Precuneus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -19 mm [L],  -46 mm [P],   66 mm [S] {TLRC}
+    -19 mm [L],  -50 mm [P],   69 mm [S] {MNI}
+    -19 mm [U],  -54 mm [P],   74 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: L_Lateral_Area_7A
+            -AND-  L_Area_5L
+ * Within 6 mm: L_Area_2
+            -AND-  L_Ventral_IntraParietal_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A7pc_left
+ * Within 5 mm: A7r_left
+ * Within 6 mm: A5m_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Parietal Lobule
+ * Within 3 mm: Left Precuneus
+ * Within 4 mm: Left Postcentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -33 mm [L],   -5 mm [P],   49 mm [S] {TLRC}
+    -33 mm [L],   -7 mm [P],   52 mm [S] {MNI}
+    -33 mm [U],  -11 mm [P],   57 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Frontal_Eye_Fields
+ * Within 1 mm: L_Area_6_anterior
+ * Within 6 mm: L_Dorsal_area_6
+ * Within 7 mm: L_Primary_Motor_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6cdl_left
+ * Within 3 mm: A6vl_left
+ * Within 6 mm: A4hf_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Precentral Gyrus
+ * Within 3 mm: Left Middle Frontal Gyrus
+ * Within 7 mm: Left Superior Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -22 mm [L],    3 mm [A],   58 mm [S] {TLRC}
+    -22 mm [L],   -0 mm [P],   63 mm [S] {MNI}
+    -22 mm [U],   -4 mm [P],   68 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_6_anterior
+ * Within 1 mm: L_Area_6m_anterior
+ * Within 5 mm: L_Inferior_6-8_Transitional_Area
+ * Within 7 mm: L_Area_6mp
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6dl_left
+ * Within 4 mm: A6vl_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Frontal Gyrus
+ * Within 1 mm: Left Middle Frontal Gyrus
+ * Within 4 mm: Left SMA
+ * Within 5 mm: Left Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -48 mm [L],    7 mm [A],   26 mm [S] {TLRC}
+    -48 mm [L],    6 mm [A],   29 mm [S] {MNI}
+    -48 mm [U],    2 mm [A],   34 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Rostral_Area_6
+ * Within 3 mm: L_Area_IFJa
+            -AND-  L_Area_IFJp
+ * Within 4 mm: L_Area_8C
+ * Within 6 mm: L_Premotor_Eye_Fields
+ * Within 7 mm: L_Ventral_Area_6
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6cvl_left
+ * Within 4 mm: A44d_left
+ * Within 6 mm: IFJ_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Frontal Gyrus (p. Opercularis)
+ * Within 1 mm: Left Precentral Gyrus
+ * Within 6 mm: Left Inferior Frontal Gyrus (p. Triangularis)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -57 mm [L],  -40 mm [P],   22 mm [S] {TLRC}
+    -58 mm [L],  -42 mm [P],   22 mm [S] {MNI}
+    -58 mm [U],  -46 mm [P],   27 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_PeriSylvian_Language_Area
+ * Within 2 mm: L_Superior_Temporal_Visual_Area
+ * Within 3 mm: L_Area_PF_Complex
+ * Within 5 mm: L_Auditory_4_Complex
+ * Within 7 mm: L_Area_TemporoParietoOccipital_Junction_1
+            -AND-  L_Area_PFcm
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A41/42_left
+ * Within 1 mm: A40rv_left
+            -AND-  A22c_left
+ * Within 2 mm: A40c_left
+ * Within 6 mm: cpSTS_left
+            -AND-  rpSTS_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Temporal Gyrus
+ * Within 2 mm: Left SupraMarginal Gyrus
+ * Within 5 mm: Left Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -62 mm [L],  -26 mm [P],   27 mm [S] {TLRC}
+    -63 mm [L],  -28 mm [P],   28 mm [S] {MNI}
+    -63 mm [U],  -32 mm [P],   33 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_PF_opercular
+ * Within 2 mm: L_Area_PF_Complex
+ * Within 3 mm: L_Area_PFt
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40rv_left
+ * Within 2 mm: A40rd_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left SupraMarginal Gyrus
+ * Within 5 mm: Left Superior Temporal Gyrus
+ * Within 7 mm: Left Postcentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -61 mm [L],  -39 mm [P],   35 mm [S] {TLRC}
+    -62 mm [L],  -42 mm [P],   36 mm [S] {MNI}
+    -62 mm [U],  -46 mm [P],   41 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: L_Area_PF_Complex
+ * Within 4 mm: L_PeriSylvian_Language_Area
+ * Within 5 mm: L_Area_PFm_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40c_left
+ * Within 4 mm: A40rv_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left SupraMarginal Gyrus
+ * Within 2 mm: Left Inferior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -40 mm [L],   -4 mm [P],   -3 mm [I] {TLRC}
+    -41 mm [L],   -4 mm [P],   -4 mm [I] {MNI}
+    -41 mm [U],   -8 mm [P],    1 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Posterior_Insular_Area_2
+ * Within 4 mm: L_Area_Posterior_Insular_1
+ * Within 5 mm: L_Area_TA2
+            -AND-  L_Para-Insular_Area
+ * Within 7 mm: L_Medial_Belt_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  dIg_left
+ * Within 1 mm: vId/vIg_left
+ * Within 2 mm: G_left
+ * Within 4 mm: TE1.0_1.2_left
+ * Within 5 mm: dId_left
+ * Within 7 mm: A4tl_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Insula Lobe
+ * Within 3 mm: Left Superior Temporal Gyrus
+ * Within 5 mm: Left Rolandic Operculum
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -34 mm [L],   21 mm [A],    3 mm [S] {TLRC}
+    -35 mm [L],   21 mm [A],    4 mm [S] {MNI}
+    -35 mm [U],   17 mm [A],    9 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Middle_Insular_Area
+ * Within 1 mm: L_Area_Frontal_Opercular
+ * Within 2 mm: L_Anterior_Ventral_Insular_Area
+ * Within 3 mm: L_Frontal_Opercular_Area_4
+ * Within 4 mm: L_Area_45
+ * Within 7 mm: L_Area_44
+            -AND-  L_Anterior_Agranular_Insula_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  dIa_left
+ * Within 1 mm: A44op_left
+ * Within 5 mm: A12/47l_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Insula Lobe
+ * Within 3 mm: Left Inferior Frontal Gyrus (p. Triangularis)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -39 mm [L],    1 mm [A],   10 mm [S] {TLRC}
+    -40 mm [L],    1 mm [A],   11 mm [S] {MNI}
+    -40 mm [U],   -3 mm [P],   16 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Frontal_Opercular_Area_3
+ * Within 1 mm: L_Middle_Insular_Area
+ * Within 2 mm: L_Frontal_Opercular_Area_2
+            -AND-  L_Frontal_Opercular_Area_4
+ * Within 3 mm: L_Frontal_Opercular_Area_1
+ * Within 4 mm: L_Posterior_Insular_Area_2
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  dId_left
+ * Within 1 mm: A4tl_left
+ * Within 4 mm: dIg_left
+ * Within 7 mm: A6cvl_left
+            -AND-  A44d_left
+            -AND-  A44v_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Insula Lobe
+ * Within 1 mm: Left Rolandic Operculum
+ * Within 4 mm: Left Inferior Frontal Gyrus (p. Opercularis)
+ * Within 7 mm: Left Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -52 mm [L],   10 mm [A],    9 mm [S] {TLRC}
+    -53 mm [L],   10 mm [A],   10 mm [S] {MNI}
+    -53 mm [U],    6 mm [A],   15 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Rostral_Area_6
+ * Within 1 mm: L_Area_44
+ * Within 7 mm: L_Area_43
+            -AND-  L_Frontal_Opercular_Area_1
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6cvl_left
+ * Within 1 mm: A44v_left
+ * Within 4 mm: A44d_left
+ * Within 5 mm: A4tl_left
+ * Within 7 mm: A45c_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Frontal Gyrus (p. Opercularis)
+ * Within 4 mm: Left Precentral Gyrus
+            -AND-  Left Rolandic Operculum
+ * Within 7 mm: Left Inferior Frontal Gyrus (p. Triangularis)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -33 mm [L],   39 mm [A],   26 mm [S] {TLRC}
+    -34 mm [L],   39 mm [A],   30 mm [S] {MNI}
+    -34 mm [U],   35 mm [A],   35 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_46
+ * Within 2 mm: L_Area_9-46d
+ * Within 3 mm: L_Area_9_Posterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A9/46d_left
+ * Within 4 mm: A9/46v_left
+ * Within 7 mm: A8vl_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Frontal Gyrus
+ * Within 5 mm: Left Inferior Frontal Gyrus (p. Triangularis)
+ * Within 7 mm: Left Superior Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -7 mm [L],   12 mm [A],   37 mm [S] {TLRC}
+     -7 mm [L],   10 mm [A],   41 mm [S] {MNI}
+     -7 mm [U],    6 mm [A],   46 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_p32_prime
+ * Within 1 mm: L_Area_Posterior_24_prime
+ * Within 3 mm: L_Ventral_Area_24d
+            -AND-  L_Anterior_24_prime
+ * Within 5 mm: L_Supplementary_And_Cingulate_Eye
+ * Within 7 mm: R_Area_Posterior_24_prime
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A24cd_left
+ * Within 2 mm: A8m_left
+ * Within 4 mm: A6m_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Cingulate Cortex
+ * Within 3 mm: Left SMA
+ * Within 6 mm: Left Superior Medial Gyrus
+ * Within 7 mm: Left Superior Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -11 mm [L],  -33 mm [P],   45 mm [S] {TLRC}
+    -11 mm [L],  -36 mm [P],   47 mm [S] {MNI}
+    -11 mm [U],  -40 mm [P],   52 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_23c
+ * Within 2 mm: L_Area_5m
+            -AND-  L_Area_5m_ventral
+ * Within 3 mm: L_Dorsal_Area_24d
+ * Within 4 mm: L_Area_31a
+ * Within 7 mm: L_Primary_Motor_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A1/2/3ll_left
+ * Within 1 mm: A23c_left
+ * Within 2 mm: A5m_left
+ * Within 5 mm: A31_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Cingulate Cortex
+ * Within 3 mm: Left Precuneus
+ * Within 4 mm: Left Paracentral Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -5 mm [L],   -2 mm [P],   57 mm [S] {TLRC}
+     -5 mm [L],   -5 mm [P],   62 mm [S] {MNI}
+     -5 mm [U],   -9 mm [P],   67 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Supplementary_And_Cingulate_Eye
+ * Within 3 mm: L_Area_6mp
+ * Within 5 mm: L_Dorsal_Area_24d
+ * Within 6 mm: R_Supplementary_And_Cingulate_Eye
+            -AND-  R_Dorsal_Area_24d
+ * Within 7 mm: L_Primary_Motor_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6m_left
+ * Within 5 mm: A6m_right
+ * Within 7 mm: A6dl_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left SMA
+ * Within 7 mm: Right SMA
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -24 mm [L],   20 mm [A],  -19 mm [I] {TLRC}
+    -25 mm [L],   22 mm [A],  -21 mm [I] {MNI}
+    -25 mm [U],   18 mm [A],  -16 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_13l
+ * Within 2 mm: L_Area_47s
+ * Within 6 mm: L_posterior_OFC_Complex
+            -AND-  L_Orbital_Frontal_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A11l_left
+ * Within 4 mm: A12/47o_left
+ * Within 5 mm: vIa_left
+ * Within 7 mm: A12/47l_left
+            -AND-  A13_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Frontal Gyrus (p. Orbitalis)
+ * Within 2 mm: Left Insula Lobe
+ * Within 6 mm: Left Temporal Pole
+ * Within 7 mm: Left Superior Orbital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -11 mm [L],   33 mm [A],  -20 mm [I] {TLRC}
+    -11 mm [L],   35 mm [A],  -22 mm [I] {MNI}
+    -11 mm [U],   31 mm [A],  -17 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Orbital_Frontal_Complex
+ * Within 4 mm: L_Area_s32
+ * Within 5 mm: L_Area_10v
+ * Within 6 mm: L_Area_13l
+ * Within 7 mm: L_Area_10r
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A11m_left
+ * Within 2 mm: A13_left
+            -AND-  A11l_left
+ * Within 6 mm: A14m_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Orbital Gyrus
+ * Within 1 mm: Left Rectal Gyrus
+ * Within 7 mm: Left Middle Orbital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -31 mm [L],   -8 mm [P],  -32 mm [I] {TLRC}
+    -31 mm [L],   -7 mm [P],  -39 mm [I] {MNI}
+    -31 mm [U],  -11 mm [P],  -34 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Perirhinal_Ectorhinal_Cortex
+ * Within 3 mm: L_Entorhinal_Cortex
+ * Within 4 mm: L_Area_TF
+ * Within 6 mm: L_Area_TG_Ventral
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A20rv_left
+ * Within 3 mm: A35/36r_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Fusiform Gyrus
+ * Within 2 mm: Left Inferior Temporal Gyrus
+ * Within 7 mm: Left ParaHippocampal Gyrus
+            -AND-  Left Medial Temporal Pole
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -47 mm [L],  -23 mm [P],  -23 mm [I] {TLRC}
+    -48 mm [L],  -23 mm [P],  -29 mm [I] {MNI}
+    -48 mm [U],  -27 mm [P],  -24 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_TF
+ * Within 1 mm: L_Area_TE2_posterior
+ * Within 5 mm: L_Perirhinal_Ectorhinal_Cortex
+ * Within 7 mm: L_Area_TE2_anterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A20cv_left
+ * Within 1 mm: A20iv_left
+ * Within 5 mm: A20il_left
+ * Within 6 mm: A37lv_left
+ * Within 7 mm: A20r_left
+            -AND-  A20rv_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -28 mm [L],    7 mm [A],  -30 mm [I] {TLRC}
+    -29 mm [L],    9 mm [A],  -35 mm [I] {MNI}
+    -29 mm [U],    5 mm [A],  -30 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_TG_dorsal
+ * Within 5 mm: L_Perirhinal_Ectorhinal_Cortex
+ * Within 6 mm: L_Area_TG_Ventral
+ * Within 7 mm: L_Area_47s
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+ * Within 1 mm: A38m_left
+ * Within 5 mm: TI_left
+            -AND-  A20rv_left
+ * Within 6 mm: A20r_left
+ * Within 7 mm: A35/36r_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Medial Temporal Pole
+ * Within 2 mm: Left Temporal Pole
+ * Within 5 mm: Left Inferior Temporal Gyrus
+ * Within 6 mm: Left Fusiform Gyrus
+            -AND-  Left ParaHippocampal Gyrus
+ * Within 7 mm: Left Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -43 mm [L],    6 mm [A],  -16 mm [I] {TLRC}
+    -44 mm [L],    7 mm [A],  -19 mm [I] {MNI}
+    -44 mm [U],    3 mm [A],  -14 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Para-Insular_Area
+ * Within 1 mm: L_Area_TG_dorsal
+ * Within 2 mm: L_Area_STGa
+ * Within 4 mm: L_Piriform_Cortex
+ * Within 5 mm: L_Area_STSd_anterior
+ * Within 6 mm: L_Anterior_Agranular_Insula_Complex
+ * Within 7 mm: L_Posterior_Insular_Area_2
+            -AND-  L_Area_TA2
+            -AND-  L_Area_STSv_anterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A38l_left
+ * Within 4 mm: A22r_left
+ * Within 5 mm: vId/vIg_left
+ * Within 6 mm: TE1.0_1.2_left
+ * Within 7 mm: vIa_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Temporal Pole
+ * Within 5 mm: Left Insula Lobe
+            -AND-  Left Middle Temporal Gyrus
+            -AND-  Left Superior Temporal Gyrus
+ * Within 6 mm: Left Medial Temporal Pole
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -52 mm [L],  -50 mm [P],   43 mm [S] {TLRC}
+    -53 mm [L],  -54 mm [P],   43 mm [S] {MNI}
+    -53 mm [U],  -58 mm [P],   48 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_PFm_Complex
+ * Within 7 mm: L_Area_IntraParietal_2
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40c_left
+ * Within 7 mm: A39rd_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Parietal Lobule
+ * Within 5 mm: Left Angular Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -35 mm [L],  -58 mm [P],   46 mm [S] {TLRC}
+    -36 mm [L],  -62 mm [P],   47 mm [S] {MNI}
+    -36 mm [U],  -66 mm [P],   52 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_Lateral_IntraParietal_dorsal
+ * Within 1 mm: L_Area_PFm_Complex
+ * Within 3 mm: L_Medial_IntraParietal_Area
+ * Within 4 mm: L_Area_IntraParietal_2
+            -AND-  L_Area_IntraParietal_1
+ * Within 5 mm: L_Area_Lateral_IntraParietal_ventral
+ * Within 7 mm: L_Area_PGs
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39rd_left
+ * Within 4 mm: A7ip_left
+ * Within 5 mm: A5l_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Angular Gyrus
+ * Within 1 mm: Left Inferior Parietal Lobule
+ * Within 2 mm: Left Superior Parietal Lobule
+ * Within 7 mm: Left Middle Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -48 mm [L],  -38 mm [P],   45 mm [S] {TLRC}
+    -49 mm [L],  -41 mm [P],   47 mm [S] {MNI}
+    -49 mm [U],  -45 mm [P],   52 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_IntraParietal_2
+ * Within 3 mm: L_Anterior_IntraParietal_Area
+ * Within 4 mm: L_Area_PFm_Complex
+ * Within 5 mm: L_Area_7PC
+            -AND-  L_Area_PF_Complex
+ * Within 6 mm: L_Area_2
+ * Within 7 mm: L_Area_PFt
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40rd_left
+ * Within 4 mm: A40c_left
+ * Within 5 mm: A2_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Parietal Lobule
+ * Within 7 mm: Left Postcentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -60 mm [L],  -46 mm [P],   -8 mm [I] {TLRC}
+    -61 mm [L],  -47 mm [P],  -13 mm [I] {MNI}
+    -61 mm [U],  -51 mm [P],   -8 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_TE1_posterior
+ * Within 2 mm: L_Area_TE2_anterior
+ * Within 7 mm: L_Area_TE1_Middle
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A20cl_left
+ * Within 3 mm: A21c_left
+            -AND-  A37dl_left
+ * Within 4 mm: A37vl_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Temporal Gyrus
+ * Within 1 mm: Left Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -33 mm [L],   40 mm [A],  -14 mm [I] {TLRC}
+    -34 mm [L],   42 mm [A],  -14 mm [I] {MNI}
+    -34 mm [U],   38 mm [A],   -9 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_anterior_47r
+ * Within 1 mm: L_Area_11l
+ * Within 5 mm: L_Area_47m
+ * Within 7 mm: L_Area_13l
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A12/47o_left
+ * Within 1 mm: A11l_left
+ * Within 7 mm: A12/47l_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Orbital Gyrus
+ * Within 1 mm: Left Inferior Frontal Gyrus (p. Orbitalis)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -43 mm [L],   47 mm [A],   -9 mm [I] {TLRC}
+    -43 mm [L],   48 mm [A],   -8 mm [I] {MNI}
+    -43 mm [U],   44 mm [A],   -3 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: L_Area_anterior_47r
+            -AND-  L_Area_posterior_47r
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A12/47l_left
+ * Within 3 mm: A9/46v_left
+ * Within 4 mm: A10l_left
+            -AND-  A45r_left
+ * Within 5 mm: A12/47o_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Orbital Gyrus
+ * Within 2 mm: Left Inferior Frontal Gyrus (p. Orbitalis)
+ * Within 7 mm: Left Inferior Frontal Gyrus (p. Triangularis)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -29 mm [L],   55 mm [A],    3 mm [S] {TLRC}
+    -29 mm [L],   57 mm [A],    6 mm [S] {MNI}
+    -29 mm [U],   53 mm [A],   11 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_posterior_10p
+ * Within 2 mm: L_Area_anterior_9-46v
+            -AND-  L_Area_anterior_10p
+ * Within 4 mm: L_Area_9_anterior
+ * Within 5 mm: L_Area_9-46d
+ * Within 7 mm: L_Area_10d
+            -AND-  L_Area_anterior_47r
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A46_left
+ * Within 5 mm: A10l_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Frontal Gyrus
+ * Within 3 mm: Left Superior Frontal Gyrus
+ * Within 7 mm: Left Superior Orbital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -44 mm [L],   39 mm [A],   11 mm [S] {TLRC}
+    -44 mm [L],   40 mm [A],   14 mm [S] {MNI}
+    -44 mm [U],   36 mm [A],   19 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_46
+ * Within 1 mm: L_Area_anterior_9-46v
+ * Within 3 mm: L_Area__IFSa
+ * Within 4 mm: L_Area_posterior_9-46v
+ * Within 6 mm: L_Area_posterior_47r
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A9/46v_left
+ * Within 2 mm: IFS_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Frontal Gyrus (p. Triangularis)
+ * Within 2 mm: Left Middle Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -45 mm [L],   20 mm [A],   24 mm [S] {TLRC}
+    -46 mm [L],   19 mm [A],   27 mm [S] {MNI}
+    -46 mm [U],   15 mm [A],   32 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_IFJa
+ * Within 1 mm: L_Area_posterior_9-46v
+            -AND-  L_Area_8C
+            -AND-  L_Area_IFSp
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A44d_left
+ * Within 1 mm: IFJ_left
+ * Within 4 mm: IFS_left
+ * Within 7 mm: A45c_left
+            -AND-  A9/46v_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Frontal Gyrus (p. Triangularis)
+ * Within 5 mm: Left Inferior Frontal Gyrus (p. Opercularis)
+ * Within 6 mm: Left Middle Frontal Gyrus
+ * Within 7 mm: Left Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -43 mm [L],    4 mm [A],   40 mm [S] {TLRC}
+    -43 mm [L],    2 mm [A],   44 mm [S] {MNI}
+    -43 mm [U],   -2 mm [P],   49 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Premotor_Eye_Fields
+ * Within 2 mm: L_Area_55b
+ * Within 3 mm: L_Area_8C
+ * Within 5 mm: L_Area_8Av
+ * Within 6 mm: L_Frontal_Eye_Fields
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  IFJ_left
+ * Within 1 mm: A6cvl_left
+ * Within 3 mm: A6vl_left
+ * Within 4 mm: A6cdl_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Precentral Gyrus
+ * Within 6 mm: Left Middle Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -11 mm [L],  -69 mm [P],   38 mm [S] {TLRC}
+    -11 mm [L],  -73 mm [P],   37 mm [S] {MNI}
+    -11 mm [U],  -77 mm [P],   42 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Parieto-Occipital_Sulcus_Area_2
+ * Within 3 mm: L_Dorsal_Transitional_Visual_Area
+ * Within 5 mm: L_Sixth_Visual_Area
+ * Within 7 mm: L_Area_7m
+            -AND-  L_Third_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  dmPOS_left
+ * Within 4 mm: vmPOS_left
+            -AND-  msOccG_left
+ * Within 7 mm: A7c_left
+            -AND-  lsOccG_left
+            -AND-  A7m_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Precuneus
+ * Within 1 mm: Left Cuneus
+            -AND-  Left Superior Occipital Gyrus
+ * Within 2 mm: Left Superior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -5 mm [L],  -28 mm [P],   27 mm [S] {TLRC}
+     -5 mm [L],  -30 mm [P],   27 mm [S] {MNI}
+     -5 mm [U],  -34 mm [P],   32 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_RetroSplenial_Complex
+ * Within 5 mm: L_Area_dorsal_23_a+b
+ * Within 6 mm: R_RetroSplenial_Complex
+ * Within 7 mm: L_Area_23d
+            -AND-  R_Area_dorsal_23_a+b
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A23d_left
+ * Within 1 mm: A23v_left
+ * Within 6 mm: A23d_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+ * Within 3 mm: Left Posterior Cingulate Cortex
+ * Within 5 mm: Left Middle Cingulate Cortex
+ * Within 6 mm: Right Middle Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -3 mm [L],    5 mm [A],   28 mm [S] {TLRC}
+     -3 mm [L],    4 mm [A],   31 mm [S] {MNI}
+     -3 mm [U],   -0 mm [P],   36 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_33_prime
+ * Within 3 mm: R_Area_Posterior_24_prime
+            -AND-  L_Area_Posterior_24_prime
+ * Within 4 mm: R_Area_33_prime
+ * Within 6 mm: L_RetroSplenial_Complex
+ * Within 7 mm: L_Anterior_24_prime
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A24rv_left
+ * Within 2 mm: A24cd_left
+ * Within 4 mm: A24cd_right
+ * Within 5 mm: A24rv_right
+            -AND-  A23d_left
+ * Within 7 mm: A23d_right
+            -AND-  A23c_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Anterior Cingulate Cortex
+ * Within 1 mm: Left Middle Cingulate Cortex
+ * Within 4 mm: Right Middle Cingulate Cortex
+ * Within 5 mm: Right Anterior Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -48 mm [L],    5 mm [A],  -27 mm [I] {TLRC}
+    -49 mm [L],    6 mm [A],  -32 mm [I] {MNI}
+    -49 mm [U],    2 mm [A],  -27 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: L_Area_TG_dorsal
+ * Within 2 mm: L_Area_TE1_anterior
+ * Within 3 mm: L_Area_STSv_anterior
+ * Within 5 mm: L_Area_TE2_anterior
+            -AND-  L_Area_STSd_anterior
+            -AND-  L_Area_STGa
+ * Within 6 mm: L_Area_TG_Ventral
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A21r_left
+ * Within 5 mm: A20r_left
+            -AND-  A38l_left
+ * Within 6 mm: A22r_left
+ * Within 7 mm: A38m_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Temporal Gyrus
+ * Within 2 mm: Left Medial Temporal Pole
+            -AND-  Left Inferior Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -62 mm [L],  -25 mm [P],  -16 mm [I] {TLRC}
+    -62 mm [L],  -24 mm [P],  -20 mm [I] {MNI}
+    -62 mm [U],  -28 mm [P],  -15 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_TE1_Middle
+ * Within 4 mm: L_Area_TE2_anterior
+ * Within 5 mm: L_Area_STSv_posterior
+ * Within 7 mm: L_Area_TE1_anterior
+            -AND-  L_Area_STSv_anterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A21c_left
+ * Within 1 mm: A20il_left
+ * Within 3 mm: A20cl_left
+            -AND-  A20cv_left
+ * Within 6 mm: aSTS_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Temporal Gyrus
+ * Within 2 mm: Left Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -57 mm [L],   -9 mm [P],   -9 mm [I] {TLRC}
+    -58 mm [L],   -9 mm [P],  -12 mm [I] {MNI}
+    -58 mm [U],  -13 mm [P],   -7 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_TE1_anterior
+ * Within 1 mm: L_Area_STSv_anterior
+ * Within 2 mm: L_Area_STSd_anterior
+ * Within 4 mm: L_Auditory_5_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  aSTS_left
+ * Within 2 mm: A22r_left
+ * Within 7 mm: A21r_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Temporal Gyrus
+ * Within 4 mm: Left Superior Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -58 mm [L],  -33 mm [P],   -0 mm [I] {TLRC}
+    -59 mm [L],  -34 mm [P],   -2 mm [I] {MNI}
+    -59 mm [U],  -38 mm [P],    3 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_STSv_posterior
+ * Within 3 mm: L_Area_STSd_posterior
+ * Within 4 mm: L_Area_TE1_posterior
+ * Within 5 mm: L_Auditory_5_Complex
+ * Within 6 mm: L_Area_TE1_Middle
+            -AND-  L_Area_TemporoParietoOccipital_Junction_1
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  aSTS_left
+ * Within 3 mm: rpSTS_left
+ * Within 4 mm: A22c_left
+ * Within 5 mm: A21c_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -59 mm [L],  -42 mm [P],    9 mm [S] {TLRC}
+    -60 mm [L],  -44 mm [P],    8 mm [S] {MNI}
+    -60 mm [U],  -48 mm [P],   13 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_TemporoParietoOccipital_Junction_1
+ * Within 4 mm: L_Area_STSv_posterior
+            -AND-  L_Superior_Temporal_Visual_Area
+ * Within 5 mm: L_Area_TE1_posterior
+            -AND-  L_Area_STSd_posterior
+            -AND-  L_Area_PHT
+ * Within 6 mm: L_Auditory_5_Complex
+            -AND-  L_Auditory_4_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  rpSTS_left
+ * Within 2 mm: cpSTS_left
+ * Within 3 mm: A37dl_left
+            -AND-  A22c_left
+ * Within 4 mm: aSTS_left
+ * Within 5 mm: A21c_left
+ * Within 7 mm: A41/42_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Temporal Gyrus
+ * Within 4 mm: Left Superior Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -49 mm [L],  -57 mm [P],   16 mm [S] {TLRC}
+    -49 mm [L],  -59 mm [P],   14 mm [S] {MNI}
+    -49 mm [U],  -63 mm [P],   19 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_TemporoParietoOccipital_Junction_2
+ * Within 4 mm: L_Medial_Superior_Temporal_Area
+            -AND-  L_Area_PGi
+            -AND-  L_Area_FST
+ * Within 6 mm: L_Area_PHT
+            -AND-  L_Area_TemporoParietoOccipital_Junction_1
+ * Within 7 mm: L_Superior_Temporal_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39rv_left
+ * Within 3 mm: cpSTS_left
+ * Within 4 mm: A37dl_left
+ * Within 7 mm: V5/MT+_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -39 mm [L],  -78 mm [P],   28 mm [S] {TLRC}
+    -39 mm [L],  -82 mm [P],   27 mm [S] {MNI}
+    -39 mm [U],  -86 mm [P],   32 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_PGp
+ * Within 3 mm: L_Area_PGs
+ * Within 5 mm: L_Area_IntraParietal_0
+ * Within 6 mm: L_Area_TemporoParietoOccipital_Junction_3
+ * Within 7 mm: L_Area_PGi
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39c_left
+ * Within 5 mm: A39rv_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Occipital Gyrus
+ * Within 6 mm: Left Angular Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -55 mm [L],  -55 mm [P],   26 mm [S] {TLRC}
+    -56 mm [L],  -58 mm [P],   25 mm [S] {MNI}
+    -56 mm [U],  -62 mm [P],   30 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_PFm_Complex
+ * Within 1 mm: L_Area_PGi
+ * Within 3 mm: L_Superior_Temporal_Visual_Area
+ * Within 5 mm: L_Area_TemporoParietoOccipital_Junction_2
+ * Within 6 mm: L_PeriSylvian_Language_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39rv_left
+ * Within 4 mm: A40c_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Angular Gyrus
+ * Within 2 mm: Left SupraMarginal Gyrus
+            -AND-  Left Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -45 mm [L],  -65 mm [P],   34 mm [S] {TLRC}
+    -46 mm [L],  -69 mm [P],   33 mm [S] {MNI}
+    -46 mm [U],  -73 mm [P],   38 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_PGi
+ * Within 4 mm: L_Area_PGs
+ * Within 7 mm: L_Area_TemporoParietoOccipital_Junction_3
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39rv_left
+ * Within 7 mm: A39rd_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Angular Gyrus
+ * Within 4 mm: Left Middle Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -36 mm [L],   20 mm [A],  -12 mm [I] {TLRC}
+    -36 mm [L],   21 mm [A],  -14 mm [I] {MNI}
+    -36 mm [U],   17 mm [A],   -9 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_47s
+ * Within 2 mm: L_Anterior_Ventral_Insular_Area
+ * Within 3 mm: L_Area_47l_(47_lateral)
+ * Within 4 mm: L_Anterior_Agranular_Insula_Complex
+ * Within 6 mm: L_Area_47m
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A12/47o_left
+ * Within 1 mm: A12/47l_left
+ * Within 2 mm: vIa_left
+ * Within 6 mm: A38l_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Frontal Gyrus (p. Orbitalis)
+ * Within 2 mm: Left Insula Lobe
+ * Within 4 mm: Left Temporal Pole
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -6 mm [L],   33 mm [A],  -12 mm [I] {TLRC}
+     -7 mm [L],   35 mm [A],  -12 mm [I] {MNI}
+     -7 mm [U],   31 mm [A],   -7 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_s32
+ * Within 1 mm: L_Area_a24
+ * Within 4 mm: L_Area_25
+ * Within 5 mm: L_Area_10r
+ * Within 6 mm: L_Area_10v
+ * Within 7 mm: R_Area_a24
+            -AND-  L_Area_p32
+            -AND-  R_Area_s32
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A32sg_left
+ * Within 1 mm: A13_left
+ * Within 3 mm: A14m_left
+ * Within 6 mm: A24rv_left
+            -AND-  A14m_right
+ * Within 7 mm: A11m_left
+            -AND-  A32sg_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Mid Orbital Gyrus
+ * Within 3 mm: Left Rectal Gyrus
+            -AND-  Left Anterior Cingulate Cortex
+ * Within 6 mm: Right Mid Orbital Gyrus
+ * Within 7 mm: Left Superior Orbital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -47 mm [L],   30 mm [A],   -8 mm [I] {TLRC}
+    -47 mm [L],   31 mm [A],   -8 mm [I] {MNI}
+    -47 mm [U],   27 mm [A],   -3 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_47l_(47_lateral)
+ * Within 2 mm: L_Area_45
+ * Within 6 mm: L_Area_47m
+            -AND-  L_Area_anterior_47r
+ * Within 7 mm: L_Area_Frontal_Opercular
+            -AND-  L_Area_posterior_47r
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A12/47l_left
+ * Within 1 mm: A45r_left
+ * Within 2 mm: A44op_left
+ * Within 7 mm: A12/47o_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Frontal Gyrus (p. Orbitalis)
+ * Within 6 mm: Left Inferior Frontal Gyrus (p. Triangularis)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -14 mm [L],   61 mm [A],   -9 mm [I] {TLRC}
+    -14 mm [L],   63 mm [A],   -8 mm [I] {MNI}
+    -14 mm [U],   59 mm [A],   -3 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Polar_10p
+ * Within 4 mm: L_Area_10r
+            -AND-  L_Area_10d
+ * Within 5 mm: L_Area_posterior_10p
+ * Within 6 mm: L_Area_10v
+            -AND-  L_Area_anterior_10p
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A10l_left
+ * Within 2 mm: A11m_left
+ * Within 5 mm: A14m_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Orbital Gyrus
+ * Within 3 mm: Left Mid Orbital Gyrus
+ * Within 5 mm: Left Middle Orbital Gyrus
+ * Within 6 mm: Left Superior Medial Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -52 mm [L],   22 mm [A],    6 mm [S] {TLRC}
+    -53 mm [L],   22 mm [A],    8 mm [S] {MNI}
+    -53 mm [U],   18 mm [A],   13 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_45
+ * Within 3 mm: L_Area_44
+ * Within 6 mm: L_Area__IFSa
+ * Within 7 mm: L_Frontal_Opercular_Area_4
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A45c_left
+ * Within 4 mm: A44v_left
+ * Within 6 mm: A44op_left
+ * Within 7 mm: IFS_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Inferior Frontal Gyrus (p. Triangularis)
+ * Within 4 mm: Left Inferior Frontal Gyrus (p. Opercularis)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -7 mm [L],   41 mm [A],    3 mm [S] {TLRC}
+     -7 mm [L],   42 mm [A],    6 mm [S] {MNI}
+     -7 mm [U],   38 mm [A],   11 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_posterior_24
+ * Within 3 mm: L_Area_a24
+ * Within 4 mm: L_Area_9_Middle
+ * Within 6 mm: L_Area_dorsal_32
+ * Within 7 mm: R_Area_posterior_24
+            -AND-  R_Area_a24
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A32sg_left
+ * Within 3 mm: A32p_left
+ * Within 5 mm: A24rv_left
+ * Within 6 mm: A10m_left
+ * Within 7 mm: A32sg_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Anterior Cingulate Cortex
+ * Within 6 mm: Left Superior Medial Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -10 mm [L],   57 mm [A],   11 mm [S] {TLRC}
+    -10 mm [L],   58 mm [A],   15 mm [S] {MNI}
+    -10 mm [U],   54 mm [A],   20 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_9_Middle
+ * Within 5 mm: L_Area_9_anterior
+ * Within 7 mm: L_Area_10d
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A10m_left
+ * Within 4 mm: A9l_left
+ * Within 7 mm: A46_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Medial Gyrus
+ * Within 1 mm: Left Superior Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -6 mm [L],   29 mm [A],   21 mm [S] {TLRC}
+     -6 mm [L],   28 mm [A],   25 mm [S] {MNI}
+     -6 mm [U],   24 mm [A],   30 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Anterior_24_prime
+ * Within 2 mm: L_Area_anterior_32_prime
+ * Within 4 mm: L_Area_33_prime
+            -AND-  L_Area_posterior_24
+ * Within 6 mm: L_Area_p32_prime
+ * Within 7 mm: R_Anterior_24_prime
+            -AND-  L_Area_dorsal_32
+            -AND-  R_Area_33_prime
+            -AND-  R_Area_posterior_24
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A32p_left
+ * Within 5 mm: A9m_left
+ * Within 6 mm: A24rv_left
+            -AND-  A32p_right
+            -AND-  A10m_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Anterior Cingulate Cortex
+ * Within 5 mm: Left Superior Medial Gyrus
+ * Within 7 mm: Left Middle Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -14 mm [L],   46 mm [A],   36 mm [S] {TLRC}
+    -14 mm [L],   45 mm [A],   42 mm [S] {MNI}
+    -14 mm [U],   41 mm [A],   47 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_9_Posterior
+ * Within 4 mm: L_Area_8B_Lateral
+            -AND-  L_Area_8Ad
+ * Within 5 mm: L_Area_9_Middle
+ * Within 6 mm: L_Area_8BM
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A9l_left
+ * Within 4 mm: A8dl_left
+ * Within 7 mm: A9/46d_left
+            -AND-  A9m_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Frontal Gyrus
+ * Within 4 mm: Left Superior Medial Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -5 mm [L],   32 mm [A],   37 mm [S] {TLRC}
+     -5 mm [L],   31 mm [A],   42 mm [S] {MNI}
+     -5 mm [U],   27 mm [A],   47 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_8BM
+ * Within 4 mm: L_Area_anterior_32_prime
+ * Within 5 mm: L_Area_dorsal_32
+ * Within 6 mm: R_Area_8BM
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A9m_left
+ * Within 5 mm: A8m_left
+ * Within 6 mm: A9m_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Superior Medial Gyrus
+ * Within 6 mm: Left Superior Frontal Gyrus
+ * Within 7 mm: Left SMA
+            -AND-  Left Middle Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -41 mm [L],   15 mm [A],   45 mm [S] {TLRC}
+    -41 mm [L],   13 mm [A],   49 mm [S] {MNI}
+    -41 mm [U],    9 mm [A],   54 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 2 mm: L_Area_8Av
+ * Within 6 mm: L_Area_8C
+            -AND-  L_Area_55b
+ * Within 7 mm: L_Inferior_6-8_Transitional_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  IFJ_left
+ * Within 1 mm: A6vl_left
+ * Within 2 mm: A8vl_left
+ * Within 7 mm: A6cvl_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Frontal Gyrus
+ * Within 2 mm: Left Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -26 mm [L],   24 mm [A],   44 mm [S] {TLRC}
+    -26 mm [L],   22 mm [A],   49 mm [S] {MNI}
+    -26 mm [U],   18 mm [A],   54 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_8Ad
+ * Within 1 mm: L_Area_8Av
+ * Within 2 mm: L_Superior_6-8_Transitional_Area
+ * Within 5 mm: L_Inferior_6-8_Transitional_Area
+ * Within 6 mm: L_Area_6_anterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A8vl_left
+ * Within 3 mm: A8dl_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Frontal Gyrus
+ * Within 5 mm: Left Superior Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -10 mm [L],   16 mm [A],   58 mm [S] {TLRC}
+    -10 mm [L],   13 mm [A],   63 mm [S] {MNI}
+    -10 mm [U],    9 mm [A],   68 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: L_Superior_Frontal_Language_Area
+ * Within 5 mm: L_Area_6m_anterior
+            -AND-  L_Supplementary_And_Cingulate_Eye
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A8dl_left
+ * Within 1 mm: A8m_left
+ * Within 2 mm: A6dl_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left SMA
+ * Within 3 mm: Left Superior Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -12 mm [L],  -54 mm [P],   15 mm [S] {TLRC}
+    -12 mm [L],  -57 mm [P],   14 mm [S] {MNI}
+    -12 mm [U],  -61 mm [P],   19 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Parieto-Occipital_Sulcus_Area_1
+ * Within 5 mm: L_Second_Visual_Area
+ * Within 6 mm: L_Area_ventral_23_a+b
+            -AND-  L_Primary_Visual_Cortex
+ * Within 7 mm: L_Dorsal_Transitional_Visual_Area
+            -AND-  L_ProStriate_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  dmPOS_left
+ * Within 3 mm: A23v_left
+ * Within 4 mm: A31_left
+ * Within 5 mm: vmPOS_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Precuneus
+ * Within 1 mm: Left Calcarine Gyrus
+ * Within 4 mm: Left Cuneus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -5 mm [L],  -52 mm [P],   28 mm [S] {TLRC}
+     -5 mm [L],  -55 mm [P],   28 mm [S] {MNI}
+     -5 mm [U],  -59 mm [P],   33 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_dorsal_23_a+b
+ * Within 1 mm: L_Area_31pd
+ * Within 2 mm: L_Area_31p_ventral
+            -AND-  L_Area_ventral_23_a+b
+ * Within 5 mm: L_Area_7m
+ * Within 6 mm: R_Area_7m
+ * Within 7 mm: R_Area_ventral_23_a+b
+            -AND-  R_Area_dorsal_23_a+b
+            -AND-  R_Area_31pd
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A31_left
+ * Within 1 mm: A23d_left
+ * Within 5 mm: A31_right
+ * Within 7 mm: A23d_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Precuneus
+ * Within 1 mm: Left Posterior Cingulate Cortex
+ * Within 6 mm: Right Precuneus
+ * Within 7 mm: Left Middle Cingulate Cortex
+            -AND-  Left Cuneus
+            -AND-  Right Posterior Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -3 mm [L],  -25 mm [P],   37 mm [S] {TLRC}
+     -3 mm [L],  -28 mm [P],   39 mm [S] {MNI}
+     -3 mm [U],  -32 mm [P],   44 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_dorsal_23_a+b
+ * Within 1 mm: L_Area_31a
+ * Within 2 mm: L_Area_23d
+ * Within 4 mm: R_Area_23d
+            -AND-  L_Area_23c
+            -AND-  R_Area_dorsal_23_a+b
+ * Within 5 mm: R_Area_31p_ventral
+            -AND-  R_Area_31a
+ * Within 6 mm: L_Area_31p_ventral
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A23c_left
+ * Within 1 mm: A23d_left
+ * Within 3 mm: A23d_right
+            -AND-  A23c_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Middle Cingulate Cortex
+ * Within 5 mm: Right Middle Cingulate Cortex
+ * Within 7 mm: Left Posterior Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     -6 mm [L],  -51 mm [P],   42 mm [S] {TLRC}
+     -6 mm [L],  -55 mm [P],   43 mm [S] {MNI}
+     -6 mm [U],  -59 mm [P],   48 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_Area_7m
+ * Within 1 mm: L_PreCuneus_Visual_Area
+            -AND-  L_Area_31pd
+ * Within 6 mm: L_Medial_Area_7P
+ * Within 7 mm: R_PreCuneus_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A31_left
+ * Within 2 mm: A7m_left
+ * Within 6 mm: A5m_left
+            -AND-  A31_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left Precuneus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+    -26 mm [L],  -32 mm [P],  -13 mm [I] {TLRC}
+    -26 mm [L],  -32 mm [P],  -18 mm [I] {MNI}
+    -26 mm [U],  -36 mm [P],  -13 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  L_ParaHippocampal_Area_1
+ * Within 3 mm: L_ParaHippocampal_Area_3
+            -AND-  L_PreSubiculum
+            -AND-  L_Hippocampus
+ * Within 5 mm: L_ParaHippocampal_Area_2
+ * Within 6 mm: L_Ventral_Visual_Complex
+ * Within 7 mm: L_Entorhinal_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  TL_left
+ * Within 3 mm: A20rv_left
+            -AND-  A35/36c_left
+            -AND-  cHipp_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Left ParaHippocampal Gyrus
+ * Within 1 mm: Left Fusiform Gyrus
+ * Within 6 mm: Left Hippocampus
+ * Within 7 mm: Left Cerebellum (IV-V)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     37 mm [R],  -36 mm [P],  -17 mm [I] {TLRC}
+     37 mm [R],  -36 mm [P],  -23 mm [I] {MNI}
+     37 mm [U],  -40 mm [P],  -18 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_TF
+ * Within 2 mm: R_Fusiform_Face_Complex
+ * Within 4 mm: R_Ventral_Visual_Complex
+ * Within 5 mm: R_ParaHippocampal_Area_3
+ * Within 7 mm: R_Area_TE2_posterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A37lv_right
+ * Within 2 mm: A20rv_right
+ * Within 7 mm: A37mv_right
+            -AND-  TL_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Fusiform Gyrus
+ * Within 5 mm: Right Cerebellum (VI)
+            -AND-  Right Cerebellum (IV-V)
+ * Within 7 mm: Right ParaHippocampal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     27 mm [R],  -36 mm [P],  -10 mm [I] {TLRC}
+     27 mm [R],  -36 mm [P],  -14 mm [I] {MNI}
+     27 mm [U],  -40 mm [P],   -9 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_ParaHippocampal_Area_1
+ * Within 1 mm: R_ParaHippocampal_Area_2
+ * Within 2 mm: R_Ventral_Visual_Complex
+ * Within 4 mm: R_ParaHippocampal_Area_3
+            -AND-  R_Hippocampus
+ * Within 6 mm: R_PreSubiculum
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  TL_right
+ * Within 1 mm: A20rv_right
+ * Within 2 mm: TH_right
+ * Within 4 mm: A37mv_right
+            -AND-  cHipp_right
+ * Within 7 mm: rLinG_right
+            -AND-  A35/36c_right
+            -AND-  A37lv_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Fusiform Gyrus
+ * Within 1 mm: Right ParaHippocampal Gyrus
+ * Within 6 mm: Right Hippocampus
+            -AND-  Right Cerebellum (IV-V)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     26 mm [R],  -69 mm [P],   -6 mm [I] {TLRC}
+     27 mm [R],  -70 mm [P],  -12 mm [I] {MNI}
+     27 mm [U],  -74 mm [P],   -7 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_VentroMedial_Visual_Area_3
+ * Within 1 mm: R_Ventral_Visual_Complex
+ * Within 2 mm: R_Eighth_Visual_Area
+ * Within 5 mm: R_Fourth_Visual_Area
+            -AND-  R_Fusiform_Face_Complex
+ * Within 6 mm: R_Third_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A37mv_right
+ * Within 2 mm: rLinG_right
+ * Within 7 mm: cLinG_right
+            -AND-  iOccG_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Fusiform Gyrus
+ * Within 4 mm: Right Cerebellum (VI)
+            -AND-  Right Lingual Gyrus
+ * Within 7 mm: Right Inferior Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     12 mm [R],  -63 mm [P],   -0 mm [I] {TLRC}
+     12 mm [R],  -65 mm [P],   -4 mm [I] {MNI}
+     12 mm [U],  -69 mm [P],    1 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Third_Visual_Area
+ * Within 1 mm: R_Second_Visual_Area
+ * Within 3 mm: R_VentroMedial_Visual_Area_1
+ * Within 6 mm: R_Fourth_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  rLinG_right
+ * Within 6 mm: vmPOS_right
+            -AND-  rCunG_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Lingual Gyrus
+ * Within 5 mm: Right Cerebellum (IV-V)
+            -AND-  Cerebellar Vermis (4/5)
+            -AND-  Cerebellar Vermis (6)
+ * Within 6 mm: Right Cerebellum (VI)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     45 mm [R],  -72 mm [P],   -1 mm [I] {TLRC}
+     46 mm [R],  -75 mm [P],   -5 mm [I] {MNI}
+     46 mm [U],  -79 mm [P],   -0 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_Lateral_Occipital_2
+ * Within 1 mm: R_Area_V4t
+ * Within 2 mm: R_Area_PH
+ * Within 4 mm: R_Area_FST
+ * Within 5 mm: R_Posterior_InferoTemporal
+ * Within 6 mm: R_Medial_Superior_Temporal_Area
+ * Within 7 mm: R_Middle_Temporal_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  V5/MT+_right
+ * Within 2 mm: iOccG_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Occipital Gyrus
+ * Within 1 mm: Right Inferior Temporal Gyrus
+ * Within 4 mm: Right Middle Temporal Gyrus
+            -AND-  Right Middle Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     11 mm [R],  -89 mm [P],    1 mm [S] {TLRC}
+     11 mm [R],  -92 mm [P],   -4 mm [I] {MNI}
+     11 mm [U],  -96 mm [P],    1 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 2 mm: R_Second_Visual_Area
+            -AND-  R_Primary_Visual_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  cLinG_right
+ * Within 4 mm: cCunG_right
+            -AND-  iOccG_right
+ * Within 5 mm: OPC_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Calcarine Gyrus
+ * Within 1 mm: Right Lingual Gyrus
+ * Within 4 mm: Left Calcarine Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     15 mm [R],  -45 mm [P],    1 mm [S] {TLRC}
+     15 mm [R],  -46 mm [P],   -1 mm [I] {MNI}
+     15 mm [U],  -50 mm [P],    4 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Primary_Visual_Cortex
+ * Within 1 mm: R_Second_Visual_Area
+            -AND-  R_RetroSplenial_Complex
+            -AND-  R_ProStriate_Area
+            -AND-  R_PreSubiculum
+ * Within 4 mm: R_Parieto-Occipital_Sulcus_Area_1
+ * Within 6 mm: R_VentroMedial_Visual_Area_1
+ * Within 7 mm: R_Hippocampus
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  vmPOS_right
+ * Within 1 mm: A23v_right
+ * Within 3 mm: rLinG_right
+ * Within 7 mm: cHipp_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Lingual Gyrus
+ * Within 4 mm: Right Cerebellum (IV-V)
+ * Within 5 mm: Right Precuneus
+            -AND-  Right Calcarine Gyrus
+            -AND-  Right ParaHippocampal Gyrus
+ * Within 7 mm: Cerebellar Vermis (4/5)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     28 mm [R],  -91 mm [P],    2 mm [S] {TLRC}
+     28 mm [R],  -94 mm [P],   -4 mm [I] {MNI}
+     28 mm [U],  -98 mm [P],    1 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: R_Second_Visual_Area
+ * Within 2 mm: R_Third_Visual_Area
+ * Within 4 mm: R_Primary_Visual_Cortex
+ * Within 6 mm: R_Fourth_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  OPC_right
+ * Within 4 mm: iOccG_right
+ * Within 6 mm: mOccG_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Occipital Gyrus
+ * Within 4 mm: Right Middle Occipital Gyrus
+            -AND-  Right Lingual Gyrus
+            -AND-  Right Calcarine Gyrus
+ * Within 6 mm: Right Fusiform Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      9 mm [R],  -73 mm [P],   13 mm [S] {TLRC}
+      9 mm [R],  -76 mm [P],   10 mm [S] {MNI}
+      9 mm [U],  -80 mm [P],   15 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Primary_Visual_Cortex
+ * Within 5 mm: R_Second_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  rCunG_right
+ * Within 7 mm: vmPOS_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Calcarine Gyrus
+ * Within 4 mm: Left Calcarine Gyrus
+ * Within 6 mm: Right Lingual Gyrus
+ * Within 7 mm: Right Cuneus
+            -AND-  Left Lingual Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     21 mm [R],  -58 mm [P],   10 mm [S] {TLRC}
+     22 mm [R],  -60 mm [P],    8 mm [S] {MNI}
+     22 mm [U],  -64 mm [P],   13 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Second_Visual_Area
+ * Within 1 mm: R_Primary_Visual_Cortex
+ * Within 2 mm: R_ProStriate_Area
+            -AND-  R_Dorsal_Transitional_Visual_Area
+ * Within 4 mm: R_Parieto-Occipital_Sulcus_Area_1
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  dmPOS_right
+ * Within 2 mm: vmPOS_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Calcarine Gyrus
+ * Within 5 mm: Right Lingual Gyrus
+ * Within 6 mm: Right Precuneus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     37 mm [R],  -80 mm [P],   14 mm [S] {TLRC}
+     38 mm [R],  -83 mm [P],   11 mm [S] {MNI}
+     38 mm [U],  -87 mm [P],   16 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: R_Area_V3CD
+ * Within 2 mm: R_Area_Lateral_Occipital_1
+ * Within 3 mm: R_Fourth_Visual_Area
+ * Within 4 mm: R_Area_Lateral_Occipital_3
+ * Within 7 mm: R_Area_PGp
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  mOccG_right
+ * Within 4 mm: A39c_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     17 mm [R],  -87 mm [P],   25 mm [S] {TLRC}
+     17 mm [R],  -91 mm [P],   22 mm [S] {MNI}
+     17 mm [U],  -95 mm [P],   27 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 2 mm: R_Area_V3A
+ * Within 3 mm: R_Third_Visual_Area
+ * Within 4 mm: R_Second_Visual_Area
+ * Within 5 mm: R_Fourth_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  OPC_right
+ * Within 1 mm: msOccG_right
+ * Within 4 mm: cCunG_right
+            -AND-  mOccG_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Occipital Gyrus
+ * Within 2 mm: Right Cuneus
+ * Within 5 mm: Right Calcarine Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     11 mm [R],  -70 mm [P],   27 mm [S] {TLRC}
+     11 mm [R],  -74 mm [P],   25 mm [S] {MNI}
+     11 mm [U],  -78 mm [P],   30 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 2 mm: R_Second_Visual_Area
+            -AND-  R_Sixth_Visual_Area
+ * Within 4 mm: R_Third_Visual_Area
+ * Within 6 mm: R_Area_7m
+            -AND-  R_Primary_Visual_Cortex
+            -AND-  R_Parieto-Occipital_Sulcus_Area_2
+            -AND-  R_Dorsal_Transitional_Visual_Area
+ * Within 7 mm: R_Parieto-Occipital_Sulcus_Area_1
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  vmPOS_right
+ * Within 3 mm: rCunG_right
+ * Within 6 mm: dmPOS_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Cuneus
+ * Within 6 mm: Right Precuneus
+            -AND-  Right Calcarine Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     15 mm [R],  -80 mm [P],   39 mm [S] {TLRC}
+     15 mm [R],  -85 mm [P],   38 mm [S] {MNI}
+     15 mm [U],  -89 mm [P],   43 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Sixth_Visual_Area
+ * Within 2 mm: R_Area_V3A
+ * Within 4 mm: R_Third_Visual_Area
+            -AND-  R_Area_V6A
+ * Within 7 mm: R_Parieto-Occipital_Sulcus_Area_2
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  msOccG_right
+ * Within 5 mm: vmPOS_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Cuneus
+ * Within 2 mm: Right Superior Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     31 mm [R],  -72 mm [P],   32 mm [S] {TLRC}
+     31 mm [R],  -76 mm [P],   31 mm [S] {MNI}
+     31 mm [U],  -80 mm [P],   36 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_IntraParietal_0
+ * Within 1 mm: R_Seventh_Visual_Area
+ * Within 2 mm: R_IntraParietal_Sulcus_Area_1
+ * Within 3 mm: R_Area_V3B
+            -AND-  R_Area_PGp
+ * Within 5 mm: R_Area_IntraParietal_1
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  lsOccG_right
+ * Within 4 mm: A39rd_right
+ * Within 6 mm: A39c_right
+ * Within 7 mm: dmPOS_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Occipital Gyrus
+ * Within 3 mm: Right Superior Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     53 mm [R],  -15 mm [P],    7 mm [S] {TLRC}
+     53 mm [R],  -16 mm [P],    7 mm [S] {MNI}
+     53 mm [U],  -20 mm [P],   12 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Medial_Belt_Complex
+ * Within 1 mm: R_Lateral_Belt_Complex
+            -AND-  R_Primary_Auditory_Cortex
+ * Within 3 mm: R_ParaBelt_Complex
+ * Within 4 mm: R_Area_OP4/PV
+ * Within 6 mm: R_Area_OP1/SII
+ * Within 7 mm: R_Auditory_4_Complex
+            -AND-  R_Area_43
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A41/42_right
+ * Within 1 mm: TE1.0_1.2_right
+ * Within 3 mm: A1/2/3tonIa_right
+ * Within 5 mm: A40rv_right
+ * Within 6 mm: A22r_right
+ * Within 7 mm: A22c_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Temporal Gyrus
+ * Within 1 mm: Right Heschls Gyrus
+ * Within 2 mm: Right Rolandic Operculum
+ * Within 7 mm: Right Insula Lobe
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     64 mm [R],  -27 mm [P],   10 mm [S] {TLRC}
+     64 mm [R],  -28 mm [P],   10 mm [S] {MNI}
+     64 mm [U],  -32 mm [P],   15 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Auditory_4_Complex
+ * Within 1 mm: R_ParaBelt_Complex
+ * Within 5 mm: R_Auditory_5_Complex
+ * Within 7 mm: R_Area_TemporoParietoOccipital_Junction_1
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A22c_right
+ * Within 1 mm: A41/42_right
+ * Within 4 mm: cpSTS_right
+            -AND-  rpSTS_right
+ * Within 5 mm: A22r_right
+ * Within 6 mm: A40rv_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     38 mm [R],  -13 mm [P],   15 mm [S] {TLRC}
+     38 mm [R],  -14 mm [P],   16 mm [S] {MNI}
+     38 mm [U],  -18 mm [P],   21 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Insular_Granular_Complex
+ * Within 2 mm: R_Area_OP1/SII
+ * Within 3 mm: R_Area_OP2-3/VS
+ * Within 5 mm: R_Area_OP4/PV
+ * Within 7 mm: R_Primary_Auditory_Cortex
+            -AND-  R_Posterior_Insular_Area_2
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  dIg_right
+ * Within 3 mm: A40rv_right
+            -AND-  A1/2/3tonIa_right
+            -AND-  G_right
+ * Within 7 mm: TE1.0_1.2_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Insula Lobe
+ * Within 2 mm: Right Rolandic Operculum
+ * Within 5 mm: Right Heschls Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     42 mm [R],  -26 mm [P],   19 mm [S] {TLRC}
+     42 mm [R],  -28 mm [P],   19 mm [S] {MNI}
+     42 mm [U],  -32 mm [P],   24 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_PFcm
+ * Within 3 mm: R_RetroInsular_Cortex
+            -AND-  R_Area_OP1/SII
+            -AND-  R_Primary_Auditory_Cortex
+            -AND-  R_Lateral_Belt_Complex
+ * Within 6 mm: R_ParaBelt_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40rv_right
+ * Within 4 mm: TE1.0_1.2_right
+ * Within 5 mm: A41/42_right
+ * Within 7 mm: G_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Rolandic Operculum
+ * Within 3 mm: Right Insula Lobe
+            -AND-  Right Superior Temporal Gyrus
+            -AND-  Right Heschls Gyrus
+ * Within 5 mm: Right SupraMarginal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     58 mm [R],    1 mm [A],   10 mm [S] {TLRC}
+     59 mm [R],    0 mm [A],   11 mm [S] {MNI}
+     59 mm [U],   -4 mm [P],   16 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_43
+ * Within 1 mm: R_Area_OP4/PV
+ * Within 3 mm: R_Area_3a
+ * Within 4 mm: R_Primary_Motor_Cortex
+ * Within 6 mm: R_Area_1
+            -AND-  R_Auditory_4_Complex
+ * Within 7 mm: R_Rostral_Area_6
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A4tl_right
+ * Within 1 mm: A1/2/3tonIa_right
+ * Within 5 mm: A4hf_right
+            -AND-  A1/2/3ulhf_right
+            -AND-  TE1.0_1.2_right
+ * Within 7 mm: A6cvl_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Rolandic Operculum
+ * Within 4 mm: Right Postcentral Gyrus
+            -AND-  Right Heschls Gyrus
+ * Within 6 mm: Right Superior Temporal Gyrus
+ * Within 7 mm: Right Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     56 mm [R],  -14 mm [P],   16 mm [S] {TLRC}
+     57 mm [R],  -15 mm [P],   17 mm [S] {MNI}
+     57 mm [U],  -19 mm [P],   22 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_OP4/PV
+ * Within 2 mm: R_Area_PF_opercular
+ * Within 6 mm: R_ParaBelt_Complex
+            -AND-  R_Area_OP1/SII
+            -AND-  R_Area_PFcm
+ * Within 7 mm: R_Auditory_4_Complex
+            -AND-  R_Lateral_Belt_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A1/2/3tonIa_right
+ * Within 2 mm: A40rv_right
+ * Within 5 mm: A41/42_right
+ * Within 7 mm: A1/2/3ulhf_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Rolandic Operculum
+ * Within 3 mm: Right Postcentral Gyrus
+ * Within 4 mm: Right SupraMarginal Gyrus
+ * Within 6 mm: Right Superior Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     57 mm [R],   -4 mm [P],   28 mm [S] {TLRC}
+     58 mm [R],   -5 mm [P],   31 mm [S] {MNI}
+     58 mm [U],   -9 mm [P],   36 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Primary_Motor_Cortex
+ * Within 1 mm: R_Primary_Sensory_Cortex
+ * Within 4 mm: R_Ventral_Area_6
+ * Within 5 mm: R_Area_1
+            -AND-  R_Area_2
+ * Within 6 mm: R_Area_3a
+ * Within 7 mm: R_Area_PFt
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A1/2/3ulhf_right
+ * Within 1 mm: A4hf_right
+ * Within 6 mm: A2_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Postcentral Gyrus
+ * Within 5 mm: Right Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      9 mm [R],  -13 mm [P],   40 mm [S] {TLRC}
+      9 mm [R],  -15 mm [P],   43 mm [S] {MNI}
+      9 mm [U],  -19 mm [P],   48 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_23c
+ * Within 3 mm: R_Area_Posterior_24_prime
+            -AND-  R_Dorsal_Area_24d
+ * Within 5 mm: R_Area_23d
+            -AND-  R_Area_5m_ventral
+ * Within 6 mm: R_Ventral_Area_24d
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A23c_right
+ * Within 3 mm: A1/2/3ll_right
+            -AND-  A4ll_right
+ * Within 4 mm: A6m_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Cingulate Cortex
+ * Within 5 mm: Right SMA
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     49 mm [R],  -20 mm [P],   49 mm [S] {TLRC}
+     49 mm [R],  -23 mm [P],   52 mm [S] {MNI}
+     49 mm [U],  -27 mm [P],   57 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_2
+ * Within 2 mm: R_Area_1
+ * Within 4 mm: R_Area_PF_Complex
+            -AND-  R_Area_PFt
+ * Within 5 mm: R_Primary_Sensory_Cortex
+            -AND-  R_Area_IntraParietal_2
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A2_right
+ * Within 3 mm: A1/2/3ulhf_right
+ * Within 5 mm: A40rd_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Postcentral Gyrus
+ * Within 6 mm: Right Precentral Gyrus
+ * Within 7 mm: Right Inferior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     45 mm [R],   -8 mm [P],   45 mm [S] {TLRC}
+     46 mm [R],  -11 mm [P],   49 mm [S] {MNI}
+     46 mm [U],  -15 mm [P],   54 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Primary_Motor_Cortex
+ * Within 1 mm: R_Primary_Sensory_Cortex
+ * Within 3 mm: R_Frontal_Eye_Fields
+ * Within 5 mm: R_Dorsal_area_6
+ * Within 6 mm: R_Area_1
+ * Within 7 mm: R_Area_55b
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A1/2/3ulhf_right
+ * Within 1 mm: A4ul_right
+            -AND-  A4hf_right
+ * Within 5 mm: A6cdl_right
+ * Within 7 mm: A2_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Precentral Gyrus
+ * Within 6 mm: Right Postcentral Gyrus
+            -AND-  Right Middle Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      6 mm [R],   -9 mm [P],   48 mm [S] {TLRC}
+      6 mm [R],  -12 mm [P],   51 mm [S] {MNI}
+      6 mm [U],  -16 mm [P],   56 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Dorsal_Area_24d
+ * Within 4 mm: R_Area_Posterior_24_prime
+            -AND-  R_Area_23c
+ * Within 6 mm: L_Dorsal_Area_24d
+            -AND-  R_Area_6mp
+ * Within 7 mm: R_Primary_Motor_Cortex
+            -AND-  R_Ventral_Area_24d
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6m_right
+ * Within 1 mm: A4ll_right
+ * Within 4 mm: A23c_right
+ * Within 6 mm: A6m_left
+ * Within 7 mm: A4ll_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Cingulate Cortex
+ * Within 1 mm: Right SMA
+ * Within 5 mm: Left SMA
+ * Within 6 mm: Left Middle Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     37 mm [R],  -22 mm [P],   55 mm [S] {TLRC}
+     37 mm [R],  -25 mm [P],   58 mm [S] {MNI}
+     37 mm [U],  -29 mm [P],   63 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Primary_Sensory_Cortex
+ * Within 1 mm: R_Primary_Motor_Cortex
+ * Within 5 mm: R_Area_3a
+            -AND-  R_Area_1
+ * Within 7 mm: R_Area_2
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A1/2/3ulhf_right
+ * Within 1 mm: A4ul_right
+ * Within 6 mm: A2_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Precentral Gyrus
+ * Within 2 mm: Right Postcentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     31 mm [R],  -40 mm [P],   60 mm [S] {TLRC}
+     31 mm [R],  -45 mm [P],   63 mm [S] {MNI}
+     31 mm [U],  -49 mm [P],   68 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_7PC
+ * Within 5 mm: R_Lateral_Area_7A
+            -AND-  R_Area_2
+            -AND-  R_Area_1
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A7pc_right
+ * Within 1 mm: A5l_right
+ * Within 2 mm: A7r_right
+ * Within 3 mm: A7ip_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Postcentral Gyrus
+ * Within 2 mm: Right Superior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     31 mm [R],  -17 mm [P],   60 mm [S] {TLRC}
+     31 mm [R],  -20 mm [P],   64 mm [S] {MNI}
+     31 mm [U],  -24 mm [P],   69 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 2 mm: R_Primary_Motor_Cortex
+ * Within 3 mm: R_Dorsal_area_6
+ * Within 7 mm: R_Primary_Sensory_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+ * Within 1 mm: A4ul_right
+ * Within 5 mm: A6cdl_right
+ * Within 6 mm: A1/2/3ulhf_right
+            -AND-  A4t_right
+ * Within 7 mm: A1/2/3tru_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Precentral Gyrus
+ * Within 6 mm: Right Postcentral Gyrus
+ * Within 7 mm: Right Superior Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     27 mm [R],  -32 mm [P],   62 mm [S] {TLRC}
+     27 mm [R],  -36 mm [P],   66 mm [S] {MNI}
+     27 mm [U],  -40 mm [P],   71 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_2
+ * Within 1 mm: R_Area_1
+ * Within 2 mm: R_Area_7PC
+ * Within 4 mm: R_Lateral_Area_7A
+ * Within 6 mm: R_Primary_Sensory_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A1/2/3tru_right
+ * Within 1 mm: A7pc_right
+ * Within 4 mm: A2_right
+ * Within 5 mm: A5l_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Postcentral Gyrus
+ * Within 4 mm: Right Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     21 mm [R],   -9 mm [P],   62 mm [S] {TLRC}
+     21 mm [R],  -12 mm [P],   67 mm [S] {MNI}
+     21 mm [U],  -16 mm [P],   72 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_6mp
+ * Within 4 mm: R_Dorsal_area_6
+ * Within 7 mm: R_Area_6m_anterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6cdl_right
+ * Within 3 mm: A4t_right
+ * Within 5 mm: A6dl_right
+            -AND-  A6m_right
+ * Within 6 mm: A4ul_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Frontal Gyrus
+ * Within 3 mm: Right Precentral Gyrus
+ * Within 4 mm: Right SMA
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      9 mm [R],  -37 mm [P],   66 mm [S] {TLRC}
+     10 mm [R],  -42 mm [P],   70 mm [S] {MNI}
+     10 mm [U],  -46 mm [P],   75 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_5m
+ * Within 2 mm: R_Area_5L
+ * Within 5 mm: R_Primary_Sensory_Cortex
+ * Within 6 mm: R_Area_3a
+ * Within 7 mm: R_Area_5m_ventral
+            -AND-  R_Area_2
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A5m_right
+ * Within 1 mm: A1/2/3ll_right
+ * Within 3 mm: A1/2/3tru_right
+ * Within 6 mm: A7pc_right
+ * Within 7 mm: A4t_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Postcentral Gyrus
+ * Within 1 mm: Right Paracentral Lobule
+ * Within 2 mm: Right Precuneus
+ * Within 5 mm: Right Superior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      6 mm [R],  -22 mm [P],   64 mm [S] {TLRC}
+      6 mm [R],  -26 mm [P],   68 mm [S] {MNI}
+      6 mm [U],  -30 mm [P],   73 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Primary_Motor_Cortex
+ * Within 4 mm: R_Area_3a
+ * Within 5 mm: R_Area_5m
+ * Within 7 mm: L_Primary_Motor_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+ * Within 1 mm: A4ll_right
+ * Within 4 mm: A4t_right
+ * Within 6 mm: A4ll_left
+ * Within 7 mm: A1/2/3tru_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Paracentral Lobule
+ * Within 4 mm: Right SMA
+ * Within 5 mm: Left Paracentral Lobule
+ * Within 6 mm: Right Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     18 mm [R],  -27 mm [P],   66 mm [S] {TLRC}
+     18 mm [R],  -31 mm [P],   70 mm [S] {MNI}
+     18 mm [U],  -35 mm [P],   75 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Primary_Sensory_Cortex
+ * Within 3 mm: R_Area_2
+ * Within 4 mm: R_Area_1
+            -AND-  R_Primary_Motor_Cortex
+            -AND-  R_Area_3a
+ * Within 7 mm: R_Area_5L
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A1/2/3tru_right
+ * Within 3 mm: A4t_right
+ * Within 6 mm: A7pc_right
+            -AND-  A4ul_right
+ * Within 7 mm: A1/2/3ll_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Precentral Gyrus
+ * Within 2 mm: Right Postcentral Gyrus
+ * Within 5 mm: Right Paracentral Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     47 mm [R],  -55 mm [P],  -10 mm [I] {TLRC}
+     48 mm [R],  -56 mm [P],  -15 mm [I] {MNI}
+     48 mm [U],  -60 mm [P],  -10 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_TE2_posterior
+ * Within 1 mm: R_Area_PH
+ * Within 2 mm: R_Area_TE1_posterior
+            -AND-  R_Area_PHT
+ * Within 4 mm: R_Fusiform_Face_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A37lv_right
+ * Within 3 mm: A37elv_right
+            -AND-  A37vl_right
+ * Within 6 mm: V5/MT+_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Temporal Gyrus
+ * Within 3 mm: Right Fusiform Gyrus
+ * Within 5 mm: Right Inferior Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     50 mm [R],  -60 mm [P],   11 mm [S] {TLRC}
+     51 mm [R],  -62 mm [P],    9 mm [S] {MNI}
+     51 mm [U],  -66 mm [P],   14 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Medial_Superior_Temporal_Area
+ * Within 3 mm: R_Area_TemporoParietoOccipital_Junction_2
+ * Within 4 mm: R_Middle_Temporal_Area
+            -AND-  R_Area_FST
+ * Within 5 mm: R_Area_TemporoParietoOccipital_Junction_3
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39c_right
+ * Within 1 mm: A37dl_right
+ * Within 4 mm: V5/MT+_right
+            -AND-  A39rv_right
+ * Within 7 mm: A37vl_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     57 mm [R],  -17 mm [P],   34 mm [S] {TLRC}
+     58 mm [R],  -20 mm [P],   36 mm [S] {MNI}
+     58 mm [U],  -24 mm [P],   41 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_PFt
+ * Within 2 mm: R_Area_2
+ * Within 6 mm: R_Area_PF_Complex
+ * Within 7 mm: R_Area_1
+            -AND-  R_Area_PF_opercular
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40rd_right
+ * Within 3 mm: A40rv_right
+            -AND-  A2_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Postcentral Gyrus
+ * Within 1 mm: Right SupraMarginal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     44 mm [R],  -38 mm [P],   45 mm [S] {TLRC}
+     44 mm [R],  -41 mm [P],   47 mm [S] {MNI}
+     44 mm [U],  -45 mm [P],   52 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_IntraParietal_2
+ * Within 2 mm: R_Anterior_IntraParietal_Area
+            -AND-  R_Area_PFm_Complex
+ * Within 4 mm: R_Area_7PC
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40rd_right
+ * Within 3 mm: A40c_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Parietal Lobule
+ * Within 2 mm: Right SupraMarginal Gyrus
+ * Within 7 mm: Right Postcentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     38 mm [R],  -34 mm [P],   45 mm [S] {TLRC}
+     38 mm [R],  -37 mm [P],   47 mm [S] {MNI}
+     38 mm [U],  -41 mm [P],   52 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Anterior_IntraParietal_Area
+ * Within 3 mm: R_Area_2
+            -AND-  R_Area_IntraParietal_2
+            -AND-  R_Area_7PC
+ * Within 7 mm: R_Area_PFm_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40rd_right
+ * Within 3 mm: A2_right
+            -AND-  A5l_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Parietal Lobule
+ * Within 1 mm: Right SupraMarginal Gyrus
+            -AND-  Right Postcentral Gyrus
+ * Within 6 mm: Right Superior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     14 mm [R],  -70 mm [P],   50 mm [S] {TLRC}
+     15 mm [R],  -74 mm [P],   51 mm [S] {MNI}
+     15 mm [U],  -78 mm [P],   56 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Dorsal_Transitional_Visual_Area
+ * Within 2 mm: R_Lateral_Area_7P
+ * Within 4 mm: R_Parieto-Occipital_Sulcus_Area_2
+            -AND-  R_Medial_IntraParietal_Area
+ * Within 5 mm: R_IntraParietal_Sulcus_Area_1
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A7c_right
+ * Within 4 mm: msOccG_right
+ * Within 5 mm: dmPOS_right
+            -AND-  A7m_right
+ * Within 6 mm: lsOccG_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Parietal Lobule
+ * Within 2 mm: Right Precuneus
+ * Within 6 mm: Right Cuneus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     32 mm [R],  -51 mm [P],   49 mm [S] {TLRC}
+     32 mm [R],  -55 mm [P],   50 mm [S] {MNI}
+     32 mm [U],  -59 mm [P],   55 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_Lateral_IntraParietal_ventral
+ * Within 1 mm: R_Area_Lateral_IntraParietal_dorsal
+ * Within 3 mm: R_Anterior_IntraParietal_Area
+            -AND-  R_Area_PFm_Complex
+ * Within 4 mm: R_Area_IntraParietal_2
+ * Within 7 mm: R_Area_IntraParietal_1
+            -AND-  R_Medial_IntraParietal_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A7ip_right
+ * Within 3 mm: A39rd_right
+ * Within 5 mm: A7c_right
+ * Within 6 mm: A40rd_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Parietal Lobule
+ * Within 1 mm: Right Superior Parietal Lobule
+ * Within 2 mm: Right Angular Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     25 mm [R],  -61 mm [P],   53 mm [S] {TLRC}
+     25 mm [R],  -65 mm [P],   54 mm [S] {MNI}
+     25 mm [U],  -69 mm [P],   59 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: R_Area_Lateral_IntraParietal_ventral
+ * Within 3 mm: R_Medial_IntraParietal_Area
+            -AND-  R_Ventral_IntraParietal_Complex
+ * Within 7 mm: R_Area_Lateral_IntraParietal_dorsal
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A7c_right
+ * Within 3 mm: A7ip_right
+            -AND-  lsOccG_right
+ * Within 4 mm: A7r_right
+ * Within 5 mm: A39rd_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Parietal Lobule
+ * Within 5 mm: Right Superior Occipital Gyrus
+            -AND-  Right Angular Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      8 mm [R],  -54 mm [P],   58 mm [S] {TLRC}
+      8 mm [R],  -58 mm [P],   60 mm [S] {MNI}
+      8 mm [U],  -62 mm [P],   65 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Medial_Area_7A
+ * Within 4 mm: R_PreCuneus_Visual_Area
+ * Within 7 mm: R_Lateral_Area_7A
+            -AND-  R_Area_5m_ventral
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A7m_right
+ * Within 1 mm: A5m_right
+ * Within 3 mm: A7r_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Precuneus
+ * Within 6 mm: Right Superior Parietal Lobule
+ * Within 7 mm: Left Precuneus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     20 mm [R],  -48 mm [P],   66 mm [S] {TLRC}
+     20 mm [R],  -53 mm [P],   68 mm [S] {MNI}
+     20 mm [U],  -57 mm [P],   73 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Lateral_Area_7A
+ * Within 4 mm: R_Ventral_IntraParietal_Complex
+ * Within 5 mm: R_Area_5L
+ * Within 7 mm: R_Area_2
+            -AND-  R_Medial_Area_7A
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A7r_right
+ * Within 3 mm: A7pc_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Parietal Lobule
+ * Within 5 mm: Right Postcentral Gyrus
+ * Within 7 mm: Right Precuneus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     35 mm [R],   -2 mm [P],   49 mm [S] {TLRC}
+     35 mm [R],   -5 mm [P],   53 mm [S] {MNI}
+     35 mm [U],   -9 mm [P],   58 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_6_anterior
+ * Within 1 mm: R_Frontal_Eye_Fields
+ * Within 4 mm: R_Dorsal_area_6
+ * Within 5 mm: R_Inferior_6-8_Transitional_Area
+ * Within 6 mm: R_Primary_Motor_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6cdl_right
+ * Within 4 mm: A6vl_right
+ * Within 6 mm: A4ul_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Frontal Gyrus
+ * Within 1 mm: Right Precentral Gyrus
+ * Within 4 mm: Right Superior Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     24 mm [R],    3 mm [A],   55 mm [S] {TLRC}
+     24 mm [R],    1 mm [A],   60 mm [S] {MNI}
+     24 mm [U],   -3 mm [P],   65 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_6_anterior
+ * Within 2 mm: R_Area_6m_anterior
+            -AND-  R_Inferior_6-8_Transitional_Area
+ * Within 5 mm: R_Area_6mp
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6dl_right
+ * Within 4 mm: A6vl_right
+            -AND-  A6cdl_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Frontal Gyrus
+ * Within 6 mm: Right Middle Frontal Gyrus
+ * Within 7 mm: Right SMA
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     51 mm [R],   12 mm [A],   19 mm [S] {TLRC}
+     51 mm [R],   11 mm [A],   21 mm [S] {MNI}
+     51 mm [U],    7 mm [A],   26 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Rostral_Area_6
+ * Within 3 mm: R_Area_IFJa
+            -AND-  R_Area_44
+ * Within 4 mm: R_Ventral_Area_6
+            -AND-  R_Area_IFJp
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A44d_right
+ * Within 1 mm: A44v_right
+            -AND-  A6cvl_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Frontal Gyrus (p. Opercularis)
+ * Within 3 mm: Right Inferior Frontal Gyrus (p. Triangularis)
+ * Within 6 mm: Right Rolandic Operculum
+            -AND-  Right Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     55 mm [R],  -47 mm [P],   14 mm [S] {TLRC}
+     55 mm [R],  -49 mm [P],   12 mm [S] {MNI}
+     55 mm [U],  -53 mm [P],   17 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_TemporoParietoOccipital_Junction_1
+ * Within 5 mm: R_Area_TemporoParietoOccipital_Junction_2
+            -AND-  R_Superior_Temporal_Visual_Area
+ * Within 7 mm: R_Area_PGi
+            -AND-  R_Area_PHT
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39rv_right
+ * Within 4 mm: cpSTS_right
+            -AND-  A37dl_right
+ * Within 7 mm: aSTS_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Temporal Gyrus
+ * Within 2 mm: Right Superior Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     58 mm [R],  -42 mm [P],   20 mm [S] {TLRC}
+     59 mm [R],  -44 mm [P],   20 mm [S] {MNI}
+     59 mm [U],  -48 mm [P],   25 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Superior_Temporal_Visual_Area
+ * Within 4 mm: R_PeriSylvian_Language_Area
+ * Within 5 mm: R_Area_TemporoParietoOccipital_Junction_1
+ * Within 6 mm: R_Area_PGi
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39rv_right
+ * Within 3 mm: A40c_right
+            -AND-  cpSTS_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Temporal Gyrus
+ * Within 4 mm: Right SupraMarginal Gyrus
+ * Within 6 mm: Right Middle Temporal Gyrus
+ * Within 7 mm: Right Angular Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     59 mm [R],  -28 mm [P],   32 mm [S] {TLRC}
+     60 mm [R],  -31 mm [P],   33 mm [S] {MNI}
+     60 mm [U],  -35 mm [P],   38 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_PF_Complex
+ * Within 2 mm: R_PeriSylvian_Language_Area
+ * Within 4 mm: R_Area_PFcm
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40rv_right
+ * Within 5 mm: A40c_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right SupraMarginal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     49 mm [R],    4 mm [A],   40 mm [S] {TLRC}
+     50 mm [R],    2 mm [A],   43 mm [S] {MNI}
+     50 mm [U],   -2 mm [P],   48 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Premotor_Eye_Fields
+ * Within 1 mm: R_Area_55b
+ * Within 5 mm: R_Area_8Av
+            -AND-  R_Primary_Motor_Cortex
+            -AND-  R_Frontal_Eye_Fields
+            -AND-  R_Ventral_Area_6
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6cvl_right
+ * Within 2 mm: A6cdl_right
+ * Within 4 mm: A4hf_right
+ * Within 6 mm: IFJ_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Precentral Gyrus
+ * Within 7 mm: Right Middle Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     41 mm [R],    5 mm [A],  -13 mm [I] {TLRC}
+     41 mm [R],    6 mm [A],  -16 mm [I] {MNI}
+     41 mm [U],    2 mm [A],  -11 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: R_Piriform_Cortex
+            -AND-  R_Area_Posterior_Insular_1
+ * Within 2 mm: R_Posterior_Insular_Area_2
+            -AND-  R_Para-Insular_Area
+ * Within 4 mm: R_Area_TG_dorsal
+ * Within 5 mm: R_Anterior_Agranular_Insula_Complex
+            -AND-  R_Area_STGa
+ * Within 6 mm: R_Area_TA2
+ * Within 7 mm: R_Area_STSd_anterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+ * Within 1 mm: A38l_right
+            -AND-  vId/vIg_right
+ * Within 4 mm: vIa_right
+ * Within 5 mm: TE1.0_1.2_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+ * Within 2 mm: Right Insula Lobe
+ * Within 3 mm: Right Temporal Pole
+ * Within 6 mm: Right Superior Temporal Gyrus
+ * Within 7 mm: Right Amygdala
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     46 mm [R],   -4 mm [P],   -3 mm [I] {TLRC}
+     46 mm [R],   -4 mm [P],   -4 mm [I] {MNI}
+     46 mm [U],   -8 mm [P],    1 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: R_Posterior_Insular_Area_2
+            -AND-  R_Area_TA2
+ * Within 4 mm: R_Para-Insular_Area
+ * Within 5 mm: R_Medial_Belt_Complex
+            -AND-  R_Area_Posterior_Insular_1
+ * Within 7 mm: R_Frontal_Opercular_Area_1
+            -AND-  R_Area_43
+            -AND-  R_Area_STSd_anterior
+            -AND-  R_Area_52
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+ * Within 1 mm: TE1.0_1.2_right
+ * Within 2 mm: G_right
+            -AND-  dIg_right
+ * Within 3 mm: vId/vIg_right
+ * Within 5 mm: A4tl_right
+ * Within 6 mm: dId_right
+ * Within 7 mm: aSTS_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Insula Lobe
+ * Within 2 mm: Right Superior Temporal Gyrus
+ * Within 5 mm: Right Temporal Pole
+ * Within 7 mm: Right Rolandic Operculum
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     34 mm [R],   24 mm [A],    3 mm [S] {TLRC}
+     35 mm [R],   24 mm [A],    5 mm [S] {MNI}
+     35 mm [U],   20 mm [A],   10 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_Frontal_Opercular
+ * Within 1 mm: R_Anterior_Ventral_Insular_Area
+ * Within 2 mm: R_Frontal_Opercular_Area_4
+            -AND-  R_Middle_Insular_Area
+ * Within 5 mm: R_Frontal_Opercular_Area_3
+ * Within 6 mm: R_Area_44
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  dIa_right
+ * Within 1 mm: A44op_right
+ * Within 4 mm: A12/47l_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Insula Lobe
+ * Within 3 mm: Right Inferior Frontal Gyrus (p. Triangularis)
+ * Within 7 mm: Right Inferior Frontal Gyrus (p. Opercularis)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     43 mm [R],    7 mm [A],    4 mm [S] {TLRC}
+     43 mm [R],    7 mm [A],    4 mm [S] {MNI}
+     43 mm [U],    3 mm [A],    9 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Frontal_Opercular_Area_1
+ * Within 2 mm: R_Frontal_Opercular_Area_4
+            -AND-  R_Middle_Insular_Area
+            -AND-  R_Posterior_Insular_Area_2
+ * Within 7 mm: R_Rostral_Area_6
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A44op_right
+ * Within 1 mm: A4tl_right
+            -AND-  dId_right
+ * Within 6 mm: A44v_right
+ * Within 7 mm: dIg_right
+            -AND-  dIa_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Insula Lobe
+ * Within 2 mm: Right Inferior Frontal Gyrus (p. Opercularis)
+ * Within 5 mm: Right Rolandic Operculum
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      7 mm [R],    9 mm [A],   37 mm [S] {TLRC}
+      7 mm [R],    7 mm [A],   41 mm [S] {MNI}
+      7 mm [U],    3 mm [A],   46 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_Posterior_24_prime
+ * Within 2 mm: R_Area_p32_prime
+ * Within 3 mm: R_Ventral_Area_24d
+            -AND-  R_Anterior_24_prime
+            -AND-  R_Supplementary_And_Cingulate_Eye
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A24cd_right
+ * Within 3 mm: A8m_right
+ * Within 4 mm: A6m_right
+ * Within 7 mm: A24cd_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Cingulate Cortex
+ * Within 5 mm: Right SMA
+ * Within 6 mm: Left Middle Cingulate Cortex
+            -AND-  Left SMA
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     10 mm [R],  -33 mm [P],   47 mm [S] {TLRC}
+     10 mm [R],  -37 mm [P],   49 mm [S] {MNI}
+     10 mm [U],  -41 mm [P],   54 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_23c
+ * Within 1 mm: R_Area_5m
+            -AND-  R_Area_5m_ventral
+ * Within 5 mm: R_PreCuneus_Visual_Area
+            -AND-  R_Area_31a
+ * Within 6 mm: R_Dorsal_Area_24d
+ * Within 7 mm: R_Area_23d
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A5m_right
+ * Within 1 mm: A1/2/3ll_right
+ * Within 2 mm: A23c_right
+ * Within 7 mm: A31_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Cingulate Cortex
+ * Within 1 mm: Right Paracentral Lobule
+ * Within 3 mm: Right Precuneus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      8 mm [R],    2 mm [A],   60 mm [S] {TLRC}
+      8 mm [R],   -1 mm [P],   65 mm [S] {MNI}
+      8 mm [U],   -5 mm [P],   70 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: R_Supplementary_And_Cingulate_Eye
+ * Within 5 mm: R_Area_6m_anterior
+            -AND-  R_Superior_Frontal_Language_Area
+ * Within 6 mm: R_Area_6mp
+ * Within 7 mm: R_Dorsal_Area_24d
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A6m_right
+ * Within 4 mm: A6dl_right
+ * Within 6 mm: A8m_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right SMA
+ * Within 7 mm: Left SMA
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     11 mm [R],   36 mm [A],  -21 mm [I] {TLRC}
+     11 mm [R],   38 mm [A],  -22 mm [I] {MNI}
+     11 mm [U],   34 mm [A],  -17 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Orbital_Frontal_Complex
+ * Within 4 mm: R_Area_13l
+ * Within 5 mm: R_Area_s32
+            -AND-  R_Area_10v
+            -AND-  R_Area_11l
+ * Within 6 mm: R_Area_10r
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A13_right
+ * Within 1 mm: A11l_right
+ * Within 4 mm: A11m_right
+ * Within 6 mm: A14m_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Rectal Gyrus
+ * Within 1 mm: Right Superior Orbital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     28 mm [R],   21 mm [A],  -18 mm [I] {TLRC}
+     28 mm [R],   23 mm [A],  -20 mm [I] {MNI}
+     28 mm [U],   19 mm [A],  -15 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: R_Area_47s
+ * Within 4 mm: R_Area_13l
+ * Within 5 mm: R_Anterior_Agranular_Insula_Complex
+ * Within 6 mm: R_Anterior_Ventral_Insular_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A11l_right
+ * Within 5 mm: A12/47o_right
+ * Within 6 mm: A12/47l_right
+            -AND-  vIa_right
+ * Within 7 mm: A13_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Frontal Gyrus (p. Orbitalis)
+ * Within 1 mm: Right Insula Lobe
+ * Within 6 mm: Right Middle Orbital Gyrus
+            -AND-  Right Superior Orbital Gyrus
+ * Within 7 mm: Right Temporal Pole
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     13 mm [R],   62 mm [A],  -13 mm [I] {TLRC}
+     13 mm [R],   65 mm [A],  -11 mm [I] {MNI}
+     13 mm [U],   61 mm [A],   -6 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Polar_10p
+ * Within 4 mm: R_Area_anterior_10p
+ * Within 5 mm: R_Area_10v
+            -AND-  R_Area_10d
+ * Within 6 mm: R_Area_10r
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A11m_right
+ * Within 2 mm: A10l_right
+ * Within 7 mm: A14m_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Mid Orbital Gyrus
+ * Within 1 mm: Right Superior Orbital Gyrus
+ * Within 5 mm: Right Middle Orbital Gyrus
+ * Within 7 mm: Right Rectal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     29 mm [R],    6 mm [A],  -33 mm [I] {TLRC}
+     29 mm [R],    8 mm [A],  -39 mm [I] {MNI}
+     29 mm [U],    4 mm [A],  -34 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_TG_dorsal
+ * Within 3 mm: R_Perirhinal_Ectorhinal_Cortex
+            -AND-  R_Area_TG_Ventral
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A20r_right
+ * Within 1 mm: A38m_right
+ * Within 2 mm: A20rv_right
+ * Within 3 mm: TI_right
+ * Within 6 mm: A35/36r_right
+ * Within 7 mm: A21r_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Medial Temporal Pole
+ * Within 3 mm: Right Fusiform Gyrus
+ * Within 4 mm: Right Inferior Temporal Gyrus
+ * Within 5 mm: Right Temporal Pole
+            -AND-  Right ParaHippocampal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     46 mm [R],  -14 mm [P],  -29 mm [I] {TLRC}
+     46 mm [R],  -13 mm [P],  -36 mm [I] {MNI}
+     46 mm [U],  -17 mm [P],  -31 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_TF
+ * Within 4 mm: R_Perirhinal_Ectorhinal_Cortex
+ * Within 5 mm: R_Area_TE2_anterior
+ * Within 7 mm: R_Area_TG_Ventral
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A20iv_right
+ * Within 3 mm: A20rv_right
+            -AND-  A20il_right
+ * Within 4 mm: A20cv_right
+ * Within 6 mm: A20r_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Temporal Gyrus
+ * Within 3 mm: Right Fusiform Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     23 mm [R],  -12 mm [P],  -26 mm [I] {TLRC}
+     24 mm [R],  -11 mm [P],  -32 mm [I] {MNI}
+     24 mm [U],  -15 mm [P],  -27 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Entorhinal_Cortex
+ * Within 2 mm: R_Hippocampus
+ * Within 5 mm: R_Perirhinal_Ectorhinal_Cortex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A35/36r_right
+ * Within 1 mm: A28/34_right
+ * Within 2 mm: rHipp_right
+ * Within 4 mm: TI_right
+ * Within 5 mm: A35/36c_right
+ * Within 7 mm: A20rv_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right ParaHippocampal Gyrus
+ * Within 4 mm: Right Fusiform Gyrus
+ * Within 7 mm: Right Hippocampus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     55 mm [R],  -43 mm [P],   38 mm [S] {TLRC}
+     56 mm [R],  -46 mm [P],   39 mm [S] {MNI}
+     56 mm [U],  -50 mm [P],   44 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_PFm_Complex
+ * Within 1 mm: R_Area_PF_Complex
+ * Within 3 mm: R_PeriSylvian_Language_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A40c_right
+ * Within 7 mm: A39rv_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Parietal Lobule
+ * Within 2 mm: Right SupraMarginal Gyrus
+ * Within 4 mm: Right Angular Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     45 mm [R],  -49 mm [P],   49 mm [S] {TLRC}
+     45 mm [R],  -53 mm [P],   50 mm [S] {MNI}
+     45 mm [U],  -57 mm [P],   55 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_PFm_Complex
+ * Within 5 mm: R_Area_PGs
+ * Within 6 mm: R_Area_IntraParietal_2
+            -AND-  R_Anterior_IntraParietal_Area
+            -AND-  R_Area_7PC
+ * Within 7 mm: R_Area_Lateral_IntraParietal_ventral
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39rd_right
+ * Within 1 mm: A40c_right
+            -AND-  A40rd_right
+ * Within 6 mm: A39rv_right
+ * Within 7 mm: A7ip_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Parietal Lobule
+ * Within 4 mm: Right Angular Gyrus
+ * Within 6 mm: Right Superior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     35 mm [R],  -64 mm [P],   43 mm [S] {TLRC}
+     35 mm [R],  -68 mm [P],   43 mm [S] {MNI}
+     35 mm [U],  -72 mm [P],   48 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_IntraParietal_1
+ * Within 1 mm: R_Area_PGs
+ * Within 4 mm: R_Medial_IntraParietal_Area
+ * Within 6 mm: R_Area_PGi
+            -AND-  R_Area_PFm_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39rd_right
+ * Within 4 mm: lsOccG_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Angular Gyrus
+ * Within 1 mm: Right Superior Occipital Gyrus
+ * Within 4 mm: Right Middle Occipital Gyrus
+ * Within 5 mm: Right Superior Parietal Lobule
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     60 mm [R],  -45 mm [P],   -8 mm [I] {TLRC}
+     60 mm [R],  -46 mm [P],  -12 mm [I] {MNI}
+     60 mm [U],  -50 mm [P],   -7 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_TE1_posterior
+ * Within 5 mm: R_Area_PHT
+ * Within 7 mm: R_Area_TE2_anterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A20cl_right
+ * Within 3 mm: A21c_right
+ * Within 5 mm: A37vl_right
+            -AND-  A37dl_right
+ * Within 6 mm: A37elv_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Temporal Gyrus
+ * Within 4 mm: Right Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     34 mm [R],   21 mm [A],   -8 mm [I] {TLRC}
+     34 mm [R],   22 mm [A],   -8 mm [I] {MNI}
+     34 mm [U],   18 mm [A],   -3 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Anterior_Ventral_Insular_Area
+ * Within 2 mm: R_Anterior_Agranular_Insula_Complex
+ * Within 3 mm: R_Area_47s
+ * Within 4 mm: R_Middle_Insular_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A12/47l_right
+ * Within 2 mm: vIa_right
+ * Within 3 mm: dIa_right
+ * Within 6 mm: A12/47o_right
+ * Within 7 mm: A44op_right
+            -AND-  A11l_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Frontal Gyrus (p. Orbitalis)
+ * Within 1 mm: Right Insula Lobe
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     33 mm [R],   45 mm [A],  -14 mm [I] {TLRC}
+     34 mm [R],   47 mm [A],  -14 mm [I] {MNI}
+     34 mm [U],   43 mm [A],   -9 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_anterior_47r
+ * Within 1 mm: R_Area_11l
+ * Within 6 mm: R_Area_47l_(47_lateral)
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A11l_right
+ * Within 3 mm: A12/47o_right
+ * Within 7 mm: A10l_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Orbital Gyrus
+ * Within 4 mm: Right Inferior Frontal Gyrus (p. Orbitalis)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     28 mm [R],   58 mm [A],   -3 mm [I] {TLRC}
+     28 mm [R],   60 mm [A],   -1 mm [I] {MNI}
+     28 mm [U],   56 mm [A],    4 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_posterior_10p
+ * Within 1 mm: R_Area_anterior_47r
+ * Within 2 mm: R_Area_anterior_10p
+ * Within 6 mm: R_Area_anterior_9-46v
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A10l_right
+ * Within 2 mm: A46_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Orbital Gyrus
+ * Within 1 mm: Right Superior Frontal Gyrus
+            -AND-  Right Middle Frontal Gyrus
+ * Within 5 mm: Right Middle Orbital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     41 mm [R],   46 mm [A],    5 mm [S] {TLRC}
+     42 mm [R],   47 mm [A],    8 mm [S] {MNI}
+     42 mm [U],   43 mm [A],   13 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: R_Area_anterior_9-46v
+ * Within 3 mm: R_Area_46
+ * Within 4 mm: R_Area__IFSa
+ * Within 5 mm: R_Area_posterior_9-46v
+ * Within 6 mm: R_Area_posterior_47r
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A9/46v_right
+ * Within 4 mm: IFS_right
+ * Within 6 mm: A45r_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Frontal Gyrus
+ * Within 7 mm: Right Inferior Frontal Gyrus (p. Triangularis)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     44 mm [R],   27 mm [A],   20 mm [S] {TLRC}
+     45 mm [R],   26 mm [A],   24 mm [S] {MNI}
+     45 mm [U],   22 mm [A],   29 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_posterior_9-46v
+ * Within 2 mm: R_Area_IFSp
+ * Within 4 mm: R_Area_IFJa
+ * Within 7 mm: R_Area_8C
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A9/46v_right
+ * Within 2 mm: A44d_right
+            -AND-  IFS_right
+ * Within 3 mm: A8vl_right
+ * Within 4 mm: IFJ_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Frontal Gyrus (p. Triangularis)
+ * Within 2 mm: Right Middle Frontal Gyrus
+ * Within 7 mm: Right Inferior Frontal Gyrus (p. Opercularis)
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     29 mm [R],   49 mm [A],   20 mm [S] {TLRC}
+     29 mm [R],   50 mm [A],   24 mm [S] {MNI}
+     29 mm [U],   46 mm [A],   29 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_9-46d
+ * Within 5 mm: R_Area_46
+ * Within 6 mm: R_Area_9_Posterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A46_right
+ * Within 4 mm: A9/46d_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Frontal Gyrus
+ * Within 3 mm: Right Superior Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     37 mm [R],   30 mm [A],   34 mm [S] {TLRC}
+     38 mm [R],   29 mm [A],   39 mm [S] {MNI}
+     38 mm [U],   25 mm [A],   44 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_8Av
+ * Within 1 mm: R_Area_8C
+ * Within 2 mm: R_Area_46
+ * Within 6 mm: R_Area_posterior_9-46v
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A8vl_right
+ * Within 4 mm: A9/46d_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     41 mm [R],   14 mm [A],   44 mm [S] {TLRC}
+     41 mm [R],   12 mm [A],   49 mm [S] {MNI}
+     41 mm [U],    8 mm [A],   54 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_8Av
+ * Within 4 mm: R_Area_55b
+ * Within 5 mm: R_Inferior_6-8_Transitional_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  IFJ_right
+ * Within 2 mm: A6vl_right
+            -AND-  A8vl_right
+ * Within 5 mm: A6cvl_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Frontal Gyrus
+ * Within 4 mm: Right Precentral Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     13 mm [R],  -65 mm [P],   36 mm [S] {TLRC}
+     14 mm [R],  -69 mm [P],   36 mm [S] {MNI}
+     14 mm [U],  -73 mm [P],   41 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Parieto-Occipital_Sulcus_Area_2
+ * Within 3 mm: R_Dorsal_Transitional_Visual_Area
+ * Within 5 mm: R_Sixth_Visual_Area
+ * Within 6 mm: R_Third_Visual_Area
+            -AND-  R_Second_Visual_Area
+ * Within 7 mm: R_Area_7m
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  dmPOS_right
+ * Within 4 mm: vmPOS_right
+ * Within 7 mm: A7m_right
+            -AND-  A31_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Cuneus
+ * Within 1 mm: Right Precuneus
+ * Within 6 mm: Right Superior Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      4 mm [R],  -23 mm [P],   29 mm [S] {TLRC}
+      4 mm [R],  -26 mm [P],   31 mm [S] {MNI}
+      4 mm [U],  -30 mm [P],   36 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_RetroSplenial_Complex
+ * Within 1 mm: R_Area_23d
+ * Within 4 mm: L_Area_23d
+            -AND-  L_RetroSplenial_Complex
+            -AND-  R_Area_dorsal_23_a+b
+ * Within 5 mm: L_Area_dorsal_23_a+b
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A23d_right
+ * Within 4 mm: A23v_right
+            -AND-  A23d_left
+            -AND-  A23c_right
+ * Within 7 mm: A23c_left
+            -AND-  A24rv_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Cingulate Cortex
+ * Within 3 mm: Left Middle Cingulate Cortex
+ * Within 6 mm: Left Posterior Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      4 mm [R],    5 mm [A],   28 mm [S] {TLRC}
+      4 mm [R],    4 mm [A],   30 mm [S] {MNI}
+      4 mm [U],   -0 mm [P],   35 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_33_prime
+ * Within 2 mm: R_Area_Posterior_24_prime
+ * Within 4 mm: L_Area_33_prime
+ * Within 6 mm: L_Area_Posterior_24_prime
+ * Within 7 mm: R_Anterior_24_prime
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A24rv_right
+ * Within 1 mm: A24cd_right
+ * Within 3 mm: A23d_right
+ * Within 4 mm: A24rv_left
+ * Within 5 mm: A24cd_left
+ * Within 6 mm: A23c_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Cingulate Cortex
+ * Within 1 mm: Right Anterior Cingulate Cortex
+ * Within 3 mm: Left Anterior Cingulate Cortex
+ * Within 4 mm: Left Middle Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      7 mm [R],   29 mm [A],   26 mm [S] {TLRC}
+      7 mm [R],   28 mm [A],   29 mm [S] {MNI}
+      7 mm [U],   24 mm [A],   34 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Anterior_24_prime
+ * Within 1 mm: R_Area_dorsal_32
+            -AND-  R_Area_posterior_24
+ * Within 2 mm: R_Area_anterior_32_prime
+ * Within 5 mm: R_Area_p32_prime
+            -AND-  R_Area_33_prime
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A32p_right
+ * Within 3 mm: A9m_right
+ * Within 7 mm: A24rv_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Anterior Cingulate Cortex
+ * Within 1 mm: Right Middle Cingulate Cortex
+ * Within 4 mm: Left Anterior Cingulate Cortex
+ * Within 5 mm: Left Superior Medial Gyrus
+            -AND-  Left Middle Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      7 mm [R],   24 mm [A],   48 mm [S] {TLRC}
+      7 mm [R],   22 mm [A],   53 mm [S] {MNI}
+      7 mm [U],   18 mm [A],   58 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_8BM
+ * Within 2 mm: R_Supplementary_And_Cingulate_Eye
+ * Within 5 mm: R_Superior_Frontal_Language_Area
+ * Within 7 mm: R_Superior_6-8_Transitional_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A8m_right
+ * Within 6 mm: A9m_right
+            -AND-  A8dl_right
+ * Within 7 mm: A8m_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right SMA
+ * Within 4 mm: Right Superior Medial Gyrus
+            -AND-  Left SMA
+ * Within 5 mm: Left Superior Medial Gyrus
+ * Within 7 mm: Right Superior Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     44 mm [R],  -72 mm [P],   28 mm [S] {TLRC}
+     44 mm [R],  -75 mm [P],   27 mm [S] {MNI}
+     44 mm [U],  -79 mm [P],   32 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_PGp
+ * Within 5 mm: R_Area_PGs
+ * Within 6 mm: R_Area_PGi
+            -AND-  R_Area_IntraParietal_0
+ * Within 7 mm: R_Area_Lateral_Occipital_3
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39c_right
+ * Within 5 mm: A39rd_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Occipital Gyrus
+ * Within 4 mm: Right Middle Temporal Gyrus
+ * Within 5 mm: Right Angular Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     50 mm [R],  -56 mm [P],   29 mm [S] {TLRC}
+     51 mm [R],  -59 mm [P],   28 mm [S] {MNI}
+     51 mm [U],  -63 mm [P],   33 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_PGi
+ * Within 5 mm: R_Area_TemporoParietoOccipital_Junction_3
+            -AND-  R_Area_PGp
+ * Within 7 mm: R_Area_PFm_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39rv_right
+ * Within 5 mm: A39c_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Angular Gyrus
+ * Within 5 mm: Right Middle Temporal Gyrus
+            -AND-  Right Superior Temporal Gyrus
+ * Within 6 mm: Right Middle Occipital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     45 mm [R],  -62 mm [P],   43 mm [S] {TLRC}
+     46 mm [R],  -67 mm [P],   43 mm [S] {MNI}
+     46 mm [U],  -71 mm [P],   48 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_PGs
+ * Within 2 mm: R_Area_PGi
+ * Within 4 mm: R_Area_PFm_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A39rd_right
+ * Within 4 mm: A39rv_right
+ * Within 7 mm: A39c_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Angular Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     46 mm [R],   11 mm [A],  -27 mm [I] {TLRC}
+     46 mm [R],   12 mm [A],  -31 mm [I] {MNI}
+     46 mm [U],    8 mm [A],  -26 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_TG_dorsal
+ * Within 3 mm: R_Area_STGa
+ * Within 7 mm: R_Area_TE1_anterior
+            -AND-  R_Area_STSd_anterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A21r_right
+ * Within 2 mm: A38l_right
+ * Within 6 mm: A38m_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Medial Temporal Pole
+ * Within 2 mm: Right Temporal Pole
+ * Within 5 mm: Right Middle Temporal Gyrus
+            -AND-  Right Inferior Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     60 mm [R],  -18 mm [P],  -16 mm [I] {TLRC}
+     61 mm [R],  -17 mm [P],  -20 mm [I] {MNI}
+     61 mm [U],  -21 mm [P],  -15 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_TE1_anterior
+ * Within 2 mm: R_Area_TE1_Middle
+ * Within 3 mm: R_Area_TE2_anterior
+ * Within 5 mm: R_Area_STSv_anterior
+ * Within 7 mm: R_Area_STSv_posterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A21c_right
+ * Within 2 mm: aSTS_right
+            -AND-  A21r_right
+ * Within 3 mm: A20il_right
+ * Within 6 mm: A20cl_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Temporal Gyrus
+ * Within 1 mm: Right Inferior Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     54 mm [R],   -9 mm [P],   -7 mm [I] {TLRC}
+     55 mm [R],   -9 mm [P],   -9 mm [I] {MNI}
+     55 mm [U],  -13 mm [P],   -4 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_STSd_anterior
+ * Within 2 mm: R_Auditory_5_Complex
+            -AND-  R_Area_STSv_anterior
+ * Within 5 mm: R_Area_TE1_anterior
+ * Within 6 mm: R_Area_TA2
+ * Within 7 mm: R_Para-Insular_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  aSTS_right
+ * Within 2 mm: A22r_right
+ * Within 5 mm: TE1.0_1.2_right
+ * Within 7 mm: A38l_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Temporal Gyrus
+ * Within 2 mm: Right Middle Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     61 mm [R],  -31 mm [P],   -1 mm [I] {TLRC}
+     62 mm [R],  -32 mm [P],   -4 mm [I] {MNI}
+     62 mm [U],  -36 mm [P],    1 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_STSv_posterior
+ * Within 3 mm: R_Area_TE1_posterior
+ * Within 4 mm: R_Area_TE1_Middle
+ * Within 5 mm: R_Auditory_5_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  aSTS_right
+ * Within 2 mm: rpSTS_right
+ * Within 3 mm: A21c_right
+ * Within 5 mm: A22r_right
+ * Within 7 mm: A22c_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Temporal Gyrus
+ * Within 6 mm: Right Superior Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     51 mm [R],  -34 mm [P],    6 mm [S] {TLRC}
+     51 mm [R],  -36 mm [P],    5 mm [S] {MNI}
+     51 mm [U],  -40 mm [P],   10 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_STSd_posterior
+ * Within 3 mm: R_Area_TemporoParietoOccipital_Junction_1
+ * Within 4 mm: R_Area_STSv_posterior
+ * Within 5 mm: R_Auditory_5_Complex
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  rpSTS_right
+ * Within 5 mm: cpSTS_right
+ * Within 6 mm: A22r_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Temporal Gyrus
+ * Within 1 mm: Right Superior Temporal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     50 mm [R],   28 mm [A],   -1 mm [I] {TLRC}
+     50 mm [R],   29 mm [A],    0 mm [S] {MNI}
+     50 mm [U],   25 mm [A],    5 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: R_Area__IFSa
+            -AND-  R_Area_45
+ * Within 6 mm: R_Area_Frontal_Opercular
+ * Within 7 mm: R_Area_44
+            -AND-  R_Area_47l_(47_lateral)
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A44op_right
+ * Within 1 mm: A45r_right
+ * Within 5 mm: A45c_right
+ * Within 6 mm: A12/47l_right
+            -AND-  IFS_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Inferior Frontal Gyrus (p. Triangularis)
+ * Within 3 mm: Right Inferior Frontal Gyrus (p. Orbitalis)
+ * Within 7 mm: Right Insula Lobe
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      4 mm [R],   34 mm [A],  -15 mm [I] {TLRC}
+      4 mm [R],   36 mm [A],  -16 mm [I] {MNI}
+      4 mm [U],   32 mm [A],  -11 mm [I] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_s32
+ * Within 4 mm: R_Area_10v
+ * Within 5 mm: R_Area_10r
+            -AND-  R_Area_a24
+ * Within 6 mm: L_Area_10v
+            -AND-  R_Orbital_Frontal_Complex
+            -AND-  L_Area_a24
+ * Within 7 mm: R_Area_p32
+            -AND-  R_Area_25
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A14m_right
+ * Within 2 mm: A13_right
+ * Within 3 mm: A11m_right
+ * Within 4 mm: A13_left
+ * Within 5 mm: A32sg_left
+            -AND-  A14m_left
+ * Within 6 mm: A32sg_right
+ * Within 7 mm: A11m_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Rectal Gyrus
+ * Within 2 mm: Left Rectal Gyrus
+            -AND-  Right Mid Orbital Gyrus
+ * Within 3 mm: Left Mid Orbital Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      7 mm [R],   40 mm [A],    1 mm [S] {TLRC}
+      8 mm [R],   41 mm [A],    3 mm [S] {MNI}
+      8 mm [U],   37 mm [A],    8 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_a24
+ * Within 3 mm: R_Area_posterior_24
+ * Within 6 mm: R_Area_9_Middle
+ * Within 7 mm: R_Area_dorsal_32
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A32sg_right
+ * Within 4 mm: A24rv_right
+ * Within 5 mm: A14m_right
+ * Within 6 mm: A10m_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Anterior Cingulate Cortex
+ * Within 4 mm: Right Superior Medial Gyrus
+            -AND-  Right Mid Orbital Gyrus
+ * Within 7 mm: Left Anterior Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      5 mm [R],   29 mm [A],   13 mm [S] {TLRC}
+      5 mm [R],   29 mm [A],   16 mm [S] {MNI}
+      5 mm [U],   25 mm [A],   21 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_posterior_24
+ * Within 1 mm: R_Area_33_prime
+ * Within 5 mm: L_Area_33_prime
+            -AND-  L_Area_posterior_24
+ * Within 7 mm: R_Area_anterior_32_prime
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A24rv_right
+ * Within 1 mm: A32sg_right
+ * Within 3 mm: A32p_right
+ * Within 4 mm: A32sg_left
+ * Within 5 mm: A32p_left
+ * Within 7 mm: A24rv_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Anterior Cingulate Cortex
+ * Within 3 mm: Left Anterior Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      8 mm [R],   56 mm [A],   11 mm [S] {TLRC}
+      8 mm [R],   58 mm [A],   15 mm [S] {MNI}
+      8 mm [U],   54 mm [A],   20 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_9_Middle
+ * Within 6 mm: R_Area_10d
+            -AND-  R_Area_9_anterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A10m_right
+ * Within 6 mm: A9l_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Medial Gyrus
+ * Within 5 mm: Right Anterior Cingulate Cortex
+            -AND-  Left Superior Medial Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     14 mm [R],   44 mm [A],   39 mm [S] {TLRC}
+     14 mm [R],   43 mm [A],   44 mm [S] {MNI}
+     14 mm [U],   39 mm [A],   49 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: R_Area_8B_Lateral
+ * Within 4 mm: R_Area_8Ad
+ * Within 7 mm: R_Area_8BM
+            -AND-  R_Area_9_Posterior
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A9l_right
+ * Within 5 mm: A8dl_right
+ * Within 6 mm: A9m_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Medial Gyrus
+ * Within 1 mm: Right Superior Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     26 mm [R],   26 mm [A],   42 mm [S] {TLRC}
+     26 mm [R],   25 mm [A],   47 mm [S] {MNI}
+     26 mm [U],   21 mm [A],   52 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_8Ad
+ * Within 1 mm: R_Area_8Av
+ * Within 4 mm: R_Superior_6-8_Transitional_Area
+ * Within 6 mm: R_Inferior_6-8_Transitional_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A9/46d_right
+ * Within 2 mm: A8dl_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Frontal Gyrus
+ * Within 1 mm: Right Middle Frontal Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     22 mm [R],   18 mm [A],   53 mm [S] {TLRC}
+     22 mm [R],   15 mm [A],   58 mm [S] {MNI}
+     22 mm [U],   11 mm [A],   63 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+ * Within 1 mm: R_Area_6m_anterior
+ * Within 2 mm: R_Superior_6-8_Transitional_Area
+ * Within 6 mm: R_Area_6_anterior
+ * Within 7 mm: R_Area_8Av
+            -AND-  R_Inferior_6-8_Transitional_Area
+            -AND-  R_Superior_Frontal_Language_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A8dl_right
+ * Within 3 mm: A6dl_right
+ * Within 4 mm: A6vl_right
+ * Within 7 mm: A8m_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Superior Frontal Gyrus
+ * Within 4 mm: Right Middle Frontal Gyrus
+ * Within 5 mm: Right SMA
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+     12 mm [R],  -53 mm [P],   17 mm [S] {TLRC}
+     13 mm [R],  -55 mm [P],   16 mm [S] {MNI}
+     13 mm [U],  -59 mm [P],   21 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Parieto-Occipital_Sulcus_Area_1
+ * Within 4 mm: R_Second_Visual_Area
+            -AND-  R_Primary_Visual_Cortex
+ * Within 6 mm: R_Area_ventral_23_a+b
+ * Within 7 mm: R_Dorsal_Transitional_Visual_Area
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  dmPOS_right
+ * Within 5 mm: A31_right
+            -AND-  vmPOS_right
+ * Within 7 mm: A23v_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Precuneus
+ * Within 2 mm: Right Calcarine Gyrus
+ * Within 4 mm: Right Cuneus
+ * Within 7 mm: Right Lingual Gyrus
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      6 mm [R],  -46 mm [P],   31 mm [S] {TLRC}
+      6 mm [R],  -49 mm [P],   32 mm [S] {MNI}
+      6 mm [U],  -53 mm [P],   37 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_Area_31p_ventral
+ * Within 1 mm: R_Area_dorsal_23_a+b
+ * Within 3 mm: R_Area_31pd
+            -AND-  R_Area_7m
+ * Within 5 mm: R_Area_31a
+            -AND-  R_RetroSplenial_Complex
+ * Within 6 mm: L_Area_dorsal_23_a+b
+ * Within 7 mm: R_Area_ventral_23_a+b
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A23d_right
+ * Within 2 mm: A31_right
+ * Within 6 mm: A23d_left
+ * Within 7 mm: A23v_right
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Middle Cingulate Cortex
+ * Within 1 mm: Right Posterior Cingulate Cortex
+ * Within 4 mm: Right Precuneus
+ * Within 5 mm: Left Posterior Cingulate Cortex
+            -AND-  Left Precuneus
+            -AND-  Left Middle Cingulate Cortex
+
+
++++++++ nearby Atlas structures +++++++
+
+Original input data coordinates in MNI space
+
+Focus point (LPI)=
+      6 mm [R],  -53 mm [P],   44 mm [S] {TLRC}
+      6 mm [R],  -57 mm [P],   45 mm [S] {MNI}
+      6 mm [U],  -61 mm [P],   50 mm [S] {MNI_ANAT}
+
+Atlas MNI_Glasser_HCP_v1.0: Glasser HCP 2016 surface-based parcellation
+   Focus point:  R_PreCuneus_Visual_Area
+ * Within 1 mm: R_Area_7m
+ * Within 2 mm: R_Medial_Area_7P
+ * Within 6 mm: L_Area_7m
+            -AND-  R_Area_31pd
+ * Within 7 mm: R_Medial_Area_7A
+            -AND-  L_Medial_Area_7P
+
+Atlas Brainnetome_1.0: Brainnetome MPM
+   Focus point:  A31_right
+ * Within 2 mm: A7m_right
+ * Within 5 mm: A5m_right
+ * Within 6 mm: A7m_left
+ * Within 7 mm: A31_left
+
+Atlas CA_ML_18_MNI: Macro Labels (N27-MNI)
+   Focus point:  Right Precuneus
+ * Within 5 mm: Left Precuneus
+
+

@@ -7,7 +7,7 @@ library(data.table)
 repo_directory <- "~/code/clock_analysis"
 behavioral_data_file <- "~/code/clock_analysis/meg/MEG_n63_behavioral_data_preprocessed_trial_df.RDS"
 
-# trial_df <- readRDS(behavioral_data_file)
+trial_df <- readRDS(behavioral_data_file)
 
 # read in the betas
 labels <- as_tibble(read_table2("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_DAN_order_manual.txt", col_names = F)) %>% 

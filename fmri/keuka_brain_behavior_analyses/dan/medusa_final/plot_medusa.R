@@ -77,15 +77,15 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
 
 meg = T
 if (meg) {
-ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri_meg_simple.rds")
-} else {ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri.rds")}
+ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri_meg_simple_ec.rds")
+} else {ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri_pe_posneg.rds")}
 out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/"
 ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5 & effect=="fixed") %>% group_by(term) %>%
   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
   ungroup() %>% setDT()
 
 plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient", facet_by="side", 
-            out_dir=file.path(out_dir, "rt_encode_24Nov2021"), p.value="p_FDR")
+            out_dir=file.path(out_dir, "rt_encode_8_Dec_2021"), p.value="p_FDR")
 
 #ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_encode_medusa_fmri_scaled.rds")
 ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_encode_medusa_fmri.rds")

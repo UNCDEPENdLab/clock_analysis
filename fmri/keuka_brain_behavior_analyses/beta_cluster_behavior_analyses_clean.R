@@ -60,11 +60,11 @@ vif.lme <- function (fit) {
 # Main analyses including model-derived behavioral variables
 # hippocampal model-based analysis
 mb3hpe_hipp <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
-                                    v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH_r)^2 + 
+                                    v_max_wi_lag + v_entropy_wi + h_HippAntL_neg +  pe_PH)^2 + 
                        rt_lag_sc:last_outcome:h_HippAntL_neg + 
-                       rt_lag_sc:last_outcome:pe_PH_r +
+                       rt_lag_sc:last_outcome:pe_PH +
                        rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL_neg + 
-                       rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH_r  +
+                       rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH  +
                        (1|id/run), df)
 
 screen.lmerTest(mb3hpe_hipp, .05)
