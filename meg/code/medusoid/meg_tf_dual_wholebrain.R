@@ -11,8 +11,8 @@ library(RColorBrewer)
 source("~/code/Rhelpers/theme_black.R")
 
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/output"
-plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/"
+data_dir <- "/Users/alexdombrovski/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/plots/wholebrain/output"
+plot_dir <- "/Users/alexdombrovski/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/plots/wholebrain/"
 
 clock_epoch_label = "Time relative to clock onset, seconds"
 rt_epoch_label = "Time relative to outcome, seconds"
@@ -21,14 +21,15 @@ rt_predict = F
 p_adjust_method = "fdr"
 
 
-regressors = c("abspe_by_rew", "entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward")
+regressors = c( "abspe_by_rew_ri")
+# regressors = c("abspe_by_rew_ri", "entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward")
 # regressors = c("entropy_change","entropy_change_ri", "entropy_change_full_ri", "abspe_by_rew", "entropy_change_fmri_ppc")
 # regressors = c("entropy", "kld","entropy_change_ri", "entropy_change_fmri", "entropy_change_fmr1", "entropy_change_fmr2"
 # "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 emt1 = F # emtrends plots for the first set (ddf$emtrends_list$emt1)
 print_filenames = T
 fixed_only = F
-reprocess = F
+reprocess = T
 plots = T
 diags = F
 average = F
@@ -87,7 +88,8 @@ if (encode) {
                       file_pattern <- ".*reward_rs.*RT"} else if (regressor=="v_max"){
                         file_pattern <- ".*v_max_rs.*RT"} else if (regressor=="abs_pe") {
                           file_pattern <- ".*abs_pe.*RT"} else if(regressor =="signed_pe") {
-                            file_pattern <- ".*signed_pe.*"} else if(regressor =="abspe_by_rew") {
+                            file_pattern <- ".*signed_pe.*"} else if(regressor =="signed_pe_rs") {
+                              file_pattern <- ".*signed_pe_rs_rs.*"} else if(regressor =="abspe_by_rew") {
                               file_pattern <- ".*abspe_by_rew.*"} else if (regressor=="v_max_ri"){
                                 file_pattern <- ".*v_max_ri.*RT"} else if (regressor == "entropy_change_fmri") {
                                   file_pattern <- ".*entropy_change_fmri.*RT"} else if (regressor == "entropy_change_fmr1") {

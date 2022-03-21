@@ -3,13 +3,29 @@ library(data.table)
 library(tidyverse)
 library(afex)
 library(lattice)
-setwd("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final")
 
-source("../get_trial_data.R")
-source("/Users/hallquist/Data_Analysis/r_packages/fmri.pipeline/R/mixed_by.R")
-labels <- readxl::read_excel("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx") %>%
-  dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label)
-
+if (Sys.getenv("USER")=="alexdombrovski") {
+  setwd("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final")
+  
+  source("../get_trial_data.R")
+  source("../medusa_final/plot_medusa.R")
+  source("~/code/fmri.pipeline/R/mixed_by.R")
+  labels <- readxl::read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx") %>%
+    dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label)
+  
+  beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/final_betas"
+  trial_df <- get_trial_data(repo_directory = "~/code/clock_analysis")
+} else {
+  setwd("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final")
+  
+  source("../get_trial_data.R")
+  source("/Users/hallquist/Data_Analysis/r_packages/fmri.pipeline/R/mixed_by.R")
+  source("../medusa_final/plot_medusa.R")
+  labels <- readxl::read_excel("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx") %>%
+    dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label)
+  trial_df <- get_trial_data(repo_directory = "/Users/hallquist/Data_Analysis/clock_analysis")
+  
+}
 beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/final_betas"
 # subject-level
 echange_l2_copes <- fread(file.path(beta_dir, "L1m-echange/Schaefer_DorsAttn_2.3mm_cope_l2.csv.gz")) %>%
@@ -22,7 +38,7 @@ echange_l2_copes <- fread(file.path(beta_dir, "L1m-echange/Schaefer_DorsAttn_2.3
 # meg_wide <- readRDS("MEG_betas_wide_echange_vmax_reward_Nov15_2021.RDS")
 
 # keep as long to have meg beta as split
-meg_ranefs <- readRDS("MEG_betas_echange_vmax_reward_Nov15_2021.RDS") %>%
+meg_ranefs <- readRDS("MEG_betas_echange_vmax_reward_Nov30_2021.RDS") %>%
   mutate(id=as.numeric(id))
 
 # run-level
@@ -70,7 +86,6 @@ histogram(echange_l2_copes$fmri_beta)
 
 histogram(~fmri_beta | id, echange_run_copes)
 
-trial_df <- get_trial_data(repo_directory = "/Users/hallquist/Data_Analysis/clock_analysis")
 
 trial_set <- trial_df %>% 
   group_by(id, run) %>%
@@ -88,7 +103,7 @@ model_base <- formula(~ (trial_neg_inv + rt_lag + rt_vmax_lag + v_max_wi_lag + v
                         rt_lag:last_outcome:fmri_beta +
                         rt_vmax_lag:trial_neg_inv:fmri_beta +
                         (1 | id/run)
-                      )
+)
 
 test_df <- combo %>% dplyr::filter(plot_label=="R_pVIP") %>%
   mutate_if(is.numeric, scale)
@@ -116,7 +131,7 @@ to_plot <- ddf$coef_df_reml %>%
   ungroup() %>% 
   left_join(labels, by="mask_value") %>%
   setDT()
-  
+
 # plot_medusa(ddf, x="plot_label", y=1, color="estimate",
 #             out_dir="parcel_betas", p.value="p_FDR", plot_type="heat")
 
@@ -150,16 +165,23 @@ model_meg <- formula(~ (trial_neg_inv + rt_lag + rt_vmax_lag + v_max_wi_lag + v_
 )
 
 model_nomeg <- formula(~ (trial_neg_inv + rt_lag + rt_vmax_lag + v_max_wi_lag + v_entropy_wi + fmri_beta + last_outcome)^2 +
-                       rt_lag:last_outcome:fmri_beta +
-                       rt_vmax_lag:trial_neg_inv:fmri_beta +
-                       (1 | id/run)
+                         rt_lag:last_outcome:fmri_beta +
+                         rt_vmax_lag:trial_neg_inv:fmri_beta +
+                         (1 | id/run)
 )
 
 
 meg_df <- mixed_by(with_meg, outcomes = "rt_csv", rhs_model_formulae = list(main=model_meg, nomeg=model_nomeg),
-                split_on = splits, scale_predictors = c("trial_neg_inv", "rt_lag", "rt_vmax_lag", "v_max_wi_lag", "fmri_beta", "avg"),
-                tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
-                calculate = c("parameter_estimates_reml"), ncores = 16, refit_on_nonconvergence = 5, padjust_by = "term")
+                   split_on = splits, scale_predictors = c("trial_neg_inv", "rt_lag", "rt_vmax_lag", "v_max_wi_lag", "fmri_beta", "avg"),
+                   tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
+                   calculate = c("parameter_estimates_reml"), ncores = 8, refit_on_nonconvergence = 5, padjust_by = "term",
+                   emtrends_spec = list(
+                     rt_lag.meg = list(outcome = "rt_csv", model_name = "main", var = "rt_lag", specs = c("last_outcome", "avg"), 
+                                       at=list(avg = c(-2, 0, 2))),
+                     rt_lag.fmri = list(outcome = "rt_csv", model_name = "main", var = "rt_lag", specs = c("last_outcome", "fmri_beta"), 
+                                        at=list(fmri_beta = c(-2, 0, 2)))
+                   )
+)
 
 # 
 # test_df <- with_meg %>% dplyr::filter(reg_region == "entropy_change_late_beta" & plot_label=="R_LIPp") %>%
@@ -179,9 +201,27 @@ plot_df <- meg_df$coef_df_reml %>%
   setDT()
 
 plot_medusa(plot_df, x="plot_label", y="reg_region", color="statistic", term_filter="(avg|fmri_beta)",
-            out_dir="parcel_betas_meg", p.value="p_FDR", plot_type="heat")
+            out_dir="parcel_betas_meg", p.value="p_FDR", plot_type="heat", width=15, height=7, )
 
 
+emt <- meg_df$emtrends_list$rt_lag.meg
+emt <- emt[,-3:-4]
+emt <- emt %>% left_join(labels, by="mask_value") %>%
+  mutate(avg=factor(avg, levels=c(-2, 0, 2), labels=c("low", "mean", "high")))
+pdf("meg_emtrends_rt_lag.reward_with_fmri_betas.pdf", height = 15, width = 15)
+ggplot(emt, aes(x=plot_label, y=rt_lag.trend, color=avg, ymin=rt_lag.trend - std.error, ymax = rt_lag.trend + std.error)) +
+  geom_pointrange() + coord_flip() + facet_grid(reg_region~last_outcome)
+dev.off()
+
+emt1 <- meg_df$emtrends_list$rt_lag.fmri
+emt1 <- emt1[,-3:-4]
+emt1 <- emt1 %>% left_join(labels, by="mask_value") %>%
+  mutate(fmri_beta=factor(fmri_beta, levels=c(-2, 0, 2), labels=c("low", "mean", "high")))
+
+pdf("fmri_emtrends_rt_lag.reward_with_meg_betas.pdf", height = 15, width = 15)
+ggplot(emt1, aes(x=plot_label, y=rt_lag.trend, color=fmri_beta, ymin=rt_lag.trend - std.error, ymax = rt_lag.trend + std.error)) +
+  geom_pointrange() + coord_flip() + facet_grid(reg_region~last_outcome)
+dev.off()
 
 
 # add MEG late beta .6-.8 suppression, early theta synchronization in separate models.
