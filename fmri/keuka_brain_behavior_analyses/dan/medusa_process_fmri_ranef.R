@@ -8,9 +8,9 @@ setwd(plot_dir)
 save = F
 # read in entropy change data
 fname = "rt_encode_output_streams_mixed_by_entropy_change_ranef.RDS"
-ddf <- as.data.frame(readRDS(fname)) %>% select(-model_name, -rhs, -outcome, -std.error, -effect, -group)
+#ddf <- as.data.frame(readRDS(fname)) %>% select(-model_name, -rhs, -outcome, -std.error, -effect, -group)
 # spread by stream and time
-wdf <- ddf %>% group_by(level) %>% filter(term=="v_entropy_wi_change", evt_time>0 & evt_time<5) %>% 
+wdf <- ddf %>% group_by(level) %>% filter(term=="v_entropy_wi_change", evt_time>0 & evt_time<5) %>%
   select(-term) %>%
   pivot_wider(names_from = c(stream, evt_time, side), values_from = estimate) %>% ungroup()
 
@@ -22,7 +22,7 @@ ranef_cor <- corr.test(na.omit(ranefs),method = 'pearson', adjust = 'none')
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
 pdf("entropy_change_ranef_corr.pdf", width=60, height=60)
-corrplot(ranef_cor$r, cl.lim=c(-1,1), 
+corrplot(ranef_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
          order = "AOE", diag = FALSE,
          addCoef.col="black", addCoefasPercent = FALSE,
@@ -43,7 +43,7 @@ wdf <- wdf %>% mutate(Subject = level) %>% select(Subject, echange_f1_early, ech
 fname = "rt_encode_output_streams_mixed_by_entropy_ranef.RDS"
 hddf <- as.data.frame(readRDS(fname)) %>% select(-model_name, -rhs, -outcome, -std.error, -effect, -group)
 # spread by stream and time
-hwdf <- hddf %>% group_by(level) %>% filter(term=="v_entropy_wi", evt_time<0) %>% 
+hwdf <- hddf %>% group_by(level) %>% filter(term=="v_entropy_wi", evt_time<0) %>%
   select(-term) %>%
   pivot_wider(names_from = c(stream, evt_time, side), values_from = estimate) %>% ungroup()
 
@@ -55,7 +55,7 @@ ranef_cor <- corr.test(na.omit(ranefs),method = 'pearson', adjust = 'none')
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
 pdf("entropy_ranef_corr.pdf", width=60, height=60)
-corrplot(ranef_cor$r, cl.lim=c(-1,1), 
+corrplot(ranef_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
          order = "hclust", diag = FALSE,
          addCoef.col="black", addCoefasPercent = FALSE,
@@ -81,7 +81,7 @@ saveRDS(trial_df, file = behavioral_data_file)
 fname = "rt_encode_output_streams_mixed_by_abs_pe_ranef.RDS"
 pddf <- as.data.frame(readRDS(fname)) %>% select(-model_name, -rhs, -outcome, -std.error, -effect, -group)
 # spread by stream and time
-pwdf <- pddf %>% group_by(level) %>% filter(term=="scale(abs_pe)", evt_time>0) %>% 
+pwdf <- pddf %>% group_by(level) %>% filter(term=="scale(abs_pe)", evt_time>0) %>%
   select(-term) %>%
   pivot_wider(names_from = c(stream, evt_time, side), values_from = estimate) %>% ungroup()
 
@@ -93,7 +93,7 @@ ranef_cor <- corr.test(na.omit(ranefs),method = 'pearson', adjust = 'none')
 # clust_cor <- cor(just_rois_w,method = 'pearson')
 
 pdf("abs_pe_ranef_corr.pdf", width=60, height=60)
-corrplot(ranef_cor$r, cl.lim=c(-1,1), 
+corrplot(ranef_cor$r, cl.lim=c(-1,1),
          method = "circle", tl.cex = 1.5, type = "upper", tl.col = 'black',
          order = "hclust", diag = FALSE,
          addCoef.col="black", addCoefasPercent = FALSE,

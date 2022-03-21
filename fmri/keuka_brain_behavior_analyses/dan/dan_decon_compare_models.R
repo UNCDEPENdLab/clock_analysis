@@ -47,15 +47,15 @@ df <- trial_df
 # select relevant columns for compactness
 df <- df %>% select(id, run, run_trial, rewFunc,emotion, rt_csv, score_csv, rt_next, pe_max, rt_vmax, rt_vmax_lag,
                     rt_vmax_change, v_entropy_wi, v_entropy_b, v_entropy, v_max_b,
-                    rt_vmax_lag_sc, rt_lag_sc,rt_lag2_sc, rt_csv_sc, trial_neg_inv_sc, Age, Female, v_entropy_wi,v_entropy_wi_change, v_entropy_wi_fixed,
-                    v_entropy_wi_change_fixed, v_entropy_wi_fixed, rt_vmax_fixed, rt_vmax_change_fixed, pe_max_fixed)
+                    rt_vmax_lag_sc, rt_lag_sc,rt_lag2_sc, rt_csv_sc, trial_neg_inv_sc, Age, Female, v_entropy_wi,v_entropy_wi_change, v_entropy_wi_full,
+                    v_entropy_wi_change_full, v_entropy_wi_full, rt_vmax_full, rt_vmax_change_full, pe_max_full)
 
 if (online) {
   d <- merge(df, clock_wide, by = c("id", "run", "run_trial"))
 } else { d <- merge(df, rt_wide, by = c("id", "run", "run_trial"))}
 
 d <- d %>% group_by(id, run) %>% arrange(id, run, run_trial) %>% 
-  mutate(pe_max_fixed_lag = lag(pe_max_fixed), 
+  mutate(pe_max_full_lag = lag(pe_max_full), 
          outcome = case_when(
            score_csv>0 ~ 'Reward',
            score_csv==0 ~ "Omission"),
@@ -63,7 +63,7 @@ d <- d %>% group_by(id, run) %>% arrange(id, run, run_trial) %>%
          trial_neg_inv_sc  = scale(1/run_trial),
          rt_csv_sc = scale(rt_csv),
          rt_lag_sc = lag(rt_csv_sc),
-         pe_max_lag_fixed = lag(pe_max_fixed)) %>% ungroup()
+         pe_max_lag_full = lag(pe_max_full)) %>% ungroup()
 # remove first run
 if (exclude_first_run) {
   d <- d %>% filter(run>1)
@@ -123,24 +123,24 @@ if (decode) {
                                outcome + 
                                (1|id), d, control=lmerControl(optimizer = "nloptwrap"))
       
-      ## fixed
+      ## full
       # entropy 
       mdf_h <-  lmerTest::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
-                                 v_entropy_wi_fixed + outcome + 
+                                 v_entropy_wi_full + outcome + 
                                  (1|id), d) 
       # entropy change 
       mdf_h_change <-  lme4::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
-                                    v_entropy_wi_change_fixed  + 
+                                    v_entropy_wi_change_full  + 
                                     outcome + 
                                     (1|id), d, control=lmerControl(optimizer = "nloptwrap"))
       # rt_vmax 
       mdf_h_rtvmax <-  lme4::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
-                                    rt_vmax_lag_fixed  + 
+                                    rt_vmax_lag_full  + 
                                     outcome + 
                                     (1|id), d %>% filter(!is.na(d$rt_vmax_lag)), control=lmerControl(optimizer = "nloptwrap"))
       # pe
       mdf_h_pe <-  lme4::lmer(h ~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + 
-                                abs(pe_max_fixed)  + 
+                                abs(pe_max_full)  + 
                                 outcome + 
                                 (1|id), d, control=lmerControl(optimizer = "nloptwrap"))
       
@@ -203,13 +203,13 @@ if (decode) {
 
 # preliminary inspection of behavioral predictors:
 
-# selective <-  lmer(scale(rt_next) ~  rt_csv_sc * outcome  +  scale(rt_vmax)  + scale(rt_vmax_fixed)  +
+# selective <-  lmer(scale(rt_next) ~  rt_csv_sc * outcome  +  scale(rt_vmax)  + scale(rt_vmax_full)  +
 #                        rt_lag_sc + 
-#                      (1|id), d %>% filter(!is.na(d$rt_vmax_lag) & !is.na(d$rt_vmax_lag_fixed)),
+#                      (1|id), d %>% filter(!is.na(d$rt_vmax_lag) & !is.na(d$rt_vmax_lag_full)),
 #                    control=lmerControl(optimizer = "nloptwrap"))
-# fixed <-  lmer(scale(rt_next) ~  rt_csv_sc * outcome  + scale(rt_vmax_fixed)  +
+# full <-  lmer(scale(rt_next) ~  rt_csv_sc * outcome  + scale(rt_vmax_full)  +
 #                          rt_lag_sc + 
-#                         (1|id), d %>% filter(!is.na(d$rt_vmax_lag) & !is.na(d$rt_vmax_lag_fixed)),
+#                         (1|id), d %>% filter(!is.na(d$rt_vmax_lag) & !is.na(d$rt_vmax_lag_full)),
 #                control=lmerControl(optimizer = "nloptwrap"))
 
 
@@ -223,11 +223,11 @@ if (rt_predict) {
                     (1|id), d, control=lmerControl(optimizer = "nloptwrap"))
     } else {
       md_h_rtvmax <-  lmer(scale(rt_next) ~ scale(h) * rt_csv_sc * outcome  + scale(h) * scale(rt_vmax)  +
-                             scale(h) * rt_lag_sc + scale(rt_vmax_fixed) +
-                             (1|id), d %>% filter(!is.na(d$rt_vmax_lag) & !is.na(d$rt_vmax_lag_fixed)), control=lmerControl(optimizer = "nloptwrap"))
-      mdf_h_rtvmax <-  lmer(scale(rt_next) ~ scale(h) * rt_csv_sc * outcome  + scale(h) * scale(rt_vmax_fixed)  +
+                             scale(h) * rt_lag_sc + scale(rt_vmax_full) +
+                             (1|id), d %>% filter(!is.na(d$rt_vmax_lag) & !is.na(d$rt_vmax_lag_full)), control=lmerControl(optimizer = "nloptwrap"))
+      mdf_h_rtvmax <-  lmer(scale(rt_next) ~ scale(h) * rt_csv_sc * outcome  + scale(h) * scale(rt_vmax_full)  +
                               scale(h) * rt_lag_sc + scale(rt_vmax) +
-                              (1|id), d %>% filter(!is.na(d$rt_vmax_lag) & !is.na(d$rt_vmax_lag_fixed)), control=lmerControl(optimizer = "nloptwrap"))
+                              (1|id), d %>% filter(!is.na(d$rt_vmax_lag) & !is.na(d$rt_vmax_lag_full)), control=lmerControl(optimizer = "nloptwrap"))
     }
     
     # while (any(grepl("failed to converge", md@optinfo$conv$lme4$messages) )) {

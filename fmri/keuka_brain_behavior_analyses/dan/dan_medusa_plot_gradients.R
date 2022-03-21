@@ -21,7 +21,7 @@ repo_directory <- "~/Data_Analysis/clock_analysis"
 # what to run
 # you can run all options at once
 decode = T  # main analysis analogous to Fig. 4 E-G in NComm 2020
-rt_predict = F # predicts next response based on signal and behavioral variables
+rt_predict = T # predicts next response based on signal and behavioral variables
 alignments = c(T,F) # whether to analyze clock-aligned ("online") or RT-aligned ("offline") responses
 
 # directories
@@ -152,6 +152,18 @@ for (online in alignments)
               scale_y_discrete(labels=c("visual-motion" = "MT+,\ncontrol", "ventro-dorsal" = "Ventro-dorsal\nstream",
                                         "oculomotor" = "Oculomotor\nstream", "dorso-dorsal" = "Dorso-dorsal\nstream")))
       dev.off()
+      
+      fname = paste("streams_line_", termstr, ".pdf", sep = "")
+      pdf(fname, width = 9, height = 3.5)
+      gg <- ggplot(edf, aes(x=t, y=estimate, ymin=estimate-std.error, ymax=estimate+std.error, color=region, size=`p, FDR-corrected`)) + 
+        geom_line(size = 1) + geom_point() +
+        geom_errorbar() +
+        geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + facet_wrap(~side) +
+        scale_color_brewer(palette="Set1") + xlab(epoch_label) + 
+        labs(alpha = expression(italic(p)[FDR])) + ggtitle(paste(termstr)) + ylab("")
+      print(gg)
+      dev.off()
+      
     }
   }
 }
