@@ -11,7 +11,7 @@ library(RColorBrewer)
 source("~/code/Rhelpers/theme_black.R")
 
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "/Users/alexdombrovski/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/plots/wholebrain/output"
+data_dir <- "/Volumes/GoogleDrive/.shortcut-targets-by-id/1ukjK6kTlaR-LXIqX6nylYOPWu1j3XGyF/SCEPTIC_fMRI/MEG/output"
 plot_dir <- "/Users/alexdombrovski/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/plots/wholebrain/"
 
 clock_epoch_label = "Time relative to clock onset, seconds"
@@ -21,7 +21,7 @@ rt_predict = F
 p_adjust_method = "fdr"
 
 
-regressors = c( "abspe_by_rew_ri")
+regressors = c( "abs_pe")
 # regressors = c("abspe_by_rew_ri", "entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward")
 # regressors = c("entropy_change","entropy_change_ri", "entropy_change_full_ri", "abspe_by_rew", "entropy_change_fmri_ppc")
 # regressors = c("entropy", "kld","entropy_change_ri", "entropy_change_fmri", "entropy_change_fmr1", "entropy_change_fmr2"
@@ -230,7 +230,9 @@ if (encode) {
                   geom_text(data = edf, x = -offset-.1, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
                   geom_text(data = edf, x = -offset+.4, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
                   geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
-                  scale_x_continuous(limits = c(-5.3,1.7), breaks = c(0-offset+0.3, 0.20-offset+0.3, 0.4-offset+0.3, 0.60-offset+0.3, 1-offset+0.3, 1.5-offset+0.3, 0, 1), labels = c("0", "0.2", "0.4", "0.6", "1", "1.5",  "0", "1")) +
+                  scale_x_continuous(limits = c(-5.3,1.7), 
+                  breaks = c(0-offset+0.3, 0.20-offset+0.3, 0.4-offset+0.3, 0.60-offset+0.3, 1-offset+0.3, 1.5-offset+0.3, 0, 1), 
+                  labels = c("0", "0.2", "0.4", "0.6", "1", "1.5",  "0", "1")) +
                   labs(alpha = expression(italic(p)[corrected])) + ggtitle(paste(termstr)) + theme_dark())    # 
           dev.off() }
         else { # plots only feedback-aligned

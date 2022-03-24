@@ -32,7 +32,7 @@ df <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_meg", gro
 
 # add meg data
 # wbetas <- readRDS("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/betas/MEG_betas_wide_echange_vmax_reward_Nov30_2021.RDS") %>% 
-wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_v_max_reward_signed_pe_rs_Mar_14_2022.RDS") %>% 
+wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_v_max_reward_signed_pe_rs_abs_pe_Mar_14_2022.RDS") %>% 
   mutate(omission_early_theta = - reward_early_theta,
          omission_late_delta = - reward_late_delta) %>% 
   mutate(entropy_change_early_beta_supp = -  entropy_change_early_beta_entropy_change,
@@ -46,8 +46,9 @@ wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_v_max
   select(c(id, omission_early_theta, omission_late_delta, 
            entropy_change_early_beta_supp, entropy_change_late_beta_supp,
            # entropy_change_early_beta_supp_ec, entropy_change_late_beta_supp_ec, 
-           vmax_late_alpha, 
-           neg_pe_early_theta, pe_late_beta_supp))
+           vmax_late_alpha, vmax_late_beta,
+           neg_pe_early_theta, pe_late_beta_supp,
+           abspe_early_theta))
            # abs_pe_late_beta_supp_ec, abs_pe_late_beta_supp))
 # merge
 df <- df %>% inner_join(wbetas, by = "id")
@@ -71,11 +72,11 @@ meg1_om_theta <-
   lme4::lmer(rt_csv_sc ~ 
                rt_lag_sc * last_outcome * entropy_change_early_beta_supp + 
                rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
-               rt_lag_sc * last_outcome * vmax_late_alpha +
+               rt_lag_sc * last_outcome * abspe_early_theta +
                rt_lag_sc * last_outcome * omission_early_theta +
                rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp + 
                rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp + 
-               rt_vmax_lag_sc * trial_neg_inv_sc * vmax_late_alpha  +
+               rt_vmax_lag_sc * trial_neg_inv_sc * abspe_early_theta  +
                rt_vmax_lag_sc * trial_neg_inv_sc * omission_early_theta  +
                (1|id/run), df %>% filter(rt_csv<4000))
 # screen.lmerTest(meg1, .01)
@@ -212,11 +213,11 @@ Anova(fmri_late_beta_only, '3')
 fmri1theta <- lme4::lmer(rt_csv_sc ~ 
                          rt_lag_sc * last_outcome * entropy_change_early_beta_supp + 
                          rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
-                         rt_lag_sc * last_outcome * vmax_late_alpha +
+                         rt_lag_sc * last_outcome * abspe_early_theta +
                          rt_lag_sc * last_outcome * omission_early_theta +
                          rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp + 
                          rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp + 
-                         rt_vmax_lag_sc * trial_neg_inv_sc * vmax_late_alpha  +
+                         rt_vmax_lag_sc * trial_neg_inv_sc * abspe_early_theta  +
                          rt_vmax_lag_sc * trial_neg_inv_sc * omission_early_theta  +
                          (1|id/run), fdf %>% filter(rt_csv<4000))
 # screen.lmerTest(fmri1, .01)

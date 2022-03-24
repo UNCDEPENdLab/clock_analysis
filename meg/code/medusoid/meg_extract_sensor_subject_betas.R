@@ -28,7 +28,7 @@ fmri = T # whether to merge and correlate with fMRI betas
 ################
 # subjects' betas
 # load  models
-regressors = c("entropy_change", "v_max", "reward", "signed_pe_rs")
+regressors = c("entropy_change", "v_max", "reward", "signed_pe_rs", "abs_pe")
 # regressors = c("entropy_change", "entropy_change_ec_sensors", "v_max", "reward", "abspe_ec_sensors", "abs_pe")
 # regressors = c("entropy_change", "v_max", "reward")
 all_regs <- lapply(regressors, function(rr) {
@@ -71,7 +71,7 @@ ec2_20 <- all_dfs %>% filter(term == "entropy_change_t" & t >= -0.2 & t <= 0.1 &
 ecs <- rbind(ec1, ec2, ec1_20, ec2_20) %>% rename(id = level) %>% ungroup() %>% pivot_wider(names_from = c(reg_region, regressor), values_from = avg)
 
 
-vm1 <- all_dfs %>% filter(term == "v_max_wi" & t >= 0.4 & t <= 0.8 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+vm1 <- all_dfs %>% filter(term == "v_max_wi" & t >= 0.5 & t <= 0.9 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
   group_by(level) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "vmax_late_beta")
 
@@ -86,6 +86,9 @@ pe1 <- all_dfs %>% filter(term == "pe_max" & regressor == "signed_pe_rs" & t >= 
   group_by(level) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "pe_early_theta")
 
+abspe1 <- all_dfs %>% filter(term == "abs_pe" & regressor == "abs_pe" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
+  group_by(level) %>%
+  summarize(avg=mean(estimate)) %>% mutate(reg_region = "abspe_early_theta")
 
 pe2 <- all_dfs %>% filter(term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
   group_by(level) %>%
@@ -102,7 +105,7 @@ pe2 <- all_dfs %>% filter(term == "pe_max" & regressor == "signed_pe_rs" & t >= 
 #   summarize(avg=mean(estimate)) %>% mutate(reg_region = "abspe_late_beta")
 
 # betas <- rbind(ec1, ec2) %>% rename(id = level) %>% ungroup()
-wholebrain_betas <- rbind(vm1, r1, r2, pe1, pe2) %>% rename(id = level) %>% pivot_wider(names_from = c(reg_region), values_from = avg) %>% ungroup()
+wholebrain_betas <- rbind(vm1, r1, r2, pe1, pe2, abspe1) %>% rename(id = level) %>% pivot_wider(names_from = c(reg_region), values_from = avg) %>% ungroup()
 wbetas <- merge(ecs, wholebrain_betas)
 just_meg_betas <- wbetas %>% select(where(is.numeric))
 cormat <- corr.test(just_meg_betas, method = "pearson")
@@ -131,11 +134,12 @@ stat_df <- data.table::rbindlist(all_stats) %>% filter(
   (regressor == "entropy_change" & term == "entropy_change_t") |
     (regressor == "v_max" & term == "v_max_wi") | 
     (regressor == "reward" & term == "reward_t") | 
-    (regressor == "signed_pe_rs" & term == "pe_max")  
+    (regressor == "signed_pe_rs" & term == "pe_max") |
+    (term == "abs_pe" & regressor == "abs_pe")
 )
 }
 setwd(plot_dir)
-pdf("Random_slope_TF_plots_echange_wi_pe_max_reward_v_max_wi_t_3.pdf", height = 4, width = 6)
+pdf("Random_slope_TF_plots_echange_wi_pe_abspe_reward_v_max_wi_t_3.pdf", height = 4, width = 6)
 ggplot(stat_df %>% filter(abs(statistic) > 3), aes(t, Freq, fill = statistic)) + geom_tile() + facet_wrap(~term) + 
   scale_fill_viridis_c("Statistic,\nthresholded\nat 3") + geom_vline(xintercept = 0, linetype="dotted", 
                                                                    color = "red", size=1.5)
@@ -156,7 +160,7 @@ sec1_20 <- stat_df %>% filter(term == "entropy_change_t" & t >= 0.5 & t <= 0.8 &
 sec2_20 <- stat_df %>% filter(term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
   summarize(stat=mean(statistic)) %>% mutate(reg_region = "entropy_change_early_beta_20hz")
 
-svm1 <- stat_df %>% filter(term == "v_max_wi" & t >= 0.4 & t <= 0.8 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+svm1 <- stat_df %>% filter(term == "v_max_wi" & t >= 0.5 & t <= 0.9 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
   summarize(stat=mean(statistic)) %>% mutate(reg_region = "vmax_late_beta")
 
 sr1 <- stat_df %>% filter(term == "reward_t" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
@@ -165,10 +169,13 @@ sr2 <- stat_df %>% filter(term == "reward_t" & t >= 0.4 & t <= 0.8 &  Freq <= "4
   summarize(stat=mean(statistic)) %>% mutate(reg_region = "reward_late_delta")
 spe1 <- stat_df %>% filter(term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
   summarize(stat=mean(statistic)) %>% mutate(reg_region = "pe_early_theta")
+sabspe1 <- stat_df %>% filter(term == "abs_pe" & regressor == "abs_pe" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
+  summarize(stat=mean(statistic)) %>% mutate(reg_region = "abspe_early_theta")
+
 spe2 <- stat_df %>% filter(term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
   summarize(stat=mean(statistic)) %>% mutate(reg_region = "pe_late_beta")
 
-signal_stats <- rbind(sec1, sec2, sec1_20, sec2_20, svm1, sr1, sr2, spe1, spe2) 
+signal_stats <- rbind(sec1, sec2, svm1, sr1, sr2, spe1, spe2, sabspe1) 
 
 signal_stats_wide <- signal_stats %>% pivot_wider(names_from = c(reg_region), values_from = stat)
 
@@ -181,11 +188,11 @@ dev.off()
 
 if (fmri) {
 fmri_ec_betas <- readRDS("~/code/clock_analysis/meg/data/fmri_ec_betas.RDS") %>% mutate(id = as.character(id))
-multi_betas <- inner_join(wbetas, fmri_ec_betas)
+multi_betas <- inner_join(wbetas %>% select(!contains('20')), fmri_ec_betas)
 
-just_betas <- multi_betas %>% select(is.numeric)
+just_betas <- multi_betas %>% select(where(is.numeric))
 cormat <- corr.test(just_betas, method = "pearson")
-corrplot(cormat$r, p.mat = cormat$p, order = "hclust", tl.cex = .5, method = 'number', sig.level = .1, insig = 'blank')
+corrplot(cormat$r, p.mat = cormat$p, order = "hclust", tl.cex = .5, method = 'number', sig.level = .1)
 }
 if (sensors) {
   # load all models

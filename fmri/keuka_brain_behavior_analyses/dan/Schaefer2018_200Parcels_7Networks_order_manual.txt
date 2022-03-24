@@ -35,7 +35,7 @@
 35	7Networks_LH_DorsAttn_IPL_l_BA2b	4_ip_AIPa	0	118	16	0
 36	7Networks_LH_DorsAttn_IPS_ant_l_7p_good	4_ip_AIPp	1	118	17	0
 37	7Networks_LH_DorsAttn_SPL_lat_l_7a_good	4_ip_VIP	1	118	18	0
-38	7Networks_LH_SPL_rostolat_l_7a_good	4_ip_LIPv	1	118	19	0
+38	7Networks_LH_DorsAttn_SPL_rostolat_l_7a_good	4_ip_LIPv	1	118	19	0
 39	7Networks_LH_DorsAttn_SPL_m_l_7a_good	3_sp_7AM	1	118	20	0
 40	7Networks_LH_DorsAttn_paracentral_l_5l_dud	3_sp_7PC	0	118	21	0
 41	7Networks_LH_DorsAttn_f_FEF_1_BA6ai_l_good	1_f_FEF	1	118	22	0
