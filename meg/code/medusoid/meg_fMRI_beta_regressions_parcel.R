@@ -19,6 +19,11 @@ source('~/code/Rhelpers/vif.lme.R')
 clock_folder <- "~/code/clock_analysis" #alex
 # source('~/code/Rhelpers/')
 fmri_dir <- '/Volumes/GoogleDrive/.shortcut-targets-by-id/1ukjK6kTlaR-LXIqX6nylYOPWu1j3XGyF/SCEPTIC_fMRI/wholebrain_betas'
+source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R")
+
+# get design
+design <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_fmri", groupfixed = T) %>% select(id, run, rewFunc) %>% unique() %>%
+  rename(run_number = run) %>% mutate(id = as.character(id))
 
 # load meg data
 # wbetas <- readRDS("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/betas/MEG_betas_wide_echange_vmax_reward_Nov30_2021.RDS") %>% 
@@ -49,7 +54,7 @@ rew_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_
                                                                         mask_value = as.character(mask_value),
                                                                         run_mc  = scale(run_number, center = T, scale = F))
 # merge
-df <- rew_betas %>% inner_join(wbetas, by = "id")
+df <- rew_betas %>% inner_join(wbetas, by = "id") %>% inner_join(design, by = c("id", "run_number"))
 
 labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_7Networks_order_manual.txt", 
                      delim = "\t", escape_double = FALSE, 
@@ -60,38 +65,109 @@ labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/d
          mask_value = as.factor(mask_value))
 dan_labels <- read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx") %>% 
   mutate(mask_value = as.character(roinum),
-         parcel = word(MNHLabel, 2, sep = "_")) %>% select(mask_value, MNHLabel, parcel, Stream, Visuomotor_Gradient, Stream_Gradient, lobe)
-df <- df %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% inner_join(dan_labels, by = "mask_value")
+         parcel = word(MNHLabel, 2, sep = "_")) %>% select(mask_value, MNHLabel, parcel, Stream, Visuomotor_Gradient, lobe)
+df <- df %>% inner_join(dan_labels, by = "mask_value") 
+
+# inspect
+ggplot(df, aes(as.factor(run_number), value, color = Stream)) + geom_boxplot(position = position_dodge2(width = 5))
+ggplot(df, aes(rewFunc, value, color = Stream)) + geom_boxplot(position = position_dodge2(width = 5))
+ggplot(df, aes(run_number, value, color = Stream)) + geom_smooth(method = "loess")
 
 
 # prototype
-# NB: convergence problems!!!
-m1 <- lmer(value ~ run_number +  parcel * omission_early_theta + (1|id), df)
+
+m1 <- lmer(value ~ as.factor(run_number) *  parcel * omission_early_theta + (1|id), df)
 while (any(grepl("failed to converge", m1@optinfo$conv$lme4$messages) )) {
 ss <- getME(m1,c("theta","fixef"))
 m1 <- update(m1,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
 summary(m1)
 Anova(m1, '3')
-
 # em1 <- as_tibble(emmeans(m1, data = df, ~network|omission_early_theta*run_number, at = list(omission_early_theta = c(-.34, .31), run_number = c(1,8))))
-# 
-# rewom_rewom_theta <- ggplot(em1, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
-#   geom_point(position = position_dodge(width = .6), size=2.5) +
-#   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~run_number) +
-#   theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
-#   scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
-#   labs(shape = "Reward omission\nearly theta\nresponse") +
-#   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
-#         axis.text=element_text(size=8.5, color="grey10")) # +
+em1 <- as_tibble(emmeans(m1, data = df, ~parcel|omission_early_theta*run_number, at = list(omission_early_theta = c(-.34, .31))))
+
+rewom_rewom_theta <- ggplot(em1, aes(x=parcel, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~run_number) +
+  theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
+  scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Reward omission\nearly theta\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
+
+m1r <- lmer(value ~ rewFunc *  parcel * omission_early_theta + (1|id), df)
+while (any(grepl("failed to converge", m1@optinfo$conv$lme4$messages) )) {
+  ss <- getME(m1,c("theta","fixef"))
+  m1r <- update(m1,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
+summary(m1r)
+Anova(m1r, '3')
+em1rs <- as_tibble(emmeans(m1r, data = df, ~omission_early_theta|rewFunc, at = list(omission_early_theta = c(-.34, .31))))
+ggplot(em1rs, aes(x=rewFunc, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
+  scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Reward omission\nearly theta\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
+em1r <- as_tibble(emmeans(m1r, data = df, ~parcel|omission_early_theta*rewFunc, at = list(omission_early_theta = c(-.34, .31))))
+ggplot(em1r, aes(x=parcel, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~rewFunc) +
+  theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
+  scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Reward omission\nearly theta\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
+
+
+# streams
+sm1 <- lmer(value ~ as.factor(run_number) *  Stream * omission_early_theta + (1|id), df)
+summary(sm1)
+Anova(sm1, '3')
+esm1 <- as_tibble(emmeans(sm1, data = df, ~Stream|omission_early_theta*run_number, at = list(omission_early_theta = c(-.34, .31))))
+ggplot(esm1, aes(x=Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~run_number) +
+  theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
+  scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Reward omission\nearly theta\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
+
+ggplot(esm1, aes(x=run_number, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~Stream) +
+  theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
+  scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Reward omission\nearly theta\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
+
+
+esm2 <- as_tibble(emmeans(sm1, data = df, ~run_number|omission_early_theta, at = list(omission_early_theta = c(-.34, .31))))
+ggplot(esm2, aes(x=run_number, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
+  scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Reward omission\nearly theta\nresponse") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
+
+
+ggplot(df, aes(run_number, value, color = omission_early_theta>0)) + geom_smooth(method = "loess") + facet_wrap(~Stream)
+
 
 # Prediction errors
 setwd(file.path(fmri_dir, 'L1m-pe'))
 pe_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_pe") %>% 
   dplyr::select(id, run_number, l1_model, mask_value, value) %>% mutate(id = as.character(id),
                                                                         mask_value = as.factor(mask_value),
-                                                                        run_mc  = scale(run_number, center = T, scale = F))
+                                                                        run_mc  = scale(run_number, center = T, scale = F),
+                                                                        beta_winsor = psych::winsor(value, trim = .05))
 # merge
 df <- pe_betas %>% inner_join(wbetas, by = "id")
+hist(df$beta_winsor)
 
 labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_7Networks_order_manual.txt", 
                      delim = "\t", escape_double = FALSE, 
@@ -101,22 +177,29 @@ labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/d
          network = substr(label, 14, 17),
          mask_value = as.factor(mask_value))
 df <- df %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% inner_join(dan_labels, by = "mask_value")
+
+# inspect
+ggplot(df, aes(run_number, value, color = omission_early_theta>0)) + geom_smooth(method = 'loess') + geom_jitter()
+
 # PE beta prediction
-m1a <- lmer(value ~ run_number * parcel * omission_early_theta + (1|id), df)
+m1a <- lmer(beta_winsor ~ as.factor(run_number) * Stream * omission_early_theta + (as.factor(run_number)|id), df)
 while (any(grepl("failed to converge", m1a@optinfo$conv$lme4$messages) )) {
   ss <- getME(m1a,c("theta","fixef"))
   m1a <- update(m1a,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
 summary(m1a)
 Anova(m1a, '3')
-em1a <-  as_tibble(emmeans(m1a, data = df, ~network|omission_early_theta*run_number, at = list(omission_early_theta = c(-.34, .31), run_number = c(1,8))))
-pe_rewom_theta <- ggplot(em1a, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
-  geom_point(position = position_dodge(width = .6), size=2.5) +
-  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~run_number) +
+em1a <-  as_tibble(emmeans(m1a, data = df, ~run_number|Stream*omission_early_theta, at = list(omission_early_theta = c(-.34, .31))))
+# pe_rewom_theta <- ggplot(em1a, aes(x=run_number, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
+ggplot(em1a, aes(x=run_number, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) + facet_wrap(~Stream) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
   theme_bw(base_size=12) +  ylab("BOLD response to reward prediction error")  +
   scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
   labs(shape = "Reward omission\nearly theta\nresponse") +
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) # +
+
+
 
 # nothing for PE late beta:
 m2 <- lmer(value ~ run_number * parcel * pe_late_beta_supp + (1|id), df)
@@ -201,13 +284,25 @@ setwd(file.path(fmri_dir, 'L1m-entropy_echange'))
 ec_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_entropy_change_feedback") %>% 
   dplyr::select(id, run_number, l1_model, mask_value, value) %>% mutate(id = as.character(id),
                                                                         mask_value = as.factor(mask_value),
-                                                                        run_mc  = scale(run_number, center = T, scale = F))
-df <- ec_betas %>% inner_join(wbetas, by = "id") %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% inner_join(dan_labels, by = "mask_value")
+                                                                        run_mc  = scale(run_number, center = T, scale = F),
+                                                                        beta_winsor = psych::winsor(value, trim = .05))
+df <- ec_betas %>% inner_join(wbetas, by = "id") %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% 
+  inner_join(dan_labels, by = "mask_value") #%>%
+#  filter(Stream!='visual-motion')
 
+# inspect
+ggplot(df, aes(as.factor(run_number), beta_winsor, color = Stream)) + geom_boxplot(position = position_dodge2(width = 5))
+ggplot(df, aes(run_number, beta_winsor, color = Stream)) + geom_smooth(method = "loess")
 # not much for late beta outside of DMN
-m6 <- lmer(value ~ run_number * parcel * entropy_change_late_beta_supp + (1|id), df)
+m6 <- lmer(beta_winsor ~ run_number * parcel * entropy_change_late_beta_supp + (1|id), df)
 summary(m6)
 Anova(m6, '3')
+
+# run as factor
+fm6 <- lmer(beta_winsor ~ as.factor(run_number) * parcel * entropy_change_late_beta_supp + (1|id), df)
+summary(fm6)
+Anova(fm6, '3')
+
 
 # more for early beta in DMN and somatomotor, visual
 m6a <- lmer(value ~ run_number * parcel * entropy_change_early_beta_supp + (1|id), df)
@@ -217,8 +312,9 @@ Anova(m6a, '3')
 # n  missing distinct     Info     Mean      Gmd      .05      .10      .25      .50      .75      .90      .95 
 # 92800        0       58        1 -0.00563   0.1265 -0.18217 -0.14210 -0.07790 -0.01109  0.08370  0.15427  0.21376 
 
-em6 <- as_tibble(emmeans(m6, data = df, ~network|entropy_change_late_beta_supp*run_number, at = list(entropy_change_late_beta_supp = c(-0.142, 0.154), run_number = c(1,8))))
-ec_ec_lbeta <- ggplot(em6, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
+# em6 <- as_tibble(emmeans(m6, data = df, ~parcel|entropy_change_late_beta_supp*run_number, at = list(entropy_change_late_beta_supp = c(-0.142, 0.154), run_number = c(1,8))))
+em6 <- as_tibble(emmeans(fm6, data = df, ~parcel|entropy_change_late_beta_supp*run_number, at = list(entropy_change_late_beta_supp = c(-0.142, 0.154))))
+ec_ec_lbeta <- ggplot(em6, aes(x=parcel, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~run_number) +
   theme_bw(base_size=12) +  ylab("BOLD response to entropy change")  +
@@ -227,8 +323,20 @@ ec_ec_lbeta <- ggplot(em6, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asymp.U
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) # +
 
+# visuo-motor gradient
+vm6 <- lmer(value ~ run_number * lobe * entropy_change_late_beta_supp + (1|id), df)
+summary(vm6)
+Anova(vm6, '3')
+
+# stream
+sm6 <- lmer(beta_winsor ~ run_number * Stream * entropy_change_late_beta_supp + (1|id), df)
+summary(sm6)
+Anova(sm6, '3')
+
+
+
 # read in entropy EV_entropy_wiz_clock
-e_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_entropy_wiz_clock") %>% 
+e_betas <- read_csv("1Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_entropy_wiz_clock") %>% 
   dplyr::select(id, run_number, l1_model, mask_value, value) %>% mutate(id = as.character(id),
                                                                         mask_value = as.factor(mask_value),
                                                                         run_mc  = scale(run_number, center = T, scale = F))
@@ -239,6 +347,11 @@ df <- e_betas %>% inner_join(wbetas, by = "id")  %>% inner_join(labels, by = "ma
 m7 <- lmer(value ~ run_number * parcel * entropy_change_late_beta_supp + (1|id), df)
 summary(m7)
 Anova(m7, '3')
+
+sm7 <- lmer(value ~ run_number * Stream * entropy_change_late_beta_supp + (1|id), df)
+summary(sm7)
+Anova(sm7, '3')
+
 em7 <- as_tibble(emmeans(m7, data = df, ~network|entropy_change_late_beta_supp*run_number, at = list(entropy_change_late_beta_supp = c(-0.142, 0.154), run_number = c(1,8))))
 e_ec_lbeta <- ggplot(em6, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
