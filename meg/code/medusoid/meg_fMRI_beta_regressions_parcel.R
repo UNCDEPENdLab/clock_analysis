@@ -1,4 +1,4 @@
-# relating MEG to run-wise fMRI betas
+# relating MEG to run-wise DAN fMRI betas at parcel level
 
 library(tidyverse)
 library(lme4)
@@ -46,7 +46,7 @@ wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_v_max
 setwd(file.path(fmri_dir, 'L1m-rew_om'))
 rew_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_rew_om") %>% 
   dplyr::select(id, run_number, l1_model, mask_value, value) %>% mutate(id = as.character(id),
-                                                                        mask_value = as.factor(mask_value),
+                                                                        mask_value = as.character(mask_value),
                                                                         run_mc  = scale(run_number, center = T, scale = F))
 # merge
 df <- rew_betas %>% inner_join(wbetas, by = "id")
@@ -58,26 +58,31 @@ labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/d
          hemi = stringr::str_extract(hemi, "[^_]"),
          network = substr(label, 14, 17),
          mask_value = as.factor(mask_value))
-df <- df %>% inner_join(labels, by = "mask_value")
+dan_labels <- read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx") %>% 
+  mutate(mask_value = as.character(roinum),
+         parcel = word(MNHLabel, 2, sep = "_")) %>% select(mask_value, MNHLabel, parcel, Stream, Visuomotor_Gradient, Stream_Gradient, lobe)
+df <- df %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% inner_join(dan_labels, by = "mask_value")
+
+
 # prototype
 # NB: convergence problems!!!
-m1 <- lmer(value ~ run_number * network * omission_early_theta + (run_number + network|id), df)
+m1 <- lmer(value ~ run_number +  parcel * omission_early_theta + (1|id), df)
 while (any(grepl("failed to converge", m1@optinfo$conv$lme4$messages) )) {
 ss <- getME(m1,c("theta","fixef"))
 m1 <- update(m1,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
 summary(m1)
 Anova(m1, '3')
 
-em1 <- as_tibble(emmeans(m1, data = df, ~network|omission_early_theta*run_number, at = list(omission_early_theta = c(-.34, .31), run_number = c(1,8))))
-
-rewom_rewom_theta <- ggplot(em1, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
-  geom_point(position = position_dodge(width = .6), size=2.5) +
-  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~run_number) +
-  theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
-  scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
-  labs(shape = "Reward omission\nearly theta\nresponse") +
-  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
-        axis.text=element_text(size=8.5, color="grey10")) # +
+# em1 <- as_tibble(emmeans(m1, data = df, ~network|omission_early_theta*run_number, at = list(omission_early_theta = c(-.34, .31), run_number = c(1,8))))
+# 
+# rewom_rewom_theta <- ggplot(em1, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
+#   geom_point(position = position_dodge(width = .6), size=2.5) +
+#   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~run_number) +
+#   theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
+#   scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+#   labs(shape = "Reward omission\nearly theta\nresponse") +
+#   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+#         axis.text=element_text(size=8.5, color="grey10")) # +
 
 # Prediction errors
 setwd(file.path(fmri_dir, 'L1m-pe'))
@@ -86,9 +91,18 @@ pe_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_c
                                                                         mask_value = as.factor(mask_value),
                                                                         run_mc  = scale(run_number, center = T, scale = F))
 # merge
-df <- pe_betas %>% inner_join(wbetas, by = "id") %>% inner_join(labels, by = "mask_value")
+df <- pe_betas %>% inner_join(wbetas, by = "id")
+
+labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_7Networks_order_manual.txt", 
+                     delim = "\t", escape_double = FALSE, 
+                     col_names = FALSE, trim_ws = TRUE) %>% dplyr::select(1:2) %>% rename(mask_value = X1, label = X2) %>%
+  mutate(hemi = stringr::str_extract(label, "_([^_]+)_"), 
+         hemi = stringr::str_extract(hemi, "[^_]"),
+         network = substr(label, 14, 17),
+         mask_value = as.factor(mask_value))
+df <- df %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% inner_join(dan_labels, by = "mask_value")
 # PE beta prediction
-m1a <- lmer(value ~ run_number * network * omission_early_theta + (run_number + network|id), df)
+m1a <- lmer(value ~ run_number * parcel * omission_early_theta + (1|id), df)
 while (any(grepl("failed to converge", m1a@optinfo$conv$lme4$messages) )) {
   ss <- getME(m1a,c("theta","fixef"))
   m1a <- update(m1a,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
@@ -105,7 +119,7 @@ pe_rewom_theta <- ggplot(em1a, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asy
         axis.text=element_text(size=8.5, color="grey10")) # +
 
 # nothing for PE late beta:
-m2 <- lmer(value ~ run_number * network * pe_late_beta_supp + (run_number + network|id), df)
+m2 <- lmer(value ~ run_number * parcel * pe_late_beta_supp + (1|id), df)
 while (any(grepl("failed to converge", m2@optinfo$conv$lme4$messages) )) {
   ss <- getME(m2,c("theta","fixef"))
   m2 <- update(m2,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
@@ -126,7 +140,7 @@ pe_pe_beta <- ggplot(em2, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asymp.UC
 
 
 # abs(PE) modulates control and visual
-m3 <- lmer(value ~ run_number * network * abspe_early_theta + (run_number + network|id), df)
+m3 <- lmer(value ~ run_number * parcel * abspe_early_theta + (1|id), df)
 while (any(grepl("failed to converge", m3@optinfo$conv$lme4$messages) )) {
   ss <- getME(m3,c("theta","fixef"))
   m3 <- update(m3,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
@@ -149,7 +163,7 @@ pe_abspe_theta <- ggplot(em3, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asym
         axis.text=element_text(size=8.5, color="grey10"))
 
 # effects of omission and abs(PE) early theta are independent
-m4 <- lmer(value ~ run_number * network * abspe_early_theta + run_number * network * omission_early_theta + (run_number + network|id), df)
+m4 <- lmer(value ~ run_number * parcel * abspe_early_theta + run_number * parcel * omission_early_theta + (1|id), df)
 summary(m4)
 Anova(m4, '3')
 vif(m4)
@@ -164,7 +178,7 @@ pe_rewom_theta <- ggplot(em4, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asym
         axis.text=element_text(size=8.5, color="grey10")) # +
 
 # entropy change late beta: weak effects on PEs in the DMN, SM, V
-m5 <- lmer(value ~ run_number * network * entropy_change_late_beta_supp + (run_number + network|id), df)
+m5 <- lmer(value ~ run_number * parcel * entropy_change_late_beta_supp + (1|id), df)
 summary(m5)
 Anova(m5, '3')
 em5 <- as_tibble(emmeans(m5, data = df, ~network|entropy_change_late_beta_supp*run_number, at = list(entropy_change_late_beta_supp = c(-0.142, 0.154), run_number = c(1,8))))
@@ -188,16 +202,15 @@ ec_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_c
   dplyr::select(id, run_number, l1_model, mask_value, value) %>% mutate(id = as.character(id),
                                                                         mask_value = as.factor(mask_value),
                                                                         run_mc  = scale(run_number, center = T, scale = F))
-# merge
-df <- ec_betas %>% inner_join(wbetas, by = "id")  %>% inner_join(labels, by = "mask_value")
+df <- ec_betas %>% inner_join(wbetas, by = "id") %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% inner_join(dan_labels, by = "mask_value")
 
 # not much for late beta outside of DMN
-m6 <- lmer(value ~ run_number *  network * entropy_change_late_beta_supp + (run_number + network|id), df)
+m6 <- lmer(value ~ run_number * parcel * entropy_change_late_beta_supp + (1|id), df)
 summary(m6)
 Anova(m6, '3')
 
 # more for early beta in DMN and somatomotor, visual
-m6a <- lmer(value ~ run_number * network * entropy_change_early_beta_supp + (run_number + network|id), df)
+m6a <- lmer(value ~ run_number * parcel * entropy_change_early_beta_supp + (1|id), df)
 summary(m6a)
 Anova(m6a, '3')
 # df$entropy_change_late_beta_supp 
@@ -220,10 +233,10 @@ e_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_co
                                                                         mask_value = as.factor(mask_value),
                                                                         run_mc  = scale(run_number, center = T, scale = F))
 # merge
-df <- e_betas %>% inner_join(wbetas, by = "id")  %>% inner_join(labels, by = "mask_value")
+df <- e_betas %>% inner_join(wbetas, by = "id")  %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% inner_join(dan_labels, by = "mask_value")
 
 # late beta: again, mostly DMN
-m7 <- lmer(value ~ run_number * network * entropy_change_late_beta_supp + (run_number + network|id), df)
+m7 <- lmer(value ~ run_number * parcel * entropy_change_late_beta_supp + (1|id), df)
 summary(m7)
 Anova(m7, '3')
 em7 <- as_tibble(emmeans(m7, data = df, ~network|entropy_change_late_beta_supp*run_number, at = list(entropy_change_late_beta_supp = c(-0.142, 0.154), run_number = c(1,8))))
