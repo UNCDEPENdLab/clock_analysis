@@ -54,7 +54,7 @@ rew_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_
                                                                         mask_value = as.character(mask_value),
                                                                         run_mc  = scale(run_number, center = T, scale = F))
 # merge
-df <- rew_betas %>% inner_join(wbetas, by = "id") %>% inner_join(design, by = c("id", "run_number"))
+df <- rew_betas %>% inner_join(wbetas, by = "id") %>% inner_join(design, by = c("id", "run_number")) %>% inner_join(design, by = c("id", "run_number"))
 
 labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_7Networks_order_manual.txt", 
                      delim = "\t", escape_double = FALSE, 
@@ -166,7 +166,7 @@ pe_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_c
                                                                         run_mc  = scale(run_number, center = T, scale = F),
                                                                         beta_winsor = psych::winsor(value, trim = .05))
 # merge
-df <- pe_betas %>% inner_join(wbetas, by = "id")
+df <- pe_betas %>% inner_join(wbetas, by = "id") %>% inner_join(design, by = c("id", "run_number"))
 hist(df$beta_winsor)
 
 labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_7Networks_order_manual.txt", 
@@ -286,7 +286,7 @@ ec_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_c
                                                                         mask_value = as.factor(mask_value),
                                                                         run_mc  = scale(run_number, center = T, scale = F),
                                                                         beta_winsor = psych::winsor(value, trim = .05))
-df <- ec_betas %>% inner_join(wbetas, by = "id") %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% 
+df <- ec_betas %>% inner_join(wbetas, by = "id") %>% inner_join(design, by = c("id", "run_number")) %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% 
   inner_join(dan_labels, by = "mask_value") #%>%
 #  filter(Stream!='visual-motion')
 
@@ -294,7 +294,7 @@ df <- ec_betas %>% inner_join(wbetas, by = "id") %>% inner_join(labels, by = "ma
 ggplot(df, aes(as.factor(run_number), beta_winsor, color = Stream)) + geom_boxplot(position = position_dodge2(width = 5))
 ggplot(df, aes(run_number, beta_winsor, color = Stream)) + geom_smooth(method = "loess")
 # not much for late beta outside of DMN
-m6 <- lmer(beta_winsor ~ run_number * parcel * entropy_change_late_beta_supp + (1|id), df)
+m6 <- lmer(beta_winsor ~ rewFunc * parcel * entropy_change_late_beta_supp + (1|id), df)
 summary(m6)
 Anova(m6, '3')
 
@@ -329,9 +329,18 @@ summary(vm6)
 Anova(vm6, '3')
 
 # stream
-sm6 <- lmer(beta_winsor ~ run_number * Stream * entropy_change_late_beta_supp + (1|id), df)
+sm6 <- lmer(beta_winsor ~ rewFunc * Stream * entropy_change_late_beta_supp + (1|id), df)
 summary(sm6)
 Anova(sm6, '3')
+esm6 <- as_tibble(emmeans(sm6, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.142, 0.154))))
+ggplot(esm6, aes(x=Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~rewFunc) +
+  theme_bw(base_size=12) +  ylab("BOLD response to entropy change")  +
+  scale_color_manual("Entropy change\nlate beta\nsuppression", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Entropy change\nlate beta\nsuppression") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
 
 
 
@@ -341,7 +350,7 @@ e_betas <- read_csv("1Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_c
                                                                         mask_value = as.factor(mask_value),
                                                                         run_mc  = scale(run_number, center = T, scale = F))
 # merge
-df <- e_betas %>% inner_join(wbetas, by = "id")  %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% inner_join(dan_labels, by = "mask_value")
+df <- e_betas %>% inner_join(wbetas, by = "id") %>% inner_join(design, by = c("id", "run_number"))  %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% inner_join(dan_labels, by = "mask_value")
 
 # late beta: again, mostly DMN
 m7 <- lmer(value ~ run_number * parcel * entropy_change_late_beta_supp + (1|id), df)
