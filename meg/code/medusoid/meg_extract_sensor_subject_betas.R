@@ -39,7 +39,7 @@ all_regs <- lapply(regressors, function(rr) {
   dfile <- file.path(cd, paste0("meg_ddf_wholebrain_", rr, ".rds"))
   ddf <- readRDS(dfile) %>% 
     # filter(effect=="ran_vals" & term != "(Intercept)" & group == "Subject") %>% droplevels() %>% 
-    filter(effect=="ran_vals" & group == "Subject") %>% droplevels() %>% 
+    filter(effect=="ran_coefs" & group == "Subject") %>% droplevels() %>% 
     dplyr::select(t, Freq, level, term, estimate, std.error, conf.low, conf.high) %>% mutate(regressor = rr)
   return(ddf)
 })
@@ -50,20 +50,20 @@ all_dfs <- data.table::rbindlist(all_regs)
 # extract entropy change "betas"
 # ecdf <- all_dfs %>% filter(term=="entropy_change_t")
 # late beta
-ec1 <- all_dfs %>% filter(term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+ec1 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
   group_by(level, regressor) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_late_beta")
 # early beta (rebound)
-ec2 <- all_dfs %>% filter(term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+ec2 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
   group_by(level, regressor) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_early_beta")
 
 # go up to 20 Hz, arbitrary boundary of beta1
-ec1_20 <- all_dfs %>% filter(term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
+ec1_20 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
   group_by(level, regressor) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_late_beta_20hz")
 
-ec2_20 <- all_dfs %>% filter(term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
+ec2_20 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
   group_by(level, regressor) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_early_beta_20hz")
 
@@ -71,14 +71,14 @@ ec2_20 <- all_dfs %>% filter(term == "entropy_change_t" & t >= -0.2 & t <= 0.1 &
 ecs <- rbind(ec1, ec2, ec1_20, ec2_20) %>% rename(id = level) %>% ungroup() %>% pivot_wider(names_from = c(reg_region, regressor), values_from = avg)
 
 
-vm1 <- all_dfs %>% filter(term == "v_max_wi" & t >= 0.5 & t <= 0.9 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+vm1 <- all_dfs %>% filter(regressor == "v_max" & term == "v_max_wi" & t >= 0.5 & t <= 0.9 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
   group_by(level) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "vmax_late_beta")
 
-r1 <- all_dfs %>% filter(term == "reward_t" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
+r1 <- all_dfs %>% filter(regressor == "reward" & term == "reward_t" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
   group_by(level) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "reward_early_theta")
-r2 <- all_dfs %>% filter(term == "reward_t" & t >= 0.4 & t <= 0.8 &  Freq <= "4.2") %>% # & Freq < "16.8"
+r2 <- all_dfs %>% filter(regressor == "reward" & term == "reward_t" & t >= 0.4 & t <= 0.8 &  Freq <= "4.2") %>% # & Freq < "16.8"
   group_by(level) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "reward_late_delta")
 
@@ -90,7 +90,7 @@ abspe1 <- all_dfs %>% filter(term == "abs_pe" & regressor == "abs_pe" & t >= 0.2
   group_by(level) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "abspe_early_theta")
 
-pe2 <- all_dfs %>% filter(term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
+pe2 <- all_dfs %>% filter( term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
   group_by(level) %>%
   summarize(avg=mean(estimate)) %>% mutate(reg_region = "pe_late_beta")
 

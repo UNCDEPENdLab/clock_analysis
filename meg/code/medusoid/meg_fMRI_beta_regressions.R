@@ -158,13 +158,17 @@ pe_abspe_theta <- ggplot(em3, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asym
 
 # effects of omission and abs(PE) early theta are independent
 m4 <- lmer(value ~ run_number * network * abspe_early_theta + run_number * network * omission_early_theta + (run_number + network|id), df)
+while (any(grepl("failed to converge", m4@optinfo$conv$lme4$messages) )) {
+  ss <- getME(m4,c("theta","fixef"))
+  m4 <- update(m4,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
+
 summary(m4)
 Anova(m4, '3')
 vif(m4)
-em4 <- as_tibble(emmeans(m4, data = df, ~network|omission_early_theta, at = list(omission_early_theta = c(-.34, .31))))
+em4 <- as_tibble(emmeans(m4, data = df, ~network|omission_early_theta*run_number, at = list(omission_early_theta = c(-.34, .31), run_number = c(1,8))))
 pe_rewom_theta <- ggplot(em4, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
-  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~run_number) +
   theme_bw(base_size=12) +  ylab("BOLD response to reward prediction error")  +
   scale_color_manual("Reward omission\nearly theta\nresponse", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
   labs(shape = "Reward omission\nearly theta\nresponse") +
@@ -173,6 +177,10 @@ pe_rewom_theta <- ggplot(em4, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asym
 
 # entropy change late beta: weak effects on PEs in the DMN, SM, V
 m5 <- lmer(value ~ run_number * network * entropy_change_late_beta_supp + (run_number + network|id), df)
+while (any(grepl("failed to converge", m5@optinfo$conv$lme4$messages) )) {
+  ss <- getME(m5,c("theta","fixef"))
+  m5 <- update(m5,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
+
 summary(m5)
 Anova(m5, '3')
 em5 <- as_tibble(emmeans(m5, data = df, ~network|entropy_change_late_beta_supp*run_number, at = list(entropy_change_late_beta_supp = c(-0.142, 0.154), run_number = c(1,8))))
@@ -201,11 +209,28 @@ df <- ec_betas %>% inner_join(wbetas, by = "id")  %>% inner_join(labels, by = "m
 
 # not much for late beta outside of DMN
 m6 <- lmer(value ~ run_number *  network * entropy_change_late_beta_supp + (run_number + network|id), df)
+while (any(grepl("failed to converge", m6@optinfo$conv$lme4$messages) )) {
+  ss <- getME(m6,c("theta","fixef"))
+  m6 <- update(m6,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
+
 summary(m6)
 Anova(m6, '3')
 
+# remove run
+m6_no_run <- lmer(value ~ network * entropy_change_late_beta_supp + ( network|id), df)
+while (any(grepl("failed to converge", m6@optinfo$conv$lme4$messages) )) {
+  ss <- getME(m6_no_run,c("theta","fixef"))
+  m6 <- update(m6_no_run,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
+
+summary(m6_no_run)
+Anova(m6_no_run, '3')
+
+
 # more for early beta in DMN and somatomotor, visual
 m6a <- lmer(value ~ run_number * network * entropy_change_early_beta_supp + (run_number + network|id), df)
+while (any(grepl("failed to converge", m6a@optinfo$conv$lme4$messages) )) {
+  ss <- getME(m6a,c("theta","fixef"))
+  m6a <- update(m6a,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
 summary(m6a)
 Anova(m6a, '3')
 # df$entropy_change_late_beta_supp 
@@ -232,6 +257,10 @@ df <- e_betas %>% inner_join(wbetas, by = "id")  %>% inner_join(labels, by = "ma
 
 # late beta: again, mostly DMN
 m7 <- lmer(value ~ run_number * network * entropy_change_late_beta_supp + (run_number + network|id), df)
+while (any(grepl("failed to converge", m7@optinfo$conv$lme4$messages) )) {
+  ss <- getME(m7,c("theta","fixef"))
+  m7 <- update(m7,start=ss,control=lmerControl(optCtrl=list(maxfun=2e4)))}
+
 summary(m7)
 Anova(m7, '3')
 em7 <- as_tibble(emmeans(m7, data = df, ~network|entropy_change_late_beta_supp*run_number, at = list(entropy_change_late_beta_supp = c(-0.142, 0.154), run_number = c(1,8))))
@@ -243,7 +272,22 @@ e_ec_lbeta <- ggplot(em6, aes(x=network, y=emmean, ymin=asymp.LCL, ymax=asymp.UC
   labs(shape = "Entropy change\nlate beta\nsuppression") +
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) # +
-setwd("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/")
+setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
 pdf("MEG_to_fMRI_runwise_betas.pdf", height = 10, width = 22)
-ggarrange(rewom_rewom_theta, pe_rewom_theta, pe_pe_beta, ec_ec_lbeta, e_ec_lbeta)
+ggarrange(rewom_rewom_theta, pe_rewom_theta, pe_pe_beta, pe_ec_lbeta, ec_ec_lbeta, e_ec_lbeta)
 dev.off()
+
+# prototype the emtrends version, first for EC/EC_lbeta
+
+emt6 <- as_tibble(emtrends(m6, data = df, var = "entropy_change_late_beta_supp",   ~network|run_number, at = list(run_number = c(1,8)))) %>% 
+  mutate(run_number = as.character(run_number))
+ec_ec_lbeta <- ggplot(emt6, aes(x=network, y=entropy_change_late_beta_supp.trend, group = run_number, ymin=asymp.LCL, ymax=asymp.UCL, color = run_number)) +
+  geom_point(position = position_dodge(width = .6), size=2.5) + geom_line(position = position_dodge(width = .6)) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  theme_bw(base_size=12) +  ylab("effect of oscilation response on BOLD response to entropy change")  +
+  scale_color_manual("Run", values=c("#1b3840","#4fa3b8"), labels = c("1", "8")) +
+  labs(shape = "Run") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
+
+
