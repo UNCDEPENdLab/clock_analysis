@@ -19,6 +19,7 @@ source('~/code/Rhelpers/vif.lme.R')
 clock_folder <- "~/code/clock_analysis" #alex
 # source('~/code/Rhelpers/')
 fmri_dir <- '/Volumes/GoogleDrive/.shortcut-targets-by-id/1ukjK6kTlaR-LXIqX6nylYOPWu1j3XGyF/SCEPTIC_fMRI/wholebrain_betas'
+
 # load meg data
 # wbetas <- readRDS("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/betas/MEG_betas_wide_echange_vmax_reward_Nov30_2021.RDS") %>% 
 wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_v_max_reward_signed_pe_rs_abs_pe_Mar_14_2022.RDS") %>% 
@@ -85,16 +86,7 @@ pe_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_c
                                                                         mask_value = as.factor(mask_value),
                                                                         run_mc  = scale(run_number, center = T, scale = F))
 # merge
-df <- pe_betas %>% inner_join(wbetas, by = "id")
-
-labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_7Networks_order_manual.txt", 
-                     delim = "\t", escape_double = FALSE, 
-                     col_names = FALSE, trim_ws = TRUE) %>% dplyr::select(1:2) %>% rename(mask_value = X1, label = X2) %>%
-  mutate(hemi = stringr::str_extract(label, "_([^_]+)_"), 
-         hemi = stringr::str_extract(hemi, "[^_]"),
-         network = substr(label, 14, 17),
-         mask_value = as.factor(mask_value))
-df <- df %>% inner_join(labels, by = "mask_value")
+df <- pe_betas %>% inner_join(wbetas, by = "id") %>% inner_join(labels, by = "mask_value")
 # PE beta prediction
 m1a <- lmer(value ~ run_number * network * omission_early_theta + (run_number + network|id), df)
 while (any(grepl("failed to converge", m1a@optinfo$conv$lme4$messages) )) {
