@@ -20,8 +20,8 @@ encode = T
 rt_predict = F
 p_adjust_method = "fdr"
 
-
-regressors = c( "abs_pe")
+regressors = c("condition")
+# rt_next, reward_rewfunc, ec_rewfunc, condition
 # regressors = c("abspe_by_rew_ri", "entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward")
 # regressors = c("entropy_change","entropy_change_ri", "entropy_change_full_ri", "abspe_by_rew", "entropy_change_fmri_ppc")
 # regressors = c("entropy", "kld","entropy_change_ri", "entropy_change_fmri", "entropy_change_fmr1", "entropy_change_fmr2"
@@ -42,6 +42,7 @@ if (encode) {
   for (regressor in regressors) {
     if (regressor=="reward") {noclock = T}
     message(paste0("Processing ", regressor))
+    if (str_detect(regressor, "rewfunc") | regressor == "rt_next") {rewFunc = T} else {rewFunc = F}
     epoch_label = "Time relative to feedback, seconds"
     if (reprocess) {
       if (!noclock) {
@@ -90,16 +91,20 @@ if (encode) {
                           file_pattern <- ".*abs_pe.*RT"} else if(regressor =="signed_pe") {
                             file_pattern <- ".*signed_pe.*"} else if(regressor =="signed_pe_rs") {
                               file_pattern <- ".*signed_pe_rs_rs.*"} else if(regressor =="abspe_by_rew") {
-                              file_pattern <- ".*abspe_by_rew.*"} else if (regressor=="v_max_ri"){
-                                file_pattern <- ".*v_max_ri.*RT"} else if (regressor == "entropy_change_fmri") {
-                                  file_pattern <- ".*entropy_change_fmri.*RT"} else if (regressor == "entropy_change_fmr1") {
-                                    file_pattern <- ".*entropy_change_fmr1.*RT"} else if (regressor == "entropy_change_fmr2") {
-                                      file_pattern <- ".*entropy_change_fmr2.*RT"} else if (regressor == "entropy_change_fmri_ppc") {
-                                        file_pattern <- ".*wholebrain_entropy_change_fmri_ppc.*RT"} else if (regressor == "entropy_change_fmri_ppc_ec_sensors") {
-                                          file_pattern <- ".*ec_sensors_entropy_change_fmri_ppc.*RT"} else if (regressor == "entropy_change_ec_sensors") {
-                                            file_pattern <- ".*ec_sensors_entropy_change_ec.*RT"} else if (regressor == "abspe_ec_sensors") {
-                                              file_pattern <- ".*ec_sensors_abspe_ec.*RT"
-                                      }
+                                file_pattern <- ".*abspe_by_rew.*"} else if (regressor=="v_max_ri"){
+                                  file_pattern <- ".*v_max_ri.*RT"} else if (regressor == "entropy_change_fmri") {
+                                    file_pattern <- ".*entropy_change_fmri.*RT"} else if (regressor == "entropy_change_fmr1") {
+                                      file_pattern <- ".*entropy_change_fmr1.*RT"} else if (regressor == "entropy_change_fmr2") {
+                                        file_pattern <- ".*entropy_change_fmr2.*RT"} else if (regressor == "entropy_change_fmri_ppc") {
+                                          file_pattern <- ".*wholebrain_entropy_change_fmri_ppc.*RT"} else if (regressor == "entropy_change_fmri_ppc_ec_sensors") {
+                                            file_pattern <- ".*ec_sensors_entropy_change_fmri_ppc.*RT"} else if (regressor == "entropy_change_ec_sensors") {
+                                              file_pattern <- ".*ec_sensors_entropy_change_ec.*RT"} else if (regressor == "abspe_ec_sensors") {
+                                                file_pattern <- ".*ec_sensors_abspe_ec.*RT"} else if (regressor == "ec_rewfunc") {
+                                                  file_pattern <- ".ec_rewfunc.*RT"} else if (regressor == "rt_next") {
+                                                    file_pattern <- ".rt_next.*RT"} else if (regressor == "reward_rewfunc") {
+                                                      file_pattern <- ".reward_rewf.*RT"} else if (regressor == "condition") {
+                                                        file_pattern <- ".condition.*RT"
+                                                }
       # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
       # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
       # file_pattern <- "entropy_rs_singleRT"
@@ -111,7 +116,12 @@ if (encode) {
         df <- df$coef_df_reml
         return(df)
       })
-      rddf <- data.table::rbindlist(rl)  %>% unique()  %>% distinct(Time, Freq, term, effect, group, level, rhs, .keep_all = TRUE)
+      if (rewFunc) {
+        rddf <- data.table::rbindlist(rl)  %>% unique()  %>% distinct(Time, Freq, term, effect, group, level, rewFunc, rhs, .keep_all = TRUE)
+      } else {
+        rddf <- data.table::rbindlist(rl)  %>% unique()  %>% distinct(Time, Freq, term, effect, group, level, rhs, .keep_all = TRUE)  
+      }
+      
       # rddf$node <- sub("_group.*", "", rddf$.filename)
       rddf$alignment <- "RT"
       if (!noclock) {offset = 4.3} else {offset = 0.3}
@@ -174,7 +184,8 @@ if (encode) {
       ddf$p_level_fdr <- factor(ddf$p_level_fdr, levels = c('1', '2', '3', '4'), labels = c("NS","p < .05", "p < .01", "p < .001"))
       ddf$`p, FDR-corrected` = ddf$p_level_fdr
       ddf$Freq <- gsub("f_", "", ddf$Freq)
-      ddf$Freq <- ordered(as.numeric(substr(as.character(ddf$Freq), 1,4)))  
+      ddf$Freq <- ordered(as.numeric(substr(as.character(ddf$Freq), 1,4)))
+      if (!file.exists(paste0(plot_dir, "/", regressor))) {dir.create(file.path(plot_dir, "/", regressor))}
       setwd(paste0(plot_dir, "/", regressor))
       # saveRDS(ddf, file = "meg_ddf_e_ec_rs.rds")
       saveRDS(ddf, file = paste0("meg_ddf_wholebrain_", regressor, ".rds"))} else {
@@ -206,8 +217,8 @@ if (encode) {
         message(termstr)
         fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")
         if (!noclock) { # plots both
-          pdf(fname, width = 6, height = 3)
-          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) +
+          pdf(fname, width = 12, height = 6)
+          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_value), size = .01) + {if(rewFunc) facet_wrap(~rewFunc)} +
                   geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
                   geom_vline(xintercept = -offset + 0.3, lty = "dashed", color = "white", size = 2) +
                   geom_vline(xintercept = -offset, lty = "dashed", color = "white", size = 1) +
@@ -220,8 +231,8 @@ if (encode) {
                   labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) + theme_dark())
           dev.off()
           fname = paste("meg_tf_rt_all_dan_FDR_", termstr, ".pdf", sep = "")
-          pdf(fname, width = 6, height = 3)
-          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) +
+          pdf(fname, width = 12, height = 6)
+          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = estimate, alpha = p_level_fdr), size = .01) + {if(rewFunc) facet_wrap(~rewFunc)} +
                   geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
                   geom_vline(xintercept = -offset + 0.3, lty = "dashed", color = "white", size = 2) +
                   geom_vline(xintercept = -offset, lty = "dashed", color = "white", size = 1) +
@@ -231,14 +242,14 @@ if (encode) {
                   geom_text(data = edf, x = -offset+.4, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
                   geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
                   scale_x_continuous(limits = c(-5.3,1.7), 
-                  breaks = c(0-offset+0.3, 0.20-offset+0.3, 0.4-offset+0.3, 0.60-offset+0.3, 1-offset+0.3, 1.5-offset+0.3, 0, 1), 
-                  labels = c("0", "0.2", "0.4", "0.6", "1", "1.5",  "0", "1")) +
+                                     breaks = c(0-offset+0.3, 0.20-offset+0.3, 0.4-offset+0.3, 0.60-offset+0.3, 1-offset+0.3, 1.5-offset+0.3, 0, 1), 
+                                     labels = c("0", "0.2", "0.4", "0.6", "1", "1.5",  "0", "1")) +
                   labs(alpha = expression(italic(p)[corrected])) + ggtitle(paste(termstr)) + theme_dark())    # 
           dev.off() }
         else { # plots only feedback-aligned
           fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")
-          pdf(fname, width = 7, height = 4.5)
-          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_value), size = .01) +
+          pdf(fname, width = 14, height = 9)
+          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_value), size = .01) + {if(rewFunc) facet_wrap(~rewFunc)} +
                   geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 2) +
                   geom_vline(xintercept = -0.3, lty = "dashed", color = "white", size = 1) +
                   scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
@@ -248,8 +259,8 @@ if (encode) {
                   labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) + theme_dark())
           dev.off() 
           fname = paste("meg_tf_rt_all_dan_FDR_", termstr, ".pdf", sep = "")
-          pdf(fname, width = 7, height = 4.5)
-          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_level_fdr), size = .01) +
+          pdf(fname, width = 14, height = 9)
+          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_level_fdr), size = .01) + {if(rewFunc) facet_wrap(~rewFunc)} +
                   geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 2) +
                   geom_vline(xintercept = -0.3, lty = "dashed", color = "white", size = 1) +
                   scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
