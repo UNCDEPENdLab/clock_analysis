@@ -187,6 +187,10 @@ pdf("ec_betas_by_rewFunc.pdf", height = 10, width = 10)
 corrplot(cormat$r, p.mat = cormat$p, order = "hclust", tl.cex = .8, insig = 'blank', method = 'number')
 dev.off()
 
+# scaling of fMRI vs. MEG betas by condition
+ggplot(df, aes(entropy_change_late_beta_supp, value, color = rewFunc)) + geom_point(alpha = .1) + facet_wrap(~rewFunc) +
+  geom_violin(aes(value))
+
 # not much for late beta outside of DMN
 m_ec_lbeta <- lmer(value ~ rewFunc *  network * entropy_change_late_beta_supp + (1|id), df)
 while (any(grepl("failed to converge", m_ec_lbeta@optinfo$conv$lme4$messages) )) {

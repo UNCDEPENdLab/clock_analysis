@@ -20,7 +20,7 @@ encode = T
 rt_predict = F
 p_adjust_method = "fdr"
 
-regressors = c("condition")
+regressors = c( "reward_rewfunc")
 # rt_next, reward_rewfunc, ec_rewfunc, condition
 # regressors = c("abspe_by_rew_ri", "entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward")
 # regressors = c("entropy_change","entropy_change_ri", "entropy_change_full_ri", "abspe_by_rew", "entropy_change_fmri_ppc")

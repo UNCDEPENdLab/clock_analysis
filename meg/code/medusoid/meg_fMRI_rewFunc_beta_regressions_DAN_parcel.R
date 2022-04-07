@@ -33,10 +33,16 @@ design_face <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_
 
 # load meg data
 # wbetas <- readRDS("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/betas/MEG_betas_wide_echange_vmax_reward_Nov30_2021.RDS") %>% 
-wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_ec_rewfunc_April_5_2022.RDS") %>% 
+wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_ec_rewfunc_rt_next_reward_rewfunc_April_5_2022.RDS") %>% 
   mutate(entropy_change_early_beta_supp = -  entropy_change_early_beta_ec_rewfunc,
-         entropy_change_late_beta_supp = - entropy_change_late_beta_ec_rewfunc) %>%
-  select(id, rewFunc, entropy_change_early_beta_supp, entropy_change_late_beta_supp)
+         entropy_change_late_beta_supp = - entropy_change_late_beta_ec_rewfunc,
+         rt_shorten_late_beta_supp = - rt_next_late_beta_rt_next,
+         omission_early_theta = - reward_early_theta_reward_rewfunc) %>%
+  select(id, rewFunc, entropy_change_early_beta_supp, entropy_change_late_beta_supp, rt_shorten_late_beta_supp, 
+         omission_early_theta) 
+omission_ave <- wbetas %>% group_by(id) %>% summarise(omission_early_theta_avg = mean(omission_early_theta)) %>%
+  ungroup()
+wbetas <- wbetas %>%  merge(omission_ave, by = "id")
 
 # load fMRI betas: reward_omission, entropy, signed_pe
 # reward/omission
@@ -46,7 +52,7 @@ rew_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_
                                                                         mask_value = as.character(mask_value),
                                                                         run_mc  = scale(run_number, center = T, scale = F))
 # merge
-df <- rew_betas %>% inner_join(wbetas, by = "id", "rewFunc") %>% inner_join(design, by = c("id", "run_number", "rewFunc")) 
+df <- rew_betas %>% inner_join(wbetas, by = "id", "rewFunc") %>% inner_join(design_face, by = c("id", "run_number", "rewFunc")) 
 
 labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_7Networks_order_manual.txt", 
                      delim = "\t", escape_double = FALSE, 
@@ -64,17 +70,43 @@ df <- df %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %
 rew_dist <-  ggplot(df, aes(rewFunc, value, color = rewFunc)) + geom_violin(draw_quantiles = .5) + stat_summary(fun=mean, geom="point") + ylab("Reward>omission fMRI beta")
 rew_means <- ggplot(df, aes(rewFunc, value, color = rewFunc)) + stat_summary(fun=mean, geom="point") + ylab("Reward>omission fMRI beta, mean")
 
-summary(lm(value ~ rewFunc * Stream, df))
-# prototype
+summary(lm(value ~ rewFunc * Stream, df %>% filter(emotion == "scram")))
+
+# models with early theta
+m_rewom_etheta <- lmer(value ~ rewFunc *  Stream * omission_early_theta +  (1|id), df)
+summary(m_rewom_etheta)
+Anova(m_rewom_etheta, '3')
 
 
+em_rewom_etheta <- as_tibble(emmeans(m_rewom_etheta, data = df, ~Stream|omission_early_theta*rewFunc, at = list(omission_early_theta = c(-0.13878, 0.66119)))) 
+rewom_ec_lbeta <- ggplot(em_rewom_etheta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~rewFunc) +
+  theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
+  scale_color_manual("Reward omission\nearly theta\nsynchronization", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Reward omission\nearly theta\nsynchronization") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
+
+
+
+
+# models with late beta
 # streams
-sm1 <- lmer(value ~ rewFunc *  Stream * entropy_change_late_beta_supp + (1|id), df)
-summary(sm1)
-Anova(sm1, '3')
+m_rewom_lbeta <- lmer(value ~ rewFunc *  Stream * entropy_change_late_beta_supp + (1|id), df)
+summary(m_rewom_lbeta)
+Anova(m_rewom_lbeta, '3')
+m_rewom_lbetas <- lmer(value ~ rewFunc *  Stream * entropy_change_late_beta_supp + (1|id), df %>% filter(emotion == "scram"))
+summary(m_rewom_lbetas)
+Anova(m_rewom_lbetas, '3')
+# control for emotion
+m_rewom_lbetae <- lmer(value ~ rewFunc *  Stream * entropy_change_late_beta_supp + emotion * Stream * entropy_change_late_beta_supp + (1|id), df)
+summary(m_rewom_lbetae)
+Anova(m_rewom_lbetae, '3')
 
-esm1 <- as_tibble(emmeans(sm1, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084), run_number = c(1,8))))
-rewom_ec_lbeta <- ggplot(esm1, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
+
+em_rewom_lbeta <- as_tibble(emmeans(m_rewom_lbeta, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084))))
+rewom_ec_lbeta <- ggplot(em_rewom_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~rewFunc) +
   theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
@@ -83,8 +115,32 @@ rewom_ec_lbeta <- ggplot(esm1, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=as
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) # +
 
+# scrambled only
+em_rewom_lbetas <- as_tibble(emmeans(m_rewom_lbetas, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084))))
+rewom_ec_lbeta_s <- ggplot(em_rewom_lbetas, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~rewFunc) +
+  theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
+  scale_color_manual("Entropy change\nlate beta\nsuppression\nexcluding faces", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Entropy change\nlate beta\nsuppression\nexcluding faces") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
 
+em_rewom_lbetae <- as_tibble(emmeans(m_rewom_lbetae, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084))))
+rewom_ec_lbeta_e <- ggplot(em_rewom_lbetae, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~rewFunc) +
+  theme_bw(base_size=12) +  ylab("BOLD response to reward > omission")  +
+  scale_color_manual("Entropy change\nlate beta\nsuppression", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Entropy change\nlate beta\nsuppression") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
 
+setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
+pdf("effects_of_emotion_rewom_lbeta.pdf", height = 6, width = 18)
+ggarrange(rewom_ec_lbeta, rewom_ec_lbeta_s, rewom_ec_lbeta_e, 
+          labels = c("original", "scrambled only", "covary for emotion"), nrow = 1, ncol = 3)
+dev.off()
 # Prediction errors
 setwd(file.path(fmri_dir, 'L1m-pe'))
 pe_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_pe") %>% 
@@ -115,7 +171,7 @@ pe_means <- ggplot(df, aes(rewFunc, value, color = rewFunc)) + stat_summary(fun=
 m5 <- lmer(value ~ rewFunc * Stream * entropy_change_late_beta_supp + (1|id), df)
 summary(m5)
 Anova(m5, '3')
-em5 <- as_tibble(emmeans(m5, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084), run_number = c(1,8))))
+em5 <- as_tibble(emmeans(m5, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084))))
 pe_ec_lbeta <- ggplot(em5, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~rewFunc) +
@@ -158,7 +214,7 @@ m6a <- lmer(value ~ rewFunc * Stream * entropy_change_late_beta_supp + (1|id), d
 summary(m6a)
 Anova(m6a, '3')
 
-# em6 <- as_tibble(emmeans(m6, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084), run_number = c(1,8))))
+# em6 <- as_tibble(emmeans(m6, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084))))
 em6 <- as_tibble(emmeans(m6a, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084))))
 ec_ec_lbeta <- ggplot(em6, aes(x=Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
@@ -197,7 +253,7 @@ sm7 <- lmer(value ~ rewFunc * Stream * entropy_change_late_beta_supp + (1|id), d
 summary(sm7)
 Anova(sm7, '3')
 
-em7 <- as_tibble(emmeans(sm7, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084), run_number = c(1,8))))
+em7 <- as_tibble(emmeans(sm7, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084))))
 e_ec_lbeta <- ggplot(em7, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~rewFunc) +
