@@ -132,11 +132,8 @@ meg_hybrid <-
   lme4::lmer(rt_csv_sc ~ 
                # rt_lag_sc * last_outcome * entropy_change_early_beta_supp + 
                rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
-               rt_lag_sc * last_outcome * pe_late_beta_supp +
                rt_lag_sc * last_outcome * omission_early_theta + 
-               # rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp + 
                rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp + 
-               rt_vmax_lag_sc * trial_neg_inv_sc * pe_late_beta_supp +
                rt_vmax_lag_sc * trial_neg_inv_sc * omission_early_theta +
                (1|id/run), df %>% filter(rt_csv<4000))
 # screen.lmerTest(meg1, .01)
@@ -151,17 +148,28 @@ meg_hybrid_rs <-
   lme4::lmer(rt_csv_sc ~ 
                # rt_lag_sc * last_outcome * entropy_change_early_beta_supp + 
                rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
-               rt_lag_sc * last_outcome * pe_late_beta_supp +
                rt_lag_sc * last_outcome * omission_early_theta + 
-               # rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp + 
                rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp + 
-               rt_vmax_lag_sc * trial_neg_inv_sc * pe_late_beta_supp +
                rt_vmax_lag_sc * trial_neg_inv_sc * omission_early_theta +
                (rt_lag_sc + rt_vmax_lag_sc|id/run), df %>% filter(rt_csv<4000))
 # screen.lmerTest(meg1, .01)
 summary(meg_hybrid_rs)
 Anova(meg_hybrid_rs, '3')
 
+# examine interaction with condition: everything holds AND late beta enhances condition effects over trials
+meg_cond <-  
+  lme4::lmer(rt_csv_sc ~ 
+               # rt_lag_sc * last_outcome * entropy_change_early_beta_supp + 
+               (rt_lag_sc + last_outcome +  entropy_change_late_beta_supp + rewFunc)^3 + 
+               (rt_lag_sc + last_outcome + omission_early_theta + rewFunc)^3 + 
+               # rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp + 
+               (rt_vmax_lag_sc + trial_neg_inv_sc + entropy_change_late_beta_supp + rewFunc)^3 + 
+               (rt_vmax_lag_sc + trial_neg_inv_sc + omission_early_theta + rewFunc)^3 + 
+               (1|id/run), df %>% filter(rt_csv<4000))
+# screen.lmerTest(meg1, .01)
+summary(meg_cond)
+Anova(meg_cond, '3')
+vif(meg_cond)
 
 # load fmri data
 fdf <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_fmri", groupfixed = T)
@@ -172,11 +180,9 @@ fmri_hybrid <-
   lme4::lmer(rt_csv_sc ~ 
                # rt_lag_sc * last_outcome * entropy_change_early_beta_supp + 
                rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
-               rt_lag_sc * last_outcome * pe_late_beta_supp +
                rt_lag_sc * last_outcome * omission_early_theta + 
                # rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp + 
                rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp + 
-               rt_vmax_lag_sc * trial_neg_inv_sc * pe_late_beta_supp +
                rt_vmax_lag_sc * trial_neg_inv_sc * omission_early_theta +
                (1|id/run), fdf %>% filter(rt_csv<4000))
 # screen.lmerTest(meg1, .01)
@@ -224,6 +230,22 @@ fmri1theta <- lme4::lmer(rt_csv_sc ~
 summary(fmri1theta)
 Anova(fmri1theta, '3')
 
+
+fmri_cond <-  
+  lme4::lmer(rt_csv_sc ~ 
+               # rt_lag_sc * last_outcome * entropy_change_early_beta_supp + 
+               (rt_lag_sc + last_outcome +  entropy_change_late_beta_supp + rewFunc)^3 + 
+               (rt_lag_sc + last_outcome + omission_early_theta + rewFunc)^3 + 
+               # rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp + 
+               (rt_vmax_lag_sc + trial_neg_inv_sc + entropy_change_late_beta_supp + rewFunc)^3 + 
+               (rt_vmax_lag_sc + trial_neg_inv_sc + omission_early_theta + rewFunc)^3 + 
+               (1|id/run), fdf %>% filter(rt_csv<4000))
+# screen.lmerTest(meg1, .01)
+summary(fmri_cond)
+Anova(fmri_cond, '3')
+vif(fmri_cond)
+
+
 # fmri1delta <- lme4::lmer(rt_csv_sc ~ 
 #                               rt_lag_sc * last_outcome * entropy_change_early_beta_supp + 
 #                               rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
@@ -266,12 +288,14 @@ Anova(fmri1theta, '3')
 # summary(fmri_ec_pe)
 # Anova(fmri_ec_pe, '3')
 
-
+###########################
+## RT lag, reward effects
+###########################
 
 # late beta to entropy change
-em1 <- as_tibble(emtrends(meg_hybrid, data = df,  var = "rt_lag_sc", specs = c("entropy_change_late_beta_supp", "last_outcome"), at = list(entropy_change_late_beta_supp = c(-.13, .12)), options = list()))
+em1 <- as_tibble(emtrends(meg_hybrid, data = df,  var = "rt_lag_sc", specs = c("entropy_change_late_beta_supp", "last_outcome"), at = list(entropy_change_late_beta_supp = c(-.071, .221)), options = list()))
 em1$study = "1. MEG"
-em2 <- as_tibble(emtrends(fmri_hybrid, data = fdf, var = "rt_lag_sc", specs = c("entropy_change_late_beta_supp", "last_outcome"), at = list(entropy_change_late_beta_supp = c(-.13, .12)), options = list()))
+em2 <- as_tibble(emtrends(fmri_hybrid, data = fdf, var = "rt_lag_sc", specs = c("entropy_change_late_beta_supp", "last_outcome"), at = list(entropy_change_late_beta_supp = c(-.071, .221)), options = list()))
 em2$study = '2. fMRI replication'
 em1 <- rbind(em2, em1)
 ec_late_beta <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) + 
@@ -288,12 +312,12 @@ ec_late_beta <- ggplot(em1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LC
   labs(shape = "Entropy change\nlate beta\nsuppression") +
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) + 
-  scale_y_reverse(limits = c(.6, 0)) 
+  scale_y_reverse(limits = c(.65, 0)) 
 
 # early theta to reward omission
-rem1 <- as_tibble(emtrends(meg_hybrid, data = df,  var = "rt_lag_sc", specs = c("omission_early_theta", "last_outcome"), at = list(omission_early_theta = c(-.31, .27)), options = list()))
+rem1 <- as_tibble(emtrends(meg_hybrid, data = df,  var = "rt_lag_sc", specs = c("omission_early_theta", "last_outcome"), at = list(omission_early_theta = c(-.040, .610)), options = list()))
 rem1$study = "1. MEG"
-rem2 <- as_tibble(emtrends(fmri_hybrid, data = fdf, var = "rt_lag_sc", specs = c("omission_early_theta", "last_outcome"), at = list(omission_early_theta = c(-.31, .27)), options = list()))
+rem2 <- as_tibble(emtrends(fmri_hybrid, data = fdf, var = "rt_lag_sc", specs = c("omission_early_theta", "last_outcome"), at = list(omission_early_theta = c(-.040, .610)), options = list()))
 rem2$study = '2. fMRI replication'
 rem1 <- rbind(rem2, rem1)
 reward_early_theta <- ggplot(rem1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) + 
@@ -311,6 +335,60 @@ reward_early_theta <- ggplot(rem1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=a
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) + 
   scale_y_reverse(limits = c(.6, 0)) 
+
+setwd('~/OneDrive/collected_letters/papers/meg/plots/meg_to_behavior/')
+pdf("meg_session_level_to_beh.pdf", height = 4, width = 11)
+ggarrange(reward_early_theta, ec_late_beta)
+dev.off()
+
+###### same with condition
+emc1 <- as_tibble(emtrends(meg_cond, data = df,  var = "rt_lag_sc", specs = c("entropy_change_late_beta_supp", "last_outcome", "rewFunc"), at = list(entropy_change_late_beta_supp = c(-.071, .221)), options = list()))
+emc1$study = "1. MEG"
+emc2 <- as_tibble(emtrends(fmri_cond, data = fdf, var = "rt_lag_sc", specs = c("entropy_change_late_beta_supp", "last_outcome", "rewFunc"), at = list(entropy_change_late_beta_supp = c(-.071, .221)), options = list()))
+emc2$study = '2. fMRI replication'
+emc1 <- rbind(emc2, emc1)
+ec_late_beta_cond <- ggplot(emc1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) + 
+  #shape = as.factor(pe_f2_hipp), 
+  #p1 <- ggplot(emc1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_grid(rewFunc~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
+  #scale_shape_manual(values=c(15,16), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("PH RPE\nresponse", palette="Set1", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("Entropy change\nlate beta\nsuppression", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Entropy change\nlate beta\nsuppression") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.7, 0)) 
+
+# early theta to reward omission
+remc1 <- as_tibble(emtrends(meg_cond, data = df,  var = "rt_lag_sc", specs = c("omission_early_theta", "last_outcome", "rewFunc"), at = list(omission_early_theta = c(-.040, .610)), options = list()))
+remc1$study = "1. MEG"
+remc2 <- as_tibble(emtrends(fmri_cond, data = fdf, var = "rt_lag_sc", specs = c("omission_early_theta", "last_outcome", "rewFunc"), at = list(omission_early_theta = c(-.040, .610)), options = list()))
+remc2$study = '2. fMRI replication'
+remc1 <- rbind(remc2, remc1)
+reward_early_theta_cond <- ggplot(remc1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) + 
+  #shape = as.factor(pe_f2_hipp), 
+  #p1 <- ggplot(emc1, aes(x=last_outcome, y=rt_lag_sc.trend, linetype = as.factor(pe_f2_hipp), ymin=asymp.LCL, ymax=asymp.UCL)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  #geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), position = position_dodge2(width=0.9), width=0.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  #geom_crossbar(position=position_dodge(width=0.7), width=0.6) + 
+  theme_bw(base_size=12) + facet_grid(rewFunc~study) + ylab("RT swings (AU)\n Small <---------> Large")  + 
+  #scale_shape_manual(values=c(15,16), labels = c("10th %ile", "90th %ile")) + 
+  #scale_color_brewer("PH RPE\nresponse", palette="Set1", labels = c("10th %ile", "90th %ile")) +
+  scale_color_manual("Reward omission\nearly theta\nsynchronization", values=c("#1b3840","#4fa3b8"), labels = c("10th %ile", "90th %ile")) +
+  labs(shape = "Reward omission\nearly theta\nsynchronization") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.7, 0)) 
+
+setwd('~/OneDrive/collected_letters/papers/meg/plots/meg_to_behavior/')
+pdf("meg_session_level_to_beh_rewFunc.pdf", height = 8, width = 11)
+ggarrange(reward_early_theta_cond, ec_late_beta_cond)
+dev.off()
 # rlem1 <- as_tibble(emtrends(meg1delta, data = df,  var = "rt_lag_sc", specs = c("omission_late_delta", "last_outcome"), at = list(omission_late_delta = c(-.3, .31)), options = list()))
 # rlem1$study = "1. MEG"
 # rlem2 <- as_tibble(emtrends(fmri1delta, data = fdf, var = "rt_lag_sc", specs = c("omission_late_delta", "last_outcome"), at = list(omission_late_delta = c(-.3, .31)), options = list()))
@@ -355,9 +433,9 @@ reward_early_theta <- ggplot(rem1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=a
 #   scale_y_reverse(limits = c(.7, -.1)) 
 
 
-ec1 <- as_tibble(emtrends(meg_hybrid, data = df,  var = "rt_vmax_lag_sc", specs = c("entropy_change_late_beta_supp", "trial_neg_inv_sc"), at = list(entropy_change_late_beta_supp =  c(-.13, .12), trial_neg_inv_sc = c(-.88, 0.39)), options = list()))
+ec1 <- as_tibble(emtrends(meg_hybrid, data = df,  var = "rt_vmax_lag_sc", specs = c("entropy_change_late_beta_supp", "trial_neg_inv_sc"), at = list(entropy_change_late_beta_supp =  c(-.071, .221), trial_neg_inv_sc = c(-.88, 0.39)), options = list()))
 ec1$study = "1. MEG"
-ec2 <- as_tibble(emtrends(fmri_hybrid, data = fdf, var = "rt_vmax_lag_sc", specs = c("entropy_change_late_beta_supp", "trial_neg_inv_sc"), at = list(entropy_change_late_beta_supp =  c(-.13, .12), trial_neg_inv_sc = c(-.88, 0.39)), options = list()))
+ec2 <- as_tibble(emtrends(fmri_hybrid, data = fdf, var = "rt_vmax_lag_sc", specs = c("entropy_change_late_beta_supp", "trial_neg_inv_sc"), at = list(entropy_change_late_beta_supp =  c(-.071, .221), trial_neg_inv_sc = c(-.88, 0.39)), options = list()))
 ec2$study = '2. fMRI replication'
 ec <- rbind(ec2, ec1)
 ec_late_beta_rtvmax <- ggplot(ec, aes(x=as.factor(trial_neg_inv_sc), y=rt_vmax_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) + 
