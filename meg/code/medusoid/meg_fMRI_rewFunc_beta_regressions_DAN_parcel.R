@@ -358,7 +358,12 @@ ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, co
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) # +
 dev.off()
+setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
+pdf("MEG_on_ec_pe_fMRI_betas.pdf", height = 10, width = 18)
+ggarrange(pe_pe_etheta, ec_etheta, pe_ec_lbeta,ec_lbeta, nrow = 2, ncol = 2)
+dev.off()
 
+ggarrange(pe_pe_etheta, pe_ec_lbeta, nrow = 2, ncol = 1)
 
 
 # read in entropy EV_entropy_wiz_clock
