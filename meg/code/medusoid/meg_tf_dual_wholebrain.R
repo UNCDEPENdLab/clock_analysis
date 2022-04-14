@@ -20,7 +20,7 @@ encode = T
 rt_predict = F
 p_adjust_method = "fdr"
 
-regressors = c( "reward_rewfunc")
+regressors = c( "entropy_change")
 # rt_next, reward_rewfunc, ec_rewfunc, condition
 # regressors = c("abspe_by_rew_ri", "entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward")
 # regressors = c("entropy_change","entropy_change_ri", "entropy_change_full_ri", "abspe_by_rew", "entropy_change_fmri_ppc")
@@ -29,7 +29,7 @@ regressors = c( "reward_rewfunc")
 emt1 = F # emtrends plots for the first set (ddf$emtrends_list$emt1)
 print_filenames = T
 fixed_only = F
-reprocess = T
+reprocess = F
 plots = T
 diags = F
 average = F
