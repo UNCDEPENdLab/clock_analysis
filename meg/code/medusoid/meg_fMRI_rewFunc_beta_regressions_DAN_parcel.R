@@ -319,10 +319,10 @@ ec_etheta <- ggplot(em_ec_etheta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax
 m_ec_lbeta <- lmer(value ~ rewFunc * Stream * entropy_change_late_beta_supp + (1|id), df)
 # summary(m_ec_lbeta)
 Anova(m_ec_lbeta, '3')
+
 em_ec_lbeta <- as_tibble(emmeans(m_ec_lbeta, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, 
                                  at = list(entropy_change_late_beta_supp = qmeg$entropy_change_late_beta_supp))) %>%
-  inner_join(qmeg, by = c("entropy_change_late_beta_supp", "rewFunc"))
-
+  inner_join(qmeg, by = c("entropy_change_late_beta_supp", "rewFunc")) 
 
 ec_lbeta <- ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
@@ -332,6 +332,19 @@ ec_lbeta <- ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=a
   labs(shape = "Entropy change\nlate beta\nsuppression") +
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) # +
+
+em_ec_lbeta_learn <- em_ec_lbeta %>% filter(rewFunc=="DEV" | rewFunc=="IEV")
+
+ec_lbeta_learn <- ggplot(em_ec_lbeta_learn, 
+                             aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_grid(~ rewFunc) +
+  theme_bw(base_size=12) +  ylab("BOLD response to entropy change")  +
+  scale_color_manual("Entropy change\nlate beta\nsuppression", values = unique(em_ec_lbeta_learn$qcolor), labels = unique(em_ec_lbeta_learn$q))  +
+  labs(shape = "Entropy change\nlate beta\nsuppression") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
+
 
 ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color = rewFunc, lty=as.factor(q))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +

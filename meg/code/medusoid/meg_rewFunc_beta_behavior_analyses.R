@@ -72,10 +72,12 @@ wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_entro
   mutate(entropy_change_early_beta_supp = -  entropy_change_early_beta_entropy_change,
          entropy_change_late_beta_supp = - entropy_change_late_beta_entropy_change
   ) %>%
-  select(c(id, omission_early_theta, omission_late_delta, 
+  select(c(id, omission_early_theta_session, 
            entropy_change_early_beta_supp, entropy_change_late_beta_supp
   ))
 
+# merge
+df <- df %>% inner_join(cond_wbetas, by = c("id", "rewFunc"))
 
 
 pdf("omission_early_theta_by_cond.pdf", height = 3, width = 5)
@@ -95,10 +97,8 @@ ggplot(cond_wbetas, aes(rewFunc, entropy_change_late_beta_supp, color = rewFunc)
 dev.off()
 summary(lmer(entropy_change_late_beta_supp ~ rewFunc + (1|id), cond_wbetas))
 
-# merge
-df <- df %>% inner_join(cond_wbetas, by = c("id", "rewFunc"))
 
-
+# only learnable
 ldf <- df %>% filter(rewFunc=="IEV" | rewFunc=="DEV")
 ev_meg2_rewFunc <-  
   lmerTest::lmer(ev ~ trial_neg_inv_sc * entropy_change_late_beta_supp * rewFunc + 
@@ -133,6 +133,14 @@ o3 <- ggplot(df, aes(trial_neg_inv_sc, rt_swing, color = omission_early_theta > 
 # pdf("performance_by_meg_beta_rewfunc.pdf", height = 8, width = 18)
 # ggarrange(o1, o2, o3, ec1, ec2, ec3, nrow = 2, ncol = 3)
 # dev.off()
+
+# look at convergence on RT_Vmax
+df <- df %>% mutate(rt_vmax_delta  = abs(rt_csv_sc - rt_vmax_lag_sc))
+ggplot(df, aes(run_trial, rt_vmax_delta, color = omission_early_theta > 0.46125, lty = reward_lag)) + geom_smooth(method = "gam") +
+  facet_wrap(~rewFunc) + scale_color_manual("Omission early theta", values = c("orange4", "orange"), labels = c("low", "high"))  
+
+ggplot(df, aes(run_trial, rt_vmax_delta, color = entropy_change_late_beta_supp > 0.19136, lty = reward_lag)) + geom_smooth(method = "gam") +
+  facet_wrap(~rewFunc) + scale_color_manual("Entropy change late beta suppression", values = c("1b3840", "4fa3b8"), labels = c("low", "high"))  
 
 # example subjects: not revealing
 # theta
@@ -415,6 +423,14 @@ thetaplot <- ggarrange(o1, o2, o3,
 betaplot <- ggarrange(ec1, ec2, ec3, 
                       fec1, fec2, fec3,  nrow = 2, ncol = 3, common.legend = T)
 
+# convergence on RT_Vmax
+fdf <- fdf %>% mutate(rt_vmax_delta  = abs(rt_csv_sc - rt_vmax_lag_sc))
+ggplot(fdf, aes(run_trial, rt_vmax_delta, color = omission_early_theta > 0.46125, lty = reward_lag)) + geom_smooth(method = "gam") +
+  facet_wrap(~rewFunc) + scale_color_manual("Omission early theta", values = c("orange4", "orange"), labels = c("low", "high"))  
+ggplot(fdf, aes(run_trial, rt_vmax_delta, color = entropy_change_late_beta_supp > 0.19136, lty = reward_lag)) + geom_smooth(method = "gam") +
+  facet_wrap(~rewFunc) + scale_color_manual("Entropy change late beta suppression", values = c("1b3840", "4fa3b8"), labels = c("low", "high"))  
+
+
 
 setwd(plot_dir)
 pdf("performance_by_meg_beta_rewfunc_replication.pdf", height = 6, width = 22)
@@ -644,7 +660,7 @@ ec_late_beta_no_rewFunc <-
   geom_point(position = position_dodge(width = .6), size=2.5) + 
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
   theme_bw(base_size=12) + facet_grid(~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
-  scale_color_manual("Reward omission\nearly theta\nsynchronization", values = unique(qmeg$qcolor), labels = unique(qmeg$q)) +
+  scale_color_manual("Entropy change\nlate beta\nsuppression", values = unique(qmeg$qcolor), labels = unique(qmeg$q)) +
   labs(shape = "Entropy change\nlate beta\nsuppression") +
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) + 
