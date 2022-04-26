@@ -19,8 +19,11 @@ rt_epoch_label = "Time relative to outcome, seconds"
 encode = T
 rt_predict = F
 p_adjust_method = "fdr"
+uncorrected = F # whether to make uncorrected plots
 
-regressors = c( "entropy_change")
+regressors = c( "v_max_ri")
+
+# regressors = c( "v_max_ri", "entropy","entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward", "kld", "abs_pe")
 # rt_next, reward_rewfunc, ec_rewfunc, condition
 # regressors = c("abspe_by_rew_ri", "entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward")
 # regressors = c("entropy_change","entropy_change_ri", "entropy_change_full_ri", "abspe_by_rew", "entropy_change_fmri_ppc")
@@ -29,7 +32,7 @@ regressors = c( "entropy_change")
 emt1 = F # emtrends plots for the first set (ddf$emtrends_list$emt1)
 print_filenames = T
 fixed_only = F
-reprocess = F
+reprocess = F # reprocess from uncompiled lmer output
 plots = T
 diags = F
 average = F
@@ -104,7 +107,7 @@ if (encode) {
                                                     file_pattern <- ".rt_next.*RT"} else if (regressor == "reward_rewfunc") {
                                                       file_pattern <- ".reward_rewf.*RT"} else if (regressor == "condition") {
                                                         file_pattern <- ".condition.*RT"
-                                                }
+                                                      }
       # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
       # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
       # file_pattern <- "entropy_rs_singleRT"
@@ -247,28 +250,29 @@ if (encode) {
                   labs(alpha = expression(italic(p)[corrected])) + ggtitle(paste(termstr)) + theme_dark())    # 
           dev.off() }
         else { # plots only feedback-aligned
-          fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")
-          pdf(fname, width = 14, height = 9)
-          print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_value), size = .01) + {if(rewFunc) facet_wrap(~rewFunc)} +
-                  geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 2) +
-                  geom_vline(xintercept = -0.3, lty = "dashed", color = "white", size = 1) +
-                  scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
-                  geom_text(data = edf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
-                  geom_text(data = edf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
-                  scale_x_continuous(limits = c(-0.7,1.1), breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2)) +
-                  labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) + theme_dark())
-          dev.off() 
+          if (uncorrected) {
+            fname = paste("meg_tf_combined_uncorrected_", termstr, ".pdf", sep = "")
+            pdf(fname, width = 14, height = 9)
+            print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_value), size = .01) + {if(rewFunc) facet_wrap(~rewFunc)} +
+                    geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
+                    geom_vline(xintercept = -0.3, lty = "dashed", color = "black", size = 1) +
+                    scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+                    geom_text(data = edf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 2.5, color = "black", angle = 90) +
+                    geom_text(data = edf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "black", angle = 90) +
+                    scale_x_continuous(limits = c(-0.7,1.1), breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2)) +
+                    labs(alpha = expression(italic(p)[uncorrected])) + ggtitle(paste(termstr)) )#+ theme_dark())
+            dev.off() }
           fname = paste("meg_tf_rt_all_dan_FDR_", termstr, ".pdf", sep = "")
-          pdf(fname, width = 14, height = 9)
+          pdf(fname, width = 6, height = 4)
           print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_level_fdr), size = .01) + {if(rewFunc) facet_wrap(~rewFunc)} +
-                  geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 2) +
-                  geom_vline(xintercept = -0.3, lty = "dashed", color = "white", size = 1) +
+                  geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
+                  geom_vline(xintercept = -0.3, lty = "dashed", color = "black", size = 1) +
                   scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
                   # facet_wrap( ~ node, ncol = 2) + 
-                  geom_text(data = edf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
-                  geom_text(data = edf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
+                  geom_text(data = edf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 4, color = "black", angle = 90) +
+                  geom_text(data = edf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 4, color = "black", angle = 90) +
                   scale_x_continuous(limits = c(-0.7,1.1), breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2)) +
-                  labs(alpha = expression(italic(p)[corrected])) + ggtitle(paste(termstr)) + theme_dark())    # 
+                  labs(alpha = expression(italic(p)[corrected])) + ggtitle(paste(termstr))) # + theme_dark())    # 
           dev.off() }
       }
     }

@@ -15,27 +15,30 @@ library(car)
 # basedir <- "~/Data_Analysis"
 basedir <- "~/code"
 coxme_dir <- file.path(basedir, "clock_analysis/coxme")
-medusa_dir = "~/Box/SCEPTIC_fMRI/dan_medusa"
-cache_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/cache"
+medusa_dir = "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa"
+cache_dir = "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/cache"
 repo_directory <- file.path(basedir,"clock_analysis")
 cwd <- getwd()
 setwd(coxme_dir)
 
+# these are set inside clock_coxme_wv_medusa.R
+censor_clock_post_rt = F # censor post-RT epoch when analyzing clock data
+lagged_decon = F # whether to use lagged (by 1s) or unlagged decon
 # load survival and wide MEDUSA ----
 
 # load coxme survival object
 # save(file = file.path(cache_dir, "fMRI_coxme_objects_for_trial_inv_MEDUSA_Dec15_2020.Rdata"), bb, fbb)
-cat("Loading survival objects\n")
+cat("Loading survival objects\n") # bb - fMRI survival object, # fbb - same, first 1s and last 0.5s filtered out
 load (file.path(cache_dir, "fMRI_coxme_objects_for_trial_inv_MEDUSA_Dec15_2020.Rdata"))
 
-# load wide MEDUSAs
+# load wide (different variables for each within-trial timepoint) MEDUSAs
 cat("Loading clock decons\n")
 load(file.path(cache_dir, 'clock_dan_wide_ts.Rdata'))
 cat("Loading RT decons\n")
 load(file.path(cache_dir, 'rt_dan_wide_ts.Rdata'))
 
 cat("Scaling behavioral variables\n")
-# U and V within- and between-trial
+# decompose U and V into within- and between-trial
 bb <- bb %>% group_by(ID, run, run_trial) %>% mutate(value_wi_t = scale(value),
                                                      uncertainty_wi_t = scale(uncertainty),
                                                      value_b_t = mean(value),
@@ -46,7 +49,7 @@ fbb <- fbb %>% group_by(ID, run, run_trial) %>% mutate(value_wi_t = scale(value)
                                                        uncertainty_b_t = mean(uncertainty)) %>% ungroup()
 
 # swap in censored clock-aligned data
-if (censor_clock_post_rt) {clock_wide <- clock_wide_cens}
+# if (censor_clock_post_rt) {clock_wide <- clock_wide_cens}
 
 # get lagged brain signal ----
 # lags are for next RT prediction
@@ -101,3 +104,4 @@ if (lagged_decon) {
 
 # reset working directory
 setwd(cwd)
+
