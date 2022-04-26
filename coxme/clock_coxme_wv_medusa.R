@@ -20,20 +20,20 @@ reprocess = F # if running for the first time or need to reprocess MEDUSA data
 if (reprocess) {censor_clock_post_rt = T # include ITI and clock epochs only, exclude post-RT epoch
 }
 # alignment = c("clock", "rt") # alignment of within-trial deconvolved signal
-alignment = c("rt")
-# alignment = c("clock")
-rt_tplus1 = T
-
+# alignment = c("rt")
+alignment = c("clock")
 uncensored = F # include first 1s and last 0.5s in survival models
+decompose_within_between_trial = T # whether value and uncertainty are decomposed into within- and between-trial components
+
 
 # basedir <- "~/Data_Analysis"
 basedir <- "~/code"
 coxme_dir <- file.path(basedir, "clock_analysis/coxme")
-medusa_dir = "~/Box/SCEPTIC_fMRI/dan_medusa"
-cache_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/cache"
+medusa_dir = "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa"
+cache_dir = "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/cache"
 repo_directory <- file.path(basedir,"clock_analysis")
 
-use_lagged_decons = c(T,F)
+use_lagged_decons = c(F)
 for (lagged_decon in use_lagged_decons) {
   # lagged_decon = T means use previous trial's signal to predict current RT
   if (lagged_decon) {
@@ -97,15 +97,15 @@ for (lagged_decon in use_lagged_decons) {
     }
     
   }
-  if (rt_tplus1) {
-    rt_surv %>% mutate(evt_time = evt_time-1)
-  }
+  # if (rt_tplus1) {
+  #   rt_surv %>% mutate(evt_time = evt_time-1)
+  # }
   rt_labels <- names(rt_surv[grepl("_L_|_R_", names(rt_surv))])
   clock_labels <- names(clock_surv[grepl("_L_|_R_", names(clock_surv))])
   
   # #test
   # labels <- labels[1:2]
-
+  
   for (event in alignment) {
     if (event == 'rt') {surv_df <- rt_surv
     labels <- rt_labels} else {surv_df <- clock_surv
@@ -119,15 +119,21 @@ for (lagged_decon in use_lagged_decons) {
                     surv_df$h <- surv_df[[label]]
                     # form <- as.formula(paste0("Surv(t1,t2,response) ~ wvs1b1a1*", label, " + wvs2b1a1*", label, " + wvs3b1a1*", label, 
                     # " +  value_wi*", label," + uncertainty_wi*", label, " + (1|ID)"))
-                    # simplified model:
-                    m  <- coxme(Surv(t1,t2,response) ~ omission_lag*wvs1b1a1*h + omission_lag2*wvs2b1a1*h + 
-                                  value_wi_t*h + uncertainty_wi_t*h + 
-                                  (1|ID), surv_df)
-                    # m  <- coxme(Surv(t1,t2,response) ~ omission_lag*wvs1b1a1*h + omission_lag2*wvs2b1a1*h + 
-                    #               value_wi_t*h + uncertainty_wi_t*h + 
-                    #               value_b_t*h + uncertainty_b_t*h + 
-                    #               trial_neg_inv_sc*h +
-                    #               (1|ID), medlag_fbb)
+                    # alternative with within- vs. between-trials decomposition
+                    if (decompose_within_between_trial) {
+                      # this "full" model uses between- and within-trial predictors simultaneously, but 
+                      # note that the interaction of h (decon) with between-trial uncertainty or value
+                      # only means that they will respond faster when those are high
+                      m  <- coxme(Surv(t1,t2,response) ~ omission_lag*wvs1b1a1*h + omission_lag2*wvs2b1a1*h +
+                                    value_wi_t*h + uncertainty_wi_t*h +
+                                    value_b_t*h + uncertainty_b_t*h +
+                                    trial_neg_inv_sc*h +
+                                    (1|ID), surv_df)} else {
+                                      # simplified model:
+                                      m  <- coxme(Surv(t1,t2,response) ~ omission_lag*wvs1b1a1*h + omission_lag2*wvs2b1a1*h + 
+                                                    value_wi_t*h + uncertainty_wi_t*h + 
+                                                    (1|ID), surv_df)
+                                    }
                     stats <- as_tibble(insight::get_statistic(m))
                     stats$p <- 2*(1-pnorm(stats$Statistic))
                     stats$label <- label
@@ -165,7 +171,9 @@ for (lagged_decon in use_lagged_decons) {
     for (fe in terms) {
       edf <- df %>% filter(Parameter == paste(fe)) 
       termstr <- str_replace_all(fe, "[^[:alnum:]]", "_")
-      pdf(paste(termstr, ".pdf", sep = ""), width = 11, height = 6)
+      if (decompose_within_between_trial) {
+        pdf(paste(termstr, "_decomposed.pdf", sep = ""), width = 11, height = 6)
+      } else {pdf(paste(termstr, ".pdf", sep = ""), width = 11, height = 6)}
       print(ggplot(edf, aes(t, region)) + geom_tile(aes(fill = Statistic, alpha = `p, FDR-corrected`), size = 1) +  
               geom_vline(xintercept = 0, lty = "dashed", color = "#FF0000", size = 2) + facet_wrap(~side) +
               scale_fill_viridis(option = "plasma") + scale_color_grey() + xlab(epoch_label) + ylab("Parcel") + 

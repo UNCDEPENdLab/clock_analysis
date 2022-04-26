@@ -287,7 +287,7 @@ save(file = "fMRI_MEG_coxme_objects_no_MEDUSA_Nov23_2020.Rdata", bb, fbb, mbb, m
 
 library(zoo)
 if (medusa) {
-  load ("~/Box/SCEPTIC_fMRI/dan_medusa/cache/clock_dan_medusa_for_coxme.Rdata")  
+  load ("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/cache/clock_dan_medusa_for_coxme.Rdata")  
   clock_cox$ID <- clock_cox$id
   # medbb <- inner_join(clock_cox, bb)  %>% arrange(id, run, trial, t1)
   tmp <- left_join(clock_cox, bb)  %>% arrange(id, run, run_trial, evt_time) 

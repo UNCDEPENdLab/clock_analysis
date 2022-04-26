@@ -22,8 +22,8 @@ cwd <- getwd()
 setwd(coxme_dir)
 
 # these are set inside clock_coxme_wv_medusa.R
-censor_clock_post_rt = F # censor post-RT epoch when analyzing clock data
-lagged_decon = F # whether to use lagged (by 1s) or unlagged decon
+# censor_clock_post_rt = F # censor post-RT epoch when analyzing clock data
+# lagged_decon = F # whether to use lagged (by 1s) or unlagged decon
 # load survival and wide MEDUSA ----
 
 # load coxme survival object

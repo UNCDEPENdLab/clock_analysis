@@ -14,14 +14,14 @@ repo_directory <- "~/code/clock_analysis"
 data_dir <- "/Volumes/GoogleDrive/.shortcut-targets-by-id/1ukjK6kTlaR-LXIqX6nylYOPWu1j3XGyF/SCEPTIC_fMRI/MEG/output"
 plot_dir <- "/Users/alexdombrovski/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/plots/wholebrain/"
 
-clock_epoch_label = "Time relative to clock onset, seconds"
-rt_epoch_label = "Time relative to outcome, seconds"
+clock_epoch_label = "Time relative to clock onset (seconds)"
+rt_epoch_label = "Time relative to outcome (seconds)"
 encode = T
 rt_predict = F
 p_adjust_method = "fdr"
 uncorrected = F # whether to make uncorrected plots
 
-regressors = c( "v_max_ri")
+regressors = c( "entropy", "reward")
 
 # regressors = c( "v_max_ri", "entropy","entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward", "kld", "abs_pe")
 # rt_next, reward_rewfunc, ec_rewfunc, condition
@@ -46,10 +46,10 @@ if (encode) {
     if (regressor=="reward") {noclock = T}
     message(paste0("Processing ", regressor))
     if (str_detect(regressor, "rewfunc") | regressor == "rt_next") {rewFunc = T} else {rewFunc = F}
-    epoch_label = "Time relative to feedback, seconds"
+    epoch_label = "Time relative to feedback (seconds)"
     if (reprocess) {
       if (!noclock) {
-        epoch_label = "Time relative to clock onset, seconds"
+        epoch_label = "Time relative to clock onset (seconds)"
         # get clock-aligned data
         if (regressor=="entropy_change") {
           file_pattern <- "*_change_rs_single_.*clock"} else if (regressor=="entropy") {
@@ -226,7 +226,7 @@ if (encode) {
                   geom_vline(xintercept = -offset + 0.3, lty = "dashed", color = "white", size = 2) +
                   geom_vline(xintercept = -offset, lty = "dashed", color = "white", size = 1) +
                   geom_vline(xintercept = -2, lty = "dotted", color = "grey", size = 1) +
-                  scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+                  scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency (Hz)") +
                   geom_text(data = edf, x = -offset-.1, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
                   geom_text(data = edf, x = -offset+.4, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
                   geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
@@ -240,7 +240,7 @@ if (encode) {
                   geom_vline(xintercept = -offset + 0.3, lty = "dashed", color = "white", size = 2) +
                   geom_vline(xintercept = -offset, lty = "dashed", color = "white", size = 1) +
                   geom_vline(xintercept = -2, lty = "dotted", color = "grey", size = 1) +
-                  scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+                  scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency (Hz)") +
                   geom_text(data = edf, x = -offset-.1, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
                   geom_text(data = edf, x = -offset+.4, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
                   geom_text(data = edf, x = 0.5, y = 6 ,aes(label = "Clock onset (t+1)"), size = 2.5, color = "black", angle = 90) +
@@ -256,7 +256,7 @@ if (encode) {
             print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_value), size = .01) + {if(rewFunc) facet_wrap(~rewFunc)} +
                     geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
                     geom_vline(xintercept = -0.3, lty = "dashed", color = "black", size = 1) +
-                    scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+                    scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency (Hz)") +
                     geom_text(data = edf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 2.5, color = "black", angle = 90) +
                     geom_text(data = edf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "black", angle = 90) +
                     scale_x_continuous(limits = c(-0.7,1.1), breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2)) +
@@ -267,7 +267,7 @@ if (encode) {
           print(ggplot(edf, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_level_fdr), size = .01) + {if(rewFunc) facet_wrap(~rewFunc)} +
                   geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
                   geom_vline(xintercept = -0.3, lty = "dashed", color = "black", size = 1) +
-                  scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+                  scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency (Hz)") +
                   # facet_wrap( ~ node, ncol = 2) + 
                   geom_text(data = edf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 4, color = "black", angle = 90) +
                   geom_text(data = edf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 4, color = "black", angle = 90) +
@@ -282,7 +282,7 @@ if (encode) {
       print(ggplot(em, aes(t, Freq)) + geom_tile(aes(fill = statistic, alpha = p_level_fdr), size = .01) +
               geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 2) +
               geom_vline(xintercept = -0.3, lty = "dashed", color = "white", size = 1) +
-              scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+              scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency (Hz)") +
               geom_text(data = edf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
               geom_text(data = edf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
               scale_x_continuous(limits = c(-0.7,1.1), breaks = c(-0.3, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2)) +
@@ -298,7 +298,7 @@ if (encode) {
 if (rt_predict) {
   setwd(data_dir)
   # plots ----
-  epoch_label = "Time relative to clock onset, seconds"
+  epoch_label = "Time relative to clock onset (seconds)"
   # get clock-aligned data
   file_pattern <- ".*rdf.*clock.*"
   message("Processing ")
@@ -408,7 +408,7 @@ if (rt_predict) {
             geom_tile(data = edf %>% filter(estimate > 0), aes(t, Freq, fill = estimate, alpha = p_value), size = .01) +
             scale_y_discrete(limits = levels(edf$Freq)) +
             scale_fill_distiller(palette = "YlGnBu", direction = -1, name = hilabel, limits = c(0, hilim)) +
-            scale_color_grey() + xlab(epoch_label) + ylab("Frequency") +
+            scale_color_grey() + xlab(epoch_label) + ylab("Frequency (Hz)") +
             # facet_wrap( ~ node, ncol = 2) +
             facet_wrap( ~ Sensor) +
             geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 1) + theme_black() +
@@ -436,7 +436,7 @@ if (rt_predict) {
     #         geom_tile(data = edf %>% filter(estimate > 0), aes(t, Freq, fill = estimate, alpha = p_level_fdr), size = .01) +
     #         scale_y_discrete(limits = levels(edf$Freq)) +
     #         scale_fill_distiller(palette = "YlGnBu", direction = -1, name = hilabel, limits = c(0, hilim)) + 
-    #         scale_color_grey() + xlab(epoch_label) + ylab("Frequency") +
+    #         scale_color_grey() + xlab(epoch_label) + ylab("Frequency (Hz)") +
     #         # facet_wrap( ~ node, ncol = 2) + 
     #         facet_wrap( ~ Sensor) +
     #         geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 1) + theme_black() + 
@@ -527,7 +527,7 @@ if (average) {
     new_scale_fill() +
     geom_tile(data = wdf %>% filter(coef_power_rt_mean > 0), aes(t, Freq, fill = coef_power_rt_mean, alpha = p_level_fdr), size = .01) + theme_dark() +
     geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 1) + theme_black() + 
-    scale_fill_distiller(palette = "YlGnBu", direction = -1, name = hilabel, limits = c(0, hilim))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency") + 
+    scale_fill_distiller(palette = "YlGnBu", direction = -1, name = hilabel, limits = c(0, hilim))+ scale_color_grey() + xlab(epoch_label) + ylab("Frequency (Hz)") + 
     geom_vline(xintercept = -5, lty = "dashed", color = "white", size = 1) +
     geom_vline(xintercept = -5.3, lty = "dashed", color = "white", size = .5) +
     geom_vline(xintercept = -2.5, lty = "dotted", color = "grey", size = .5) +
