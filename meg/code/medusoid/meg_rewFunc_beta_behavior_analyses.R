@@ -878,6 +878,52 @@ pdf("decomposed_meg_omission_theta_behavior.pdf", height = 8, width = 14)
 ggarrange(etheta_decomposed, w_etheta_decomposed)
 dev.off()
 
+# early theta across conditions
+across_conditions_1 <- as_tibble(emtrends(meg_om_theta_lbeta_decomposed, data = df,  var = "rt_lag_sc", specs = c("omission_early_theta_avg", "last_outcome"), 
+                           at = list(omission_early_theta_avg = unique(qmeg$omission_early_theta_avg)))) %>%  
+  inner_join(qmeg, by = c("omission_early_theta_avg"))
+across_conditions_1$study = "1. MEG"
+across_conditions_2 <- as_tibble(emtrends(fmri_om_theta_lbeta_decomposed, data =fdf, var = "rt_lag_sc", specs = c("omission_early_theta_avg", "last_outcome"), 
+                           at = list(omission_early_theta_avg = unique(qmeg$omission_early_theta_avg)))) %>%  
+  inner_join(qmeg, by = c("omission_early_theta_avg"))
+across_conditions_2$study = '2. fMRI replication'
+across_conditions_1 <- rbind(across_conditions_2, across_conditions_1)
+etheta_decomposed <- 
+  ggplot(across_conditions_1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=q)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  theme_bw(base_size=12) + facet_grid(rewFunc~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
+  scale_color_manual("Omission\nearly theta\nsynchronization\n(across conditions)", values = across_conditions_1$theta_color)  +
+  labs(shape = "Omission\nearly theta\nsynchronization\n(across conditions)") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.75, -.09)) 
+
+wacross_conditions_1 <- as_tibble(emtrends(meg_om_theta_lbeta_decomposed, data = df,  var = "rt_lag_sc", specs = c("om_theta_wi", "last_outcome"), 
+                            at = list(om_theta_wi = unique(qmeg$om_theta_wi)))) %>%  
+  inner_join(qmeg, by = c("om_theta_wi"))
+wacross_conditions_1$study = "1. MEG"
+wacross_conditions_2 <- as_tibble(emtrends(fmri_om_theta_lbeta_decomposed, data =fdf, var = "rt_lag_sc", specs = c("om_theta_wi", "last_outcome"), 
+                            at = list(om_theta_wi = unique(qmeg$om_theta_wi)))) %>%  
+  inner_join(qmeg, by = c("om_theta_wi"))
+wacross_conditions_2$study = '2. fMRI replication'
+wacross_conditions_1 <- rbind(wacross_conditions_2, wacross_conditions_1)
+w_etheta_decomposed <- 
+  ggplot(wacross_conditions_1, aes(x=last_outcome, y=rt_lag_sc.trend, ymin=asymp.LCL, ymax=asymp.UCL, color=q)) + 
+  geom_point(position = position_dodge(width = .6), size=2.5) + 
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + 
+  theme_bw(base_size=12) + facet_grid(rewFunc~study)+ ylab("RT swings (AU)\n Small <---------> Large")  + 
+  scale_color_manual("Omission\nearly theta\nsynchronization\n(within condition)", values = across_conditions_1$theta_color)  +
+  labs(shape = "Omission\nearly theta\nsynchronization\n(within condition)") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) + 
+  scale_y_reverse(limits = c(.9, -.09)) 
+
+setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
+pdf("decomposed_meg_omission_theta_behavior.pdf", height = 8, width = 14)
+ggarrange(etheta_decomposed, w_etheta_decomposed)
+dev.off()
+
 
 setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
 pdf("decomposed_meg_betas_behavior.pdf", height = 8, width = 22)
