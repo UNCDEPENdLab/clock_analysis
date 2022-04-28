@@ -15,20 +15,21 @@ library(corrplot)
 source("~/code/Rhelpers/theme_black.R")
 
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "/Users/alexdombrovski/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/plots/wholebrain/output"
-plot_dir <- "/Users/alexdombrovski/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/plots/wholebrain"
+data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/output"
+plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain"
 stat_summaries <- T # get mean statistics for every signal
 
 sensors = F # extract sensor random slopes
 
-rewFunc = T
+rewFunc = F
 
 fmri = T # whether to merge and correlate with fMRI betas
 # select_ec_sensors = T
 ################
 # subjects' betas
 # load  models
-regressors = c("ec_rewfunc", "rt_next", "reward_rewfunc")
+regressors = c("entropy_change", "v_max", "reward", "abs_pe")
+# regressors = c("ec_rewfunc", "rt_next", "reward_rewfunc")
 # regressors = c("entropy_change", "entropy_change_ec_sensors", "v_max", "reward", "abspe_ec_sensors", "abs_pe")
 # regressors = c("entropy_change", "v_max", "reward")
 all_regs <- lapply(regressors, function(rr) {
@@ -79,17 +80,17 @@ if (rewFunc) {
     group_by(level, regressor) %>%
     summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_early_beta")
     
-  # go up to 20 Hz, arbitrary boundary of beta1
-  ec1_20 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
-    group_by(level, regressor) %>%
-    summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_late_beta_20hz")
+  # # go up to 20 Hz, arbitrary boundary of beta1
+  # ec1_20 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
+  #   group_by(level, regressor) %>%
+  #   summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_late_beta_20hz")
+  # 
+  # ec2_20 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
+  #   group_by(level, regressor) %>%
+  #   summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_early_beta_20hz")
   
-  ec2_20 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
-    group_by(level, regressor) %>%
-    summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_early_beta_20hz")
   
-  
-  ecs <- rbind(ec1, ec2, ec1_20, ec2_20) %>% rename(id = level) %>% ungroup() %>% pivot_wider(names_from = c(reg_region, regressor), values_from = avg)
+  ecs <- rbind(ec1, ec2) %>% rename(id = level) %>% ungroup() %>% pivot_wider(names_from = c(reg_region, regressor), values_from = avg)
   
   
   vm1 <- all_dfs %>% filter(regressor == "v_max" & term == "v_max_wi" & t >= 0.5 & t <= 0.9 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
@@ -110,6 +111,10 @@ if (rewFunc) {
   abspe1 <- all_dfs %>% filter(term == "abs_pe" & regressor == "abs_pe" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
     group_by(level) %>%
     summarize(avg=mean(estimate)) %>% mutate(reg_region = "abspe_early_theta")
+  
+  abspe2 <- all_dfs %>% filter(term == "abs_pe" & regressor == "abs_pe" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+    group_by(level) %>%
+    summarize(avg=mean(estimate)) %>% mutate(reg_region = "abspe_late_beta")
   
   pe2 <- all_dfs %>% filter( term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
     group_by(level) %>%
@@ -136,7 +141,7 @@ if (rewFunc) {
   setwd("~/code/clock_analysis/meg/data")
   saveRDS(wbetas, file = paste("MEG_betas", paste(regressors, collapse="_"), "April_5_2022.RDS", sep = "_"))  
 } else {
-wholebrain_betas <- rbind(vm1, r1, r2, pe1, pe2, abspe1) %>% rename(id = level) %>% pivot_wider(names_from = c(reg_region), values_from = avg) %>% ungroup()
+wholebrain_betas <- rbind(vm1, r1, r2, pe1, pe2, abspe1, abspe2) %>% rename(id = level) %>% pivot_wider(names_from = c(reg_region), values_from = avg) %>% ungroup()
 wbetas <- merge(ecs, wholebrain_betas)
 just_meg_betas <- wbetas %>% select(where(is.numeric))
 cormat <- corr.test(just_meg_betas, method = "pearson")

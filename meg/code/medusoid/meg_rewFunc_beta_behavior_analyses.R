@@ -93,9 +93,9 @@ summary(lm(rt_shorten_late_beta_supp ~ rewFunc, cond_wbetas))
 
 pdf("ec_late_beta_by_cond.pdf", height = 3, width = 5)
 ggplot(cond_wbetas, aes(rewFunc, entropy_change_late_beta_supp, color = rewFunc)) + 
-  geom_violin(draw_quantiles = .5) + geom_jitter(alpha = .3)
+  geom_violin(draw_quantiles = .5) + geom_boxplot() + geom_jitter(alpha = .3)
 dev.off()
-summary(lmer(entropy_change_late_beta_supp ~ rewFunc + (1|id), cond_wbetas))
+Anova(lmer(entropy_change_late_beta_supp ~ rewFunc + (1|id), cond_wbetas))
 
 
 # only learnable
@@ -290,7 +290,7 @@ meg_om_theta_lbeta_decomposed <-
                # rt_vmax_lag_sc * trial_neg_inv_sc * om_theta_wi * rewFunc  +
                (1|id/run), df %>% filter(rt_csv<4000))
 # screen.lmerTest(meg_om_theta_lbeta_decomposed, .01)
-anova(meg_om_theta_lbeta_rewFunc, meg_om_theta_lbeta_decomposed)
+# anova(meg_om_theta_lbeta_rewFunc, meg_om_theta_lbeta_decomposed)
 
 summary(meg_om_theta_lbeta_decomposed)
 Anova(meg_om_theta_lbeta_decomposed, '3')
