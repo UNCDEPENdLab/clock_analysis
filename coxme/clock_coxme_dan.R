@@ -24,17 +24,28 @@ library(coxme)
 library(survminer)
 # library(OIsurv)
 library(ggpubr)
+clock_folder <- "~/code/clock_analysis" #alex
+source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R")
+
+# load trial data
+sdf <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_fmri", groupfixed = T) %>% mutate(id = as.character(id),
+                                                                                                         ID = id)
 
 load(file="clock_for_coxme_value_only_070518.RData")
 
-# add hippocampal betas
+add_fmri_betas = F
+
+if (add_fmri_betas) {
+# add fMRI betas
+  # obsolete
 setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 load('trial_df_and_vh_pe_clusters_u.Rdata')
 hdf <- df %>% select (ID, general_entropy, med_par, fef) %>% unique()
 sdf <- sdf %>% inner_join(hdf, by = "ID")
-
-# mark events (responses)
 sdf$response <- round(sdf$rt/1000, digits = 1)==sdf$t2
+} else {
+sdf$response <- round(sdf$rt/1000, digits = 1)==sdf$t2}
+# mark events (responses)
 
 
 # inspect piecewize hazard functions
@@ -54,14 +65,15 @@ H$h <- as.numeric(H$h)
 H$logh <- log(H$h)
 H$times <- as.numeric(H$times)
 # pdf("piecewise_hazard_fx_all_groups.pdf", width = 12, height = 4)
+# piecewise hazard function
 ggplot(H,aes(times, h, color = condition)) + geom_line()
+# log hazard: subtle differences, but as expected
 ggplot(H,aes(times, logh, color = condition)) + geom_line()
-# not what I expected: shared underlying hazard across contingencies
 
+
+# validation: survival analysis with continuous time, as expected
 badfit <- survfit(Surv(t2) ~ rewFunc, type = 'right', origin = .1, data=sdf)
 badfit1 <- survfit(Surv(rt) ~ rewFunc,  data=bdf)
-
-
 plot(badfit1, mark.time=FALSE, lty=1:4,
      xlab="ms", ylab="Proportion still waiting")
 legend(3000, .85, c("CEV", "CEVR", "DEV", "IEV"),
