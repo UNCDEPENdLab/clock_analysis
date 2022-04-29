@@ -15,8 +15,8 @@ library(corrplot)
 source("~/code/Rhelpers/theme_black.R")
 
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "/Users/alexdombrovski/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/plots/wholebrain/output"
-plot_dir <- "/Users/alexdombrovski/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/plots/wholebrain"
+data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/output"
+plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain"
 stat_summaries <- T # get mean statistics for every signal
 
 sensors = F # extract sensor random slopes
@@ -28,8 +28,13 @@ fmri = T # whether to merge and correlate with fMRI betas
 ################
 # subjects' betas
 # load  models
+regressors = c("entropy_change", "v_max", "reward", "abs_pe")
 # regressors = c("ec_rewfunc", "rt_next", "reward_rewfunc")
-regressors = c("entropy_change",  "reward", "abspe_ec_sensors", "abs_pe", "signed_pe_rs")
+# regressors = c("entropy_change", "entropy_change_ec_sensors", "v_max", "reward", "abspe_ec_sensors", "abs_pe")
+
+# regressors = c("ec_rewfunc", "rt_next", "reward_rewfunc")
+# regressors = c("entropy_change",  "reward", "abspe_ec_sensors", "abs_pe", "signed_pe_rs")
+
 
 # regressors = c("entropy_change", "v_max", "reward")
 all_regs <- lapply(regressors, function(rr) {
@@ -79,9 +84,8 @@ if (rewFunc) {
   ec2 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
     group_by(level, regressor) %>%
     summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_early_beta")
-  
-  # # go up to 20 Hz, arbitrary boundary of beta1
-  # not necessary
+    
+
   # ec1_20 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
   #   group_by(level, regressor) %>%
   #   summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_late_beta_20hz")
@@ -113,6 +117,10 @@ if (rewFunc) {
     group_by(level) %>%
     summarize(avg=mean(estimate)) %>% mutate(reg_region = "abspe_early_theta")
   
+  abspe2 <- all_dfs %>% filter(term == "abs_pe" & regressor == "abs_pe" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+    group_by(level) %>%
+    summarize(avg=mean(estimate)) %>% mutate(reg_region = "abspe_late_beta")
+  
   pe2 <- all_dfs %>% filter( term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
     group_by(level) %>%
     summarize(avg=mean(estimate)) %>% mutate(reg_region = "pe_late_beta")
@@ -138,21 +146,20 @@ if (rewFunc) {
   setwd("~/code/clock_analysis/meg/data")
   saveRDS(wbetas, file = paste("MEG_betas", paste(regressors, collapse="_"), "April_5_2022.RDS", sep = "_"))  
 } else {
-  wholebrain_betas <- rbind(r1, r2, pe1, pe2, abspe1) %>% rename(id = level) %>% pivot_wider(names_from = c(reg_region), values_from = avg) %>% ungroup()
-  wbetas <- merge(ecs, wholebrain_betas)
-  
+
+wholebrain_betas <- rbind(vm1, r1, r2, pe1, pe2, abspe1, abspe2) %>% rename(id = level) %>% pivot_wider(names_from = c(reg_region), values_from = avg) %>% ungroup()
+wbetas <- merge(ecs, wholebrain_betas)
+just_meg_betas <- wbetas %>% select(where(is.numeric))
+cormat <- corr.test(just_meg_betas, method = "pearson")
+# inspect corr structure to make sure it is not garbage
+corrplot(cormat$r, p.mat = cormat$p, order = "hclust", tl.cex = .8, insig = 'blank', method = 'number')
+setwd("~/code/clock_analysis/meg/data")
+saveRDS(wbetas, file = paste("MEG_betas", paste(regressors, collapse="_"), "Mar_14_2022.RDS", sep = "_"))
   # compare signals for early theta
   etheta <- wbetas %>% select(id, reward_early_theta, pe_early_theta, abspe_early_theta) %>% pivot_longer(names_to = "signal", 
                                                                                                           cols =c(reward_early_theta, pe_early_theta, abspe_early_theta))
   ggplot(etheta, aes(signal, value, color = signal)) + geom_violin() + geom_point()
   
-  
-  just_meg_betas <- wbetas %>% select(where(is.numeric))
-  cormat <- corr.test(just_meg_betas, method = "pearson")
-  # inspect corr structure to make sure it is not garbage
-  corrplot(cormat$r, p.mat = cormat$p, order = "hclust", tl.cex = .8, insig = 'blank', method = 'number')
-  setwd("~/code/clock_analysis/meg/data")
-  saveRDS(wbetas, file = paste("MEG_betas", paste(regressors, collapse="_"), "Mar_14_2022.RDS", sep = "_"))
 }
 if (stat_summaries) {
   

@@ -452,9 +452,9 @@ ggarrange(pe_pe_etheta, pe_ec_lbeta, nrow = 2, ncol = 1)
 
 
 # interaction with run?
-m_ec_lbeta_run2 <- lmer(value ~ (rewFunc +  Stream + entropy_change_late_beta_supp + run_mc) ^2 + (1|id), df)
-summary(m_ec_lbeta_run)
-Anova(m_ec_lbeta_run, '3')
+# m_ec_lbeta_run2 <- lmer(value ~ (rewFunc +  Stream + entropy_change_late_beta_supp + run_mc) ^2 + (1|id), df)
+# summary(m_ec_lbeta_run)
+# Anova(m_ec_lbeta_run, '3')
 
 # read in entropy EV_entropy_wiz_clock
 e_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_entropy_wiz_clock") %>% 
