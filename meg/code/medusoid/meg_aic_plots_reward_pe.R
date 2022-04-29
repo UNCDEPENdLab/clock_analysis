@@ -16,7 +16,7 @@ repo_directory <- "~/code/clock_analysis"
 data_dir <- "/Volumes/GoogleDrive/.shortcut-targets-by-id/1ukjK6kTlaR-LXIqX6nylYOPWu1j3XGyF/SCEPTIC_fMRI/MEG/output"
 plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/"
 
-rt_epoch_label = "Time relative to event, seconds"
+rt_epoch_label = "Time relative to event (seconds)"
 encode = T
 rt_predict = F
 # regressors = c("reward")
@@ -117,7 +117,7 @@ if (plots) {
     ggplot(wddf , aes(t, Freq)) + geom_tile(aes(fill = AIC_diff_thresholded)) + 
     geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 2) +
     geom_vline(xintercept = -0.3, lty = "dashed", color = "white", size = 1) +
-    scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+    scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency (Hz)") +
     # facet_wrap( ~ node, ncol = 2) + 
     geom_text(data = wddf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
     geom_text(data = wddf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +

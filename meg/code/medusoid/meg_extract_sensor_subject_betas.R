@@ -223,11 +223,11 @@ stat_df <- data.table::rbindlist(stat_regs) %>% filter(effect == "fixed")
 
 # stat_df <- all_dfs %>% mutate(statistic1 = estimate/std.error) %>% select(term, t, Freq, statistic1, level, regressor) 
 
-sec1 <- stat_df %>% filter(term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+sec1 <- stat_df %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
   summarize(stat=mean(statistic),
             se = std.error(statistic)) %>% mutate(reg_region = "entropy_change_late_beta")
 # early beta (rebound)
-sec2 <- stat_df %>% filter(term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+sec2 <- stat_df %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
   summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "entropy_change_early_beta")
 
 # go up to 20 Hz, arbitrary boundary of beta1
@@ -248,6 +248,10 @@ sr1a <- stat_df %>% filter(term == "reward_centered" & regressor == "abs_pe" & t
 
 sr2 <- stat_df %>% filter(term == "reward_t" & t >= 0.4 & t <= 0.8 &  Freq <= "4.2") %>% # & Freq < "16.8"
   summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "reward_late_delta")
+
+sr3 <- stat_df %>% filter(term == "reward_t" & regressor == "reward" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+  summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "reward_late_beta")
+
 spe1 <- stat_df %>% filter(term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
   summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "pe_early_theta")
 sabspe1 <- stat_df %>% filter(term == "abs_pe" & regressor == "abs_pe" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
@@ -268,19 +272,19 @@ setwd("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/")
 pdf("MEG_early_theta_signal_stats_comparison.pdf", height = 1.5, width = 2.75)
 # ggplot(signal_stats, aes(factor(reg_region, level = c("reward_early_theta", "pe_early_theta", "abspe_early_theta")), stat)) + geom_point(size = 3) +
 ggplot(signal_stats, aes(factor(reg_region, level = c("reward_early_theta", "pe_early_theta", "abspe_early_theta")), stat)) + 
-  geom_bar(stat = "identity", fill = "grey70") + geom_errorbar(aes(ymin = stat - se, ymax = stat + se)) +
-  scale_x_discrete(labels = c("Reward >\nomission", "Signed\nprediction\nerror", "Absolute\nprediction\nerror")) + xlab(NULL) + ylab("Mean statistic") +
+  geom_bar(stat = "identity", fill = "grey70") + geom_errorbar(aes(ymin = stat - se, ymax = stat + se), width = .3) +
+  scale_x_discrete(labels = c("Reward >\nomission", "Signed\nprediction\nerror", "Absolute\nprediction\nerror")) + xlab(NULL) + ylab("Mean t statistic") +
   ylim(c(-7.5, 2.5)) + geom_hline(yintercept = 0) 
 dev.off()
 
 # compare late beta responses
-beta_stats <- rbind(sec1, spe2, sabspe2)
-pdf("MEG_late_beta_signal_stats_comparison.pdf", height = 1.5, width = 2.75)
+beta_stats <- rbind(sec1, spe2, sabspe2, sr3)
+pdf("MEG_late_beta_signal_stats_comparison.pdf", height = 1.5, width = 3.25)
 # ggplot(signal_stats, aes(factor(reg_region, level = c("reward_early_theta", "pe_early_theta", "abspe_early_theta")), stat)) + geom_point(size = 3) +
-ggplot(beta_stats, aes(factor(reg_region, level = c("entropy_change_late_beta", "pe_late_beta", "abspe_late_beta")), stat)) + 
-  geom_bar(stat = "identity", fill = "grey70") + geom_errorbar(aes(ymin = stat - se, ymax = stat + se)) +
-  scale_x_discrete(labels = c("Entropy\nchange", "Signed\nprediction\nerror", "Absolute\nprediction\nerror")) + xlab(NULL) + ylab("Mean statistic") +
-  ylim(c(-13, .5)) + geom_hline(yintercept = 0)
+ggplot(beta_stats, aes(factor(reg_region, level = c("entropy_change_late_beta", "pe_late_beta", "abspe_late_beta", "reward_late_beta")), stat)) + 
+  geom_bar(stat = "identity", fill = "grey70") + geom_errorbar(aes(ymin = stat - se, ymax = stat + se), width = .3) +
+  scale_x_discrete(labels = c("Entropy\nchange", "Signed\nprediction\nerror", "Absolute\nprediction\nerror", "Reward")) + xlab(NULL) + ylab("Mean t statistic") +
+  ylim(c(-4, .25)) + geom_hline(yintercept = 0)
 dev.off()
 
 signal_stats_wide <- signal_stats %>% pivot_wider(names_from = c(reg_region), values_from = stat)
