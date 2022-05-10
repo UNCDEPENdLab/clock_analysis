@@ -19,7 +19,7 @@ data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/output"
 plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain"
 stat_summaries <- T # get mean statistics for every signal
 
-sensors = F # extract sensor random slopes
+sensors = T # extract sensor random slopes
 
 rewFunc = F
 
@@ -315,13 +315,13 @@ if (fmri) {
 }
 if (sensors) {
   # load all models
-  regressors = c("entropy_change","v_max_ri")
+  regressors = c("entropy_change")
   all_res <- lapply(regressors, function(rr) {
     cd <- file.path(plot_dir, rr)
     dfile <- file.path(cd, paste0("meg_ddf_wholebrain_", rr, ".rds"))
     ddf <- readRDS(dfile) %>% 
-      filter(effect=="ran_vals" & term != "(Intercept)") %>% 
-      dplyr::select(t, Freq, level, term, estimate, std.error, conf.low, conf.high)
+      filter(effect=="ran_coefs" & term != "(Intercept)") %>% 
+      dplyr::select(t, Freq, level, group, term, estimate, std.error, conf.low, conf.high)
     return(ddf)
   })
   
@@ -329,6 +329,17 @@ if (sensors) {
   all_res[[1]] <- all_res[[1]] %>% filter(Freq <= 40) %>% droplevels()
   
   all_df <- data.table::rbindlist(all_res)
+  
+  echange <- all_df %>% filter(term != "v_max_wi" & t >= .4 & t <= .8 & Freq >= "8.4" & Freq < "20") %>%
+    select(-std.error, -conf.low, -conf.high) %>%
+    pivot_wider(names_from="term", values_from = "estimate") %>%
+    group_by(t, Freq) %>%
+    do({
+      df <- .
+      r <- cor(df$entropy_change_t, df$abs_pe_sc)
+      data.frame(df[1,], r)
+    }) %>% ungroup()
+  
   
   pe_echange <- all_df %>% filter(term != "v_max_wi" & t >= .4 & t <= .8 & Freq >= "8.4" & Freq < "20") %>%
     select(-std.error, -conf.low, -conf.high) %>%
