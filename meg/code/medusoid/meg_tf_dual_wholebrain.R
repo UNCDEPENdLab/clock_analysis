@@ -11,7 +11,7 @@ library(RColorBrewer)
 source("~/code/Rhelpers/theme_black.R")
 
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "/Volumes/GoogleDrive/.shortcut-targets-by-id/1ukjK6kTlaR-LXIqX6nylYOPWu1j3XGyF/SCEPTIC_fMRI/MEG/output"
+data_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/MEG/output/"
 plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/"
 
 clock_epoch_label = "Time relative to clock onset (seconds)"
@@ -21,7 +21,7 @@ rt_predict = F
 p_adjust_method = "fdr"
 uncorrected = F # whether to make uncorrected plots
 
-regressors = c("kld")
+regressors = c("abspe_rewfunc")
 
 # regressors = c( "v_max_ri", "entropy","entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward", "kld", "abs_pe")
 # rt_next, reward_rewfunc, ec_rewfunc, condition
@@ -32,7 +32,7 @@ regressors = c("kld")
 emt1 = F # emtrends plots for the first set (ddf$emtrends_list$emt1)
 print_filenames = T
 fixed_only = F
-reprocess = F # reprocess from uncompiled lmer output
+reprocess = T # reprocess from uncompiled lmer output
 plots = T
 diags = F
 average = F
@@ -106,7 +106,8 @@ if (encode) {
                                                   file_pattern <- ".ec_rewfunc.*RT"} else if (regressor == "rt_next") {
                                                     file_pattern <- ".rt_next.*RT"} else if (regressor == "reward_rewfunc") {
                                                       file_pattern <- ".reward_rewf.*RT"} else if (regressor == "condition") {
-                                                        file_pattern <- ".condition.*RT"
+                                                        file_pattern <- ".condition.*RT"} else if (regressor == "abspe_rewfunc") {
+                                                          file_pattern <- ".abspe_rewfunc.*RT"
                                                       }
       # file_pattern <- "ddf_combined_entropy_rsRT|ddf_combined_entropy_change_rs_RT"
       # file_pattern <- "meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_RT|meg_mixed_by_tf_ddf_wholebrain_entropy_change_rs_finishRT"
