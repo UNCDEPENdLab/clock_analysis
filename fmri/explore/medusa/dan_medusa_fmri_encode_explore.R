@@ -180,6 +180,9 @@ if (alignment == "clock" || alignment == "clock_online") {
   enc_rt_pe <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
                          v_entropy_wi + v_entropy_wi_change + pe_max +
                          (1 | id) )
+  # signed PE w/o covariates
+  enc_rt_pe_only <- formula(~ pe_max +
+                         (1 | id) )
   
   # abs_pe x outcome interaction
   enc_rt_int <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
