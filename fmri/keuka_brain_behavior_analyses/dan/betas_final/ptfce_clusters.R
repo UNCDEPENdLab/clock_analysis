@@ -32,6 +32,7 @@ echange_rois <- read_csv(obj$get_outputs()$atlas_files[[1]]["summary"]) %>% rena
 schaefer_200_wami <- read.csv("/proj/mnhallqlab/projects/clock_analysis/fmri/pfc_entropy/original_masks/schaefer_200_whereami.csv")
 echange_parcels <- schaefer_200_wami %>% inner_join(echange_rois) %>% filter(retained == TRUE)
 
+write_csv(echange_parcels, file="schaefer_echange_parcel_overlap.csv")
 
 
 # all schaefers that overlap overall echange FWE map at > .75

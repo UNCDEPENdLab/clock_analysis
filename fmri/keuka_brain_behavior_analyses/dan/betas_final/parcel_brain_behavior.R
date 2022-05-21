@@ -19,7 +19,7 @@ if (Sys.getenv("USER")=="alexdombrovski") {
   setwd("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final")
   
   source("../get_trial_data.R")
-  source("/Users/hallquist/Data_Analysis/r_packages/fmri.pipeline/R/mixed_by.R")
+  #source("/Users/hallquist/Data_Analysis/r_packages/fmri.pipeline/R/mixed_by.R")
   source("../medusa_final/plot_medusa.R")
   labels <- readxl::read_excel("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx") %>%
     dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label)
@@ -56,42 +56,91 @@ labels_200 <- read.csv(file.path(beta_dir, "schaefer_200_whereami.csv")) %>%
   dplyr::rename(mask_value = roi_num, plot_label = MNI_Glasser_HCP_v1.0) %>% dplyr::select(mask_value, plot_label) %>%
   mutate(plot_label = sub("Focus point:\\s+", "", plot_label, perl=TRUE))
 
-#trial_df <- get_trial_data(repo_directory = "~/Data_Analysis/clock_analysis") %>%
+# trial_df <- get_trial_data(repo_directory = "~/Data_Analysis/clock_analysis") %>%
 trial_df <- get_trial_data(repo_directory = "/proj/mnhallqlab/projects/clock_analysis") %>%
   group_by(id, run) %>%
-  mutate(v_max_wi_lag = lag(v_max_wi, order_by=run_trial)) %>%
+  mutate(v_max_wi_lag = lag(v_max_wi, order_by = run_trial)) %>%
   ungroup() %>%
-  dplyr::select(id, run, run_trial, trial_neg_inv, rt_csv, rt_lag, v_entropy_wi, v_max_wi_lag, 
-                rt_vmax_lag, last_outcome)
+  dplyr::rename(run_number = run) %>%
+  dplyr::select(id, run_number, run_trial, trial_neg_inv, rt_csv, rt_lag, v_entropy_wi, v_max_wi_lag, 
+                rt_vmax_lag, last_outcome, rewFunc)
 
-echange_l2_copes <- file.path(beta_dir, "L1m-echange/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz")
+# single file testing
+# echange_l2_copes <- file.path(beta_dir, "L1m-echange/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz")
+# echange_l1_copes <- file.path(beta_dir, "L1m-echange/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz")
+
+# simpler models without rewFunc
 int <- formula(~ (trial_neg_inv + rt_lag + v_max_wi_lag + v_entropy_wi + fmri_beta + last_outcome)^2 +
                         rt_lag:last_outcome:fmri_beta +
                         rt_vmax_lag*trial_neg_inv*fmri_beta +
-                        (1 | id/run)
+                        (1 | id/run_number)
 )
 
 
 slo <- formula(~ (trial_neg_inv + rt_lag + v_max_wi_lag + v_entropy_wi + fmri_beta + last_outcome)^2 +
                  rt_lag:last_outcome:fmri_beta +
                  rt_vmax_lag*trial_neg_inv*fmri_beta +
-                 (1 + rt_lag + rt_vmax_lag | id/run)
+                 (1 + rt_lag + rt_vmax_lag | id/run_number)
 )
 
-efiles <- list.files(beta_dir, pattern = "Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz", 
-                    recursive = TRUE, full.names = TRUE)
+# int only with rewFunc moderation
+rewFunc <- formula(~ (trial_neg_inv + rt_lag + v_max_wi_lag + v_entropy_wi + fmri_beta + last_outcome + rewFunc)^2 +
+                        rt_lag:last_outcome:fmri_beta +
+                        rt_vmax_lag*trial_neg_inv*fmri_beta +
+                        rt_lag*last_outcome*fmri_beta*rewFunc +
+                        rt_vmax_lag*fmri_beta*rewFunc +
+                        (1 | id/run_number)
+)
 
+
+
+emtrends_spec <- list(
+  rt_lag_int = list(
+    outcome = "rt_csv", model_name = "int", var = "rt_lag", specs = c("last_outcome", "fmri_beta"),
+    at = list(fmri_beta = c(-2, 0, 2))
+  ), # z scores
+  rt_lag_slo = list(
+    outcome = "rt_csv", model_name = "slo", var = "rt_lag", specs = c("last_outcome", "fmri_beta"),
+    at = list(fmri_beta = c(-2, 0, 2))
+  ), # z scores
+  rt_lag_rewFunc = list(
+    outcome = "rt_csv", model_name = "rewFunc", var = "rt_lag", specs = c("last_outcome", "fmri_beta", "rewFunc"),
+    at = list(fmri_beta = c(-2, 0, 2)) # z scores
+  ),
+  rt_vmax_int = list(
+    outcome = "rt_csv", model_name = "int", var = "rt_vmax_lag", specs = c("last_outcome", "fmri_beta"),
+    at = list(fmri_beta = c(-2, 0, 2)) # z scores
+  ),
+  rt_vmax_slo = list(
+    outcome = "rt_csv", model_name = "slo", var = "rt_vmax_lag", specs = c("last_outcome", "fmri_beta"),
+    at = list(fmri_beta = c(-2, 0, 2)) # z scores
+  ),
+  rt_vmax_rewFunc = list(
+    outcome = "rt_csv", model_name = "rewFunc", var = "rt_vmax_lag", specs = c("fmri_beta", "rewFunc"),
+    at = list(fmri_beta = c(-2, 0, 2)) # z scores
+  )
+)
+
+# save snapshot of environment to use inside estimation
 save.image(file="parcel_input_snapshot.RData")
 
+
+efiles_l2 <- list.files(beta_dir,
+  pattern = "Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz",
+  recursive = TRUE, full.names = TRUE
+)
+
 #efiles <- efiles[3:6]
-for (ee in efiles) {
+for (ee in efiles_l2) {
   job <- R_batch_job$new(
     job_name = "parcel_bb", batch_directory = getwd(), scheduler = "slurm",
     input_rdata_file = "parcel_input_snapshot.RData",
     n_nodes = 1, n_cpus = 16, wall_time = "12:00:00",
     mem_total = "64G",
     r_code = glue("to_plot <- mixed_by_betas('{ee}', labels_200, trial_df, mask_file = 'Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
-                            rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16, afni_dir = '/proj/mnhallqlab/sw/afni',
+                            rhs_model_formulae = fmri.pipeline:::named_list(int, slo), ncores = 16, afni_dir = '/proj/mnhallqlab/sw/afni',
+                            calculate = c('parameter_estimates_reml', 'fit_statistics'),
+                            beta_level = 2L, focal_contrast = 'overall', emtrends_spec = emtrends_spec,
                             split_on = c('l1_cope_name', 'l2_cope_name', 'mask_value'))"),
     r_packages = c("fmri.pipeline", "tidyverse", "data.table", "sfsmisc"),
     batch_code = c("module use /proj/mnhallqlab/sw/modules", "module load r/4.1.2_depend")
@@ -105,6 +154,47 @@ for (ee in efiles) {
   #                           rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16,
   #                           split_on = c("l1_cope_name", "l2_cope_name", "mask_value"))
 }
+
+
+efiles_l1 <- list.files(beta_dir,
+  pattern = "Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz",
+  recursive = TRUE, full.names = TRUE
+)
+
+efiles_l1 <- efiles_l1[c(6, 9, 11)] # entropy, pe, echange
+l1_contrasts <- c("EV_entropy_change_feedback", "EV_entropy_wiz_clock", "EV_pe")
+
+# l1 brain-behavior
+for (ee in seq_along(efiles_l1)) {
+  job <- R_batch_job$new(
+    job_name = "parcel_bb", batch_directory = getwd(), scheduler = "slurm",
+    input_rdata_file = "parcel_input_snapshot.RData",
+    n_nodes = 1, n_cpus = 16, wall_time = "12:00:00",
+    mem_total = "96G",
+    r_code = glue("to_plot <- mixed_by_betas('{efiles_l1[ee]}', labels_200, trial_df, mask_file = 'Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
+                            rhs_model_formulae = fmri.pipeline:::named_list(rewFunc), ncores = 16, afni_dir = '/proj/mnhallqlab/sw/afni',
+                            calculate = c('parameter_estimates_reml', 'fit_statistics'),
+                            trial_join_col = c('id', 'run_number'), beta_level = 1L, focal_contrast = '{l1_contrasts[ee]}', emtrends_spec = emtrends_spec,
+                            split_on = c('l1_cope_name', 'mask_value'))"),
+    r_packages = c("fmri.pipeline", "tidyverse", "data.table", "sfsmisc"),
+    batch_code = c("module use /proj/mnhallqlab/sw/modules", "module load r/4.1.2_depend")
+  )
+
+  #eval(parse(text = job$r_code))
+  job$submit()
+
+  # local execution
+  # to_plot <- mixed_by_betas(ee, labels_200, trial_df, mask_file = "Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
+  #                           rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16,
+  #                           split_on = c("l1_cope_name", "l2_cope_name", "mask_value"))
+}
+
+
+
+
+####
+
+
 
 
 # these are betas I manually extracted by using colMeans, readNifti, and mask indices in the old/traditional voxelwise approach.

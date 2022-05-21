@@ -10,26 +10,25 @@
 #' @param trial_join_col The column name in \code{beta_csv} and \code{trial_df} used to match-merge them
 #' @param split_on The factors in \code{beta_csv} used to split the data into separate datasets for multilevel models.
 #'   Default is 'mask_value', but if the beta_csv contains many contrasts, it may be more like, c('mask_value', 'l1_cope_name', 'l2_cope_name')
-#' @param rhs_form The right-hand side formula used in the lmer() calls by mixed_by
 #' @param ncores The number of cores to use for parallel computation of splits (passed through to mixed_by)
 #' @param out_dir The output directory for statistic and image files
 #' @param afni_dir The directory containing AFNI commands/programs
-#'
+#' @param ... Additional arguments passed to mixed_by
+#' 
 #' @details Note that by default, this function also computes the robust mean of betas/coefficients in each mask_value and provides
 #'   an overall map of means by parcel/mask value. This is usezful to see in which parcels whole-brain activation is robust and significant
 #'   and it provides a validation of the parcelwise beta extraction against the corresponding voxelwise maps from which the betas are drawn
 #' @return The data.frame containing coefficients by splits (incl. mask value)
 mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label_join_col = "mask_value", trial_join_col = "id",
-                           split_on = c("mask_value", "l1_cope_name"), rhs_form = NULL, ncores = 16,
-                           out_dir = NULL, out_prefix = NULL, afni_dir = "~/abin") {
+                           beta_level = 2L, focal_contrast = "overall", out_dir = NULL, out_prefix = NULL, afni_dir = "~/abin", ...) {
   checkmate::assert_data_frame(label_df)
   checkmate::assert_file_exists(beta_csv)
-  if (checkmate::test_formula(rhs_form)) {
-    rhs_form <- list(main = rhs_form) # always work from list
-  }
+
+  # reasonable default -- superseded by ...
+  #split_on = c("mask_value", "l1_cope_name"), 
 
   if (is.null(out_dir)) {
-    out_dir <- file.path(normalizePath(dirname(beta_csv)), "parcel_maps")
+    out_dir <- file.path(normalizePath(dirname(beta_csv)), paste0("parcel_maps_l", beta_level))
   }
 
   if (!dir.exists(out_dir)) {
@@ -46,36 +45,48 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
   # the big betas file has all of the L2 contrasts, which are largely uninteresting and make the dataset massive
   # for now, subset down to overall contrast at L2.
 
-  cope_df <- fread(beta_csv) %>%
-    filter(l2_cope_name == "overall") %>% # for not, ignore all other l2 contrasts
+  if (beta_level == 2L) {
+    nest_by <- c("l1_model", "l1_cope_name", "l2_cope_name")
+    fill_split <- c("l1_cope_name", "l2_cope_name", "term", "model_name")
 
-    # debugging only
-    # filter(mask_value %in% 1:2) %>%
-    # filter(l1_cope_name == "EV_clock") %>%
-    # filter(l1_cope_name == "EV_entropy_change_feedback" & l2_cope_name == "overall") %>%
-    # filter(l1_cope_name == "EV_entropy_wiz_clock" & l2_cope_name == "overall") %>%
-    dplyr::select(-feat_dir, -img, -mask_name, -session, -l1_cope_number, -l2_cope_number, -l2_model) %>%
-    rename(fmri_beta = value) %>%
-    merge(label_df, by = label_join_col, all.x = TRUE)
+    cope_df <- fread(beta_csv) %>%
+      filter(l2_cope_name == !!focal_contrast) %>% # for not, ignore all other l2 contrasts
 
+      # debugging only
+      # filter(mask_value %in% 1:2) %>%
+      # filter(l1_cope_name == "EV_clock") %>%
+      # filter(l1_cope_name == "EV_entropy_change_feedback" & l2_cope_name == "overall") %>%
+      # filter(l1_cope_name == "EV_entropy_wiz_clock" & l2_cope_name == "overall") %>%
+      
+      dplyr::select(-feat_dir, -img, -mask_name, -session, -l1_cope_number, -l2_cope_number, -l2_model) %>%
+      rename(fmri_beta = value) %>%
+      merge(label_df, by = label_join_col, all.x = TRUE)
+  } else if (beta_level == 1L) {
+    nest_by <- c("l1_model", "l1_cope_name")
+    fill_split <- c("l1_cope_name", "term", "model_name")
+
+    cope_df <- fread(beta_csv) %>%
+      filter(l1_cope_name == !!focal_contrast) %>%
+
+      # debugging only
+      # filter(mask_value %in% 1:2) %>%
+      # filter(l1_cope_name == "EV_clock") %>%
+      # filter(l1_cope_name == "EV_entropy_change_feedback") %>%
+      # filter(l1_cope_name == "EV_entropy_wiz_clock") %>%
+      dplyr::select(-feat_dir, -img, -mask_name, -session, -l1_cope_number) %>%
+      rename(fmri_beta = value) %>%
+      merge(label_df, by = label_join_col, all.x = TRUE)
+
+  }
+
+  # for l1 betas, need c("id", "run_number") as join
   combo <- cope_df %>%
     merge(trial_df, by = trial_join_col, all.x = TRUE, allow.cartesian = TRUE) # trial_df and betas get crossed
-
-  # %>%
-  #   left_join(label_df, by=label_join_col) %>%
-  #   left_join(trial_df, by=trial_join_col)
-
-  # divide mixed_by by contrast
-  # if ("l2_cope_name" %in% names(cope_df)) {
-  #   cope_split <- split(cope_df, by=c("l1_cope_name", "l2_cope_name"))
-  # } else {
-  #   cope_split <- split(cope_df, by="l1_cope_name")
-  # }
 
   # run one-sample test statistics for each parcel to corroborate beta extraction against whole-brain voxelwise analysis
   onesamp_betas(cope_df,
     mask_file = mask_file, roi_column = "mask_value",
-    nest_by = c("l1_model", "l1_cope_name", "l2_cope_name"),
+    nest_by = nest_by,
     out_dir = out_dir, img_prefix = "onesamp", afni_dir = afni_dir
   )
 
@@ -86,21 +97,9 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
   } else {
     # run mixed by across splits
     ddf <- mixed_by(combo,
-      outcomes = "rt_csv", rhs_model_formulae = rhs_form,
-      split_on = split_on,
-      scale_predictors = c("trial_neg_inv", "rt_lag", "rt_vmax_lag", "v_max_wi_lag", "fmri_beta"),
+      outcomes = "rt_csv", scale_predictors = c("trial_neg_inv", "rt_lag", "rt_vmax_lag", "v_max_wi_lag", "fmri_beta"),
       tidy_args = list(effects = c("fixed"), conf.int = TRUE),
-      calculate = c("parameter_estimates_reml"), ncores = ncores, refit_on_nonconvergence = 5, padjust_by = "term",
-      emtrends_spec = list(
-        rt_lag_int = list(
-          outcome = "rt_csv", model_name = "int", var = "rt_lag", specs = c("last_outcome", "fmri_beta"),
-          at = list(fmri_beta = c(-2, 0, 2))
-        ), # z scores
-        rt_lag_slo = list(
-          outcome = "rt_csv", model_name = "slo", var = "rt_lag", specs = c("last_outcome", "fmri_beta"),
-          at = list(fmri_beta = c(-2, 0, 2))
-        ) # z scores
-      )
+      refit_on_nonconvergence = 5, padjust_by = "term", ...
     )
 
     rm(combo)
@@ -121,7 +120,7 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
   fill_mask_with_stats(mask_file,
     mask_col = "mask_value", stat_dt = to_plot, subbrik_cols = c("t", "p", "logp", "p_FDR"),
     subbrik_labels = c("t", "1-p", "neglogp", "1-pFDR"),
-    split_on = c("l1_cope_name", "l2_cope_name", "term", "model_name"), afni_dir = afni_dir, out_dir = out_dir, img_prefix = NULL
+    split_on = fill_split, afni_dir = afni_dir, out_dir = out_dir, img_prefix = NULL
   )
 
   # fwrite(to_plot, file="fmri_brainbehavior_parcel_entropy_betas_200.csv", row.names=FALSE)
