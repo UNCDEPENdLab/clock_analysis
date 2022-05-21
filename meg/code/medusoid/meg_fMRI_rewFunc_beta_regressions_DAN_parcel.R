@@ -23,6 +23,8 @@ clock_folder <- "~/code/clock_analysis" #alex
 fmri_dir <- '/Volumes/GoogleDrive/.shortcut-targets-by-id/1ukjK6kTlaR-LXIqX6nylYOPWu1j3XGyF/SCEPTIC_fMRI/wholebrain_betas'
 source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R")
 
+decompose = T # whether to decompose MEG betas into session and condition levels
+
 # get design
 design <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_fmri", groupfixed = T) %>% select(id, run, rewFunc) %>% unique() %>%
   rename(run_number = run) %>% mutate(id = as.character(id),
@@ -41,25 +43,57 @@ design_face <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_
 
 # load meg data
 # wbetas <- readRDS("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/betas/MEG_betas_wide_echange_vmax_reward_Nov30_2021.RDS") %>% 
-wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_ec_rewfunc_rt_next_reward_rewfunc_April_5_2022.RDS") %>% 
-  mutate(entropy_change_early_beta_supp = -  entropy_change_early_beta_ec_rewfunc,
-         entropy_change_late_beta_supp = - entropy_change_late_beta_ec_rewfunc,
-         rt_shorten_late_beta_supp = - rt_next_late_beta_rt_next,
-         omission_early_theta = - reward_early_theta_reward_rewfunc) %>%
-  select(id, rewFunc, entropy_change_early_beta_supp, entropy_change_late_beta_supp, rt_shorten_late_beta_supp, 
-         omission_early_theta) 
-omission_ave <- wbetas %>% group_by(id) %>% summarise(omission_early_theta_avg = mean(omission_early_theta)) %>%
-  ungroup()
-wbetas <- wbetas %>%  merge(omission_ave, by = "id")
-# get MEG quantiles by condition
-qmeg <- wbetas %>% group_by(rewFunc) %>% summarize(omission_early_theta = quantile(omission_early_theta, c(.1, .9)),
-                                                   q = c("10th %ile", "90th %ile"),
-                                                   qcolor = c("#1b3840","#4fa3b8"),
-                                                   theta_color = c("orange4", "orange"),
-                                                   entropy_change_late_beta_supp = quantile(entropy_change_late_beta_supp, c(.1, .9))) %>% ungroup()
 
+if (decompose) {
+  wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_ec_rewfunc_rt_next_reward_rewfunc_April_5_2022.RDS") %>% 
+    mutate(entropy_change_early_beta_supp = -  entropy_change_early_beta_ec_rewfunc,
+           entropy_change_late_beta_supp = - entropy_change_late_beta_ec_rewfunc,
+           rt_shorten_late_beta_supp = - rt_next_late_beta_rt_next,
+           omission_early_theta = - reward_early_theta_reward_rewfunc) %>%
+    select(id, rewFunc, entropy_change_early_beta_supp, entropy_change_late_beta_supp, rt_shorten_late_beta_supp, 
+           omission_early_theta) 
+  avg <- wbetas %>% group_by(id) %>% summarise(omission_early_theta_avg = mean(omission_early_theta),
+                                                    entropy_change_late_beta_avg = mean(entropy_change_late_beta_supp)) %>%
+    ungroup()
+  
+  wbetas <- wbetas %>%  merge(avg, by = "id") %>% mutate(
+    ec_lbeta_wi = entropy_change_late_beta_supp - entropy_change_late_beta_avg,
+    om_theta_wi = omission_early_theta - omission_early_theta_avg)
+  
+  # inspect
+  
+  qmeg <- wbetas %>% group_by(rewFunc) %>% summarize(omission_early_theta = quantile(omission_early_theta, c(.1, .9), names = F),
+                                                          q = c("10th %ile", "90th %ile"),
+                                                          qcolor = c("#1b3840","#4fa3b8"),
+                                                          theta_color = c("orange4", "orange"),
+                                                          entropy_change_late_beta_supp = quantile(entropy_change_late_beta_supp, c(.1, .9), names = F),
+                                                          entropy_change_late_beta_avg = quantile(entropy_change_late_beta_avg, c(.1, .9), names = F),
+                                                          omission_early_theta_avg = quantile(omission_early_theta_avg, c(.1, .9), names = F),
+                                                          ec_lbeta_wi = quantile(ec_lbeta_wi, c(.1, .9), names = F),
+                                                          om_theta_wi = quantile(om_theta_wi, c(.1, .9), names = F),
+  ) %>% ungroup()
+} else {
+  wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_ec_rewfunc_rt_next_reward_rewfunc_April_5_2022.RDS") %>% 
+    mutate(entropy_change_early_beta_supp = -  entropy_change_early_beta_ec_rewfunc,
+           entropy_change_late_beta_supp = - entropy_change_late_beta_ec_rewfunc,
+           rt_shorten_late_beta_supp = - rt_next_late_beta_rt_next,
+           omission_early_theta = - reward_early_theta_reward_rewfunc) %>%
+    select(id, rewFunc, entropy_change_early_beta_supp, entropy_change_late_beta_supp, rt_shorten_late_beta_supp, 
+           omission_early_theta) 
+  omission_ave <- wbetas %>% group_by(id) %>% summarise(omission_early_theta_avg = mean(omission_early_theta)) %>%
+    ungroup()
+  wbetas <- wbetas %>%  merge(omission_ave, by = "id")
+  
+  # get MEG quantiles by condition
+  qmeg <- wbetas %>% group_by(rewFunc) %>% summarize(omission_early_theta = quantile(omission_early_theta, c(.1, .9)),
+                                                     q = c("10th %ile", "90th %ile"),
+                                                     qcolor = c("#1b3840","#4fa3b8"),
+                                                     theta_color = c("orange4", "orange"),
+                                                     entropy_change_late_beta_supp = quantile(entropy_change_late_beta_supp, c(.1, .9))) %>% ungroup()
+}
 # load fMRI betas: reward_omission, entropy, signed_pe
 # reward/omission
+
 setwd(file.path(fmri_dir, 'L1m-rew_om'))
 rew_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_rew_om") %>% 
   dplyr::select(id, run_number, l1_model, mask_value, value) %>% mutate(id = as.character(id),
@@ -85,6 +119,7 @@ rew_dist <-  ggplot(df, aes(rewFunc, value, color = rewFunc)) + geom_violin(draw
 rew_means <- ggplot(df, aes(rewFunc, value, color = rewFunc)) + stat_summary(fun=mean, geom="point") + ylab("Reward>omission fMRI beta, mean")
 
 summary(lm(value ~ rewFunc * Stream, df %>% filter(emotion == "scram")))
+summary(lm(value ~ rewFunc * Stream * run_mc, df))
 
 # models with early theta
 m_rewom_etheta <- lmer(value ~ rewFunc *  Stream * omission_early_theta  +  (1|id), df)
@@ -134,6 +169,11 @@ Anova(m_rewom_lbeta, '3')
 # m_rewom_lbetae <- lmer(value ~ rewFunc *  Stream * entropy_change_late_beta_supp + emotion * Stream * entropy_change_late_beta_supp + (1|id), df)
 # summary(m_rewom_lbetae)
 # Anova(m_rewom_lbetae, '3')
+
+# interaction with run?
+m_rewom_lbeta_run <- lmer(value ~ rewFunc *  Stream * entropy_change_late_beta_supp * run_mc + (1|id), df)
+summary(m_rewom_lbeta_run)
+Anova(m_rewom_lbeta_run, '3')
 
 
 # em_rewom_lbeta <- as_tibble(emmeans(m_rewom_lbeta, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084))))
@@ -217,7 +257,6 @@ m_pe_etheta <- lmer(value ~ rewFunc *  Stream * omission_early_theta  +  (1|id),
 summary(m_pe_etheta)
 Anova(m_pe_etheta, '3')
 
-
 # em_pe_etheta <- as_tibble(emmeans(m_pe_etheta, data = df, ~Stream|omission_early_theta*rewFunc, at = list(omission_early_theta = c(-0.13878, 0.66119))))
 # sample MEG at condition-wise quantiles
 em_pe_etheta <- as_tibble(emmeans(m_pe_etheta, data = df, ~Stream|omission_early_theta*rewFunc, at = list(omission_early_theta = qmeg$omission_early_theta))) %>%
@@ -241,12 +280,23 @@ ggplot(em_pe_etheta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, c
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) # +
 
+# effects of early theta decomposed into condition and session levels
+if (decompose) {
+  m_pe_etheta_dec <- lmer(value ~ rewFunc *  Stream * omission_early_theta_avg  +
+                            rewFunc *  Stream * om_theta_wi  +(1|id), df)
+  summary(m_pe_etheta_dec)
+  anova(m_pe_etheta, m_pe_etheta_dec)
+  Anova(m_pe_etheta_dec, '3')
+}
+
+
+
 # entropy change late beta
 m_pe_lbeta <- lmer(value ~ rewFunc * Stream * entropy_change_late_beta_supp + (1|id), df)
 # summary(m_pe_lbeta)
 Anova(m_pe_lbeta, '3')
 em_pe_lbeta <- as_tibble(emmeans(m_pe_lbeta, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, 
-                                    at = list(entropy_change_late_beta_supp = qmeg$entropy_change_late_beta_supp))) %>%
+                                 at = list(entropy_change_late_beta_supp = qmeg$entropy_change_late_beta_supp))) %>%
   inner_join(qmeg, by = c("entropy_change_late_beta_supp", "rewFunc"))
 
 
@@ -287,6 +337,9 @@ df <- ec_betas %>% inner_join(design, by = c("id", "run_number")) %>% inner_join
   inner_join(dan_labels, by = "mask_value") #%>%
 #  filter(Stream!='visual-motion')
 
+summary(lm(value ~ rewFunc * Stream * run_mc, df))
+
+
 # inspect
 ec_dist <-  ggplot(df, aes(rewFunc, value, color = rewFunc)) + geom_violin(draw_quantiles = .5) + ylab("Entropy change change fMRI beta")
 ec_means <- ggplot(df, aes(rewFunc, value, color = rewFunc)) + stat_summary(fun=mean, geom="point") + ylab("Entropy change fMRI beta,\nmean")# not much for late beta outside of DMN
@@ -319,10 +372,10 @@ ec_etheta <- ggplot(em_ec_etheta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax
 m_ec_lbeta <- lmer(value ~ rewFunc * Stream * entropy_change_late_beta_supp + (1|id), df)
 # summary(m_ec_lbeta)
 Anova(m_ec_lbeta, '3')
+
 em_ec_lbeta <- as_tibble(emmeans(m_ec_lbeta, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, 
                                  at = list(entropy_change_late_beta_supp = qmeg$entropy_change_late_beta_supp))) %>%
-  inner_join(qmeg, by = c("entropy_change_late_beta_supp", "rewFunc"))
-
+  inner_join(qmeg, by = c("entropy_change_late_beta_supp", "rewFunc")) 
 
 ec_lbeta <- ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
@@ -333,6 +386,38 @@ ec_lbeta <- ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=a
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) # +
 
+em_ec_lbeta_learn <- em_ec_lbeta %>% filter(rewFunc=="DEV" | rewFunc=="IEV")
+
+ec_lbeta_learn <- ggplot(em_ec_lbeta_learn, 
+                         aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=qcolor)) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_grid(~ rewFunc) +
+  theme_bw(base_size=12) +  ylab("BOLD response to entropy change")  +
+  scale_color_identity("Entropy change\nlate beta\nsuppression", guide = "legend", labels = unique(em_ec_lbeta_learn$q))  +
+  labs(shape = "Entropy change\nlate beta\nsuppression") +
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
+
+
+em_ec_lbeta_unlearn <- em_ec_lbeta %>% filter(rewFunc=="CEV" | rewFunc=="CEVR")
+
+ec_lbeta_unlearn <- ggplot(em_ec_lbeta_unlearn, 
+                           aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=qcolor)) +
+  geom_point(position = position_dodge(width = .6), size=2.5) +
+  geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_grid(~ rewFunc) +
+  theme_bw(base_size=12) +  ylab("BOLD response to entropy change")  +
+  scale_color_identity("Entropy change\nlate beta\nsuppression", guide = "legend", labels = unique(em_ec_lbeta_learn$q))  +
+  labs(shape = "Entropy change\nlate beta\nsuppression") + 
+  theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
+        axis.text=element_text(size=8.5, color="grey10")) # +
+
+setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
+pdf("lbeta_learnable_unlearnable.pdf", height = 6, width = 9, onefile = F)
+ggarrange(NULL, ec_lbeta_learn, NULL, ec_lbeta_unlearn, 
+          ncol = 1, nrow = 4, heights = c(.1, 1, .1, 1), 
+          common.legend = T, legend = "right", align = "h", 
+          labels = c("", "Learnable conditions"," ", "Unlearnable conditions"), hjust = -1.6, vjust = -.2)
+dev.off()
 ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color = rewFunc, lty=as.factor(q))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~(rewFunc=="DEV" | rewFunc=="IEV")) +
@@ -358,8 +443,18 @@ ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, co
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) # +
 dev.off()
+setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
+pdf("MEG_on_ec_pe_fMRI_betas.pdf", height = 10, width = 18)
+ggarrange(pe_pe_etheta, ec_etheta, pe_ec_lbeta,ec_lbeta, nrow = 2, ncol = 2)
+dev.off()
+
+ggarrange(pe_pe_etheta, pe_ec_lbeta, nrow = 2, ncol = 1)
 
 
+# interaction with run?
+# m_ec_lbeta_run2 <- lmer(value ~ (rewFunc +  Stream + entropy_change_late_beta_supp + run_mc) ^2 + (1|id), df)
+# summary(m_ec_lbeta_run)
+# Anova(m_ec_lbeta_run, '3')
 
 # read in entropy EV_entropy_wiz_clock
 e_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_entropy_wiz_clock") %>% 

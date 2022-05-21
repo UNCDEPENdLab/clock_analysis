@@ -15,21 +15,27 @@ library(corrplot)
 source("~/code/Rhelpers/theme_black.R")
 
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "/Users/alexdombrovski/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/plots/wholebrain/output"
-plot_dir <- "/Users/alexdombrovski/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/plots/wholebrain"
+data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/output"
+plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain"
 stat_summaries <- T # get mean statistics for every signal
 
-sensors = F # extract sensor random slopes
+sensors = T # extract sensor random slopes
 
-rewFunc = T
+rewFunc = F
 
 fmri = T # whether to merge and correlate with fMRI betas
 # select_ec_sensors = T
 ################
 # subjects' betas
 # load  models
-regressors = c("ec_rewfunc", "rt_next", "reward_rewfunc")
+regressors = c("entropy_change", "v_max", "reward", "abs_pe")
+# regressors = c("ec_rewfunc", "rt_next", "reward_rewfunc")
 # regressors = c("entropy_change", "entropy_change_ec_sensors", "v_max", "reward", "abspe_ec_sensors", "abs_pe")
+
+# regressors = c("ec_rewfunc", "rt_next", "reward_rewfunc")
+# regressors = c("entropy_change",  "reward", "abspe_ec_sensors", "abs_pe", "signed_pe_rs")
+
+
 # regressors = c("entropy_change", "v_max", "reward")
 all_regs <- lapply(regressors, function(rr) {
   cd <- file.path(plot_dir, rr)
@@ -41,9 +47,9 @@ all_regs <- lapply(regressors, function(rr) {
     # filter(effect=="ran_vals" & term != "(Intercept)" & group == "Subject") %>% droplevels() %>% 
     filter(effect=="ran_coefs" & group == "Subject") %>% droplevels()
   if (rewFunc) {
-    ddf <- ddf %>%  dplyr::select(t, Freq, rewFunc, level, term, estimate, std.error, conf.low, conf.high) %>% mutate(regressor = rr)
+    ddf <- ddf %>%  dplyr::select(t, Freq, rewFunc, level, term, estimate, std.error, conf.low, conf.high, statistic) %>% mutate(regressor = rr)
   } else {
-    ddf <- ddf %>%  dplyr::select(t, Freq, level, term, estimate, std.error, conf.low, conf.high) %>% mutate(regressor = rr)
+    ddf <- ddf %>%  dplyr::select(t, Freq, level, term, estimate, std.error, conf.low, conf.high, statistic) %>% mutate(regressor = rr)
   }
   return(ddf)
 })
@@ -79,22 +85,22 @@ if (rewFunc) {
     group_by(level, regressor) %>%
     summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_early_beta")
     
-  # go up to 20 Hz, arbitrary boundary of beta1
-  ec1_20 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
-    group_by(level, regressor) %>%
-    summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_late_beta_20hz")
-  
-  ec2_20 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
-    group_by(level, regressor) %>%
-    summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_early_beta_20hz")
-  
-  
-  ecs <- rbind(ec1, ec2, ec1_20, ec2_20) %>% rename(id = level) %>% ungroup() %>% pivot_wider(names_from = c(reg_region, regressor), values_from = avg)
+
+  # ec1_20 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
+  #   group_by(level, regressor) %>%
+  #   summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_late_beta_20hz")
+  # 
+  # ec2_20 <- all_dfs %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
+  #   group_by(level, regressor) %>%
+  #   summarize(avg=mean(estimate)) %>% mutate(reg_region = "entropy_change_early_beta_20hz")
   
   
-  vm1 <- all_dfs %>% filter(regressor == "v_max" & term == "v_max_wi" & t >= 0.5 & t <= 0.9 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
-    group_by(level) %>%
-    summarize(avg=mean(estimate)) %>% mutate(reg_region = "vmax_late_beta")
+  ecs <- rbind(ec1, ec2) %>% rename(id = level) %>% ungroup() %>% pivot_wider(names_from = c(reg_region, regressor), values_from = avg)
+  
+  
+  # vm1 <- all_dfs %>% filter(regressor == "v_max" & term == "v_max_wi" & t >= 0.5 & t <= 0.9 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+  #   group_by(level) %>%
+  #   summarize(avg=mean(estimate)) %>% mutate(reg_region = "vmax_late_beta")
   
   r1 <- all_dfs %>% filter(regressor == "reward" & term == "reward_t" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
     group_by(level) %>%
@@ -110,6 +116,10 @@ if (rewFunc) {
   abspe1 <- all_dfs %>% filter(term == "abs_pe" & regressor == "abs_pe" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
     group_by(level) %>%
     summarize(avg=mean(estimate)) %>% mutate(reg_region = "abspe_early_theta")
+  
+  abspe2 <- all_dfs %>% filter(term == "abs_pe" & regressor == "abs_pe" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+    group_by(level) %>%
+    summarize(avg=mean(estimate)) %>% mutate(reg_region = "abspe_late_beta")
   
   pe2 <- all_dfs %>% filter( term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
     group_by(level) %>%
@@ -136,7 +146,8 @@ if (rewFunc) {
   setwd("~/code/clock_analysis/meg/data")
   saveRDS(wbetas, file = paste("MEG_betas", paste(regressors, collapse="_"), "April_5_2022.RDS", sep = "_"))  
 } else {
-wholebrain_betas <- rbind(vm1, r1, r2, pe1, pe2, abspe1) %>% rename(id = level) %>% pivot_wider(names_from = c(reg_region), values_from = avg) %>% ungroup()
+
+wholebrain_betas <- rbind(vm1, r1, r2, pe1, pe2, abspe1, abspe2) %>% rename(id = level) %>% pivot_wider(names_from = c(reg_region), values_from = avg) %>% ungroup()
 wbetas <- merge(ecs, wholebrain_betas)
 just_meg_betas <- wbetas %>% select(where(is.numeric))
 cormat <- corr.test(just_meg_betas, method = "pearson")
@@ -144,6 +155,11 @@ cormat <- corr.test(just_meg_betas, method = "pearson")
 corrplot(cormat$r, p.mat = cormat$p, order = "hclust", tl.cex = .8, insig = 'blank', method = 'number')
 setwd("~/code/clock_analysis/meg/data")
 saveRDS(wbetas, file = paste("MEG_betas", paste(regressors, collapse="_"), "Mar_14_2022.RDS", sep = "_"))
+  # compare signals for early theta
+  etheta <- wbetas %>% select(id, reward_early_theta, pe_early_theta, abspe_early_theta) %>% pivot_longer(names_to = "signal", 
+                                                                                                          cols =c(reward_early_theta, pe_early_theta, abspe_early_theta))
+  ggplot(etheta, aes(signal, value, color = signal)) + geom_violin() + geom_point()
+  
 }
 if (stat_summaries) {
   
@@ -174,40 +190,116 @@ dev.off()
 
 # get mean statistics
 
-sec1 <- stat_df %>% filter(term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
-  summarize(stat=mean(statistic)) %>% mutate(reg_region = "entropy_change_late_beta")
+all_regs <- lapply(regressors, function(rr) {
+  cd <- file.path(plot_dir, rr)
+  if (str_detect(rr, "ec_sensors")) {
+    dfile <- file.path(cd, paste0("meg_mixed_by_tf_ddf_ec_sensors_", rr, ".rds"))
+  }
+  dfile <- file.path(cd, paste0("meg_ddf_wholebrain_", rr, ".rds"))
+  ddf <- readRDS(dfile[1]) %>% 
+    # filter(effect=="ran_vals" & term != "(Intercept)" & group == "Subject") %>% droplevels() %>% 
+    filter(effect=="ran_coefs" & group == "Subject") %>% droplevels()
+  if (rewFunc) {
+    ddf <- ddf %>%  dplyr::select(t, Freq, rewFunc, level, term, estimate, std.error, conf.low, conf.high, statistic) %>% mutate(regressor = rr)
+  } else {
+    ddf <- ddf %>%  dplyr::select(t, Freq, level, term, estimate, std.error, conf.low, conf.high, statistic) %>% mutate(regressor = rr)
+  }
+  return(ddf)
+})
+
+stat_regs <- lapply(regressors, function(rr) {
+  cd <- file.path(plot_dir, rr)
+  if (str_detect(rr, "ec_sensors")) {
+    dfile <- file.path(cd, paste0("meg_mixed_by_tf_ddf_ec_sensors_", rr, ".rds"))
+  }
+  dfile <- file.path(cd, paste0("meg_ddf_wholebrain_", rr, ".rds"))
+  ddf <- readRDS(dfile[1]) %>% 
+    # filter(effect=="ran_vals" & term != "(Intercept)" & group == "Subject") %>% droplevels() %>% 
+    filter(effect=="ran_coefs" & group == "Subject" | effect == "fixed") %>% droplevels()
+  if (rewFunc) {
+    ddf <- ddf %>%  dplyr::select(t, Freq, rewFunc, level, term, estimate, std.error, conf.low, conf.high, statistic, effect, rhs) %>% mutate(regressor = rr)
+  } else {
+    ddf <- ddf %>%  dplyr::select(t, Freq, level, term, estimate, std.error, conf.low, conf.high, statistic, effect, rhs) %>% mutate(regressor = rr)
+  }
+  return(ddf)
+})
+
+
+stat_df <- data.table::rbindlist(stat_regs) %>% filter(effect == "fixed")
+
+
+# stat_df <- all_dfs %>% mutate(statistic1 = estimate/std.error) %>% select(term, t, Freq, statistic1, level, regressor) 
+
+sec1 <- stat_df %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+  summarize(stat=mean(statistic),
+            se = std.error(statistic)) %>% mutate(reg_region = "entropy_change_late_beta")
 # early beta (rebound)
-sec2 <- stat_df %>% filter(term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
-  summarize(stat=mean(statistic)) %>% mutate(reg_region = "entropy_change_early_beta")
+sec2 <- stat_df %>% filter(regressor == "entropy_change" & term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+  summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "entropy_change_early_beta")
 
 # go up to 20 Hz, arbitrary boundary of beta1
-sec1_20 <- stat_df %>% filter(term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
-  summarize(stat=mean(statistic)) %>% mutate(reg_region = "entropy_change_late_beta_20hz")
+# sec1_20 <- stat_df %>% filter(term == "entropy_change_t" & t >= 0.5 & t <= 0.8 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
+#   summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "entropy_change_late_beta_20hz")
+# 
+# sec2_20 <- stat_df %>% filter(term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
+#   summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "entropy_change_early_beta_20hz")
+# 
+# svm1 <- stat_df %>% filter(term == "v_max_wi" & t >= 0.5 & t <= 0.9 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+#   summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "vmax_late_beta")
+# 
+library(plotrix)
+sr1 <- stat_df %>% filter(term == "reward_t" & regressor == "reward" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
+  summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "reward_early_theta")
+sr1a <- stat_df %>% filter(term == "reward_centered" & regressor == "abs_pe" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
+  summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "reward_early_theta")
 
-sec2_20 <- stat_df %>% filter(term == "entropy_change_t" & t >= -0.2 & t <= 0.1 & Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
-  summarize(stat=mean(statistic)) %>% mutate(reg_region = "entropy_change_early_beta_20hz")
-
-svm1 <- stat_df %>% filter(term == "v_max_wi" & t >= 0.5 & t <= 0.9 & Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
-  summarize(stat=mean(statistic)) %>% mutate(reg_region = "vmax_late_beta")
-
-sr1 <- stat_df %>% filter(term == "reward_t" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
-  summarize(stat=mean(statistic)) %>% mutate(reg_region = "reward_early_theta")
 sr2 <- stat_df %>% filter(term == "reward_t" & t >= 0.4 & t <= 0.8 &  Freq <= "4.2") %>% # & Freq < "16.8"
-  summarize(stat=mean(statistic)) %>% mutate(reg_region = "reward_late_delta")
+  summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "reward_late_delta")
+
+sr3 <- stat_df %>% filter(term == "reward_t" & regressor == "reward" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+  summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "reward_late_beta")
+
 spe1 <- stat_df %>% filter(term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
-  summarize(stat=mean(statistic)) %>% mutate(reg_region = "pe_early_theta")
+  summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "pe_early_theta")
 sabspe1 <- stat_df %>% filter(term == "abs_pe" & regressor == "abs_pe" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
-  summarize(stat=mean(statistic)) %>% mutate(reg_region = "abspe_early_theta")
+  summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "abspe_early_theta")
+sabspe2 <- stat_df %>% filter(term == "abs_pe" & regressor == "abs_pe" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+  summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "abspe_late_beta")
 
-spe2 <- stat_df %>% filter(term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "20") %>% # & Freq < "16.8"
-  summarize(stat=mean(statistic)) %>% mutate(reg_region = "pe_late_beta")
+sabspe1a <- stat_df %>% filter(term == "abs_pe" & regressor == "reward" & t >= 0.2 & t <= 0.4 & Freq >= "5" &  Freq <= "8.4") %>% # & Freq < "16.8"
+  summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "abspe_early_theta")
 
-signal_stats <- rbind(sec1, sec2, svm1, sr1, sr2, spe1, spe2, sabspe1) 
+spe2 <- stat_df %>% filter(term == "pe_max" & regressor == "signed_pe_rs" & t >= 0.5 & t <= 0.8 &  Freq >= "8.4" &  Freq <= "16.8") %>% # & Freq < "16.8"
+  summarize(stat=mean(statistic), se = std.error(statistic)) %>% mutate(reg_region = "pe_late_beta")
+
+# compare early theta responses
+signal_stats <- rbind(sr1, spe1, sabspe1) 
+# signal_stats <- rbind(sec1, sec2, sr1, sr2, spe1, spe2, sabspe1) 
+setwd("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/")
+pdf("MEG_early_theta_signal_stats_comparison.pdf", height = 1.5, width = 2.75)
+# ggplot(signal_stats, aes(factor(reg_region, level = c("reward_early_theta", "pe_early_theta", "abspe_early_theta")), stat)) + geom_point(size = 3) +
+ggplot(signal_stats, aes(factor(reg_region, level = c("reward_early_theta", "pe_early_theta", "abspe_early_theta")), stat)) + 
+  geom_bar(stat = "identity", fill = "grey70") + geom_errorbar(aes(ymin = stat - se, ymax = stat + se), width = .3) +
+  scale_x_discrete(labels = c("Reward >\nomission", "Signed\nprediction\nerror", "Absolute\nprediction\nerror")) + xlab(NULL) + ylab("Mean t statistic") +
+  ylim(c(-7.5, 2.5)) + geom_hline(yintercept = 0) 
+dev.off()
+
+# compare late beta responses
+beta_stats <- rbind(sec1, spe2, sabspe2, sr3)
+pdf("MEG_late_beta_signal_stats_comparison.pdf", height = 1.5, width = 3.25)
+# ggplot(signal_stats, aes(factor(reg_region, level = c("reward_early_theta", "pe_early_theta", "abspe_early_theta")), stat)) + geom_point(size = 3) +
+ggplot(beta_stats, aes(factor(reg_region, level = c("entropy_change_late_beta", "pe_late_beta", "abspe_late_beta", "reward_late_beta")), stat)) + 
+  geom_bar(stat = "identity", fill = "grey70") + geom_errorbar(aes(ymin = stat - se, ymax = stat + se), width = .3) +
+  scale_x_discrete(labels = c("Entropy\nchange", "Signed\nprediction\nerror", "Absolute\nprediction\nerror", "Reward")) + xlab(NULL) + ylab("Mean t statistic") +
+  ylim(c(-4, .25)) + geom_hline(yintercept = 0)
+dev.off()
 
 signal_stats_wide <- signal_stats %>% pivot_wider(names_from = c(reg_region), values_from = stat)
 
+"meta-analysis"
+
 pdf("meg_signals_stat_comparison.pdf", height = 4, width = 4)
-ggplot(signal_stats, aes(reg_region, abs(stat))) + geom_point() + theme_minimal() +
+ggplot(signal_stats, aes(reg_region, stat)) + geom_point() + theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 dev.off()
 # correlation between fMRI and MEG betas
@@ -223,13 +315,13 @@ if (fmri) {
 }
 if (sensors) {
   # load all models
-  regressors = c("entropy_change","v_max_ri")
+  regressors = c("entropy_change")
   all_res <- lapply(regressors, function(rr) {
     cd <- file.path(plot_dir, rr)
     dfile <- file.path(cd, paste0("meg_ddf_wholebrain_", rr, ".rds"))
     ddf <- readRDS(dfile) %>% 
-      filter(effect=="ran_vals" & term != "(Intercept)") %>% 
-      dplyr::select(t, Freq, level, term, estimate, std.error, conf.low, conf.high)
+      filter(effect=="ran_coefs" & term != "(Intercept)") %>% 
+      dplyr::select(t, Freq, level, group, term, estimate, std.error, conf.low, conf.high)
     return(ddf)
   })
   
@@ -237,6 +329,17 @@ if (sensors) {
   all_res[[1]] <- all_res[[1]] %>% filter(Freq <= 40) %>% droplevels()
   
   all_df <- data.table::rbindlist(all_res)
+  
+  echange <- all_df %>% filter(term != "v_max_wi" & t >= .4 & t <= .8 & Freq >= "8.4" & Freq < "20") %>%
+    select(-std.error, -conf.low, -conf.high) %>%
+    pivot_wider(names_from="term", values_from = "estimate") %>%
+    group_by(t, Freq) %>%
+    do({
+      df <- .
+      r <- cor(df$entropy_change_t, df$abs_pe_sc)
+      data.frame(df[1,], r)
+    }) %>% ungroup()
+  
   
   pe_echange <- all_df %>% filter(term != "v_max_wi" & t >= .4 & t <= .8 & Freq >= "8.4" & Freq < "20") %>%
     select(-std.error, -conf.low, -conf.high) %>%

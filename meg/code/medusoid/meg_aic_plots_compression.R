@@ -11,10 +11,10 @@ library(RColorBrewer)
 source("~/code/Rhelpers/theme_black.R")
 
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/output"
+data_dir <- "/Volumes/GoogleDrive/.shortcut-targets-by-id/1ukjK6kTlaR-LXIqX6nylYOPWu1j3XGyF/SCEPTIC_fMRI/MEG/output"
 plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/"
 
-rt_epoch_label = "Time relative to event, seconds"
+rt_epoch_label = "Time relative to outcome (seconds)"
 encode = T
 rt_predict = F
 # regressors = c("reward")
@@ -23,7 +23,7 @@ regressor = c("entropy_change_ri")
 # regressors = c("entropy", "kld", "entropy_change", "entropy_change_neg", "entropy_change_pos", "reward")
 print_filenames = T
 fixed_only = F
-reprocess = T
+reprocess = F
 plots = T
 aic_threshold = 100
 diags = F
@@ -159,7 +159,7 @@ if (plots) {
     geom_vline(xintercept = -offset + 0.3, lty = "dashed", color = "white", size = 2) +
     geom_vline(xintercept = -offset, lty = "dashed", color = "white", size = 1) +
     geom_vline(xintercept = -2, lty = "dotted", color = "grey", size = 1) +
-    scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+    scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency (Hz)") +
     geom_text(data = wddf, x = -offset-.1, y = 5,aes(label = "Response(t)"), size = 3, color = "white", angle = 90) +
     geom_text(data = wddf, x = -offset+.4, y = 5,aes(label = "Outcome(t)"), size = 3, color = "white", angle = 90) +
     geom_text(data = wddf, x = 0.15, y = 6 ,aes(label = "Clock onset (t+1)"), size = 3, color = "black", angle = 90) +
@@ -167,16 +167,17 @@ if (plots) {
     labs(fill = expression("AIC"["full"] - AIC["selective"])) + ggtitle("Evidence of value compression") + theme_dark()
   dev.off()
   } else { # RT only
-    pdf(fname, width = 7, height = 4.5)
-    ggplot(wddf , aes(t, Freq)) + geom_tile(aes(fill = AIC_diff_thresholded)) + 
-      geom_vline(xintercept = 0, lty = "dashed", color = "white", size = 2) +
-      geom_vline(xintercept = -0.3, lty = "dashed", color = "white", size = 1) +
-      scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency") +
+    pdf(fname, width = 5, height = 3.5)
+    ggplot(wddf , aes(t, Freq)) + geom_tile(aes(fill = AIC_diff_thresholded, alpha = !is.na(AIC_diff_thresholded))) + 
+      geom_vline(xintercept = 0, lty = "dashed", color = "black", size = 2) +
+      geom_vline(xintercept = -0.3, lty = "dashed", color = "black", size = 1) +
+      scale_fill_viridis(option = "plasma") +  xlab(rt_epoch_label) + ylab("Frequency (Hz)") +
       # facet_wrap( ~ node, ncol = 2) + 
-      geom_text(data = wddf, x = -0.4, y = 5,aes(label = "Response(t)"), size = 2.5, color = "white", angle = 90) +
-      geom_text(data = wddf, x = 0.1, y = 5,aes(label = "Outcome(t)"), size = 2.5, color = "white", angle = 90) +
-      scale_x_continuous(limits = c(-1,1.3), breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2)) +
-      labs(fill = expression("AIC"["full"] - AIC["selective"])) + ggtitle("Evidence of value compression") + theme_dark()
+      geom_text(data = wddf, x = -0.38, y = 3.5,aes(label = "Response(t)"), size = 4, color = "black", angle = 90) +
+      geom_text(data = wddf, x = 0.1, y = 3.5,aes(label = "Outcome(t)"), size = 4, color = "black", angle = 90) +
+      scale_x_continuous(limits = c(-0.7,1.1), breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1, 1.2)) +
+      labs(fill = expression("AIC"["full"] - AIC["selective"])) + guides(alpha = "none") +#scale_alpha(guide = 'none') + 
+      ggtitle("Evidence of value compression")# + theme_dark()
     dev.off()
-  }
+    }
 }
