@@ -21,8 +21,9 @@ if (use_new_pipeline) {
 }
 # cache_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/cache"
 cache_dir <- file.path(medusa_dir, "cache")
-repo_directory <- "~/code/clock_analysis"
-# repo_directory <- "~/Data_Analysis/clock_analysis"
+
+# repo_directory <- "~/code/clock_analysis"
+repo_directory <- "~/Data_Analysis/clock_analysis"
 
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R"))
 
@@ -72,10 +73,17 @@ if (!reprocess) {
   } else if (visuomotor) {
     load(file.path(cache_dir, "clock_dan_visuomotor.Rdata"))
     load(file.path(cache_dir, "rt_dan_visuomotor.Rdata"))
+  } else if (visuomotor5) {
+    load(file.path(cache_dir, "clock_dan_visuomotor5.Rdata"))
+    load(file.path(cache_dir, "rt_dan_visuomotor5.Rdata"))
   } else if (visuomotor_long) {
     load(file.path(cache_dir, "clock_dan_visuomotor_long.Rdata"))
     load(file.path(cache_dir, "clock_dan_visuomotor_long_online.Rdata"))
     load(file.path(cache_dir, "rt_dan_visuomotor_long.Rdata"))
+  } else if (visuomotor_long) {
+    load(file.path(cache_dir, "clock_dan_visuomotor5_long.Rdata"))
+    load(file.path(cache_dir, "clock_dan_visuomotor5_long_online.Rdata"))
+    load(file.path(cache_dir, "rt_dan_visuomotor5_long.Rdata"))
   } else {
     load(file.path(cache_dir, "clock_dan_wide_ts.Rdata"))
     load(file.path(cache_dir, "clock_dan_tall_ts.Rdata"))
@@ -126,9 +134,9 @@ if (!reprocess) {
   message("Labeling regions")
 
   labels <- as_tibble(read_excel(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx"))) %>%
-    select(c("roinum", "plot_label", "Stream", "Visuomotor_Gradient", "Stream_Gradient"))
+    select(c("roinum", "plot_label", "Stream", "Visuomotor_Gradient", "Visuomotor_5", "Stream_Gradient"))
 
-  names(labels) <- c("atlas_value", "label_short", "stream", "visuomotor_grad", "stream_grad")
+  names(labels) <- c("atlas_value", "label_short", "stream", "visuomotor_grad", "visuomotor5", "stream_grad")
   labels$stream_grad <- as.numeric(labels$stream_grad)
   labels <- labels %>%
     arrange(visuomotor_grad, stream_grad) %>%
@@ -141,9 +149,11 @@ if (!reprocess) {
       label_short = substr(label_short, 3, length(label_short)), # drop off side from label
       label = paste(visuomotor_grad, stream_grad, label_short, side, sep = "_"),
       stream_side = paste0(stream, "_", side),
-      visuomotor_side = paste0(visuomotor_grad, "_", side)
+      visuomotor_side = paste0(visuomotor_grad, "_", side),
+      visuomotor5_side = paste0(visuomotor5, "_", side)
     ) %>%
-    select(c(label, label_short, side, atlas_value, stream, visuomotor_grad, stream_grad, stream_side, visuomotor_side))
+    select(label, label_short, side, atlas_value, stream, visuomotor_grad, 
+           visuomotor5, stream_grad, stream_side, visuomotor_side, visuomotor5_side)
 
   clock <- dplyr::full_join(clock, labels, by = c("atlas_value"))
   rt <- dplyr::full_join(rt, labels, by="atlas_value")
@@ -263,16 +273,34 @@ if (!reprocess) {
     pivot_wider(names_from = c(visuomotor_side, evt_time), values_from = decon_interp, values_fn = mean) %>%
     ungroup()
   
+  # 5-subdivision clock
+  clock_visuomotor5 <- clock_comb %>%
+    select(id, run, run_trial, evt_time, visuomotor5_side, decon_interp) %>%
+    pivot_wider(names_from = c(visuomotor5_side, evt_time), values_from = decon_interp, values_fn = mean) %>%
+    ungroup()
+  
   # format for mixed_by (long)
   clock_visuomotor_long <- clock_comb %>%
     select(id, run, run_trial, evt_time, visuomotor_side, decon_interp) %>%
     group_by(id, run, run_trial, evt_time, visuomotor_side) %>%
     dplyr::summarise(decon_interp = mean(decon_interp, na.rm=TRUE)) %>%
     ungroup()
+  
+  clock_visuomotor5_long <- clock_comb %>%
+    select(id, run, run_trial, evt_time, visuomotor5_side, decon_interp) %>%
+    group_by(id, run, run_trial, evt_time, visuomotor5_side) %>%
+    dplyr::summarise(decon_interp = mean(decon_interp, na.rm=TRUE)) %>%
+    ungroup()
 
   clock_visuomotor_long_online <- clock_comb_online %>%
     select(id, run, run_trial, evt_time, visuomotor_side, decon_interp) %>%
     group_by(id, run, run_trial, evt_time, visuomotor_side) %>%
+    dplyr::summarise(decon_interp = mean(decon_interp, na.rm=TRUE)) %>%
+    ungroup()
+  
+  clock_visuomotor5_long_online <- clock_comb_online %>%
+    select(id, run, run_trial, evt_time, visuomotor5_side, decon_interp) %>%
+    group_by(id, run, run_trial, evt_time, visuomotor5_side) %>%
     dplyr::summarise(decon_interp = mean(decon_interp, na.rm=TRUE)) %>%
     ungroup()
 
@@ -292,6 +320,9 @@ if (!reprocess) {
   save(clock_visuomotor, file = file.path(cache_dir, "clock_dan_visuomotor.Rdata"))
   save(clock_visuomotor_long, file = file.path(cache_dir, "clock_dan_visuomotor_long.Rdata"))
   save(clock_visuomotor_long_online, file = file.path(cache_dir, "clock_dan_visuomotor_long_online.Rdata"))
+  save(clock_visuomotor5, file = file.path(cache_dir, "clock_dan_visuomotor5.Rdata"))
+  save(clock_visuomotor5_long, file = file.path(cache_dir, "clock_dan_visuomotor5_long.Rdata"))
+  save(clock_visuomotor5_long_online, file = file.path(cache_dir, "clock_dan_visuomotor5_long_online.Rdata"))
 
   # save RT ----
   # take all preceding timepoints for RT_wide
@@ -301,15 +332,23 @@ if (!reprocess) {
     group_by(id, run, run_trial) %>%
     pivot_wider(names_from = c(label, evt_time), values_from = decon_interp) %>%
     ungroup()
+  
   rt_streams <- rt_comb %>%
     select(id, run, run_trial, evt_time, decon_interp, stream_side) %>%
     group_by(id, run, run_trial) %>%
     pivot_wider(names_from = c(stream_side, evt_time), values_from = decon_interp, values_fn=mean) %>%
     ungroup()
+  
   rt_visuomotor <- rt_comb %>%
     select(id, run, run_trial, evt_time, decon_interp, visuomotor_side) %>%
     group_by(id, run, run_trial) %>%
     pivot_wider(names_from = c(visuomotor_side, evt_time), values_from = decon_interp, values_fn=mean) %>%
+    ungroup()
+  
+  rt_visuomotor5 <- rt_comb %>%
+    select(id, run, run_trial, evt_time, decon_interp, visuomotor5_side) %>%
+    group_by(id, run, run_trial) %>%
+    pivot_wider(names_from = c(visuomotor5_side, evt_time), values_from = decon_interp, values_fn=mean) %>%
     ungroup()
 
   # format for mixed_by (long)
@@ -319,10 +358,18 @@ if (!reprocess) {
     dplyr::summarise(decon_interp = mean(decon_interp, na.rm = TRUE)) %>%
     ungroup()
 
+  rt_visuomotor5_long <- rt_comb %>%
+    select(id, run, run_trial, evt_time, visuomotor5_side, decon_interp) %>%
+    group_by(id, run, run_trial, evt_time, visuomotor5_side) %>%
+    dplyr::summarise(decon_interp = mean(decon_interp, na.rm = TRUE)) %>%
+    ungroup()
+  
   save(rt_wide, file = file.path(cache_dir, "rt_dan_wide_ts.Rdata"))
   save(rt_comb, file = file.path(cache_dir, "rt_dan_tall_ts.Rdata"))
   save(trial_df, file = file.path(cache_dir, "sceptic_trial_df_for_medusa.RData"))
   save(rt_streams, file = file.path(cache_dir, "rt_dan_streams.Rdata"))
   save(rt_visuomotor, file = file.path(cache_dir, "rt_dan_visuomotor.Rdata"))
   save(rt_visuomotor_long, file = file.path(cache_dir, "rt_dan_visuomotor_long.Rdata"))
+  save(rt_visuomotor5, file = file.path(cache_dir, "rt_dan_visuomotor5.Rdata"))
+  save(rt_visuomotor5_long, file = file.path(cache_dir, "rt_dan_visuomotor5_long.Rdata"))
 }

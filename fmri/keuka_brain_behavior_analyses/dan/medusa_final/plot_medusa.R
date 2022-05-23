@@ -44,10 +44,11 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
       g <- ggplot(this_df, aes_string(x=x, y=y, color=color, ymin=ymin, ymax=ymax)) +
         geom_line(size=1, position=position_dodge(width=0.4)) + 
         geom_pointrange(aes(size=p_level), position=position_dodge(width=0.4)) +
-        #scale_color_brewer(palette="Dark2", labels=c("1" = "MT+, control", "2" = "Parieto-occipital", "3" = "Post. parietal", "4" = "Frontal")) +
+        scale_color_brewer("Visuomotor\ngradient", palette="Dark2", labels=c("1" = "MT+, control", "2" = "Parieto-occipital", "3" = "Post. parietal", "4" = "Frontal")) +
         geom_hline(yintercept = 0, size=1.5, alpha=0.6) +
         geom_vline(xintercept = 0, size=1.5, alpha=0.6) +
-        scale_size_manual(values=c(0.5, 0.8, 1.1, 1.4)) + theme_bw(base_size=15)
+        scale_size_manual("FDR p-value", values=c(0.5, 0.8, 1.1, 1.4)) + theme_bw(base_size=15) +
+        xlab("Time (seconds)") + ylab("Unstandardized coefficient")
     } else if (plot_type == "heat") {
       g <-  ggplot(this_df, aes_string(x=x, y=y, fill=color)) +
         geom_tile() +
@@ -75,11 +76,16 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
   
 }
 
-meg = T
+# alex tests of PE slopes/emtrends
+meg = F
 if (meg) {
-ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri_meg_simple_ec.rds")
-} else {ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri_pe_posneg.rds")}
+  ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri_meg_simple_ec.rds")
+} else {
+  ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri_pe_posneg.rds")
+}
+
 out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/"
+
 ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5 & effect=="fixed") %>% group_by(term) %>%
   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
   ungroup() %>% setDT()
@@ -87,6 +93,7 @@ ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5 & effect=="
 plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient", facet_by="side", 
             out_dir=file.path(out_dir, "rt_encode_8_Dec_2021"), p.value="p_FDR")
 
+# CLOCK ALIGNED ENCODING
 #ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_encode_medusa_fmri_scaled.rds")
 ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_encode_medusa_fmri.rds")
 ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
@@ -108,6 +115,17 @@ ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time < 4) %>%
 
 plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient", facet_by="side",
             out_dir=file.path(out_dir, "clock_encode_online_24Nov2021"), p.value="p_FDR")
+
+
+ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri.rds")
+ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time >= -3 & evt_time <= 5) %>% 
+  filter(effect=="fixed") %>%
+  group_by(term) %>%
+  mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
+  ungroup() %>% setDT()
+
+plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient", facet_by="side",
+            out_dir=file.path(out_dir, "rt_encode_24Nov2021"), p.value="p_FDR")
 
 # 
 # 

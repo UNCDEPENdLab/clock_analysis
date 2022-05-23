@@ -68,17 +68,20 @@ exp_renorm <- function(x, beta=1) {
   return(trans)
 }
 
-#plot(exp_renorm(EV), type="l")
+plot(exp_renorm(EV), type="l")
+plot(EV, type="l")
 exp_renorm(c(rnorm(100)/1e6, 0), beta=1)
 
 exp_renorm(rep(10, 100), beta=1)
 
-plot(exp_renorm(EV, beta=.1), type="l", main="SCEPTIC value compression", xlab = "Time", ylab = "Value")
+#plot(exp_renorm(EV, beta=.1), type="l", main="SCEPTIC value compression", xlab = "Time", ylab = "Value")
+plot(EV, type="l", main="SCEPTIC value compression", xlab = "Time", ylab = "Value")
 lines(exp_renorm(EV, beta=1), type="l", col="red")
 lines(exp_renorm(EV, beta=3), type="l", col="green")
 lines(exp_renorm(EV, beta=10), type="l", col="gray")
 lines(exp_renorm(EV, beta=20), type="l", col="blue")
 lines(exp_renorm(EV, beta=30), type="l", col="orange")
+lines(exp_renorm(EV, beta=1000), type="l", col="orange")
 
 
 range(EV)

@@ -8,7 +8,7 @@ setwd(beta_dir)
 
 # MNH/AD internal labeling scheme
 labels <- readxl::read_excel("~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx") %>%
-  dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label, Stream, Visuomotor_Gradient)
+  dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label, Stream, Visuomotor_Gradient, lobe)
 
 labels_200 <- read.csv(file.path(beta_dir, "schaefer_200_whereami.csv")) %>%
   dplyr::rename(mask_value = roi_num, plot_label = MNI_Glasser_HCP_v1.0) %>% dplyr::select(mask_value, plot_label) %>%
@@ -19,7 +19,6 @@ head(labels)
 
 mixed_by_files <- list.files(pattern="Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2_mixed_by.rds", 
                              full.names = TRUE, recursive=TRUE)
-
 
 effects_of_interest <- c(
   Rew="fmri_beta:last_outcomeReward",
@@ -128,6 +127,137 @@ dev.off()
 fwrite(dan_tab, file="dan_bb_effects_rint.csv")
 
 
+## Look at effects by subnetworks within Yeo 17
+schaefer_dir <- "~/Data_Analysis/schaefer_wb_parcellation"
+
+schaefer_7 <- read.csv(file.path(schaefer_dir, "labels", "Schaefer2018_200Parcels_7Networks_order.csv")) %>%
+  mutate(network=factor(network), net_num = as.numeric(network)) %>%
+  rename(network7=network, net_num7=net_num, subregion7=subregion)
+
+# this has the spatial coordinate, spatial_roi_num
+schaefer_7_lookup <- read.csv(file.path(schaefer_dir, "labels", "Schaefer_200_7networks_labels.csv"))
+
+schaefer_7 <- schaefer_7 %>% inner_join(schaefer_7_lookup, by="roi_num") %>%
+  rename(roi_num7=roi_num)
+
+schaefer_17 <- read.csv(file.path(schaefer_dir, "labels", "Schaefer2018_200Parcels_17Networks_order.csv")) %>%
+  mutate(network=factor(network), net_num = as.numeric(network)) %>%
+  rename(network17=network, net_num17=net_num, subregion17=subregion) %>%
+  select(-hemi) # mirrored in 7
+
+# this has the spatial coordinate, spatial_roi_num
+schaefer_17_lookup <- read.csv(file.path(schaefer_dir, "labels", "Schaefer_200_17networks_labels.csv")) %>%
+  select(roi_num, spatial_roi_num) # x,y,z and labels already duplicated in 7-network lookup
+
+schaefer_17 <- schaefer_17 %>% inner_join(schaefer_17_lookup, by="roi_num") %>%
+  rename(roi_num17=roi_num)
+
+both <- schaefer_7 %>%
+  select(-hemi) %>%
+  inner_join(schaefer_17, by="spatial_roi_num") %>%
+  rename(mask_value=roi_num7) %>%
+  filter(network7 == "DorsAttn")
+
+mixed_by_files <- list.files(pattern="Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2_mixed_by.rds", 
+                             full.names = TRUE, recursive=TRUE)
+
+effects_of_interest <- c(
+  Rew="fmri_beta:last_outcomeReward",
+  RTvmax="fmri_beta:rt_vmax_lag", 
+  RtLag="rt_lag:fmri_beta",
+  RtLagxRew="rt_lag:fmri_beta:last_outcomeReward"
+)
+
+dan_display <- lapply(mixed_by_files, function(x) {
+  l1m <- sub("\\./([^/]+)/.*", "\\1", x, perl=TRUE)
+  mout <- readRDS(x)$coef_df_reml %>%
+    dplyr::filter(model_name == "int" & l2_cope_name == "overall") %>% # random intercept model
+    dplyr::filter(!grepl("(EV_clock|EV_feedback)", l1_cope_name)) %>%
+    dplyr::select(-outcome, -rhs, -effect, -l2_cope_name, -model_name) %>%
+    dplyr::filter(term %in% effects_of_interest) %>%
+    mutate(l1_model = !!l1m)
+  return(mout)
+})
+
+dan_df <- rbindlist(dan_display) %>%
+  dplyr::filter(l1_model %in% c("L1m-abspe", "L1m-pe", "L1m-echange", "L1m-entropy_wiz")) %>%
+  dplyr::mutate(l1_cope_name = factor(
+    sub("EV_", "", l1_cope_name),
+    levels=c("entropy_change_feedback", "entropy_wiz_clock", "pe", "abspe"),
+    labels=c("echange", "entropy", "pe", "abspe")
+  )) %>%
+  dplyr::select(-l1_model, -statistic) %>%
+  inner_join(both, by="mask_value") %>%
+  inner_join(labels, by="mask_value") %>%
+  mutate(sort_label = paste(lobe, sub("([LR])_(.*)", "\\2_\\1", plot_label, perl=TRUE)))
+
+library(patchwork)
+
+pdf("dan_bb_17_dissociation.pdf", width=32, height=16)
+dan_e <- dan_df %>% filter(l1_cope_name %in% c("echange", "entropy"))
+dan_pe <- dan_df %>% filter(l1_cope_name %in% c("abspe", "pe"))
+                           
+g1 <- ggplot(dan_e, aes(x=sort_label, y=estimate, ymin=estimate-std.error, ymax=estimate+std.error, color=l1_cope_name)) +
+  facet_grid(term~network17, scales = "free") +
+  geom_pointrange(position=position_dodge(width=0.7), size=1.5) +
+  theme_bw(base_size = 18) +
+  theme(axis.text.x = element_text(angle=90)) +
+  scale_color_brewer(palette="Set2") +
+  geom_hline(yintercept = 0)
+
+g2 <- ggplot(dan_pe, aes(x=sort_label, y=estimate, ymin=estimate-std.error, ymax=estimate+std.error, color=l1_cope_name)) +
+  facet_grid(term~network17, scales = "free") +
+  geom_pointrange(position=position_dodge(width=0.7), size=1.5) +
+  theme_bw(base_size = 18) +
+  theme(axis.text.x = element_text(angle=90)) +
+  geom_hline(yintercept = 0)
+
+g1 + g2 + plot_layout(nrow=1)
+dev.off()
+
+## meta mixed by comparing network mean B-B effects
+library(afex)
+m <- lm(estimate ~ network17, dan_pe %>% filter(l1_cope_name=="abspe" & term=="rt_lag:fmri_beta"))
+m1 <- lm(estimate ~ network17 + hemi, dan_pe %>% filter(l1_cope_name=="abspe" & term=="rt_lag:fmri_beta"))
+m <- lm(estimate ~ network17, dan_pe %>% filter(l1_cope_name=="pe" & term=="rt_lag:fmri_beta"))
+summary(m1)
+anova(m, m1)
+library(brms)
+ff2 <- brm(
+  estimate | se(std.error, sigma=TRUE) ~ 1 + network17 + (1 | plot_label), 
+  dan_pe %>% filter(l1_cope_name=="abspe" & term=="rt_lag:fmri_beta"),
+  chains= 4, cores=4, iter = 15000,
+  control = list(
+    adapt_delta = 0.999,
+    max_treedepth = 13
+  )
+)
+
+library(emmeans)
+summary(ff2)
+emmeans(ff2, ~network17)
+pairs(emmeans(ff2, ~network17))
+
+
+ff3 <- brm(
+  estimate | se(std.error, sigma=TRUE) ~ 1 + network17 + (1 | plot_label), 
+  dan_pe %>% filter(l1_cope_name=="pe" & term=="rt_lag:fmri_beta"),
+  chains= 4, cores=4, iter = 15000,
+  control = list(
+    adapt_delta = 0.999,
+    max_treedepth = 13
+  )
+)
+
+summary(ff3)
+emmeans(ff3, ~network17)
+pairs(emmeans(ff3, ~network17))
+
+
+
+
+
+### leftovers
 library(ggpubr)
 library(factoextra)
 to_cluster <- scale(dan_corr[, -1:-4])
@@ -151,3 +281,5 @@ fviz_cluster(res.km, data = to_cluster,
              ellipse.type = "convex", 
              ggtheme = theme_bw()
 )
+
+
