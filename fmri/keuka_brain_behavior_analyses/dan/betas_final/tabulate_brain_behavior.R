@@ -17,8 +17,12 @@ labels_200 <- read.csv(file.path(beta_dir, "schaefer_200_whereami.csv")) %>%
 head(labels)
 
 
+# mixed_by_files <- list.files(pattern="Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2_mixed_by.rds", 
+#                              full.names = TRUE, recursive=TRUE)
+
 mixed_by_files <- list.files(pattern="Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2_mixed_by.rds", 
                              full.names = TRUE, recursive=TRUE)
+
 
 effects_of_interest <- c(
   Rew="fmri_beta:last_outcomeReward",
@@ -130,35 +134,44 @@ fwrite(dan_tab, file="dan_bb_effects_rint.csv")
 ## Look at effects by subnetworks within Yeo 17
 schaefer_dir <- "~/Data_Analysis/schaefer_wb_parcellation"
 
-schaefer_7 <- read.csv(file.path(schaefer_dir, "labels", "Schaefer2018_200Parcels_7Networks_order.csv")) %>%
+schaefer_7 <- read.csv(file.path(schaefer_dir, "labels", "Schaefer2018_400Parcels_7Networks_order.csv")) %>%
   mutate(network=factor(network), net_num = as.numeric(network)) %>%
   rename(network7=network, net_num7=net_num, subregion7=subregion)
 
 # this has the spatial coordinate, spatial_roi_num
-schaefer_7_lookup <- read.csv(file.path(schaefer_dir, "labels", "Schaefer_200_7networks_labels.csv"))
+schaefer_7_lookup <- read.csv(file.path(schaefer_dir, "labels", "Schaefer_400_7networks_labels.csv"))
 
 schaefer_7 <- schaefer_7 %>% inner_join(schaefer_7_lookup, by="roi_num") %>%
   rename(roi_num7=roi_num)
 
-schaefer_17 <- read.csv(file.path(schaefer_dir, "labels", "Schaefer2018_200Parcels_17Networks_order.csv")) %>%
+schaefer_17 <- read.csv(file.path(schaefer_dir, "labels", "Schaefer2018_400Parcels_17Networks_order.csv")) %>%
   mutate(network=factor(network), net_num = as.numeric(network)) %>%
   rename(network17=network, net_num17=net_num, subregion17=subregion) %>%
   select(-hemi) # mirrored in 7
 
 # this has the spatial coordinate, spatial_roi_num
-schaefer_17_lookup <- read.csv(file.path(schaefer_dir, "labels", "Schaefer_200_17networks_labels.csv")) %>%
+schaefer_17_lookup <- read.csv(file.path(schaefer_dir, "labels", "Schaefer_400_17networks_labels.csv")) %>%
   select(roi_num, spatial_roi_num) # x,y,z and labels already duplicated in 7-network lookup
 
 schaefer_17 <- schaefer_17 %>% inner_join(schaefer_17_lookup, by="roi_num") %>%
   rename(roi_num17=roi_num)
 
+#schaefer_444 <- 
+
 both <- schaefer_7 %>%
   select(-hemi) %>%
   inner_join(schaefer_17, by="spatial_roi_num") %>%
   rename(mask_value=roi_num7) %>%
-  filter(network7 == "DorsAttn")
+  filter(network7 %in% c("DorsAttn", "SalVentAttn", "Cont", "Vis", "SomMot", "Default")) %>% 
+  #filter(network7 == "DorsAttn") %>% 
+  #filter(network17 == "DorsAttnA" | network17 == "DorsAttnB") %>%
+  mutate(plot_label = make.unique(sub("Focus point:\\s+", "", MNI_Glasser_HCP_v1.0, perl=TRUE))) %>%
+  mutate(lobe = if_else(x < 0, "left", "right"))
 
-mixed_by_files <- list.files(pattern="Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2_mixed_by.rds", 
+beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas/tmp_444"
+#setwd(beta_dir)
+
+mixed_by_files <- list.files(path = beta_dir, pattern=".*Schaefer_444_final_2009c_2.3mm_cope_l2_mixed_by.rds", 
                              full.names = TRUE, recursive=TRUE)
 
 effects_of_interest <- c(
@@ -180,22 +193,24 @@ dan_display <- lapply(mixed_by_files, function(x) {
 })
 
 dan_df <- rbindlist(dan_display) %>%
-  dplyr::filter(l1_model %in% c("L1m-abspe", "L1m-pe", "L1m-echange", "L1m-entropy_wiz")) %>%
+  #dplyr::filter(l1_model %in% c("L1m-abspe", "L1m-pe", "L1m-echange", "L1m-entropy_wiz")) %>%
   dplyr::mutate(l1_cope_name = factor(
     sub("EV_", "", l1_cope_name),
     levels=c("entropy_change_feedback", "entropy_wiz_clock", "pe", "abspe"),
     labels=c("echange", "entropy", "pe", "abspe")
   )) %>%
-  dplyr::select(-l1_model, -statistic) %>%
+  dplyr::select(-l1_model) %>% #, -statistic
   inner_join(both, by="mask_value") %>%
-  inner_join(labels, by="mask_value") %>%
+  #inner_join(labels, by="mask_value") %>%
   mutate(sort_label = paste(lobe, sub("([LR])_(.*)", "\\2_\\1", plot_label, perl=TRUE)))
+
+dan_e <- dan_df %>% filter(l1_cope_name %in% c("echange", "entropy"))# %>% filter(network7=="DorsAttn")
+dan_pe <- dan_df %>% filter(l1_cope_name %in% c("abspe", "pe"))# %>% filter(network7=="DorsAttn")
+
 
 library(patchwork)
 
-pdf("dan_bb_17_dissociation.pdf", width=32, height=16)
-dan_e <- dan_df %>% filter(l1_cope_name %in% c("echange", "entropy"))
-dan_pe <- dan_df %>% filter(l1_cope_name %in% c("abspe", "pe"))
+pdf("dan_bb_17_dissociation_400.pdf", width=32, height=16)
                            
 g1 <- ggplot(dan_e, aes(x=sort_label, y=estimate, ymin=estimate-std.error, ymax=estimate+std.error, color=l1_cope_name)) +
   facet_grid(term~network17, scales = "free") +
@@ -214,6 +229,151 @@ g2 <- ggplot(dan_pe, aes(x=sort_label, y=estimate, ymin=estimate-std.error, ymax
 
 g1 + g2 + plot_layout(nrow=1)
 dev.off()
+
+pdf("dan_bb_17_dissociation_400_pe.pdf", width=32, height=16)
+g2 <- ggplot(dan_pe, aes(x=sort_label, y=estimate, ymin=estimate-std.error, ymax=estimate+std.error, color=l1_cope_name)) +
+  facet_grid(term~network17, scales = "free") +
+  geom_pointrange(position=position_dodge(width=0.7), size=1.5) +
+  theme_bw(base_size = 18) +
+  theme(axis.text.x = element_text(angle=90)) +
+  geom_hline(yintercept = 0)
+
+g2
+dev.off()
+
+
+ggplot(dan_pe %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="pe"), aes(x=y, y=x, color=estimate)) + geom_point(size=6) +
+  scale_color_viridis_c() + brms::theme_black()
+
+g1 <- ggplot(dan_pe %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="pe"), 
+       aes(x=y, y=z, color=-statistic, shape=network7, alpha=padj_BY_term < .01)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text_repel(aes(label=subregion17), color="grey80")
+
+g2 <- ggplot(dan_pe %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="abspe"), 
+       aes(x=y, y=z, color=-statistic, shape=network7, alpha=padj_BY_term < .01)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text_repel(aes(label=subregion17), color="grey80")
+
+g1 + g2 + plot_layout(ncol=2)
+
+ggplot(dan_pe %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="abspe"), 
+       aes(x=y, y=z, color=-estimate, shape=lobe, alpha=padj_BY_term < .05)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text_repel(aes(label=subregion17), color="grey80")
+
+
+ggplot(dan_pe %>% filter(term=="rt_lag:fmri_beta:last_outcomeReward" & l1_cope_name=="abspe"), 
+       aes(x=y, y=z, color=-estimate, shape=lobe, alpha=padj_BY_term < .05)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text_repel(aes(label=subregion17), color="grey80")
+
+
+g1 <- ggplot(dan_pe %>% filter(term=="fmri_beta:rt_vmax_lag" & l1_cope_name=="abspe"), 
+       aes(x=y, y=z, color=statistic, shape=network7, alpha=abs(statistic) > 3)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text(aes(label=subregion17), color="grey80") + ggtitle("abspe rtvmax")
+  #scale_y_reverse()
+
+g2 <- ggplot(dan_pe %>% filter(term=="fmri_beta:rt_vmax_lag" & l1_cope_name=="pe"), 
+       aes(x=y, y=z, color=statistic, shape=network7, alpha=abs(statistic) > 3)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text(aes(label=subregion17), color="grey80") + ggtitle("PE rtvmax")
+  #scale_y_reverse()
+
+g3 <- ggplot(dan_pe %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="abspe"), 
+             aes(x=y, y=z, color=statistic, shape=network17, alpha=abs(statistic) > 3)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text(aes(label=subregion17), color="grey80") + ggtitle("abspe rt_lag")
+  #scale_y_reverse()
+
+g4 <- ggplot(dan_pe %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="pe"), 
+             aes(x=y, y=z, color=statistic, shape=network17, alpha=abs(statistic) > 3)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text(aes(label=subregion17), color="grey80") + ggtitle("PE rt_lag")
+  #scale_y_reverse()
+
+
+g1 + g2 + g3 + g4 +  plot_layout(nrow=2)
+
+
+###
+
+
+g1 <- ggplot(dan_e %>% filter(term=="fmri_beta:rt_vmax_lag" & l1_cope_name=="echange"), 
+             aes(x=y, y=z, fill=statistic, alpha=padj_BY_term < .05, shape=network7)) + geom_point(size=15) +
+  scale_fill_viridis_c() + theme_dark() + scale_shape_manual(values=20:26) +
+  geom_text(aes(label=subregion17), color="black") + ggtitle("Echange rtvmax")
+
+
+g2 <- ggplot(dan_pe %>% filter(term=="fmri_beta:rt_vmax_lag" & l1_cope_name=="abspe"), 
+             aes(x=y, y=z, fill=statistic, alpha=padj_BY_term < .05, shape=network7)) + geom_point(size=15) +
+  scale_fill_viridis_c() + theme_dark() + scale_shape_manual(values=20:26) +
+  geom_text(aes(label=subregion17), color="black") + ggtitle("absPE rtvmax")
+
+g1 + g2
+
+
+g2 <- ggplot(dan_pe %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="abspe"), 
+             aes(x=y, y=x, fill=statistic, alpha=padj_BY_term < .01, shape=network7)) + geom_point(size=15) +
+  scale_fill_viridis_c() + theme_dark() +
+  geom_text(aes(label=subregion17), color="black") + ggtitle("abspe rtlag") +
+  scale_shape_manual(values=21:26)
+
+
+g2 <- ggplot(dan_pe %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="pe"), 
+             aes(x=y, y=z, color=statistic, alpha=padj_BY_term < .05)) + geom_point(size=15) +
+  scale_color_viridis_c() + theme_dark() + facet_wrap(~network7) +
+  geom_text(aes(label=subregion17), color="black") + ggtitle("pe rtlag")
+
+
+##
+
+
+g2 <- ggplot(dan_pe %>% filter(term=="fmri_beta:rt_vmax_lag" & l1_cope_name=="abspe"), 
+             aes(x=y, y=x, color=statistic, alpha=abs(statistic) > 3)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() + facet_wrap(~network7) +
+  geom_text(aes(label=subregion17), color="grey80") + ggtitle("absPE rtvmax")
+
+g3 <- ggplot(dan_pe %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="abspe"), 
+             aes(x=y, y=x, color=statistic, alpha=abs(statistic) > 3)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() + facet_wrap(~network7) +
+  geom_text(aes(label=subregion17), color="grey80") + ggtitle("absPE rt lag")
+
+g1 + g2 + g3 + plot_layout(nrow=3)
+  
+g3 <- ggplot(dan_e %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="echange"), 
+             aes(x=y, y=x, color=statistic, shape=network7, alpha=abs(statistic) > 3)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text(aes(label=subregion17), color="grey80") + ggtitle("Echange rt_lag")
+
+g4 <- ggplot(dan_pe %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="pe"), 
+             aes(x=y, y=x, color=statistic, shape=network7, alpha=abs(statistic) > 3)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text(aes(label=subregion17), color="grey80") + ggtitle("PE rt_lag")
+
+
+g1 + g2 + g3 + g4 +  plot_layout(nrow=2)
+
+
+###
+ggplot(dan_e %>% filter(term=="rt_lag:fmri_beta" & l1_cope_name=="echange"), 
+       aes(x=y, y=x, color=statistic, shape=lobe, alpha=padj_BY_term < .05)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text_repel(aes(label=subregion17), color="grey80")
+
+
+
+ggplot(dan_e %>% filter(term=="fmri_beta:rt_vmax_lag" & l1_cope_name=="entropy"), 
+       aes(x=y, y=z, color=statistic, shape=lobe, alpha=padj_BY_term < .05)) + geom_point(size=15) +
+  scale_color_viridis_c() + brms::theme_black() +
+  geom_text_repel(aes(label=subregion17), color="grey80")
+
+
+
+#shape=network7
+
+x <- dan_pe %>% filter(term=="rt_lag:fmri_beta")
 
 ## meta mixed by comparing network mean B-B effects
 library(afex)
