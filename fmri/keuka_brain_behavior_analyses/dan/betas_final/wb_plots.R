@@ -6,7 +6,6 @@ library(patchwork)
 library(fmri.pipeline)
 
 Sys.setenv(AFNIDIR="/Users/hallquist/abin")
-#source("~/Data_Analysis/r_packages/fmri.pipeline/R/ggbrain.R")
 setwd("~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final")
 
 bg_color <- "gray90"
@@ -82,6 +81,26 @@ pe_gg <- ggbrain(
 # slices = data.frame(coord = c("z = 58", "x = -7.45", "y = 10")),
 # positive_colorscale = scale_fill_viridis_c(), negative_colorscale = scale_fill_distiller(palette="Blues"))
 plot(pe_gg)
+dev.off()
+
+##### REW > OM
+
+
+rew_dir <- file.path(betas_dir, "L1m-rew_om")
+
+png("figures/rew_wb_ptfce.png", width = 5, height = 4, units = "in", res = 600, bg = bg_color)
+
+rew_gg <- ggbrain(
+  underlay = file.path(rew_dir, "template_brain.nii.gz"),
+  overlay = file.path(rew_dir, "zstat6_ptfce_1mm.nii.gz"),
+  slices = data.frame(coord = c("x = -42", "y = 9", "z = 49", "z = 55"), coord_labels = TRUE),
+  remove_null_space = TRUE, pos_thresh = 5.2, neg_thresh = -5.2,
+  background_color = bg_color, text_color = text_color,
+  panel_borders = FALSE, symmetric_legend = symmetric_legend, base_size = base_size,
+  underlay_contrast = "low", ncol=2, nrow=2, title = "Reward > Omission\n(feedback phase)"
+)
+
+plot(rew_gg)
 dev.off()
 
 #### PAIRWISE DIFFERENCES: Entropy vs. PE is not of interest
@@ -188,7 +207,7 @@ echange_gt_rew_gg <- ggbrain(
 plot(echange_gt_rew_gg)
 dev.off()
 
-pe_inset <- pe_gt_rew_gg & guides(fill = guide_colorbar(barheight=3))
+pe_inset <- pe_gt_rew_gg & guides(fill = guide_colorbar(barheight=4.5, ticks.colour = text_color))
 
 #   fill_new = guide_colorbar(barheight = panel_height, available_aes = "fill_new"),
 #   #fill_new_new = guide_colorbar(barheight = unit(0.1, "cm"), available_aes = "fill_new_new")
@@ -252,9 +271,23 @@ pe_gg_with_inset <- ggdraw(
             x = 0.45, y=0.01, width = 0.43, height=0.43)
 
 
+# shrink color bars for pairwise plots to fit within panel
+echange_gt_entropy_gg_small <- echange_gt_entropy_gg & 
+  guides(
+    fill = guide_colorbar(barheight=4.5, order = 1, ticks.colour = text_color), 
+    fill_new=guide_colorbar(barheight=4.5, available_aes = "fill_new", order = 2, ticks.colour = text_color)
+  )
+
+echange_gt_pe_gg_small <- echange_gt_pe_gg & 
+  guides(
+    fill = guide_colorbar(barheight=4.5, order = 1, ticks.colour = text_color), 
+    fill_new=guide_colorbar(barheight=4.5, available_aes = "fill_new", order = 2, ticks.colour = text_color)
+  )
+
+
 pdf("figures/composite.pdf", width=15, height=9)
 p <- ( wrap_elements(plot=entropy_gg) + wrap_elements(plot=echange_gg) + wrap_elements(plot=pe_gg_with_inset) + plot_layout(widths=c(1,1,1.6)) ) /
-  ( wrap_elements(plot=echange_gt_entropy_gg) + wrap_elements(plot=echange_gt_pe_gg) ) +
+  ( wrap_elements(plot=echange_gt_entropy_gg_small) + wrap_elements(plot=echange_gt_pe_gg_small) ) +
   plot_layout(heights=c(2, 1.4)) + # first composite row is 2x the second row
   plot_annotation(
     tag_levels = "A", tag_suffix = ")",

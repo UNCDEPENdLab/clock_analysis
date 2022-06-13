@@ -6,18 +6,22 @@ library(tidyr)
 ## Thus, warp the 200-parcel FSL space to fonov using our in-lab warp coefficients and NN interpolation. This yields a good result by eye. It's a little precious on region boundaries (speckled at points, but defensibly so),
 ## but the centroids of the ROIs are definitely correct and a few straggler voxels will not hamper us"
 
+setwd("/proj/mnhallqlab/projects/clock_analysis/fmri/pfc_entropy/")
+
 ## system(paste(c("applywarp -i original_masks/Schaefer2018_200Parcels_7Networks_order_FSLMNI152_1mm_ants",
 ##                "-o original_masks/Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants",
 ##                "-r ~/standard/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c",
 ##                "-w ~/standard/fsl_mni152/fsl_mni152_to_fonov_mni152_warpcoef --interp=nn"), collapse=" "))
 
-## system(paste(c("applywarp -i original_masks/Schaefer2018_200Parcels_7Networks_order_FSLMNI152_1mm_ants",
-##                "-o original_masks/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants",
-##                "-r ~/standard/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_2.3mm",
-##                "-w ~/standard/fsl_mni152/fsl_mni152_to_fonov_mni152_warpcoef --interp=nn"), collapse=" "))
+# system(paste(c("applywarp -i original_masks/Schaefer2018_400Parcels_7Networks_order_FSLMNI152_1mm_ants",
+#                "-o original_masks/Schaefer2018_400Parcels_7Networks_order_fonov_2.3mm_ants",
+#                "-r $MRI_STDDIR/mni_icbm152_nlin_asym_09c/mni_icbm152_t1_tal_nlin_asym_09c_2.3mm",
+#                "-w $MRI_STDDIR/fsl_mni152/fsl_mni152_to_fonov_mni152_warpcoef --interp=nn"), collapse=" "))
 
-orig <- readNIfTI("original_masks/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants.nii.gz", reorient=FALSE)
-labels <- read.table("original_masks/Schaefer2018_200Parcels_7Networks_order.txt") %>% select(1:2) %>%
+
+
+orig <- readNIfTI("original_masks/Schaefer2018_400Parcels_7Networks_order_fonov_2.3mm_ants.nii.gz", reorient=FALSE)
+labels <- read.table("original_masks/Schaefer2018_400Parcels_7Networks_order.txt") %>% select(1:2) %>%
   setNames(c("roinum", "network")) %>%
   mutate(hemi=if_else(grepl("_LH_", network), "L", "R"),
       network=sub("7Networks_[LR]H_", "", network)) %>%
@@ -39,6 +43,11 @@ for (nn in unique(labels$network)) {
   bad_mi <- which(!orig %in% unique(thisnet$roinum))
   mod[bad_mi] <- 0 #dump
 
-  writeNIfTI(mod, filename=paste0("masks/Schaefer_", nn, "_2.3mm"))
+  writeNIfTI(mod, filename=paste0("masks/Schaefer_400_", nn, "_2.3mm"))
  
 }
+
+
+# compare 400 and 200
+dan_200 <- readNIfTI("masks/Schaefer_DorsAttn_2.3mm.nii.gz")
+dan_400 <- readNIfTI("masks/Schaefer_400_DorsAttn_2.3mm.nii.gz")

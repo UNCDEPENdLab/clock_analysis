@@ -4,9 +4,9 @@ library(lme4)
 library(ggpubr)
 library(car)
 
-setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
+setwd("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses")
+#setwd('~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/')
 load('trial_df_and_vh_pe_clusters_u.Rdata')
-
 
 get_kldsum <- function(v1, v2) {
   require(LaplacesDemon)
@@ -21,6 +21,8 @@ df <- df %>% group_by(ID, run) %>% arrange(ID, run, run_trial) %>% mutate(
   rt_lag4 = lag(rt_lag3),
   rt_lag5 = lag(rt_lag4),
   rt_swing_lag2 = lag(rt_swing_lag),
+  omission_lag2 = lag(omission_lag),
+  omission_lag3 = lag(omission_lag2),
   omission_lag4 = lag(omission_lag3),
   omission_lag5 = lag(omission_lag4)) %>% ungroup() %>%
   rowwise() %>% mutate(
@@ -35,6 +37,8 @@ df <- df %>% group_by(ID, run) %>% arrange(ID, run, run_trial) %>% mutate(
   ) %>%
   ungroup() %>% mutate(rt_swing_lag_sc = scale(rt_swing_lag),
                        rt_swing_lag2_sc = scale(rt_swing_lag2))
+
+save(df, file="kld_df_aug2021.RData")
 
 # # inspect: r(KLD3, KLD4) = .88, similar timecourses; r(kld_rew3, kld_rew4) = 0.86
 # # r(kld3, rt_swing_lag) = .53

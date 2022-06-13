@@ -10,6 +10,12 @@ get_kldsum <- function(v1, v2) {
   return(kk$sum.KLD.px.py)
 }
 
+# get_kldsum(1:10, 2:11)
+# get_kldsum(c(1.2, 1.5, 2.5), c(0.6, 1.2, 1.5))
+# get_kldsum(c(1.2, 1.5, 2.5), c(2.5, 1.2, 1.5))
+# get_kldsum(c(1.2, 1.5, 2.5), c(0, 1.5, 2.5))
+
+
 get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfixed=TRUE) {
   checkmate::assert_directory_exists(repo_directory)
   
