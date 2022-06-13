@@ -14,7 +14,8 @@ if (Sys.getenv("USER")=="alexdombrovski") {
     dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label)
   
   beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/final_betas"
-  trial_df <- get_trial_data(repo_directory = "~/code/clock_analysis")
+  # trial_df <- get_trial_data(repo_directory = "~/code/clock_analysis")
+  trial_df <- get_trial_data(repo_directory = "~/code/clock_analysis", dataset = "mmclock_meg") %>% mutate(id = as.integer(id))# for MEG
 } else {
   setwd("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final")
   
@@ -37,34 +38,80 @@ library(purrr)
 library(glue)
 
 #analysis_dir <- "~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final"
-analysis_dir <- "/proj/mnhallqlab/projects/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final"
+analysis_dir <- "~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final"
 setwd(analysis_dir)
 
 source("../get_trial_data.R")
 source("parcel_brain_behavior_functions.R")
 
 # location of whole brain betas for analysis
-# beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas"
-beta_dir <- file.path(analysis_dir, "wholebrain_betas")
+beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas"
+# beta_dir <- file.path(analysis_dir, "wholebrain_betas")
 
-# MNH/AD internal labeling scheme
-labels <- readxl::read_excel(file.path(analysis_dir, "..", "MNH Dan Labels.xlsx")) %>%
-  dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label)
+# # MNH/AD internal labeling scheme
+# labels <- readxl::read_excel(file.path(analysis_dir, "..", "MNH Dan Labels.xlsx")) %>%
+#   dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label)
 
 # BALSA parcel labels from whereami
-labels_200 <- read.csv(file.path(beta_dir, "schaefer_200_whereami.csv")) %>%
-  dplyr::rename(mask_value = roi_num, plot_label = MNI_Glasser_HCP_v1.0) %>% dplyr::select(mask_value, plot_label) %>%
-  mutate(plot_label = sub("Focus point:\\s+", "", plot_label, perl=TRUE))
+setwd("~/code/schaefer_wb_parcellation")
+schaefer_7 <- read.csv("labels/Schaefer2018_400Parcels_7Networks_order.csv") %>%
+  mutate(network=factor(network), net_num = as.numeric(network)) %>%
+  rename(network7=network, net_num7=net_num)
 
+# this has the spatial coordinate, spatial_roi_num
+schaefer_7_lookup <- read.csv("labels/Schaefer_400_7networks_labels.csv")
+
+schaefer_7 <- schaefer_7 %>% inner_join(schaefer_7_lookup, by="roi_num") %>%
+  rename(roi_num7=roi_num, subregion7=subregion)
+
+schaefer_17 <- read.csv("labels/Schaefer2018_400Parcels_17Networks_order.csv") %>%
+  mutate(network=factor(network), net_num = as.numeric(network)) %>%
+  rename(network17=network, net_num17=net_num) %>%
+  select(-hemi) # mirrored in 7
+
+# this has the spatial coordinate, spatial_roi_num
+schaefer_17_lookup <- read.csv("labels/Schaefer_400_17networks_labels.csv") %>%
+  select(roi_num, spatial_roi_num) # x,y,z and labels already duplicated in 7-network lookup
+
+schaefer_17 <- schaefer_17 %>% inner_join(schaefer_17_lookup, by="roi_num") %>%
+  rename(roi_num17=roi_num, subregion17=subregion)
+
+both <- inner_join(schaefer_7, schaefer_17, by="spatial_roi_num") %>%
+  select(spatial_roi_num, roi_num7, roi_num17, network7, network17, net_num7, net_num17, subregion7, subregion17, everything())
+setDT(both)
+labels_df <- both %>% 
+  # filter(net_num7==3 | (network17=="DorsAttnA" | network17=="DorsAttnB")) %>% 
+  mutate(roi_num7 = as.factor(roi_num7)) %>% 
+  # label lobes
+  mutate(lobe = case_when(
+    str_detect(subregion17, "Temp") ~ "temporal",
+    str_detect(subregion17, "Par") | str_detect(subregion17, "SPL") | str_detect(subregion17, "PostC") |
+      str_detect(subregion17, "IPS") | str_detect(subregion17, "IPL") | str_detect(subregion17, "pCun") ~ "parietal",
+    str_detect(subregion17, "PFC") | str_detect(subregion17, "FEF") | str_detect(subregion17, "PrCv") ~ "frontal"),
+    vm_gradient17 = case_when(
+      lobe == "temporal" ~ "MT+",
+      lobe == "parietal" & network17 == "DorsAttnA" ~ "PPCcaudal",
+      lobe == "parietal" & network17 == "DorsAttnB" ~ "PPCrostral",
+      lobe == "frontal" ~ "premotor",
+      TRUE ~ as.character(network17)),
+    plot_label = sub("Focus point:\\s+", "", MNI_Glasser_HCP_v1.0, perl=TRUE),
+    mask_value = as.integer(as.character(roi_num7))
+  )
 #trial_df <- get_trial_data(repo_directory = "~/Data_Analysis/clock_analysis") %>%
-trial_df <- get_trial_data(repo_directory = "/proj/mnhallqlab/projects/clock_analysis") %>%
+# trial_df <- get_trial_data(repo_directory = "~/code/clock_analysis") %>%
+trial_df <- trial_df %>%
   group_by(id, run) %>%
   mutate(v_max_wi_lag = lag(v_max_wi, order_by=run_trial)) %>%
   ungroup() %>%
   dplyr::select(id, run, run_trial, trial_neg_inv, rt_csv, rt_lag, v_entropy_wi, v_max_wi_lag, 
                 rt_vmax_lag, last_outcome)
 
-echange_l2_copes <- file.path(beta_dir, "L1m-echange/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz")
+# take a single subject
+# trial_df <- trial_df %>% filter(id == 10637)
+
+#echange_l2_copes <- file.path(beta_dir, "L1m-echange/Schaefer2018_400Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz")
+echange_l2_copes <- file.path(beta_dir, "L1m-echange/Schaefer_444_final_2009c_2.3mm_cope_l2.csv.gz")
+
 int <- formula(~ (trial_neg_inv + rt_lag + v_max_wi_lag + v_entropy_wi + fmri_beta + last_outcome)^2 +
                         rt_lag:last_outcome:fmri_beta +
                         rt_vmax_lag*trial_neg_inv*fmri_beta +
@@ -78,20 +125,28 @@ slo <- formula(~ (trial_neg_inv + rt_lag + v_max_wi_lag + v_entropy_wi + fmri_be
                  (1 + rt_lag + rt_vmax_lag | id/run)
 )
 
-efiles <- list.files(beta_dir, pattern = "Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz", 
-                    recursive = TRUE, full.names = TRUE)
+efiles <- list.files(beta_dir, pattern = "Schaefer_444_final_2009c_2.3mm_cope_l2.csv.gz", 
+                     recursive = TRUE, full.names = TRUE)
+
+# drop entropy
+# efiles <- efiles[c(1:)]
+
+# efiles <- list.files(beta_dir, pattern = "Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz", 
+#                     recursive = TRUE, full.names = TRUE)
 
 save.image(file="parcel_input_snapshot.RData")
 
 #efiles <- efiles[3:6]
 for (ee in efiles) {
   job <- R_batch_job$new(
-    job_name = "parcel_bb", batch_directory = getwd(), scheduler = "slurm",
+    job_name = "parcel_bb", batch_directory = getwd(), scheduler = "local",
     input_rdata_file = "parcel_input_snapshot.RData",
-    n_nodes = 1, n_cpus = 16, wall_time = "12:00:00",
+    n_nodes = 1, n_cpus = 2, wall_time = "12:00:00",
     mem_total = "64G",
-    r_code = glue("to_plot <- mixed_by_betas('{ee}', labels_200, trial_df, mask_file = 'Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
-                            rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16, afni_dir = '/proj/mnhallqlab/sw/afni',
+    #r_code = glue("to_plot <- mixed_by_betas('{ee}', labels_df, trial_df, mask_file = 'Schaefer2018_400Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
+    r_code = glue("to_plot <- mixed_by_betas('{ee}', labels_df, trial_df, mask_file = 'Schaefer_444_final_2.3mm.nii.gz',
+                            rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 2, afni_dir = '/Users/alexdombrovski/abin',
+                            out_prefix = 'Schaefer_400_all_networks_17_meg',
                             split_on = c('l1_cope_name', 'l2_cope_name', 'mask_value'))"),
     r_packages = c("fmri.pipeline", "tidyverse", "data.table", "sfsmisc"),
     batch_code = c("module use /proj/mnhallqlab/sw/modules", "module load r/4.1.2_depend")
@@ -101,11 +156,25 @@ for (ee in efiles) {
 
 
   # local execution
-  # to_plot <- mixed_by_betas(ee, labels_200, trial_df, mask_file = "Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
+  # to_plot <- mixed_by_betas(ee, labels_df, trial_df, mask_file = "Schaefer_444_final_2.3mm.nii.gz",
   #                           rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16,
   #                           split_on = c("l1_cope_name", "l2_cope_name", "mask_value"))
 }
 
+
+# test filtering of copes: parametric modulator only
+# cope_df <- fread("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas/L1m-pe/Schaefer_444_final_2009c_2.3mm_cope_l2.csv.gz") %>%
+#   filter(l2_cope_name == "overall" & !l1_cope_name  %in% c("EV_clock", "EV_feedback")) %>% # for not, ignore all other l2 contrasts
+#   
+#   # debugging only
+#   # filter(mask_value %in% 1:2) %>%
+#   # filter(l1_cope_name == "EV_clock") %>%
+#   # filter(l1_cope_name == "EV_entropy_change_feedback" & l2_cope_name == "overall") %>%
+#   # filter(l1_cope_name == "EV_entropy_wiz_clock" & l2_cope_name == "overall") %>%
+#   dplyr::select(-feat_dir, -img, -mask_name, -session, -l1_cope_number, -l2_cope_number, -l2_model) %>%
+#   rename(fmri_beta = value) %>%
+#   # merge(label_df, by = label_join_col, all.x = TRUE)
+#   merge(label_df, by = label_join_col, all = FALSE) 
 
 # these are betas I manually extracted by using colMeans, readNifti, and mask indices in the old/traditional voxelwise approach.
 # see entropy_betas.R. These are specifically the entropy change overall betas from the echange model
@@ -116,7 +185,7 @@ manual_betas <- read.csv("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_
   mutate(mask_value = as.integer(sub("^V", "", roi))) %>%
   dplyr::select(-roi)
 
-onesamp_betas(manual_betas, mask_file="Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
+onesamp_betas(manual_betas, mask_file="Schaefer2018_400Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
               out_dir = "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas/beta_debugging")
 
 man_means <- manual_betas %>% group_by(mask_value) %>% summarise(mean = mean(fmri_beta))
@@ -125,11 +194,11 @@ man_means <- manual_betas %>% group_by(mask_value) %>% summarise(mean = mean(fmr
 echange_intermediate <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas/beta_debugging/overall_echange_stat_result.rds") %>%
   unnest(img_stats) %>% select(-img, -img_exists, -x, -y, -z)
 
-int_means <- echange_intermediate %>% group_by(mask_value) %>% summarise(mean = mean(value))
-
-onesamp_betas(echange_intermediate, mask_file="Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz", dv = "value",
-              out_dir = "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas/beta_debugging", img_prefix = "echange_intermediate")
-
+# int_means <- echange_intermediate %>% group_by(mask_value) %>% summarise(mean = mean(value))
+# 
+# onesamp_betas(echange_intermediate, mask_file="Schaefer2018_400Parcels_7Networks_order_fonov_1mm_ants.nii.gz", dv = "value",
+#               out_dir = "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas/beta_debugging", img_prefix = "echange_intermediate")
+# 
 
 
 #setwd("/Users/michael/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final")
@@ -145,20 +214,20 @@ onesamp_betas(echange_intermediate, mask_file="Schaefer2018_200Parcels_7Networks
 
 
 
-echange_l2_copes <- file.path(beta_dir, "L1m-echange/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz")
+echange_l2_copes <- file.path(beta_dir, "L1m-echange/Schaefer_444_final_2009c_2.3mm_cope_l2.csv.gz")
 
-mixed_by_betas(echange_l2_copes, labels_200, trial_df)
+mixed_by_betas(echange_l2_copes, labels_df, trial_df)
 
 # subject-level
 #echange_l2_copes <- fread(file.path(beta_dir, "L1m-echange/Schaefer_DorsAttn_2.3mm_cope_l2.csv.gz")) %>%
-#echange_l2_copes <- fread(file.path(beta_dir, "L1m-echange/zstat6_ptfce_Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_overlap_cope_l2.csv.gz")) %>%
-#echange_l2_copes <- fread(file.path(beta_dir, "L1m-echange/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz")) %>%
-entropy_l2_copes <- fread(file.path(beta_dir, "L1m-entropy_wiz/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz")) %>%
+#echange_l2_copes <- fread(file.path(beta_dir, "L1m-echange/zstat6_ptfce_Schaefer2018_400Parcels_7Networks_order_fonov_2.3mm_ants_overlap_cope_l2.csv.gz")) %>%
+#echange_l2_copes <- fread(file.path(beta_dir, "L1m-echange/Schaefer_444_final_2009c_2.3mm_cope_l2.csv.gz")) %>%
+entropy_l2_copes <- fread(file.path(beta_dir, "L1m-entropy_wiz/Schaefer_444_final_2009c_2.3mm_cope_l2.csv.gz")) %>%
   #filter(l1_cope_name == "EV_entropy_change_feedback" & l2_cope_name == "overall") %>%
   filter(l1_cope_name == "EV_entropy_wiz_clock" & l2_cope_name == "overall") %>%
   select(-feat_dir, -img) %>%
   rename(fmri_beta=value) %>%
-  left_join(labels_200, by="mask_value")
+  left_join(labels_df, by="mask_value")
 
 # meg effects of interest
 # meg_wide <- readRDS("MEG_betas_wide_echange_vmax_reward_Nov15_2021.RDS")
@@ -269,14 +338,14 @@ to_plot <- ddf$coef_df_reml %>%
   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
   ungroup() %>% 
   #left_join(labels, by="mask_value") %>%
-  left_join(labels_200, by="mask_value") %>%
+  left_join(labels_df, by="mask_value") %>%
   setDT()
 
 
 #write.csv(to_plot %>% select(-rhs, -effect), file="fmri_brainbehavior_parcel_betas.csv", row.names=FALSE)
 #write.csv(to_plot %>% select(-rhs, -effect), file="fmri_brainbehavior_parcel_betas_ptfce.csv", row.names=FALSE)
-#write.csv(to_plot %>% select(-rhs, -effect), file="fmri_brainbehavior_parcel_betas_200.csv", row.names=FALSE)
-write.csv(to_plot %>% select(-rhs, -effect), file="fmri_brainbehavior_parcel_entropy_betas_200.csv", row.names=FALSE)
+#write.csv(to_plot %>% select(-rhs, -effect), file="fmri_brainbehavior_parcel_betas_400.csv", row.names=FALSE)
+write.csv(to_plot %>% select(-rhs, -effect), file="fmri_brainbehavior_parcel_entropy_betas_400.csv", row.names=FALSE)
 
 
 # plot_medusa(ddf, x="plot_label", y=1, color="estimate",

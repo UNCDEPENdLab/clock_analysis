@@ -40,6 +40,49 @@ design_face <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_
                                         rewFunc == "CEV" | rewFunc == "CEVR" ~ "unlearnable"
                                       ))
 
+# get fMRI parcel labels for 400
+setwd("~/code/schaefer_wb_parcellation")
+schaefer_7 <- read.csv("labels/Schaefer2018_400Parcels_7Networks_order.csv") %>%
+  mutate(network=factor(network), net_num = as.numeric(network)) %>%
+  rename(network7=network, net_num7=net_num)
+
+# this has the spatial coordinate, spatial_roi_num
+schaefer_7_lookup <- read.csv("labels/Schaefer_400_7networks_labels.csv")
+
+schaefer_7 <- schaefer_7 %>% inner_join(schaefer_7_lookup, by="roi_num") %>%
+  rename(roi_num7=roi_num, subregion7=subregion)
+
+schaefer_17 <- read.csv("labels/Schaefer2018_400Parcels_17Networks_order.csv") %>%
+  mutate(network=factor(network), net_num = as.numeric(network)) %>%
+  rename(network17=network, net_num17=net_num) %>%
+  select(-hemi) # mirrored in 7
+
+# this has the spatial coordinate, spatial_roi_num
+schaefer_17_lookup <- read.csv("labels/Schaefer_400_17networks_labels.csv") %>%
+  select(roi_num, spatial_roi_num) # x,y,z and labels already duplicated in 7-network lookup
+
+schaefer_17 <- schaefer_17 %>% inner_join(schaefer_17_lookup, by="roi_num") %>%
+  rename(roi_num17=roi_num, subregion17=subregion)
+
+both <- inner_join(schaefer_7, schaefer_17, by="spatial_roi_num") %>%
+  select(spatial_roi_num, roi_num7, roi_num17, network7, network17, net_num7, net_num17, subregion7, subregion17, everything())
+setDT(both)
+labels <- both %>% filter(network7=="DorsAttn" & (network17=="DorsAttnA" | network17=="DorsAttnB")) %>% 
+  mutate(roi_num7 = as.factor(roi_num7)) %>% 
+  # label lobes
+  mutate(lobe = case_when(
+    str_detect(subregion17, "Temp") ~ "temporal",
+    str_detect(subregion17, "Par") | str_detect(subregion17, "SPL") | str_detect(subregion17, "PostC") |
+      str_detect(subregion17, "IPS") | str_detect(subregion17, "IPL") | str_detect(subregion17, "pCun") ~ "parietal",
+    str_detect(subregion17, "PFC") | str_detect(subregion17, "FEF") | str_detect(subregion17, "PrCv") ~ "frontal"),
+    vm_gradient17 = case_when(
+      lobe == "temporal" ~ "MT+",
+      lobe == "parietal" & network17 == "DorsAttnA" ~ "PPCcaudal",
+      lobe == "parietal" & network17 == "DorsAttnB" ~ "PPCrostral",
+      lobe == "frontal" ~ "premotor",
+      TRUE ~ as.character(network17))
+  )
+
 
 # load meg data
 # wbetas <- readRDS("~/OneDrive/collected_letters/papers/meg/plots/wholebrain/betas/MEG_betas_wide_echange_vmax_reward_Nov30_2021.RDS") %>% 
@@ -327,17 +370,29 @@ dev.off()
 
 
 # read in entropy change betas
-setwd(file.path(fmri_dir, 'L1m-entropy_echange'))
-ec_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_entropy_change_feedback") %>% 
-  dplyr::select(id, run_number, l1_model, mask_value, value) %>% mutate(id = as.character(id),
-                                                                        mask_value = as.factor(mask_value),
-                                                                        run_mc  = scale(run_number, center = T, scale = F),
-                                                                        beta_winsor = psych::winsor(value, trim = .05))
-df <- ec_betas %>% inner_join(design, by = c("id", "run_number")) %>% inner_join(wbetas, by = c("id", "rewFunc")) %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% 
-  inner_join(dan_labels, by = "mask_value") #%>%
+# setwd(file.path(fmri_dir, 'L1m-entropy_echange'))
+setwd(file.path(fmri_dir, 'L1m-echange'))
+ec_betas <- read_csv("Schaefer_444_final_2009c_2.3mm_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_entropy_change_feedback") %>% 
+  dplyr::select(id, run_number, l1_model, mask_value, value) %>% rename(roi_num7 = "mask_value")  %>% 
+  mutate(id = as.character(id),
+  roi_num7 = as.factor(roi_num7),
+  run_mc  = scale(run_number, center = T, scale = F),
+  beta_winsor = psych::winsor(value, trim = .05)) 
+df <- ec_betas %>% inner_join(design, by = c("id", "run_number")) %>% inner_join(wbetas, by = c("id", "rewFunc")) %>% inner_join(labels, by = "roi_num7") 
+  
+# ec_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_entropy_change_feedback") %>% 
+#   dplyr::select(id, run_number, l1_model, mask_value, value) %>% mutate(id = as.character(id),
+#                                                                         mask_value = as.factor(mask_value),
+#                                                                         run_mc  = scale(run_number, center = T, scale = F),
+#                                                                         beta_winsor = psych::winsor(value, trim = .05)) 
+
+# df <- ec_betas %>% inner_join(design, by = c("id", "run_number")) %>% inner_join(wbetas, by = c("id", "rewFunc")) %>% inner_join(labels, by = "mask_value") %>% filter(network=="Dors") %>% 
+#   inner_join(dan_labels, by = "mask_value") #%>%
 #  filter(Stream!='visual-motion')
 
-summary(lm(value ~ rewFunc * Stream * run_mc, df))
+# summary(lm(value ~ rewFunc * Stream * run_mc, df))
+summary(lm(value ~ rewFunc * vm_gradient17 * run_mc, df))
+anova(lm(value ~ rewFunc * vm_gradient17 * run_mc, df))
 
 
 # inspect
@@ -348,17 +403,17 @@ ec_means <- ggplot(df, aes(rewFunc, value, color = rewFunc)) + stat_summary(fun=
 # winsorizing does not help
 # m6 <- lmer(beta_winsor ~ rewFunc * Stream * entropy_change_late_beta_supp + (1|id), df)
 
-m_ec_etheta <- lmer(value ~ rewFunc *  Stream * omission_early_theta  +  (1|id), df)
+m_ec_etheta <- lmer(value ~ rewFunc *  vm_gradient17 * omission_early_theta  +  (1|id), df)
 summary(m_ec_etheta)
 Anova(m_ec_etheta, '3')
 
 
-# em_ec_etheta <- as_tibble(emmeans(m_ec_etheta, data = df, ~Stream|omission_early_theta*rewFunc, at = list(omission_early_theta = c(-0.13878, 0.66119))))
+# em_ec_etheta <- as_tibble(emmeans(m_ec_etheta, data = df, ~vm_gradient17|omission_early_theta*rewFunc, at = list(omission_early_theta = c(-0.13878, 0.66119))))
 # sample MEG at condition-wise quantiles
-em_ec_etheta <- as_tibble(emmeans(m_ec_etheta, data = df, ~Stream|omission_early_theta*rewFunc, at = list(omission_early_theta = qmeg$omission_early_theta))) %>%
+em_ec_etheta <- as_tibble(emmeans(m_ec_etheta, data = df, ~vm_gradient17|omission_early_theta*rewFunc, at = list(omission_early_theta = qmeg$omission_early_theta))) %>%
   inner_join(qmeg, by = c("omission_early_theta", "rewFunc"))
 
-ec_etheta <- ggplot(em_ec_etheta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
+ec_etheta <- ggplot(em_ec_etheta, aes(x = vm_gradient17, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(omission_early_theta))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~rewFunc) +
   theme_bw(base_size=12) +  ylab("BOLD response to entropy change")  +
@@ -369,15 +424,15 @@ ec_etheta <- ggplot(em_ec_etheta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax
 
 
 # entropy change late beta
-m_ec_lbeta <- lmer(value ~ rewFunc * Stream * entropy_change_late_beta_supp + (1|id), df)
-# summary(m_ec_lbeta)
+m_ec_lbeta <- lmer(value ~ rewFunc * vm_gradient17 * entropy_change_late_beta_supp + (1|id), df)
+summary(m_ec_lbeta)
 Anova(m_ec_lbeta, '3')
 
-em_ec_lbeta <- as_tibble(emmeans(m_ec_lbeta, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, 
+em_ec_lbeta <- as_tibble(emmeans(m_ec_lbeta, data = df, ~vm_gradient17|entropy_change_late_beta_supp*rewFunc, 
                                  at = list(entropy_change_late_beta_supp = qmeg$entropy_change_late_beta_supp))) %>%
   inner_join(qmeg, by = c("entropy_change_late_beta_supp", "rewFunc")) 
 
-ec_lbeta <- ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
+ec_lbeta <- ggplot(em_ec_lbeta, aes(x = vm_gradient17, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~rewFunc) +
   theme_bw(base_size=12) +  ylab("BOLD response to entropy change")  +
@@ -389,7 +444,7 @@ ec_lbeta <- ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=a
 em_ec_lbeta_learn <- em_ec_lbeta %>% filter(rewFunc=="DEV" | rewFunc=="IEV")
 
 ec_lbeta_learn <- ggplot(em_ec_lbeta_learn, 
-                         aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=qcolor)) +
+                         aes(x = vm_gradient17, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=qcolor)) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_grid(~ rewFunc) +
   theme_bw(base_size=12) +  ylab("BOLD response to entropy change")  +
@@ -402,7 +457,7 @@ ec_lbeta_learn <- ggplot(em_ec_lbeta_learn,
 em_ec_lbeta_unlearn <- em_ec_lbeta %>% filter(rewFunc=="CEV" | rewFunc=="CEVR")
 
 ec_lbeta_unlearn <- ggplot(em_ec_lbeta_unlearn, 
-                           aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=qcolor)) +
+                           aes(x = vm_gradient17, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=qcolor)) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_grid(~ rewFunc) +
   theme_bw(base_size=12) +  ylab("BOLD response to entropy change")  +
@@ -418,7 +473,7 @@ ggarrange(NULL, ec_lbeta_learn, NULL, ec_lbeta_unlearn,
           common.legend = T, legend = "right", align = "h", 
           labels = c("", "Learnable conditions"," ", "Unlearnable conditions"), hjust = -1.6, vjust = -.2)
 dev.off()
-ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color = rewFunc, lty=as.factor(q))) +
+ggplot(em_ec_lbeta, aes(x = vm_gradient17, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color = rewFunc, lty=as.factor(q))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~(rewFunc=="DEV" | rewFunc=="IEV")) +
   theme_bw(base_size=12) +  ylab("BOLD response to entropy change")  +
@@ -434,7 +489,7 @@ ggarrange(ec_etheta, ec_lbeta, nrow = 2, ncol = 1)
 dev.off()
 
 pdf("MEG_lbeta_on_ec_fMRI_beta_learnable.pdf", height = 6, width = 10)
-ggplot(em_ec_lbeta, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color = rewFunc, lty=as.factor(q))) +
+ggplot(em_ec_lbeta, aes(x = vm_gradient17, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color = rewFunc, lty=as.factor(q))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~(rewFunc=="DEV" | rewFunc=="IEV")) +
   theme_bw(base_size=12) +  ylab("BOLD response to entropy change")  +
@@ -450,9 +505,17 @@ dev.off()
 
 ggarrange(pe_pe_etheta, pe_ec_lbeta, nrow = 2, ncol = 1)
 
+# parcel-level late beta effects
+
+# entropy change late beta
+df$roi_num17 <- factor(df$roi_num17)
+m_ec_lbeta_parcel <- lmer(value ~ rewFunc * roi_num17 * entropy_change_late_beta_supp + (1|id), df)
+summary(m_ec_lbeta_parcel)
+Anova(m_ec_lbeta_parcel, '3')
+
 
 # interaction with run?
-# m_ec_lbeta_run2 <- lmer(value ~ (rewFunc +  Stream + entropy_change_late_beta_supp + run_mc) ^2 + (1|id), df)
+# m_ec_lbeta_run2 <- lmer(value ~ (rewFunc +  vm_gradient17 + entropy_change_late_beta_supp + run_mc) ^2 + (1|id), df)
 # summary(m_ec_lbeta_run)
 # Anova(m_ec_lbeta_run, '3')
 
@@ -474,12 +537,12 @@ m7 <- lmer(value ~ rewFunc * parcel * entropy_change_late_beta_supp + (1|id), df
 summary(m7)
 Anova(m7, '3')
 
-sm7 <- lmer(value ~ rewFunc * Stream * entropy_change_late_beta_supp + (1|id), df)
+sm7 <- lmer(value ~ rewFunc * vm_gradient17 * entropy_change_late_beta_supp + (1|id), df)
 summary(sm7)
 Anova(sm7, '3')
 
-em7 <- as_tibble(emmeans(sm7, data = df, ~Stream|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084))))
-e_ec_lbeta <- ggplot(em7, aes(x = Stream, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
+em7 <- as_tibble(emmeans(sm7, data = df, ~vm_gradient17|entropy_change_late_beta_supp*rewFunc, at = list(entropy_change_late_beta_supp = c(-0.07553, 0.22084))))
+e_ec_lbeta <- ggplot(em7, aes(x = vm_gradient17, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color=as.factor(entropy_change_late_beta_supp))) +
   geom_point(position = position_dodge(width = .6), size=2.5) +
   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~rewFunc) +
   theme_bw(base_size=12) +  ylab("BOLD response to entropy, clock-aligned")  +

@@ -184,5 +184,4 @@ for (lagged_decon in use_lagged_decons) {
       save(file = "medusa_coxme_wtrial_inv_output.Rdata", df)} 
   }
 }
-stopCluster(cl)
 

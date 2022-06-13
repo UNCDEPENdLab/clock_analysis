@@ -1,6 +1,7 @@
 library(tidyverse)
 library(lme4)
 library(data.table)
+library(readxl)
 
 out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/explore_medusa"
 #repo_directory <- "~/code/clock_analysis"
@@ -38,7 +39,7 @@ named_list <- function(...) {
 #   summarise(isna=sum(is.na(decon_interp)))
 # 
 # rt_visuomotor_long <- rt_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_interp))
-rt_visuomotor_long <- fread("~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/EXPLORE Medusa/transformed_schaefer_dan_3.125mm_rt_long_decon_aligned.csv.gz") %>%
+rt_visuomotor_long <- fread("~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/EXPLORE_Medusa/reproc/transformed_schaefer_dan_3.125mm_rt_long_decon_aligned.csv.gz") %>%
   mutate(atlas_value = as.character(atlas_value),
          id = as.character(id))
 # labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_7Networks_order_manual.txt",
@@ -54,10 +55,19 @@ dan_labels <- setDT(read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_
          hemi = substr(MNHLabel, 1,1)
   ) %>% select(atlas_value, MNHLabel, parcel, Stream, Visuomotor_Gradient, lobe, parcel, hemi)
 rt_visuomotor_long <- rt_visuomotor_long %>% inner_join(dan_labels, by = "atlas_value") %>% filter(!is.na(Stream))
-trial_df <- setDT(read_delim("~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/EXPLORE Medusa/explore_get_trial_data.csv")) %>%
-  dplyr::select(id, run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
+
+setwd("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan")
+
+source("get_trial_data.R")
+source("medusa_final/plot_medusa.R")
+source("~/code/fmri.pipeline/R/mixed_by.R")
+
+trial_df <- setDT(get_trial_data(dataset = "explore", repo_directory = "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/EXPLORE_Medusa/"))  
+
+trial_df <- trial_df %>% dplyr::select(id, run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
                 v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
-  mutate(log_kld3 = log(kld3 + .00001))
+  mutate(log_kld3 = log(kld3 + .00001),
+         id = as.character(id))
 # rt_visuomotor_long <- rt_visuomotor_long %>% inner_join(trial_df)
 # rt_visuomotor_long <- rt_visuomotor_long %>% filter(evt_time > -3 & evt_time < 6)
 
@@ -204,24 +214,24 @@ if (alignment == "clock" || alignment == "clock_online") {
                            v_entropy_wi*run_trial + v_entropy_wi_change*run_trial + abs_pe*run_trial + outcome +
                            (1 | id) )
   # flist <- named_list(enc_rt_base)
-  
-  flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
+  flist <- named_list(enc_rt_rslope, enc_rt_kld, enc_rt_pe, )
+  # flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
 }
 
 
-splits <- c("Stream", "side", "evt_time")
+splits <- c("vm_gradient", "side", "evt_time")
 
 message("Running mixed_by")
 ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial"),
                 tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
-                calculate = c("parameter_estimates_reml"), ncores = 18, refit_on_nonconvergence = 5, padjust_by = "term"#,
+                calculate = c("parameter_estimates_reml"), ncores = 10, refit_on_nonconvergence = 5, padjust_by = "term"#,
                 # emtrends_spec = list(
                 #   abspe = list(outcome = "decon_mean", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
                 #)
                 )
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_encode_medusa_fmri.rds")))
 
 dd <- ddf$emtrends_list$abspe
 dd <- dd[,c(-4, -5)]

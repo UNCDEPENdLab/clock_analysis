@@ -36,18 +36,41 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
     
     trial_df <- trial_df %>% dplyr::rename(clock_onset = starttime) %>%
       mutate(iti_ideal = 0, feedback_onset = 0)
+  } else if (dataset == "explore") {
+    # full <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
+    # u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
+    
+    if (isTRUE(groupfixed)) {
+      trial_df <- read.csv(file.path(repo_directory, "explore_decay_factorize_selective_psequate_fixedparams_fmri_ffx_sceptic_trial_statistics (2).csv")) %>% 
+        mutate(run = run_number)
+    } else {
+      trial_df <- read_csv(file.path(repo_directory, "mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
+    }
+    trials_per_run <- 40
+  } else if (dataset == "bsocial") {
+    # full <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
+    # u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
+    
+    if (isTRUE(groupfixed)) {
+      load(file.path(repo_directory, "decay_merged.RData")) 
+      trial_df <- decay_merged %>% rename(id = "ID", rt_csv = "rt", score_csv = "score")
+    } else {
+      trial_df <- read_csv(file.path(repo_directory, "mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
+    }
+    trials_per_run <- 40
   } else {
     stop("Don't know how to interpret dataset")
   }
   
   trial_df <- trial_df %>%
-  
+    
     arrange(id, run, trial) %>% # make sure trials are consecutive
     
     # group-level mutations
     mutate(
       trial = as.numeric(trial),
-      run_trial = trial - (run - 1) * !!trials_per_run,
+      run_trial = 1:n(),
+      # run_trial = trial - (run - 1) * !!trials_per_run,
       trial_neg_inv = -1000 / run_trial,
       trial_neg_inv_sc = as.vector(scale(trial_neg_inv)),
       rt_csv = rt_csv / 1000, # respecify in terms of seconds
@@ -62,7 +85,7 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
       rew_om = as.numeric(score_csv > 0), # 1/0 representation for fMRI GLMs
       rew_om_c = rew_om - 0.5 # effect coding variant for interactions
     ) %>%
-
+    
     #run-level mutations
     group_by(id, run) %>%
     dplyr::mutate(
@@ -174,34 +197,35 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
       log_kld3 = log(kld3 + .00001), # to handle large positive skew
       log_kld3_cum2 = log(kld3_cum2 + .00001)
     ) %>% ungroup()
+  if (!dataset %in% c("explore", "bsocial"))
+  {
+    u_df <- u_df %>%
+      dplyr::select(
+        id, run, trial, u_chosen, u_chosen_quantile, u_chosen_lag,
+        u_chosen_quantile_lag, u_chosen_change, u_chosen_quantile_change
+      )
+    trial_df <- inner_join(trial_df, u_df, by=c("id", "run", "trial"))
+    # load full entropy and RT_vmax
+    full <- as_tibble(full) %>%
+      dplyr::select(c(id, run, trial, v_entropy, rt_vmax, pe_max)) %>%
+      mutate(rt_vmax = rt_vmax / 10) %>% # put into seconds
+      dplyr::rename(v_entropy_full = v_entropy, rt_vmax_full = rt_vmax, pe_max_full = pe_max) %>%
+      group_by(id, run) %>%
+      mutate(
+        rt_vmax_lag_full = lag(rt_vmax_full),
+        rt_vmax_change_full = rt_vmax_full - rt_vmax_lag_full,
+        rt_vmax_next_full = lead(rt_vmax_full),
+        rt_vmax_change_next_full = rt_vmax_next_full - rt_vmax_full,
+        v_entropy_wi_full = as.vector(scale(v_entropy_full)),
+        v_entropy_wi_lead_full = lead(v_entropy_wi_full),
+        v_entropy_wi_change_full = v_entropy_wi_lead_full - v_entropy_wi_full,
+      ) %>%
+      ungroup()
+    
+    trial_df <- inner_join(trial_df, full, by = c("id", "run", "trial"))
+  }
   
-  u_df <- u_df %>%
-    dplyr::select(
-      id, run, trial, u_chosen, u_chosen_quantile, u_chosen_lag,
-      u_chosen_quantile_lag, u_chosen_change, u_chosen_quantile_change
-    )
-
-  trial_df <- inner_join(trial_df, u_df, by=c("id", "run", "trial"))
-
-  # load full entropy and RT_vmax
-  full <- as_tibble(full) %>%
-    dplyr::select(c(id, run, trial, v_entropy, rt_vmax, pe_max)) %>%
-    mutate(rt_vmax = rt_vmax / 10) %>% # put into seconds
-    dplyr::rename(v_entropy_full = v_entropy, rt_vmax_full = rt_vmax, pe_max_full = pe_max) %>%
-    group_by(id, run) %>%
-    mutate(
-      rt_vmax_lag_full = lag(rt_vmax_full),
-      rt_vmax_change_full = rt_vmax_full - rt_vmax_lag_full,
-      rt_vmax_next_full = lead(rt_vmax_full),
-      rt_vmax_change_next_full = rt_vmax_next_full - rt_vmax_full,
-      v_entropy_wi_full = as.vector(scale(v_entropy_full)),
-      v_entropy_wi_lead_full = lead(v_entropy_wi_full),
-      v_entropy_wi_change_full = v_entropy_wi_lead_full - v_entropy_wi_full,
-    ) %>%
-    ungroup()
-
-  trial_df <- inner_join(trial_df, full, by = c("id", "run", "trial"))
-
+  
   if (dataset=="mmclock_meg") {
     trial_df <- trial_df %>% 
       tidyr::separate(id, sep="_", into=c("id", "date")) %>%
@@ -213,6 +237,6 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
   #   dplyr::select(-model)
   # 
   # trial_df <- inner_join(trial_df, params, by = c("dataset", "id"))
-
+  
   return(trial_df)
 }

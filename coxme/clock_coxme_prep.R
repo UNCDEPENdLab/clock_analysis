@@ -30,7 +30,7 @@ library(ggpubr)
 #################
 
 # whether to add medusa data
-medusa = T
+medusa = F
 
 load(file="clock_for_coxme_value_only_070518.RData")
 # msdf <- read_csv("~/code/clock_analysis/coxme/sceptic_signals/mmclock_meg_fixed_uv_ureset_fixedparams_meg_ffx_trial_statistics.csv.gz")
@@ -287,7 +287,8 @@ mvudf$response <- mvudf$y_chosen==mvudf$bin
 # use approx to interpolate
 
 # save w/o MEDUSA
-save(file = "fMRI_MEG_coxme_objects_no_MEDUSA_Nov23_2020.Rdata", bb, fbb, mbb, mfbb)
+# save(file = "fMRI_MEG_coxme_objects_no_MEDUSA_Nov23_2020.Rdata", bb, fbb, mbb, mfbb)
+save(file = "fMRI_MEG_coxme_objects_no_MEDUSA_May_2022.Rdata", bb, fbb, mbb, mfbb)
 
 library(zoo)
 if (medusa) {
@@ -309,4 +310,6 @@ if (medusa) {
   medbb <- medbb %>% filter(!is.na(response)) %>% select(-labels)
   medfbb <- medbb %>% filter(bin > 10 & bin < 35)
 }
+
+
 save(file = "fMRI_MEG_coxme_objects_with_medusa_Nov24_2020.Rdata", medbb, medfbb)

@@ -47,8 +47,8 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
   # for now, subset down to overall contrast at L2.
 
   cope_df <- fread(beta_csv) %>%
-    filter(l2_cope_name == "overall") %>% # for not, ignore all other l2 contrasts
-
+    # filter(l2_cope_name == "overall") %>% # for not, ignore all other l2 contrasts
+    filter(l2_cope_name == "overall" & !l1_cope_name  %in% c("EV_clock", "EV_feedback")) %>% # only parametric modulators
     # debugging only
     # filter(mask_value %in% 1:2) %>%
     # filter(l1_cope_name == "EV_clock") %>%
@@ -56,8 +56,9 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
     # filter(l1_cope_name == "EV_entropy_wiz_clock" & l2_cope_name == "overall") %>%
     dplyr::select(-feat_dir, -img, -mask_name, -session, -l1_cope_number, -l2_cope_number, -l2_model) %>%
     rename(fmri_beta = value) %>%
-    merge(label_df, by = label_join_col, all.x = TRUE)
-
+    # merge(label_df, by = label_join_col, all.x = TRUE)
+    merge(label_df, by = label_join_col, all = FALSE) # only regions in mask
+  
   combo <- cope_df %>%
     merge(trial_df, by = trial_join_col, all.x = TRUE, allow.cartesian = TRUE) # trial_df and betas get crossed
 
@@ -76,7 +77,7 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
   onesamp_betas(cope_df,
     mask_file = mask_file, roi_column = "mask_value",
     nest_by = c("l1_model", "l1_cope_name", "l2_cope_name"),
-    out_dir = out_dir, img_prefix = "onesamp", afni_dir = afni_dir
+    out_dir = out_dir, img_prefix = "onesamp_444", afni_dir = afni_dir
   )
 
   out_file <- file.path(out_dir, paste0(out_prefix, "_mixed_by.rds"))
@@ -134,7 +135,8 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
 fill_mask_with_stats <- function(mask_nifti, mask_cifti = NULL, mask_col = "mask_value", stat_dt, stat_cols = c("t", "p"), 
                                  subbrik_labels = NULL, split_on=NULL, stack_along = "stat_cols", start_time = -4.0,
                                  img_prefix = "maskfill", out_dir = getwd(), overwrite = FALSE,
-                                 afni_dir = "~/abin", wb_dir = "/Applications/workbench/bin_macosx64", python3_bin = "/usr/local/bin/python3" 
+                                 afni_dir = "~/abin", wb_dir = "/Applications/workbench/bin_macosx64", python3_bin = "/usr/local/bin/python3",
+                                 output_cifti = FALSE
                                  ) {
   require(RNifti)
   require(glue)
@@ -146,8 +148,10 @@ fill_mask_with_stats <- function(mask_nifti, mask_cifti = NULL, mask_col = "mask
   checkmate::assert_directory_exists(afni_dir)
   afni_dir <- normalizePath(afni_dir)
   
-  checkmate::assert_directory_exists(wb_dir)
-  wb_dir <- normalizePath(wb_dir)
+  if (isTRUE(output_cifti)) {
+    checkmate::assert_directory_exists(wb_dir)
+    wb_dir <- normalizePath(wb_dir)
+  }
   
   checkmate::assert_file_exists(python3_bin)
   python3_bin <- normalizePath(python3_bin)
@@ -158,7 +162,7 @@ fill_mask_with_stats <- function(mask_nifti, mask_cifti = NULL, mask_col = "mask
     subbrik_labels <- stat_cols
   }
   
-  output_cifti <- FALSE
+  
   if (!is.null(mask_cifti)) {
     checkmate::assert_file_exists(mask_cifti)
     output_cifti <- TRUE

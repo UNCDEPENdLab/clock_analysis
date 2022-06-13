@@ -58,18 +58,22 @@ labels <- both %>% filter(net_num7==3 & (network17=="DorsAttnA" | network17=="Do
     mask_value = as.integer(as.character(roi_num7)),
     atlas_value = as.character(mask_value))
 
-dan_labels <-  dan_labels %>% select(atlas_value, MNHLabel) %>% inner_join(labels, by = "atlas_value")
+# dan_labels <-  dan_labels %>% select(atlas_value, MNHLabel) %>% inner_join(labels, by = "atlas_value")
 
 
 # visuomotor_long <- TRUE # what we want to load in load_medusa_data_dan.R
 # source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
-rt_visuomotor_long <- read_csv("")
+rt_visuomotor_long <- fread("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/Schaefer_400_remap_rt_long_decon_aligned.csv.gz") %>%
+  rename(roi_num7 = "roi_400") %>% mutate(roi_num7 = as.factor(roi_num7)) %>% inner_join(labels, by = "roi_num7")
+
+clock_visuomotor_long <- read_csv("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/Schaefer_400_remap_clock_long_decon_aligned.csv.gz")
 
 
 emm = T # extract EMMEANS estimates, e.g. for hi/lo abs(PE)
 
 # mixed_by call
-source("~/Data_Analysis/r_packages/fmri.pipeline/R/mixed_by.R")
+# source("~/Data_Analysis/r_packages/fmri.pipeline/R/mixed_by.R")
+source("~/code/fmri.pipeline/R/mixed_by.R")
 
 # helper function to compile list of formulae
 named_list <- function(...) {
@@ -80,25 +84,24 @@ named_list <- function(...) {
 # no need to analyze time points with tons of missingness -- subset to times with plenty of data
 # also drop out any missing decon data since that is the DV
 clock_visuomotor_long %>% group_by(evt_time) %>%
-  summarise(isna=sum(is.na(decon_interp)))
+  summarise(isna=sum(is.na(decon_mean)))
 
-clock_visuomotor_long <- clock_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_interp))
+clock_visuomotor_long <- clock_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_mean))
 
-clock_visuomotor_long_online %>% group_by(evt_time) %>%
-  summarise(isna=sum(is.na(decon_interp)))
+# clock_visuomotor_long_online %>% group_by(evt_time) %>%
+#   summarise(isna=sum(is.na(decon_mean)))
 
-clock_visuomotor_long_online <- clock_visuomotor_long_online %>% filter(!is.na(decon_interp) & evt_time <= 4)
+# clock_visuomotor_long_online <- clock_visuomotor_long_online %>% filter(!is.na(decon_mean) & evt_time <= 4)
 
 rt_visuomotor_long %>% group_by(evt_time) %>%
-  summarise(isna=sum(is.na(decon_interp)))
+  summarise(isna=sum(is.na(decon_mean)))
 
-rt_visuomotor_long <- rt_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_interp))
+rt_visuomotor_long <- rt_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_mean))
 
 #alignment <- "clock"
 #alignment <- "clock_online"
 alignment <- "rt"
-
-setDT(trial_df)
+trial_df <- setDT(get_trial_data(repo_directory = "~/code/clock_analysis", dataset = "mmclock_fmri") %>% mutate(id = as.integer(id)))
 
 message("Merging")
 if (alignment=="clock") {
@@ -108,8 +111,8 @@ if (alignment=="clock") {
                   v_entropy_wi, v_entropy_wi_change_lag, kld3_lag, v_max_wi, abs_pe_lag, outcome_lag) %>%
     mutate(log_kld3_lag = log(kld3_lag + .00001))
   
-  d <- merge(trial_df, clock_visuomotor_long, by = c("id", "run", "run_trial"))
-  d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")  
+  d <- merge(trial_df, clock_visuomotor_long, by = c("id", "run", "trial"))
+  # d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")  
 } else if (alignment == "clock_online") {
   # subset to columns of interest
   trial_df <- trial_df %>%
@@ -117,17 +120,17 @@ if (alignment=="clock") {
                   v_entropy_wi, v_entropy_wi_change_lag, kld3_lag, v_max_wi, abs_pe_lag, outcome_lag) %>%
     mutate(log_kld3_lag = log(kld3_lag + .00001))
   
-  d <- merge(trial_df, clock_visuomotor_long_online, by = c("id", "run", "run_trial"))
-  d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_") 
+  d <- merge(trial_df, clock_visuomotor_long_online, by = c("id", "run", "trial"))
+  # d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_") 
 } else if (alignment == "rt") {
   # subset to columns of interest
   trial_df <- trial_df %>%
-    dplyr::select(id, run, run_trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
+    dplyr::select(id, run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
                   v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
     mutate(log_kld3 = log(kld3 + .00001))
   
-  d <- merge(trial_df, rt_visuomotor_long, by = c("id", "run", "run_trial"))
-  d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")
+  d <- merge(trial_df, rt_visuomotor_long, by = c("id", "run", "trial"))
+  # d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")
 }
 
 rm(rt_visuomotor_long)
@@ -237,18 +240,18 @@ if (alignment == "clock" || alignment == "clock_online") {
 }
 
 
-splits <- c("vm_gradient17", "side", "evt_time")
+splits <- c("vm_gradient17", "hemi", "evt_time")
 
 message("Running mixed_by")
-ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist,
+ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial"),
                 tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
-                calculate = c("parameter_estimates_reml"), ncores = 16, refit_on_nonconvergence = 5, padjust_by = "term",
+                calculate = c("parameter_estimates_reml"), ncores = 10, refit_on_nonconvergence = 5, padjust_by = "term",
                 emtrends_spec = list(
-                  abspe = list(outcome = "decon_interp", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
+                  abspe = list(outcome = "decon_mean", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
                 ))
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_encode_medusa_fmri.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_400_encode_medusa_fmri.rds")))
 
 dd <- ddf$emtrends_list$abspe
 dd <- dd[,c(-4, -5)]

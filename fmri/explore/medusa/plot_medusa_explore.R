@@ -44,7 +44,7 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
       g <- ggplot(this_df, aes_string(x=x, y=y, color=color, ymin=ymin, ymax=ymax)) +
         geom_line(size=1, position=position_dodge(width=0.4)) + 
         geom_pointrange(aes(size=p_level), position=position_dodge(width=0.4)) +
-        #scale_color_brewer(palette="Dark2", labels=c("1" = "MT+, control", "2" = "Parieto-occipital", "3" = "Post. parietal", "4" = "Frontal")) +
+        scale_color_brewer(palette="Dark2", labels=c("1" = "MT+, control", "2" = "Parieto-occipital", "3" = "Post. parietal", "4" = "Frontal")) +
         geom_hline(yintercept = 0, size=1.5, alpha=0.6) +
         geom_vline(xintercept = 0, size=1.5, alpha=0.6) +
         scale_size_manual(values=c(0.5, 0.8, 1.1, 1.4)) + theme_bw(base_size=15)
@@ -78,11 +78,12 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
 ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/explore_medusa/rt_encode_medusa_fmri.rds")
 out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/explore_medusa/plots"
 ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5 & effect=="fixed") %>% group_by(term) %>%
-  mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
+  mutate(p_FDR=p.adjust(p.value, method="fdr"),
+         vm_gradient = as.factor(vm_gradient)) %>%
   ungroup() %>% setDT()
 
-plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="Stream", facet_by="side", 
-            out_dir=file.path(out_dir, "rt_encode_11_May_2022"), p.value="p_FDR")
+plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient", facet_by="side", 
+            out_dir=file.path(out_dir, "rt_encode_vm_gradient_May_15_2022"), p.value="p_FDR")
 
 #ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_encode_medusa_fmri_scaled.rds")
 ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_encode_medusa_fmri.rds")

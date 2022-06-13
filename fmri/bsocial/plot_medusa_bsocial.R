@@ -2,7 +2,6 @@ library(dplyr)
 library(ggplot2)
 library(data.table)
 
-
 plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NULL, color=NULL, facet_by=NULL, p.value="p.value", lty_by=NULL,
                         pdf_by=c("term", "model_name"), out_dir=getwd(), plot_type="line", flip=FALSE, term_filter=NULL,
                         width=9, height=7, include_title=TRUE) {
@@ -89,72 +88,69 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
   
 }
 
-meg = F
-if (meg) {
-ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri_meg_simple_ec.rds")
-} else {ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/rt_encode_medusa_fmri_pe_posneg.rds")}
-out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/"
+ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/bsocial_medusa/rt_vm_gradient17by_200_roi_GRP_demo_encode_medusa_fmri.rds")
+out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/bsocial_medusa/plots"
 ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5 & effect=="fixed") %>% group_by(term, model_name) %>%
-  mutate(p_FDR=p.adjust(p.value, method="fdr"), 
-         side = hemi) %>%
+  mutate(p_FDR=p.adjust(p.value, method="fdr"),
+         vm_gradient17 = as.factor(vm_gradient17)) %>%
   ungroup() %>% setDT()
 
-plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient17", facet_by="side", 
-            out_dir=file.path(out_dir, "rt_encode_400_May_31_2022"), p.value="p_FDR")
+plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient17", facet_by = "side",
+            out_dir=file.path(out_dir, "rt_encode_vm_gradient17_May_15_2022"), p.value="p_FDR")
 
-#ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_encode_medusa_fmri_scaled.rds")
-ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_encode_medusa_fmri.rds")
-ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
-  filter(effect=="fixed") %>%
-  group_by(term, model_name) %>%
-  mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
-  ungroup() %>% setDT()
-
-plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient17", facet_by="side",
-             out_dir=file.path(out_dir, "clock_encode_24Nov2021"), p.value="p_FDR")
-
-# clock online
-ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_online_encode_medusa_fmri.rds")
-ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time < 4) %>% 
-  filter(effect=="fixed") %>%
-  group_by(term) %>%
-  mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
-  ungroup() %>% setDT()
-
-plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient17", facet_by="side",
-            out_dir=file.path(out_dir, "clock_encode_online_24Nov2021"), p.value="p_FDR")
-
-# 
-# 
-# 
-# 
-# 
-# 
-# rdf <- readRDS("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/rt_prediction_rt_aligned_mixed_by.rds")
-# out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/"
-# rdf$coef_df_reml <- rdf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
+# #ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_encode_medusa_fmri_scaled.rds")
+# ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_encode_medusa_fmri.rds")
+# ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
 #   filter(effect=="fixed") %>%
 #   group_by(term) %>%
 #   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
-#   ungroup() %>% 
-#   tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_") %>%
-#   setDT()
+#   ungroup() %>% setDT()
 # 
-# plot_medusa(rdf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient17", facet_by="side", 
-#             out_dir=file.path(out_dir, "rt_predict"), p.value="p_FDR")
+# plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient17", facet_by="side",
+#              out_dir=file.path(out_dir, "clock_encode_24Nov2021"), p.value="p_FDR")
 # 
-# 
-# ### CLOCK-ALIGNED RT PREDICTION
-# cdf <- readRDS("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/rt_prediction_clock_aligned_mixed_by.rds")
-# out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/"
-# cdf$coef_df_reml <- cdf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
+# # clock online
+# ddf <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/clock_online_encode_medusa_fmri.rds")
+# ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time < 4) %>% 
 #   filter(effect=="fixed") %>%
 #   group_by(term) %>%
 #   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
-#   ungroup() %>% 
-#   tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_") %>%
-#   setDT()
+#   ungroup() %>% setDT()
 # 
-# plot_medusa(cdf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient17", facet_by="side", 
-#             out_dir=file.path(out_dir, "clock_predict"), p.value="p_FDR")
+# plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient17", facet_by="side",
+#             out_dir=file.path(out_dir, "clock_encode_online_24Nov2021"), p.value="p_FDR")
 # 
+# # 
+# # 
+# # 
+# # 
+# # 
+# # 
+# # rdf <- readRDS("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/rt_prediction_rt_aligned_mixed_by.rds")
+# # out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/"
+# # rdf$coef_df_reml <- rdf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
+# #   filter(effect=="fixed") %>%
+# #   group_by(term) %>%
+# #   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
+# #   ungroup() %>% 
+# #   tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_") %>%
+# #   setDT()
+# # 
+# # plot_medusa(rdf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient17", facet_by="side", 
+# #             out_dir=file.path(out_dir, "rt_predict"), p.value="p_FDR")
+# # 
+# # 
+# # ### CLOCK-ALIGNED RT PREDICTION
+# # cdf <- readRDS("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/rt_prediction_clock_aligned_mixed_by.rds")
+# # out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/"
+# # cdf$coef_df_reml <- cdf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
+# #   filter(effect=="fixed") %>%
+# #   group_by(term) %>%
+# #   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
+# #   ungroup() %>% 
+# #   tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_") %>%
+# #   setDT()
+# # 
+# # plot_medusa(cdf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient17", facet_by="side", 
+# #             out_dir=file.path(out_dir, "clock_predict"), p.value="p_FDR")
+# # 
