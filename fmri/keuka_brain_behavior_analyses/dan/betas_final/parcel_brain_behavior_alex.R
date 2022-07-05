@@ -51,54 +51,60 @@ beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas"
 # labels <- readxl::read_excel(file.path(analysis_dir, "..", "MNH Dan Labels.xlsx")) %>%
 #   dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label)
 
-# BALSA parcel labels from whereami
-setwd("~/code/schaefer_wb_parcellation")
-schaefer_7 <- read.csv("labels/Schaefer2018_400Parcels_7Networks_order.csv") %>%
-  mutate(network=factor(network), net_num = as.numeric(network)) %>%
-  rename(network7=network, net_num7=net_num)
+# # BALSA parcel labels from whereami
+# setwd("~/code/schaefer_wb_parcellation")
+# schaefer_7 <- read.csv("labels/Schaefer2018_400Parcels_7Networks_order.csv") %>%
+#   mutate(network=factor(network), net_num = as.numeric(network)) %>%
+#   rename(network7=network, net_num7=net_num)
+# 
+# # this has the spatial coordinate, spatial_roi_num
+# schaefer_7_lookup <- read.csv("labels/Schaefer_400_7networks_labels.csv")
+# 
+# schaefer_7 <- schaefer_7 %>% inner_join(schaefer_7_lookup, by="roi_num") %>%
+#   rename(roi_num7=roi_num, subregion7=subregion)
+# 
+# schaefer_17 <- read.csv("labels/Schaefer2018_400Parcels_17Networks_order.csv") %>%
+#   mutate(network=factor(network), net_num = as.numeric(network)) %>%
+#   rename(network17=network, net_num17=net_num) %>%
+#   select(-hemi) # mirrored in 7
+# 
+# # this has the spatial coordinate, spatial_roi_num
+# schaefer_17_lookup <- read.csv("labels/Schaefer_400_17networks_labels.csv") %>%
+#   select(roi_num, spatial_roi_num) # x,y,z and labels already duplicated in 7-network lookup
+# 
+# schaefer_17 <- schaefer_17 %>% inner_join(schaefer_17_lookup, by="roi_num") %>%
+#   rename(roi_num17=roi_num, subregion17=subregion)
+# 
+# both <- inner_join(schaefer_7, schaefer_17, by="spatial_roi_num") %>%
+#   select(spatial_roi_num, roi_num7, roi_num17, network7, network17, net_num7, net_num17, subregion7, subregion17, everything())
+# setDT(both)
+# labels_df <- both %>% 
+#   # filter(net_num7==3 | (network17=="DorsAttnA" | network17=="DorsAttnB")) %>% 
+#   mutate(roi_num7 = as.factor(roi_num7)) %>% 
+#   # label lobes
+#   mutate(lobe = case_when(
+#     str_detect(subregion17, "Temp") ~ "temporal",
+#     str_detect(subregion17, "Par") | str_detect(subregion17, "SPL") | str_detect(subregion17, "PostC") |
+#       str_detect(subregion17, "IPS") | str_detect(subregion17, "IPL") | str_detect(subregion17, "pCun") ~ "parietal",
+#     str_detect(subregion17, "PFC") | str_detect(subregion17, "FEF") | str_detect(subregion17, "PrCv") ~ "frontal"),
+#     vm_gradient17 = case_when(
+#       lobe == "temporal" ~ "MT+",
+#       lobe == "parietal" & network17 == "DorsAttnA" ~ "PPCcaudal",
+#       lobe == "parietal" & network17 == "DorsAttnB" ~ "PPCrostral",
+#       lobe == "frontal" ~ "premotor",
+#       TRUE ~ as.character(network17)),
+#     plot_label = sub("Focus point:\\s+", "", MNI_Glasser_HCP_v1.0, perl=TRUE),
+#     mask_value = as.integer(as.character(roi_num7))
+#   )
 
-# this has the spatial coordinate, spatial_roi_num
-schaefer_7_lookup <- read.csv("labels/Schaefer_400_7networks_labels.csv")
-
-schaefer_7 <- schaefer_7 %>% inner_join(schaefer_7_lookup, by="roi_num") %>%
-  rename(roi_num7=roi_num, subregion7=subregion)
-
-schaefer_17 <- read.csv("labels/Schaefer2018_400Parcels_17Networks_order.csv") %>%
-  mutate(network=factor(network), net_num = as.numeric(network)) %>%
-  rename(network17=network, net_num17=net_num) %>%
-  select(-hemi) # mirrored in 7
-
-# this has the spatial coordinate, spatial_roi_num
-schaefer_17_lookup <- read.csv("labels/Schaefer_400_17networks_labels.csv") %>%
-  select(roi_num, spatial_roi_num) # x,y,z and labels already duplicated in 7-network lookup
-
-schaefer_17 <- schaefer_17 %>% inner_join(schaefer_17_lookup, by="roi_num") %>%
-  rename(roi_num17=roi_num, subregion17=subregion)
-
-both <- inner_join(schaefer_7, schaefer_17, by="spatial_roi_num") %>%
-  select(spatial_roi_num, roi_num7, roi_num17, network7, network17, net_num7, net_num17, subregion7, subregion17, everything())
-setDT(both)
-labels_df <- both %>% 
-  # filter(net_num7==3 | (network17=="DorsAttnA" | network17=="DorsAttnB")) %>% 
-  mutate(roi_num7 = as.factor(roi_num7)) %>% 
-  # label lobes
-  mutate(lobe = case_when(
-    str_detect(subregion17, "Temp") ~ "temporal",
-    str_detect(subregion17, "Par") | str_detect(subregion17, "SPL") | str_detect(subregion17, "PostC") |
-      str_detect(subregion17, "IPS") | str_detect(subregion17, "IPL") | str_detect(subregion17, "pCun") ~ "parietal",
-    str_detect(subregion17, "PFC") | str_detect(subregion17, "FEF") | str_detect(subregion17, "PrCv") ~ "frontal"),
-    vm_gradient17 = case_when(
-      lobe == "temporal" ~ "MT+",
-      lobe == "parietal" & network17 == "DorsAttnA" ~ "PPCcaudal",
-      lobe == "parietal" & network17 == "DorsAttnB" ~ "PPCrostral",
-      lobe == "frontal" ~ "premotor",
-      TRUE ~ as.character(network17)),
-    plot_label = sub("Focus point:\\s+", "", MNI_Glasser_HCP_v1.0, perl=TRUE),
-    mask_value = as.integer(as.character(roi_num7))
-  )
+labels_df <- setDT(read_excel("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/MNH DAN Labels 400 Good Only 47 parcels.xlsx")) %>%
+  mutate(roi_num7 = as.factor(roi7_400), 
+         mask_value = as.integer(roi7_400),
+         plot_label = mnh_label_400, 
+         vm_gradient17 = parcel_group) %>% select(roi_num7, mask_value, plot_label, vm_gradient17, hemi, x, y, z)
 #trial_df <- get_trial_data(repo_directory = "~/Data_Analysis/clock_analysis") %>%
-# trial_df <- get_trial_data(repo_directory = "~/code/clock_analysis") %>%
-trial_df <- trial_df %>%
+trial_df <- get_trial_data(repo_directory = "~/code/clock_analysis") %>%
+# trial_df <- trial_df %>%
   group_by(id, run) %>%
   mutate(v_max_wi_lag = lag(v_max_wi, order_by = run_trial)) %>%
   ungroup() %>%
@@ -182,21 +188,22 @@ save.image(file="parcel_input_snapshot.RData")
 
 
 efiles_l2 <- list.files(beta_dir,
-                        pattern = "Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz",
+                        pattern = "Schaefer_444_final_2009c_2.3mm_cope_l2.csv.gz",
                         recursive = TRUE, full.names = TRUE
 )
 
-#efiles <- efiles[3:6]
+# manually filter just abspe and echange
+efiles <- efiles[2:3]
 for (ee in efiles_l2) {
   job <- R_batch_job$new(
     job_name = "parcel_bb", batch_directory = getwd(), scheduler = "local",
     input_rdata_file = "parcel_input_snapshot.RData",
-    n_nodes = 1, n_cpus = 2, wall_time = "12:00:00",
+    n_nodes = 1, n_cpus = 10, wall_time = "23:00:00",
     mem_total = "64G",
     #r_code = glue("to_plot <- mixed_by_betas('{ee}', labels_df, trial_df, mask_file = 'Schaefer2018_400Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
     r_code = glue("to_plot <- mixed_by_betas('{ee}', labels_df, trial_df, mask_file = 'Schaefer_444_final_2.3mm.nii.gz',
-                            rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 2, afni_dir = '/Users/alexdombrovski/abin',
-                            out_prefix = 'Schaefer_400_all_networks_17_meg',
+                            rhs_model_formulae = fmri.pipeline:::named_list(int, slo), ncores = 2, afni_dir = '/Users/localadmin/abin',
+                            out_prefix = 'Schaefer_400_DAN_manual_labels_',
     
                                                #                         rhs_model_formulae = fmri.pipeline:::named_list(int, slo), ncores = 16, afni_dir = '/proj/mnhallqlab/sw/afni',
                                                #                         calculate = c('parameter_estimates_reml', 'fit_statistics'),
@@ -213,7 +220,7 @@ for (ee in efiles_l2) {
   
   # local execution
   # to_plot <- mixed_by_betas(ee, labels_df, trial_df, mask_file = "Schaefer_444_final_2.3mm.nii.gz",
-  #                           rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16,
+  #                           rhs_model_formulae = fmri.pipeline:::named_list(int, slo), ncores = 16,
   #                           split_on = c("l1_cope_name", "l2_cope_name", "mask_value"))
 
 }
@@ -221,7 +228,7 @@ for (ee in efiles_l2) {
 
 
 efiles_l1 <- list.files(beta_dir,
-  pattern = "Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz",
+  pattern = "Schaefer_444_final_2009c_2.3mm_cope_l1.csv.gz",
   recursive = TRUE, full.names = TRUE
 )
 
@@ -248,8 +255,8 @@ for (ee in seq_along(efiles_l1)) {
   job$submit()
 
   # local execution
-  # to_plot <- mixed_by_betas(ee, labels_200, trial_df, mask_file = "Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
-  #                           rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16,
+  # to_plot <- mixed_by_betas(ee, labels_df, trial_df, mask_file = "Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
+  #                           rhs_model_formulae = fmri.pipeline:::named_list(int, slo), ncores = 16,
   #                           split_on = c("l1_cope_name", "l2_cope_name", "mask_value"))
 }
 
