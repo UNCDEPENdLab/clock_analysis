@@ -45,7 +45,6 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
   # the big betas file has all of the L2 contrasts, which are largely uninteresting and make the dataset massive
   # for now, subset down to overall contrast at L2.
 
-<<<<<<< HEAD
   cope_df <- fread(beta_csv) %>%
     # filter(l2_cope_name == "overall") %>% # for not, ignore all other l2 contrasts
     filter(l2_cope_name == "overall" & !l1_cope_name  %in% c("EV_clock", "EV_feedback")) %>% # only parametric modulators
@@ -59,7 +58,7 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
     # merge(label_df, by = label_join_col, all.x = TRUE)
     merge(label_df, by = label_join_col, all = FALSE) # only regions in mask
   
-=======
+
   if (beta_level == 2L) {
     nest_by <- c("l1_model", "l1_cope_name", "l2_cope_name")
     fill_split <- c("l1_cope_name", "l2_cope_name", "term", "model_name")
@@ -95,21 +94,15 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
   }
 
   # for l1 betas, need c("id", "run_number") as join
->>>>>>> 724220f383a32da52fda21907defb894966ff4e4
-  combo <- cope_df %>%
+combo <- cope_df %>%
     merge(trial_df, by = trial_join_col, all.x = TRUE, allow.cartesian = TRUE) # trial_df and betas get crossed
 
   # run one-sample test statistics for each parcel to corroborate beta extraction against whole-brain voxelwise analysis
   onesamp_betas(cope_df,
     mask_file = mask_file, roi_column = "mask_value",
-<<<<<<< HEAD
     nest_by = c("l1_model", "l1_cope_name", "l2_cope_name"),
     out_dir = out_dir, img_prefix = "onesamp_444", afni_dir = afni_dir
-=======
-    nest_by = nest_by,
-    out_dir = out_dir, img_prefix = "onesamp", afni_dir = afni_dir
->>>>>>> 724220f383a32da52fda21907defb894966ff4e4
-  )
+)
 
   out_file <- file.path(out_dir, paste0(out_prefix, "_mixed_by.rds"))
 
