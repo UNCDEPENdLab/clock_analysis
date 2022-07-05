@@ -300,15 +300,15 @@ g1 + g2 + g3 + g4 +  plot_layout(nrow=2)
 ###
 
 
-g1 <- ggplot(dan_e %>% filter(term=="fmri_beta:rt_vmax_lag" & l1_cope_name=="echange"), 
+g1 <- ggplot(dan_e %>% filter(term=="fmri_beta:rt_vmax_lag" & l1_cope_name=="echange" & network7!="SomMot"), 
              aes(x=y, y=z, fill=statistic, alpha=padj_BY_term < .05, shape=network7)) + geom_point(size=15) +
-  scale_fill_viridis_c() + theme_dark() + scale_shape_manual(values=20:26) +
+  scale_fill_viridis_c() + theme_dark() + scale_shape_manual(values=21:26) +
   geom_text(aes(label=subregion17), color="black") + ggtitle("Echange rtvmax")
 
 
-g2 <- ggplot(dan_pe %>% filter(term=="fmri_beta:rt_vmax_lag" & l1_cope_name=="abspe"), 
+g2 <- ggplot(dan_pe %>% filter(term=="fmri_beta:rt_vmax_lag" & l1_cope_name=="abspe" & network7 != "SomMot"), 
              aes(x=y, y=z, fill=statistic, alpha=padj_BY_term < .05, shape=network7)) + geom_point(size=15) +
-  scale_fill_viridis_c() + theme_dark() + scale_shape_manual(values=20:26) +
+  scale_fill_viridis_c() + theme_dark() + scale_shape_manual(values=21:26) +
   geom_text(aes(label=subregion17), color="black") + ggtitle("absPE rtvmax")
 
 g1 + g2
