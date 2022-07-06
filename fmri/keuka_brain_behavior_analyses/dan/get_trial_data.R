@@ -75,8 +75,7 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
     # group-level mutations
     mutate(
       trial = as.numeric(trial),
-      run_trial = 1:n(),
-      # run_trial = trial - (run - 1) * !!trials_per_run,
+      run_trial = trial - (run - 1) * !!trials_per_run,
       trial_neg_inv = -1000 / run_trial,
       trial_neg_inv_sc = as.vector(scale(trial_neg_inv)),
       rt_csv = rt_csv / 1000, # respecify in terms of seconds
@@ -203,8 +202,8 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
       log_kld3 = log(kld3 + .00001), # to handle large positive skew
       log_kld3_cum2 = log(kld3_cum2 + .00001)
     ) %>% ungroup()
-  if (!dataset %in% c("explore", "bsocial"))
-  {
+  
+  if (!dataset %in% c("explore", "bsocial")) {
     u_df <- u_df %>%
       dplyr::select(
         id, run, trial, u_chosen, u_chosen_quantile, u_chosen_lag,
