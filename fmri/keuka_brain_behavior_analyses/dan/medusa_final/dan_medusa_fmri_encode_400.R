@@ -1,107 +1,39 @@
 library(tidyverse)
 library(lme4)
 library(data.table)
+library(readxl)
+library(fmri.pipeline) # mixed_by call: use fmri.pipeline installation
 
 out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa"
-repo_directory <- "~/code/clock_analysis"
 decon_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/"
-# repo_directory <- "~/Data_Analysis/clock_analysis"
+#schaefer_dir <- "~/code/schaefer_wb_parcellation"
+schaefer_dir <- "~/Data_Analysis/schaefer_wb_parcellation"
+# repo_directory <- "~/code/clock_analysis"
+repo_directory <- "~/Data_Analysis/clock_analysis"
 
-dan_labels <- setDT(read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx")) %>%
-  mutate(atlas_value = as.character(roinum),
-         parcel = word(MNHLabel, 2, sep = "_"),
-         hemi = substr(MNHLabel, 1,1)
-  ) %>% select(atlas_value, MNHLabel, parcel, Stream, Visuomotor_Gradient, lobe, parcel, hemi)
+# move to new 400 labels
+labels <- setDT(read_excel("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/MNH DAN Labels 400 Good Only 47 parcels.xlsx")) %>%
+  rename(roi_num7=roi7_400) %>%
+  select(roi_num7, mnh_label_400, network7_400, network17_400, parcel_group, hemi)
 
-# add Schaefer 17 labels
-setwd("~/code/schaefer_wb_parcellation")
-schaefer_7 <- read.csv("labels/Schaefer2018_400Parcels_7Networks_order.csv") %>%
-  mutate(network=factor(network), net_num = as.numeric(network)) %>%
-  rename(network7=network, net_num7=net_num)
+# sanity checks -- network labels from different inputs match
+#all.equal(labels$network17_400, labels$network17)
+#all.equal(labels$network7_400, labels$network7)
 
-# this has the spatial coordinate, spatial_roi_num
-schaefer_7_lookup <- read.csv("labels/Schaefer_400_7networks_labels.csv")
+visuomotor_long <- TRUE # what we want to load in load_medusa_data_dan.R
+schaefer_400 <- TRUE # indicate that we want the 400-parcel data
 
-schaefer_7 <- schaefer_7 %>% inner_join(schaefer_7_lookup, by="roi_num") %>%
-  rename(roi_num7=roi_num, subregion7=subregion)
+source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
 
-schaefer_17 <- read.csv("labels/Schaefer2018_400Parcels_17Networks_order.csv") %>%
-  mutate(network=factor(network), net_num = as.numeric(network)) %>%
-  rename(network17=network, net_num17=net_num) %>%
-  select(-hemi) # mirrored in 7
-
-# this has the spatial coordinate, spatial_roi_num
-schaefer_17_lookup <- read.csv("labels/Schaefer_400_17networks_labels.csv") %>%
-  select(roi_num, spatial_roi_num) # x,y,z and labels already duplicated in 7-network lookup
-
-schaefer_17 <- schaefer_17 %>% inner_join(schaefer_17_lookup, by="roi_num") %>%
-  rename(roi_num17=roi_num, subregion17=subregion)
-
-both <- inner_join(schaefer_7, schaefer_17, by="spatial_roi_num") %>%
-  select(spatial_roi_num, roi_num7, roi_num17, network7, network17, net_num7, net_num17, subregion7, subregion17, everything())
-setDT(both)
-labels <- both %>% filter(net_num7==3 & (network17=="DorsAttnA" | network17=="DorsAttnB")) %>% 
-  mutate(roi_num7 = as.factor(roi_num7)) %>% 
-  # label lobes
-  mutate(lobe = case_when(
-    str_detect(subregion17, "Temp") ~ "temporal",
-    str_detect(subregion17, "Par") | str_detect(subregion17, "SPL") | str_detect(subregion17, "PostC") |
-      str_detect(subregion17, "IPS") | str_detect(subregion17, "IPL") | str_detect(subregion17, "pCun") ~ "parietal",
-    str_detect(subregion17, "PFC") | str_detect(subregion17, "FEF") | str_detect(subregion17, "PrCv") ~ "frontal"),
-    vm_gradient17 = case_when(
-      lobe == "temporal" ~ "MT+",
-      lobe == "parietal" & network17 == "DorsAttnA" ~ "PPCcaudal",
-      lobe == "parietal" & network17 == "DorsAttnB" ~ "PPCrostral",
-      lobe == "frontal" ~ "premotor",
-      TRUE ~ as.character(network17)),
-    plot_label = sub("Focus point:\\s+", "", MNI_Glasser_HCP_v1.0, perl=TRUE),
-    mask_value = as.integer(as.character(roi_num7)),
-    atlas_value = as.character(mask_value))
-
-# dan_labels <-  dan_labels %>% select(atlas_value, MNHLabel) %>% inner_join(labels, by = "atlas_value")
-
-
-# visuomotor_long <- TRUE # what we want to load in load_medusa_data_dan.R
-# source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
-rt_visuomotor_long <- fread("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/Schaefer_400_remap_rt_long_decon_aligned.csv.gz") %>%
-  rename(roi_num7 = "roi_400") %>% mutate(roi_num7 = as.factor(roi_num7)) %>% inner_join(labels, by = "roi_num7")
-
-clock_visuomotor_long <- read_csv("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/Schaefer_400_remap_clock_long_decon_aligned.csv.gz")
-
+# uh oh, some mismatches in original -- corrected by 5Jul2022 reprocessing of event alignment to match final N=47 400 DAN
+# setdiff(unique(labels$roi_num7), unique(rt_visuomotor_long$roi_num7))
+# setdiff(unique(rt_visuomotor_long$roi_num7), unique(dan_labels$roi_num7))
 
 emm = T # extract EMMEANS estimates, e.g. for hi/lo abs(PE)
-
-# mixed_by call
-# source("~/Data_Analysis/r_packages/fmri.pipeline/R/mixed_by.R")
-source("~/code/fmri.pipeline/R/mixed_by.R")
-
-# helper function to compile list of formulae
-named_list <- function(...) {
-  vnames <- as.character(match.call())[-1]
-  return(setNames(list(...), vnames))
-}
-
-# no need to analyze time points with tons of missingness -- subset to times with plenty of data
-# also drop out any missing decon data since that is the DV
-clock_visuomotor_long %>% group_by(evt_time) %>%
-  summarise(isna=sum(is.na(decon_mean)))
-
-clock_visuomotor_long <- clock_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_mean))
-
-# clock_visuomotor_long_online %>% group_by(evt_time) %>%
-#   summarise(isna=sum(is.na(decon_mean)))
-
-# clock_visuomotor_long_online <- clock_visuomotor_long_online %>% filter(!is.na(decon_mean) & evt_time <= 4)
-
-rt_visuomotor_long %>% group_by(evt_time) %>%
-  summarise(isna=sum(is.na(decon_mean)))
-
-rt_visuomotor_long <- rt_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_mean))
 
 #alignment <- "clock"
 #alignment <- "clock_online"
 alignment <- "rt"
-trial_df <- setDT(get_trial_data(repo_directory = "~/code/clock_analysis", dataset = "mmclock_fmri") %>% mutate(id = as.integer(id)))
 
 message("Merging")
 if (alignment=="clock") {
@@ -111,8 +43,8 @@ if (alignment=="clock") {
                   v_entropy_wi, v_entropy_wi_change_lag, kld3_lag, v_max_wi, abs_pe_lag, outcome_lag) %>%
     mutate(log_kld3_lag = log(kld3_lag + .00001))
   
-  d <- merge(trial_df, clock_visuomotor_long, by = c("id", "run", "trial"))
-  # d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")  
+  d <- merge(trial_df, clock_visuomotor_long, by = c("id", "run", "run_trial"))
+  d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")
 } else if (alignment == "clock_online") {
   # subset to columns of interest
   trial_df <- trial_df %>%
@@ -120,8 +52,8 @@ if (alignment=="clock") {
                   v_entropy_wi, v_entropy_wi_change_lag, kld3_lag, v_max_wi, abs_pe_lag, outcome_lag) %>%
     mutate(log_kld3_lag = log(kld3_lag + .00001))
   
-  d <- merge(trial_df, clock_visuomotor_long_online, by = c("id", "run", "trial"))
-  # d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_") 
+  d <- merge(trial_df, clock_visuomotor_long_online, by = c("id", "run", "run_trial"))
+  d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")
 } else if (alignment == "rt") {
   # subset to columns of interest
   trial_df <- trial_df %>%
@@ -129,8 +61,8 @@ if (alignment=="clock") {
                   v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
     mutate(log_kld3 = log(kld3 + .00001))
   
-  d <- merge(trial_df, rt_visuomotor_long, by = c("id", "run", "trial"))
-  # d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")
+  d <- merge(trial_df, rt_visuomotor_long, by = c("id", "run", "run_trial"))
+  d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")
 }
 
 rm(rt_visuomotor_long)
@@ -190,7 +122,7 @@ if (alignment == "clock" || alignment == "clock_online") {
                                rt_csv_sc*run_trial + rt_lag_sc + outcome_lag +
                                (1 | id) )
   
-  flist <- named_list(enc_clock_base, enc_clock_rslope, enc_clock_kld, enc_clock_logkld, enc_clock_pe, enc_clock_int, enc_clock_trial)
+  flist <- fmri.pipeline:::named_list(enc_clock_base, enc_clock_rslope, enc_clock_kld, enc_clock_logkld, enc_clock_pe, enc_clock_int, enc_clock_trial)
 } else if (alignment == "rt") {
   # basal analysis
   enc_rt_base <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
@@ -236,25 +168,25 @@ if (alignment == "clock" || alignment == "clock_online") {
                            v_entropy_wi*run_trial + v_entropy_wi_change*run_trial + abs_pe*run_trial + outcome +
                            (1 | id) )
   
-  flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
+  flist <- fmri.pipeline:::named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
 }
 
 
-splits <- c("vm_gradient17", "hemi", "evt_time")
+splits <- c("vm_gradient17", "side", "evt_time")
 
 message("Running mixed_by")
-ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
+ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist,
                 split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial"),
                 tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
                 calculate = c("parameter_estimates_reml"), ncores = 10, refit_on_nonconvergence = 5, padjust_by = "term",
                 emtrends_spec = list(
-                  abspe = list(outcome = "decon_mean", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
+                  abspe = list(outcome = "decon_interp", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
                 ))
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_400_encode_medusa_fmri.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_400_final47_encode_medusa_fmri.rds")))
 
-dd <- ddf$emtrends_list$abspe
-dd <- dd[,c(-4, -5)]
-ggplot(dd, aes(x=evt_time, y=abs_pe.trend, ymin=abs_pe.trend-std.error, ymax=abs_pe.trend+std.error, color=vm_gradient17)) + 
-  geom_pointrange() + geom_line() + geom_vline(xintercept = 0) + geom_hline(yintercept = 0) +
-  facet_grid(outcome...1 ~ side)
+# dd <- ddf$emtrends_list$abspe
+# dd <- dd[,c(-4, -5)]
+# ggplot(dd, aes(x=evt_time, y=abs_pe.trend, ymin=abs_pe.trend-std.error, ymax=abs_pe.trend+std.error, color=vm_gradient17)) + 
+#   geom_pointrange() + geom_line() + geom_vline(xintercept = 0) + geom_hline(yintercept = 0) +
+#   facet_grid(outcome...1 ~ side)
