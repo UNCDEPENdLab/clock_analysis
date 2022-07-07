@@ -56,7 +56,7 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
     dplyr::select(-feat_dir, -img, -mask_name, -session, -l1_cope_number, -l2_cope_number, -l2_model) %>%
     rename(fmri_beta = value) %>%
     # merge(label_df, by = label_join_col, all.x = TRUE)
-    merge(label_df, by = label_join_col, all = FALSE) # only regions in mask
+    left_join(label_df, by = label_join_col, all = FALSE) # only regions in mask
   
 
   if (beta_level == 2L) {
@@ -74,7 +74,7 @@ mixed_by_betas <- function(beta_csv, label_df, trial_df, mask_file = NULL, label
       
       dplyr::select(-feat_dir, -img, -mask_name, -session, -l1_cope_number, -l2_cope_number, -l2_model) %>%
       rename(fmri_beta = value) %>%
-      merge(label_df, by = label_join_col, all.x = TRUE)
+      left_join(label_df, by = label_join_col, all.x = TRUE)
   } else if (beta_level == 1L) {
     nest_by <- c("l1_model", "l1_cope_name")
     fill_split <- c("l1_cope_name", "term", "model_name")
