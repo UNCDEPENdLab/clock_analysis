@@ -17,35 +17,36 @@ library(foreach)
 library(doParallel)
 source("~/code/Rhelpers/theme_black.R")
 
-from_cache = T
+from_cache = F
 plots = T
 inspect = F
 beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas"
 source("~/code/fmri.pipeline/R/mixed_by.R")
 
 studies = c("meg", "fmri")
-censor = c(T)
+censor = c(F)
 decompose = c(T, F)
-
+omit_value = T
+if (omit_value) {rhs = "no_value"} else {rhs = ""}
 for (censor_ends in censor) {
   for (study in studies) {
     for (decompose_within_between_trial in decompose) {
       if (!from_cache) {
-        if (Sys.getenv("USER")=="alexdombrovski") {
+        if (Sys.getenv("USER")=="alexdombrovski" | Sys.getenv("USER")=="Alex") {
           load("~/code/clock_analysis/coxme/fMRI_MEG_coxme_objects_no_MEDUSA_Nov23_2020")
+          # source("../get_trial_data.R")
+          source("parcel_brain_behavior_functions.R")
         } else {
           setwd("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final")
-          
           source("../get_trial_data.R")
           source("/Users/hallquist/Data_Analysis/r_packages/fmri.pipeline/R/mixed_by.R")
           source("../medusa_final/plot_medusa.R")
+          analysis_dir <- "~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final"
         }
-        #analysis_dir <- "~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final"
         analysis_dir <- "~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final"
         setwd(analysis_dir)
         
-        source("../get_trial_data.R")
-        source("parcel_brain_behavior_functions.R")
+        
         
         labels_df <- setDT(read_excel("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/MNH DAN Labels 400 Good Only 47 parcels.xlsx")) %>%
           mutate(roi_num7 = as.factor(roi7_400), 
@@ -69,7 +70,7 @@ for (censor_ends in censor) {
           trial_df <- mfbb
           out_dir <- file.path(beta_dir, "coxme/censored")
         }
-        
+        rm(list = c("bb", "fbb", "mbb", "mfbb"))
         trial_df <- trial_df %>% select(ID, run, trial, rewFunc, t2, t1, run_trial, omission_lag, bin, response, trial_neg_inv_sc,
                                         value_wi, uncertainty_wi, value_wi_t, uncertainty_wi_t, value_b_t, uncertainty_b_t, value_b, uncertainty_b) 
         
@@ -122,12 +123,19 @@ for (censor_ends in censor) {
                           # this "full" model uses between- and within-trial predictors simultaneously, but 
                           # note that the interaction of h (decon) with between-trial uncertainty or value
                           # only means that they will respond faster when those are high
-                          m  <- coxme(Surv(t1,t2,response) ~ value_wi_t * scale(h) + uncertainty_wi_t * trial_neg_inv_sc * scale(h) +
-                                        (1|ID), surv_df)} else {
-                                          # simplified model:
-                                          m  <- coxme(Surv(t1,t2,response) ~ value_wi * scale(h) + uncertainty_wi * trial_neg_inv_sc * scale(h) + 
-                                                        (1|ID), surv_df)
-                                        }
+                          if (omit_value) {
+                            m  <- coxme(Surv(t1,t2,response) ~  uncertainty_wi_t * trial_neg_inv_sc * scale(h) +
+                                          (1|ID), surv_df)} else {
+                                            m  <- coxme(Surv(t1,t2,response) ~ value_wi_t * scale(h) + uncertainty_wi_t * trial_neg_inv_sc * scale(h) +
+                                                          (1|ID), surv_df)} 
+                        } else {
+                          if (omit_value) {
+                            m  <- coxme(Surv(t1,t2,response) ~  uncertainty_wi * trial_neg_inv_sc * scale(h) + 
+                                          (1|ID), surv_df)} else {
+                                            # simplified model:
+                                            m  <- coxme(Surv(t1,t2,response) ~ value_wi * scale(h) + uncertainty_wi * trial_neg_inv_sc * scale(h) + 
+                                                          (1|ID), surv_df)}
+                        }
                         stats <- as_tibble(insight::get_statistic(m))
                         # stats$p <- 2*(1-pnorm(stats$Statistic))
                         stats[3] <- insight::get_parameters(m)[2]
@@ -181,7 +189,7 @@ for (censor_ends in censor) {
         
         if (decompose_within_between_trial) {method = "decomposed"
         } else {method = "non_decomposed"}
-        saveRDS(ddf, paste0("beta_coxme_", method, "_", study, "_trial.rds"))
+        saveRDS(ddf, paste0("beta_coxme_", method, "_", study, "_", rhs, "_trial.rds"))
         
       } else if (from_cache) {
         if (!censor_ends) {
