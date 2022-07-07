@@ -1,4 +1,4 @@
-# plot betas from the 17-network Schaeffer 2018 parcellation
+# plot betas from the 17-network Schaeffer 2018 parcellation with manual DAN lables from June-July 2022
 
 library(tidyverse)
 library(lme4)
@@ -18,55 +18,58 @@ source("~/code/Rhelpers/theme_black.R")
 source('~/code/Rhelpers/screen.lmerTest.R')
 source('~/code/Rhelpers/vif.lme.R')
 # library(stringi)
-# session = "meg"
-session = c("fmri")
+session = "meg"
+# for (session in c("fmri", "meg")) {
 # clock_folder <- "~/Data_Analysis/clock_analysis" #michael
 clock_folder <- "~/code/clock_analysis" #alex
 # source('~/code/Rhelpers/')
 fmri_dir <- '/Volumes/GoogleDrive/.shortcut-targets-by-id/1ukjK6kTlaR-LXIqX6nylYOPWu1j3XGyF/SCEPTIC_fMRI/wholebrain_betas'
-# source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R")
+
+# Manual labels from June-July 2022
 labels_df <- setDT(read_excel("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/MNH DAN Labels 400 Good Only 47 parcels.xlsx")) %>%
   mutate(roi_num7 = as.factor(roi7_400), 
          mask_value = as.integer(roi7_400),
          plot_label = mnh_label_400, 
          vm_gradient17 = parcel_group) %>% select(roi_num7, mask_value, plot_label, vm_gradient17, network17_400_DAN, hemi, x, y, z)
 
-# plot PE betas across the 17-network parcellation of the 7-network DAN
-
 setwd(file.path(fmri_dir, 'L1m-abspe'))
-# brain to behavior
+# plot brain to behavior results
 if (session == "meg") {
   temp <- readRDS("./parcel_maps/Schaefer_400_dan17_meg_test_mixed_by.rds")  
 } else if (session == "fmri") {
   temp <- readRDS("./parcel_maps_l2/Schaefer_400_DAN_manual_labels__mixed_by.rds")
 }
+
+# import the results of brain-behavior analyses
 df <- temp$coef_df_reml %>% filter(term == "rt_lag:fmri_beta" | term == "fmri_beta:rt_vmax_lag" | term == "rt_lag:fmri_beta:last_outcomeReward") %>%
   filter(l1_cope_name == "EV_abspe") %>%
   rename(roi_num7 = "mask_value") %>% mutate(roi_num7 = as.factor(roi_num7),
                                              padj_BY_term = p.adjust(p.value, method = 'BH'),
-                                                                  p_level_fdr = as.factor(case_when(
-                                                                    # p_fdr > .1 ~ '0',
-                                                                    # p_fdr < .1 & p_fdr > .05 ~ '1',
-                                                                    padj_BY_term > .05 ~ '1',
-                                                                    padj_BY_term < .05 & padj_BY_term > .01 ~ '2',
-                                                                    padj_BY_term < .01 & padj_BY_term > .001 ~ '3',
-                                                                    padj_BY_term <.001 & padj_BY_term > .0001 ~ '4',
-                                                                    padj_BY_term <.0001 & padj_BY_term > .00001 ~ '5',
-                                                                    padj_BY_term <.00001 ~ '6'
-                                                                    ))) %>% inner_join(labels_df, by = "roi_num7") #%>%
-  # filter( (net_num17==7 | net_num17==8))
-  # filter(net_num7 ==3 & (net_num17==7 | net_num17==8))
-  # filter(net_num7 ==3 ) 
+                                             p_level_fdr = as.factor(case_when(
+                                               # p_fdr > .1 ~ '0',
+                                               # p_fdr < .1 & p_fdr > .05 ~ '1',
+                                               padj_BY_term > .05 ~ '1',
+                                               padj_BY_term < .05 & padj_BY_term > .01 ~ '2',
+                                               padj_BY_term < .01 & padj_BY_term > .001 ~ '3',
+                                               padj_BY_term <.001 & padj_BY_term > .0001 ~ '4',
+                                               padj_BY_term <.0001 & padj_BY_term > .00001 ~ '5',
+                                               padj_BY_term <.00001 ~ '6'
+                                             )),
+                                             reward = case_when(
+                                               term == "rt_lag:fmri_beta" ~ "Omission",
+                                               term == "rt_lag:fmri_beta:last_outcomeReward" ~ "Reward"
+                                             )) %>% inner_join(labels_df, by = "roi_num7") 
 df$p_level_fdr <- factor(df$p_level_fdr, levels = c('1', '2', '3', '4', '5', '6'), labels = c("NS","p < .05", "p < .01", "p < .001", "p < .0001", "p < .00001")) 
 
 setwd(file.path(fmri_dir, "plots"))
 
-ggplot(df %>% filter(term == "rt_lag:fmri_beta" & model_name == "int"),  aes(y, z, shape = network17_400_DAN)) + 
-  geom_point(size = 20, color = "white", aes(alpha = p_level_fdr, fill = - statistic)) + scale_shape_manual(values = 21:25) + geom_point(size = 20, aes(color = network17_400_DAN)) +
-  scale_fill_viridis(option = "mako") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 8)
+# # quick check
+# ggplot(df %>% filter(term == "rt_lag:fmri_beta" & model_name == "int"),  aes(y, z, shape = network17_400_DAN)) + 
+#   geom_point(size = 20, color = "white", aes(alpha = p_level_fdr, fill = - statistic)) + scale_shape_manual(values = 21:25) + geom_point(size = 20, aes(color = network17_400_DAN)) +
+#   scale_fill_viridis(option = "mako") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 8)
 
-pdf(paste0("pe_rt_swings_by_vm_gradient17_axial_", session, ".pdf"), height = 12, width = 16)
-ggplot(df %>% filter(term == "rt_lag:fmri_beta" & model_name == "int"),  aes(y, x, shape = vm_gradient17)) + 
+pdf(paste0("abspe_rt_swings_by_vm_gradient17_axial_", session, ".pdf"), height = 12, width = 16)
+ggplot(df %>% filter(term == "rt_lag:fmri_beta" & model_name == "int"),  aes(y, -x, shape = vm_gradient17)) + 
   geom_point(size = 24, color = "white", aes(alpha = p_level_fdr, fill = - statistic)) + scale_shape_manual(values = 21:25) + geom_point(size = 24, aes(color = vm_gradient17)) +
   scale_fill_viridis(option = "mako") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 8)
 dev.off()
@@ -74,78 +77,79 @@ dev.off()
 # wdf <- df %>% filter(term %in% c("rt_lag:fmri_beta", "rt_lag:fmri_beta:last_outcomeReward")) %>% 
 #   pivot_wider(names_from = term, values_from = names(df)[9:17], names_sep = "_") %>% select_all(funs(gsub(":", "_", .))) %>%
 #   group_by(model_name, plot_label) %>%
-#   mutate(estimate_mean = (estimate_rt_lag_fmri_beta + estimate_rt_lag_fmri_beta_last_outcomeReward)/2
+#   mutate(statistic_mean = (statistic_rt_lag_fmri_beta + statistic_rt_lag_fmri_beta_last_outcomeReward)/2
 #   )
 # 
-# pdf(paste0("pe_rt_swings_mean_saggital_", session, ".pdf"), height = 12, width = 16)
+# pdf(paste0("abspe_rt_swings_mean_saggital_", session, ".pdf"), height = 12, width = 16)
 # ggplot(wdf %>% filter(model_name == "int"),   aes(y, z, shape = vm_gradient17)) + 
-#   geom_point(size = 20, color = "white", aes(alpha = p_level_fdr, fill = - estimate)) + scale_shape_manual(values = 21:25) + geom_point(size = 20, color = "white") +
+#   geom_point(size = 20, color = "white", aes(alpha = p_level_fdr, fill = - statistic)) + scale_shape_manual(values = 21:25) + geom_point(size = 20, color = "white") +
 #   scale_fill_viridis() + theme_black() + 
 #   # geom_text_repel(aes(alpha = p_level_fdr, label=plot_label), color = "white", force = 5, point.padding = 40, size = 6) + 
 #   geom_text_repel(aes(alpha = p_level_fdr, label=plot_label), point.padding = 40, force = 6, color="white", size = 7) 
 # dev.off()
 
-pdf(paste0("pe_rt_swings_omission_and_reward_saggital_", session, ".pdf"), height = 12, width = 24)
+pdf(paste0("abspe_rt_swings_omission_and_reward_saggital_", session, ".pdf"), height = 12, width = 24)
 ggplot(df %>% filter(term %in% c("rt_lag:fmri_beta", "rt_lag:fmri_beta:last_outcomeReward")  & model_name == "int"),  aes(y, z, shape = vm_gradient17, alpha = p_level_fdr)) + 
-  geom_point(size = 20, color = "white", aes(alpha = p_level_fdr, fill = - estimate)) + scale_shape_manual(values = 21:25) + geom_point(size = 20, color = "white") +
-  scale_fill_viridis() + theme_black() + 
+  geom_point(size = 20, color = "white", aes(alpha = p_level_fdr, fill = - statistic)) + scale_shape_manual(values = 21:25) + geom_point(size = 20, color = "white") +
+  scale_fill_viridis(option = "mako") + theme_black() + 
   # geom_text_repel(aes(alpha = p_level_fdr, label=plot_label), color = "white", force = 5, point.padding = 40, size = 6) + 
-  geom_text_repel(aes(alpha = p_level_fdr, label=plot_label), point.padding = 40, force = 6, color="white", size = 7) +
-  facet_wrap(~term)
+  geom_text_repel(aes(alpha = p_level_fdr, label=plot_label), point.padding = 40, force = 6, color="white", size = 6) +
+  facet_wrap(~reward)
 dev.off()
 
-pdf(paste0("pe_rt_swings_omission_and_reward_axial_", session, ".pdf"), height = 12, width = 24)
+pdf(paste0("abspe_rt_swings_omission_and_reward_axial_", session, ".pdf"), height = 12, width = 24)
 ggplot(df %>% filter(term %in% c("rt_lag:fmri_beta", "rt_lag:fmri_beta:last_outcomeReward")  & model_name == "int"),  aes(y, -x, shape = vm_gradient17, alpha = p_level_fdr)) + 
-  geom_point(size = 20, color = "white", aes(alpha = p_level_fdr, fill = - estimate)) + scale_shape_manual(values = 21:25) + geom_point(size = 20, color = "white") +
-  scale_fill_viridis() + theme_black() + 
+  geom_point(size = 20, color = "white", aes(alpha = p_level_fdr, fill = - statistic)) + scale_shape_manual(values = 21:25) + geom_point(size = 20, color = "white") +
+  scale_fill_viridis(option = "mako") + theme_black() + 
   # geom_text_repel(aes(alpha = p_level_fdr, label=plot_label), color = "white", force = 5, point.padding = 40, size = 6) + 
-  geom_text_repel(aes(alpha = p_level_fdr, label=plot_label), point.padding = 40, force = 6, color="white", size = 7) +
-  facet_wrap(~term)
+  geom_text_repel(aes(alpha = p_level_fdr, label=plot_label), point.padding = 40, force = 6, color="white", size = 6) +
+  facet_wrap(~reward)
 dev.off()
 
-
-pdf(paste0("pe_rt_swings_by_vm_gradient17_", session, ".pdf"), height = 8, width = 10)
+pdf(paste0("abspe_rt_swings_by_vm_gradient17_", session, ".pdf"), height = 8, width = 16)
 ggplot(df %>% filter(term %in% c("rt_lag:fmri_beta", "rt_lag:fmri_beta:last_outcomeReward")  & model_name == "int")) + 
-  geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, - estimate, color = -estimate, alpha = p_level_fdr)) + 
-  geom_violin(aes(vm_gradient17, - estimate), alpha = .2) + scale_shape_manual(values = 21:25) +
+  geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, - statistic, color = - statistic, alpha = p_level_fdr)) + 
+  geom_violin(aes(vm_gradient17, - statistic), alpha = .2) + scale_shape_manual(values = 21:25) +
   # scale_color_viridis(option = "mako") + theme_black() + 
-  scale_color_viridis() + theme_black() + xlab("DAN region") + ylab("RT swing") +
-  geom_text_repel(aes(vm_gradient17, - estimate, alpha = p_level_fdr, label=plot_label), point.padding = 40, force = 6, color="white", size = 3) + facet_wrap(~term)
-  # geom_text_repel(aes(vm_gradient17, - estimate, color = -estimate, alpha = p_level_fdr, label=plot_label),  color="blue")
+  scale_color_viridis(option = "mako") + theme_black() + xlab("DAN region") + ylab("RT swing") +
+  geom_text_repel(aes(vm_gradient17, -statistic, alpha = p_level_fdr, label=plot_label), point.padding = 20, force = 5, color="#4FC3F7", size = 3.5) + facet_wrap(~reward)
+# geom_text_repel(aes(vm_gradient17, - statistic, color = -statistic, alpha = p_level_fdr, label=plot_label),  color="blue")
 dev.off()
 
 
-# test a vs b
+# # test
+# summary(lm(statistic ~ vm_gradient17 + hemi*term, df %>% filter(term %in% c("rt_lag:fmri_beta", "rt_lag:fmri_beta:last_outcomeReward"))))
+# summary(lm(statistic ~ vm_gradient17 + hemi, df %>% filter(term %in% c("fmri_beta:rt_vmax_lag"))))
 
-summary(lm(estimate ~ vm_gradient17 + hemi*term, df %>% filter(term %in% c("rt_lag:fmri_beta", "rt_lag:fmri_beta:last_outcomeReward"))))
-summary(lm(estimate ~ vm_gradient17 + hemi, df %>% filter(term %in% c("fmri_beta:rt_vmax_lag"))))
-
-pdf(paste0("pe_rtvmax_by_vm_gradient17_saggital_", session, ".pdf"), height = 12, width = 16)
-ggplot(df %>% filter(term == "fmri_beta:rt_vmax_lag" & model_name == "int"),  aes(y, z, shape = vm_gradient17)) + 
+pdf(paste0("abspe_rtvmax_by_vm_gradient17_saggital_", session, ".pdf"), height = 12, width = 16)
+ggplot(df %>% filter(term == "fmri_beta:rt_vmax_lag" & model_name == "int"),  aes(y, z, shape = vm_gradient17, alpha = p_level_fdr)) + 
   geom_point(size = 24, color = "white", aes(alpha = p_level_fdr, fill = statistic)) + scale_shape_manual(values = 21:25) + geom_point(size = 24, aes(color = vm_gradient17)) +
-  scale_fill_viridis(option = "inferno") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 8)
+  scale_fill_viridis(option = "inferno") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 6)
 dev.off()
-pdf(paste0("pe_rtvmax_by_vm_gradient17_axial_", session, ".pdf"), height = 12, width = 16)
-ggplot(df %>% filter(term == "fmri_beta:rt_vmax_lag" & model_name == "int"),  aes(y, x, shape = vm_gradient17)) + 
+pdf(paste0("abspe_rtvmax_by_vm_gradient17_axial_", session, ".pdf"), height = 12, width = 16)
+ggplot(df %>% filter(term == "fmri_beta:rt_vmax_lag" & model_name == "int"),  aes(y, -x, shape = vm_gradient17, alpha = p_level_fdr)) + 
   geom_point(size = 24, color = "white", aes(alpha = p_level_fdr, fill = statistic)) + scale_shape_manual(values = 21:25) + geom_point(size = 24, aes(color = vm_gradient17)) +
-  scale_fill_viridis(option = "inferno") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 8)
+  scale_fill_viridis(option = "inferno") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 6)
 dev.off()
-# ggplot(df %>% filter(term == "rt_lag:fmri_beta" & model_name == "slo"),  aes(y, x, color = - estimate, shape = net_num17==8, alpha = abs(statistic)>1)) + 
-#   geom_point(size = 32) + 
-#   scale_color_viridis() + theme_black() + geom_text_repel(aes(label=plot_label), color="white")
-# 
-# ggplot(df %>% filter(term == "rt_lag:fmri_beta" & model_name == "int"),  aes(y, z, color = - estimate, shape = net_num17==8, alpha = abs(statistic))) + 
-#   geom_point(size = 32) + 
-#   scale_color_viridis() + theme_black() + geom_text_repel(aes(label=plot_label), color="white")
+pdf(paste0("abspe_rtvmax_by_vm_gradient17_", session, ".pdf"), height = 8, width = 12)
+ggplot(df %>% filter(term %in% c("fmri_beta:rt_vmax_lag")  & model_name == "int")) + 
+  geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, statistic, color = statistic, alpha = p_level_fdr)) + 
+  geom_violin(aes(vm_gradient17, statistic), alpha = .2) + scale_shape_manual(values = 21:25) +
+  # scale_color_viridis(option = "mako") + theme_black() + 
+  scale_color_viridis(option = "inferno") + theme_black() + xlab("DAN region") + ylab("Convergence on RT(Vmax)") +
+  geom_text_repel(aes(vm_gradient17, statistic, alpha = p_level_fdr, label=plot_label), point.padding = 20, force = 5, color="#4FC3F7", size = 3) 
+# geom_text_repel(aes(vm_gradient17, - statistic, color = -statistic, alpha = p_level_fdr, label=plot_label),  color="blue")
+dev.off()
 
+# plot entropy change exploitation effect
 
 setwd(file.path(fmri_dir, 'L1m-echange'))
 # here, mask_value = roi_num7
 # brain to behavior
 if (session == "meg") {
   temp <- readRDS("./parcel_maps/Schaefer_400_dan17_meg_test_mixed_by.rds")  
-} else {
-  temp <- readRDS("./parcel_maps/Schaefer_444_final_2009c_2.3mm_cope_l2_mixed_by.rds")
+} else if (session == "fmri") {
+  temp <- readRDS("./parcel_maps_l2/Schaefer_400_DAN_manual_labels__mixed_by.rds")
 }
 
 edf <- temp$coef_df_reml %>% filter(term == "rt_lag:fmri_beta" | term == "fmri_beta:rt_vmax_lag" | term == "rt_lag:fmri_beta:last_outcomeReward") %>%
@@ -161,29 +165,27 @@ edf <- temp$coef_df_reml %>% filter(term == "rt_lag:fmri_beta" | term == "fmri_b
                                                padj_BY_term <.001 & padj_BY_term > .0001 ~ '4',
                                                padj_BY_term <.0001 & padj_BY_term > .00001 ~ '5',
                                                padj_BY_term <.00001 ~ '6'
-                                             ))) %>% inner_join(labels, by = "roi_num7") %>%
-  # filter(net_num7 ==3 & (net_num17==7 | net_num17==8))
-filter( (net_num17==7 | net_num17==8))
+                                             ))) %>% inner_join(labels_df, by = "roi_num7") #%>%
 setwd(file.path(fmri_dir, "plots"))
 
-# filter(net_num7 ==3 ) 
 edf$p_level_fdr <- factor(edf$p_level_fdr, levels = c('1', '2', '3', '4', '5', '6'), labels = c("NS","p < .05", "p < .01", "p < .001", "p < .0001", "p < .00001")) 
+
 pdf(paste0("echange_rtvmax_by_vm_gradient17_saggital_", session, ".pdf"), height = 12, width = 16)
-ggplot(edf %>% filter(term == "fmri_beta:rt_vmax_lag" & model_name == "int"),  aes(y, z, shape = vm_gradient17)) + 
+ggplot(edf %>% filter(term == "fmri_beta:rt_vmax_lag" & model_name == "int"),  aes(y, z, shape = vm_gradient17, alpha = p_level_fdr)) + 
   geom_point(size = 24, color = "white", aes(alpha = p_level_fdr, fill = statistic)) + scale_shape_manual(values = 21:25) + geom_point(size = 24, aes(color = vm_gradient17)) +
-  scale_fill_viridis(option = "inferno") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 8)
+  scale_fill_viridis(option = "inferno") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 6)
 dev.off()
 pdf(paste0("echange_rtvmax_by_vm_gradient17_axial_", session, ".pdf"), height = 12, width = 16)
-ggplot(edf %>% filter(term == "fmri_beta:rt_vmax_lag" & model_name == "int"),  aes(y, x, shape = vm_gradient17)) + 
+ggplot(edf %>% filter(term == "fmri_beta:rt_vmax_lag" & model_name == "int"),  aes(y, -x, shape = vm_gradient17, alpha = p_level_fdr)) + 
   geom_point(size = 24, color = "white", aes(alpha = p_level_fdr, fill = statistic)) + scale_shape_manual(values = 21:25) + geom_point(size = 24, aes(color = vm_gradient17)) +
-  scale_fill_viridis(option = "inferno") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 8)
+  scale_fill_viridis(option = "inferno") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 6)
 dev.off()
-pdf(paste0("echange_rtvmax_by_vm_gradient17_violin_", session, ".pdf"), height = 8, width = 5)
-
+pdf(paste0("echange_rtvmax_by_vm_gradient17_", session, ".pdf"), height = 8, width = 12)
 ggplot(edf %>% filter(term %in% c("fmri_beta:rt_vmax_lag")  & model_name == "int")) + 
-  geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, estimate, color = estimate, alpha = p_level_fdr)) + 
-  geom_violin(aes(vm_gradient17, estimate), alpha = .2) + scale_shape_manual(values = 21:25) +
-  scale_color_viridis(option = "inferno") + theme_black() + 
-  geom_text_repel(aes(vm_gradient17, - estimate, color = estimate, alpha = p_level_fdr, label=plot_label),  color="blue")
+  geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, statistic, color = statistic, alpha = p_level_fdr)) + 
+  geom_violin(aes(vm_gradient17, statistic), alpha = .2) + scale_shape_manual(values = 21:25) +
+  scale_color_viridis(option = "inferno") + theme_black() + xlab("DAN region") + ylab("Convergence on RT(Vmax)") +
+  geom_text_repel(aes(vm_gradient17, statistic, alpha = p_level_fdr, label=plot_label), point.padding = 20, force = 5, color="#4FC3F7", size = 3) 
 dev.off()
 
+# }

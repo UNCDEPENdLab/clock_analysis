@@ -3,7 +3,7 @@ library(data.table)
 library(tidyverse)
 library(afex)
 library(lattice)
-session  = "meg"
+session  = "fmri"
 if (Sys.getenv("USER")=="alexdombrovski") {
   setwd("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final")
   
@@ -54,8 +54,8 @@ labels_df <- setDT(read_excel("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_me
          vm_gradient17 = parcel_group) %>% select(roi_num7, mask_value, plot_label, vm_gradient17, network17_400_DAN, hemi, x, y, z)
 
 #trial_df <- get_trial_data(repo_directory = "~/Data_Analysis/clock_analysis") %>%
-if (session == "meg") {
-trial_df <- setDT(get_trial_data(repo_directory = "~/code/clock_analysis", dataset = "mmclock_meg")) %>%
+if (session == "meg") {study = "mmclock_meg"} else if (session == "fmri") {study = "mmclock_fmri"}
+trial_df <- setDT(get_trial_data(repo_directory = "~/code/clock_analysis", dataset = study)) %>%
 # trial_df <- trial_df %>%
   group_by(id, run) %>%
   mutate(v_max_wi_lag = lag(v_max_wi, order_by = run_trial),
@@ -63,8 +63,7 @@ trial_df <- setDT(get_trial_data(repo_directory = "~/code/clock_analysis", datas
   ungroup() %>%
   dplyr::rename(run_number = run) %>%
   dplyr::select(id, run_number, run_trial, trial_neg_inv, rt_csv, rt_lag, v_entropy_wi, v_max_wi_lag, 
-                rt_vmax_lag, last_outcome, rewFunc) }
-
+                rt_vmax_lag, last_outcome, rewFunc) 
 # take a single subject
 # trial_df <- trial_df %>% filter(id == 10637)
 
@@ -132,8 +131,8 @@ efiles_l2 <- list.files(beta_dir,
                         recursive = TRUE, full.names = TRUE
 )
 
-# manually filter just abspe and echange
-efiles_l2 <- efiles_l2[2:4]
+# manually filter just echange
+efiles_l2 <- efiles_l2[3]
 
 # # test on one parcel
 # labels_df <- labels_df[1,]
@@ -143,12 +142,12 @@ for (ee in efiles_l2) {
   job <- R_batch_job$new(
     job_name = "parcel_bb", batch_directory = getwd(), scheduler = "local",
     input_rdata_file = "parcel_input_snapshot.RData",
-    n_nodes = 1, n_cpus = 10, wall_time = "23:00:00",
+    n_nodes = 1, n_cpus = 18, wall_time = "23:00:00",
     mem_total = "64G",
     #r_code = glue("to_plot <- mixed_by_betas('{ee}', labels_df, trial_df, mask_file = 'Schaefer2018_400Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
     r_code = glue("to_plot <- mixed_by_betas('{ee}', labels_df, trial_df, mask_file = 'Schaefer_444_final_2.3mm.nii.gz',
-                            rhs_model_formulae = fmri.pipeline:::named_list(int, slo), ncores = 10, afni_dir = '/Users/alexdombrovski/abin',
-                            out_prefix = 'Schaefer_400_all_parcels_meg_',
+                            rhs_model_formulae = fmri.pipeline:::named_list(int, slo), ncores = 18, afni_dir = '~/abin',
+                            out_prefix = 'Schaefer_400_dan_parcels_fmri_',
     
                                                #                         rhs_model_formulae = fmri.pipeline:::named_list(int, slo), ncores = 16, afni_dir = '/proj/mnhallqlab/sw/afni',
                                                #                         calculate = c('parameter_estimates_reml', 'fit_statistics'),

@@ -25,8 +25,9 @@ source("~/code/fmri.pipeline/R/mixed_by.R")
 
 studies = c("meg", "fmri")
 censor = c(F)
-decompose = c(T, F)
+decompose = c(T)
 omit_value = T
+split_by_reward = T
 if (omit_value) {rhs = "no_value"} else {rhs = ""}
 for (censor_ends in censor) {
   for (study in studies) {
