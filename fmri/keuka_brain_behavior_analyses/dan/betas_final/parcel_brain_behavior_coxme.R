@@ -292,6 +292,22 @@ for (censor_ends in censor) {
 
 if (inspect) {
   
+  summary(lm(uncertainty_wi_t ~ value_wi_t * trial_neg_inv_sc * omission_lag, trial_df))
+  summary(lm(uncertainty_wi_t ~ value_wi_t * trial_neg_inv_sc * omission_lag, trial_df))
+  summary(lm(uncertainty_wi ~ value_wi + trial_neg_inv_sc, trial_df))
+  summary(lm(uncertainty_wi ~ value_wi, trial_df))
+  
+  m  <- coxme(Surv(t1,t2,response) ~ value_wi_t + uncertainty_wi_t * trial_neg_inv_sc + uncertainty_wi_t * omission_lag +
+                (1|ID), surv_df)
+  summary(m)
+  
+  m2  <- coxme(Surv(t1,t2,response) ~ value_wi_t * value_b_t + uncertainty_wi_t * uncertainty_b_t + trial_neg_inv_sc + uncertainty_wi_t * omission_lag +
+                (1|ID), surv_df)
+  summary(m2)
+  
+  m0  <- coxme(Surv(t1,t2,response) ~  uncertainty_wi_t * trial_neg_inv_sc + uncertainty_wi_t * omission_lag +
+                (1|ID), surv_df)
+  summary(m0)
   # inspect models to understand uncertainty sensitivity
   # look at the key "decomposed" models for fMRI and MEG
   ddf_fmri <- read_rds("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas/coxme/beta_coxme_decomposed_fmritrial.rds") %>% mutate(
