@@ -2,7 +2,7 @@ library(tidyverse)
 library(lme4)
 library(data.table)
 library(readxl)
-
+library(fmri.pipeline)
 out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/explore_medusa"
 #repo_directory <- "~/code/clock_analysis"
 repo_directory <- "~/Data_Analysis/clock_analysis"
@@ -39,22 +39,39 @@ named_list <- function(...) {
 #   summarise(isna=sum(is.na(decon_interp)))
 # 
 # rt_visuomotor_long <- rt_visuomotor_long %>% filter(evt_time >= -4 & evt_time <= 6 & !is.na(decon_interp))
-rt_visuomotor_long <- fread("~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/EXPLORE_Medusa/reproc/transformed_schaefer_dan_3.125mm_rt_long_decon_aligned.csv.gz") %>%
-  mutate(atlas_value = as.character(atlas_value),
-         id = as.character(id))
-# labels <- read_delim("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/Schaefer2018_200Parcels_7Networks_order_manual.txt",
-#                      delim = "\t", escape_double = FALSE,
-#                      col_names = FALSE, trim_ws = TRUE) %>% dplyr::select(1:2) %>% rename(mask_value = X1, label = X2) %>%
-#   mutate(hemi = stringr::str_extract(label, "_([^_]+)_"),
-#          hemi = stringr::str_extract(hemi, "[^_]"),
-#          network = substr(label, 14, 17),
-#          mask_value = as.factor(mask_value))
-dan_labels <- setDT(read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx")) %>%
-  mutate(atlas_value = as.character(roinum),
-         parcel = word(MNHLabel, 2, sep = "_"),
-         hemi = substr(MNHLabel, 1,1)
-  ) %>% select(atlas_value, MNHLabel, parcel, Stream, Visuomotor_Gradient, lobe, parcel, hemi)
-rt_visuomotor_long <- rt_visuomotor_long %>% inner_join(dan_labels, by = "atlas_value") %>% filter(!is.na(Stream))
+
+# move to new 400 labels
+labels <- setDT(read_excel("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/MNH DAN Labels 400 Good Only 47 parcels.xlsx")) %>%
+  rename(roi_num7=roi7_400) %>%
+  select(roi_num7, mnh_label_400, network7_400, network17_400, parcel_group, hemi) %>% mutate(atlas_value = as.integer(roi_num7))
+
+# rt_visuomotor_long <- fread("~/data/explore_medusa_400/exp_decon_rt_aligned.csv.gz") 
+# forty_seven <- unique(labels$atlas_value)
+# rt_visuomotor_long_400_47 <- rt_visuomotor_long %>% filter(atlas_value %in% forty_seven)
+# fwrite(rt_visuomotor_long_400_47, "explore_decon_rt_aligned_47_400.csv")  
+setwd("~/data/explore_medusa_400/")
+
+files <-  gsub("//", "/", list.files(pattern = "interpolated", full.names = T))
+message(paste0("Found ", length(files), " files."))
+csl <- lapply(files, function(x) {
+  print(x)
+  df <- fread(x) 
+  df$id <- as.integer(stringi::stri_extract_first(x, regex = "\\d+"))
+  # if (class(df)=="list") {
+  df$run <- stringi::stri_extract_last(x, regex = "\\d+")
+  # } else if (ncol(df)==3) {
+  # df <- df$fit_df
+  # }
+  return(df)
+})
+rt_visuomotor_long <- data.table::rbindlist(csl)
+
+setwd(out_dir)
+forty_seven <- unique(labels$atlas_value)
+rt_visuomotor_long_400_47 <- rt_visuomotor_long %>% filter(atlas_value %in% forty_seven) %>% mutate(run = as.integer(run))
+rt_visuomotor_long_400_47 <- rt_visuomotor_long_400_47 %>% inner_join(labels, by = "atlas_value")
+
+# rt_visuomotor_long <- rt_visuomotor_long %>% inner_join(dan_labels, by = "atlas_value") %>% filter(!is.na(Stream))
 
 setwd("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan")
 
@@ -66,8 +83,8 @@ trial_df <- setDT(get_trial_data(dataset = "explore", repo_directory = "~/OneDri
 
 trial_df <- trial_df %>% dplyr::select(id, run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
                 v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
-  mutate(log_kld3 = log(kld3 + .00001),
-         id = as.character(id))
+  mutate(log_kld3 = log(kld3 + .00001)) #,
+         # id = as.character(id))
 # rt_visuomotor_long <- rt_visuomotor_long %>% inner_join(trial_df)
 # rt_visuomotor_long <- rt_visuomotor_long %>% filter(evt_time > -3 & evt_time < 6)
 
@@ -103,12 +120,12 @@ if (alignment=="clock") {
                   v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
     mutate(log_kld3 = log(kld3 + .00001))
   
-  d <- merge(trial_df, rt_visuomotor_long, by = c("id", "run", "trial"))
-  d <- d %>% rename(vm_gradient = "Visuomotor_Gradient", side = "hemi")
+  d <- merge(trial_df, rt_visuomotor_long_400_47, by = c("id", "run", "trial"))
+  d <- d %>% rename(side = "hemi")
   # d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient", "side"), sep="_")
 }
 
-rm(rt_visuomotor_long)
+# rm(rt_visuomotor_long)
 # rm(clock_visuomotor_long)
 # rm(clock_visuomotor_long_online)
 gc()
@@ -177,6 +194,9 @@ if (alignment == "clock" || alignment == "clock_online") {
   enc_rt_rslope <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
                              v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
                              (abs_pe + v_entropy_wi + v_entropy_wi_change + v_max_wi | id) )
+  enc_rt_rslope_kld <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
+                             v_entropy_wi + v_entropy_wi_change + abs_pe + outcome + kld3 +
+                             (abs_pe + v_entropy_wi + v_entropy_wi_change + v_max_wi | id) )
   
   enc_rt_kld <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
                           v_entropy_wi + v_entropy_wi_change + abs_pe + outcome + kld3 +
@@ -190,9 +210,18 @@ if (alignment == "clock" || alignment == "clock_online") {
   enc_rt_pe <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
                          v_entropy_wi + v_entropy_wi_change + pe_max +
                          (1 | id) )
+  
+  # signed PE
+  enc_rt_pe_kld <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
+                         v_entropy_wi + v_entropy_wi_change + pe_max + kld3 +
+                         (1 | id) )
   # signed PE w/o covariates
   enc_rt_pe_only <- formula(~ pe_max +
                          (1 | id) )
+
+  enc_rt_pe_rslope <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
+                         v_entropy_wi + v_entropy_wi_change + pe_max +
+                         (pe_max | id) )
   
   # abs_pe x outcome interaction
   enc_rt_int <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
@@ -213,25 +242,34 @@ if (alignment == "clock" || alignment == "clock_online") {
   enc_rt_trial <- formula(~ rt_csv_sc*run_trial + rt_lag_sc + v_max_wi*run_trial +
                            v_entropy_wi*run_trial + v_entropy_wi_change*run_trial + abs_pe*run_trial + outcome +
                            (1 | id) )
-  # flist <- named_list(enc_rt_base)
-  flist <- named_list(enc_rt_rslope, enc_rt_kld, enc_rt_pe, )
+  flist <- named_list(enc_rt_rslope_kld)
+  # flist <- named_list(enc_rt_rslope, enc_rt_kld, enc_rt_pe)
   # flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
 }
 
 
-splits <- c("vm_gradient", "side", "evt_time")
+splits <- c("parcel_group", "side", "evt_time")
 
 message("Running mixed_by")
 ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial"),
                 tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
-                calculate = c("parameter_estimates_reml"), ncores = 10, refit_on_nonconvergence = 5, padjust_by = "term"#,
+                calculate = c("parameter_estimates_reml"), ncores = 9, refit_on_nonconvergence = 5, padjust_by = "term"#,
                 # emtrends_spec = list(
                 #   abspe = list(outcome = "decon_mean", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
                 #)
                 )
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_encode_medusa_fmri.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "pe_only_and_pe_rslope_explore_400_47_encode_June13_2022.rds")))
+ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
+  filter(effect=="fixed") %>%
+  group_by(term, model_name) %>%
+  mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
+  ungroup() %>% setDT()
+
+plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="parcel_group", facet_by="side",
+            out_dir=file.path(out_dir, "explore_400_47"), p.value="padj_BY_term")
+
 
 dd <- ddf$emtrends_list$abspe
 dd <- dd[,c(-4, -5)]
