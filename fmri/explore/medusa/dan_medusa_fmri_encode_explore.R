@@ -260,7 +260,7 @@ ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 #)
                 )
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "pe_only_and_pe_rslope_explore_400_47_encode_June13_2022.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_rslope_kld_explore_400_47_encode_June13_2022.rds")))
 ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
   filter(effect=="fixed") %>%
   group_by(term, model_name) %>%
