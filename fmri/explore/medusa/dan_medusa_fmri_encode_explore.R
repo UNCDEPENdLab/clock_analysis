@@ -121,7 +121,7 @@ if (alignment=="clock") {
     mutate(log_kld3 = log(kld3 + .00001))
   
   d <- merge(trial_df, rt_visuomotor_long_400_47, by = c("id", "run", "trial"))
-  d <- d %>% rename(side = "hemi")
+  # d <- d %>% rename(side = "hemi")
   # d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient", "side"), sep="_")
 }
 
@@ -198,6 +198,10 @@ if (alignment == "clock" || alignment == "clock_online") {
                              v_entropy_wi + v_entropy_wi_change + abs_pe + outcome + kld3 +
                              (abs_pe + v_entropy_wi + v_entropy_wi_change + v_max_wi | id) )
   
+  enc_rt_rslope_logkld <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
+                                 v_entropy_wi + v_entropy_wi_change + abs_pe + outcome + log_kld3 +
+                                 (abs_pe + v_entropy_wi + v_entropy_wi_change + v_max_wi | id) )
+  
   enc_rt_kld <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
                           v_entropy_wi + v_entropy_wi_change + abs_pe + outcome + kld3 +
                           (1 | id) )
@@ -242,7 +246,7 @@ if (alignment == "clock" || alignment == "clock_online") {
   enc_rt_trial <- formula(~ rt_csv_sc*run_trial + rt_lag_sc + v_max_wi*run_trial +
                            v_entropy_wi*run_trial + v_entropy_wi_change*run_trial + abs_pe*run_trial + outcome +
                            (1 | id) )
-  flist <- named_list(enc_rt_rslope_kld)
+  flist <- named_list(enc_rt_rslope_logkld)
   # flist <- named_list(enc_rt_rslope, enc_rt_kld, enc_rt_pe)
   # flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
 }
@@ -260,15 +264,35 @@ ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 #)
                 )
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_rslope_kld_explore_400_47_encode_June13_2022.rds")))
-ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_rslope_logkld_explore_400_47_encode_July19_2022.rds")))
+
+# aggregate all results into one RDS
+setwd(out_dir)
+files <-  gsub("//", "/", list.files(pattern = ".*400.*47.*rds", full.names = T))
+message(paste0("Found ", length(files), " files."))
+csl <- lapply(files, function(x) {
+  print(x)
+  df <- readRDS(x) %>% Filter(Negate(is.null),.)
+  df <- df$coef_df_reml
+  # df$id <- as.integer(stringi::stri_extract_first(x, regex = "\\d+"))
+  # # if (class(df)=="list") {
+  # df$run <- stringi::stri_extract_last(x, regex = "\\d+")
+  # } else if (ncol(df)==3) {
+  # df <- df$fit_df
+  # }
+  return(df)
+})
+ddf_all <- data.table::rbindlist(csl)
+saveRDS(ddf_all, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_all_models_explore_400_47_encode_July19_2022.rds")))
+
+ddf_all <- ddf_all %>% dplyr::filter(evt_time <= 5) %>% 
   filter(effect=="fixed") %>%
   group_by(term, model_name) %>%
   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
   ungroup() %>% setDT()
 
-plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="parcel_group", facet_by="side",
-            out_dir=file.path(out_dir, "explore_400_47"), p.value="padj_BY_term")
+plot_medusa(ddf_all, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="parcel_group", facet_by="side",
+            out_dir=file.path(out_dir, "explore_400_47"),  p.value="padj_BY_term")
 
 
 dd <- ddf$emtrends_list$abspe
