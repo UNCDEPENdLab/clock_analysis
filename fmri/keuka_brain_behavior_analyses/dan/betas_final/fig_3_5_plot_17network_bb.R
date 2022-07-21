@@ -116,6 +116,18 @@ if ("abspe" %in% signals) {
     facet_wrap(~reward) + guides(alpha = guide_legend(override.aes = list(color = "white"), title = expression(p[FDR]))))
   # geom_text_repel(aes(vm_gradient17, - statistic, color = -statistic, alpha = p_level_fdr, label=plot_label),  color="blue")
   dev.off()
+
+  # main champagne plot, random slopes:
+  pdf(paste0("abspe_rt_swings_by_vm_gradient17_", session, "_rslope.pdf"), height = 8, width = 16)
+  print(ggplot(df %>% filter(term %in% c("rt_lag:fmri_beta", "rt_lag:fmri_beta:last_outcomeReward")  & model_name == "slo") %>% mutate(`RT swings` = -statistic)) + 
+          geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, - statistic, color = `RT swings`, alpha = p_level_fdr), show.legend = T) + 
+          geom_violin(aes(vm_gradient17, - statistic), alpha = .2) + scale_shape_manual(values = 21:25) +
+          # scale_color_viridis(option = "mako") + theme_black() + 
+          scale_color_viridis(option = "mako") + theme_black() + xlab("DAN region") + ylab("RT swing") +
+          geom_text_repel(aes(vm_gradient17, -statistic, alpha = p_level_fdr, label=plot_label), point.padding = 20, force = 5, color="#4FC3F7", size = 3.5, show.legend = F) + 
+          facet_wrap(~reward) + guides(alpha = guide_legend(override.aes = list(color = "white"), title = expression(p[FDR]))))
+  # geom_text_repel(aes(vm_gradient17, - statistic, color = -statistic, alpha = p_level_fdr, label=plot_label),  color="blue")
+  dev.off()
   
   # anatomical detail for supplemental figures:
   pdf(paste0("abspe_rt_swings_omission_and_reward_saggital_", session, ".pdf"), height = 12, width = 24)
@@ -155,6 +167,7 @@ if ("abspe" %in% signals) {
     guides(alpha = guide_legend(override.aes = list(color = "white"), title = expression(p[FDR]))))
   dev.off()
   pdf(paste0("abspe_rtvmax_by_vm_gradient17_", session, ".pdf"), height = 8, width = 12)
+  
   print(ggplot(df %>% filter(term %in% c("fmri_beta:rt_vmax_lag")  & model_name == "int")) + 
     geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, statistic, color = statistic, alpha = p_level_fdr)) + 
     geom_violin(aes(vm_gradient17, statistic), alpha = .2) + scale_shape_manual(values = 21:25) +
@@ -164,6 +177,19 @@ if ("abspe" %in% signals) {
     guides(alpha = guide_legend(override.aes = list(color = "white"), title = expression(p[FDR]))))
   # geom_text_repel(aes(vm_gradient17, - statistic, color = -statistic, alpha = p_level_fdr, label=plot_label),  color="blue")
   dev.off()
+  
+  # abspe exploit figure, random slopes:
+  pdf(paste0("abspe_rtvmax_by_vm_gradient17_", session, "_rslope.pdf"), height = 8, width = 12)
+  print(ggplot(df %>% filter(term %in% c("fmri_beta:rt_vmax_lag")  & model_name == "slo")) + 
+          geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, statistic, color = statistic, alpha = p_level_fdr)) + 
+          geom_violin(aes(vm_gradient17, statistic), alpha = .2) + scale_shape_manual(values = 21:25) +
+          # scale_color_viridis(option = "mako") + theme_black() + 
+          scale_color_viridis(option = "inferno") + theme_black() + xlab("DAN region") + ylab("Convergence on RT(Vmax)") +
+          geom_text_repel(aes(vm_gradient17, statistic, alpha = p_level_fdr, label=plot_label), point.padding = 20, force = 5, color="#4FC3F7", size = 3)  +
+          guides(alpha = guide_legend(override.aes = list(color = "white"), title = expression(p[FDR]))))
+  # geom_text_repel(aes(vm_gradient17, - statistic, color = -statistic, alpha = p_level_fdr, label=plot_label),  color="blue")
+  dev.off()
+  
 }
 
 if ("echange" %in% signals) {
@@ -220,5 +246,16 @@ print(ggplot(edf %>% filter(term %in% c("fmri_beta:rt_vmax_lag")  & model_name =
   geom_text_repel(aes(vm_gradient17, statistic, alpha = p_level_fdr, label=plot_label), point.padding = 20, force = 5, color="#4FC3F7", size = 3)  +
   guides(alpha = guide_legend(override.aes = list(color = "white"), title = expression(p[FDR]))))
 dev.off()
+
+pdf(paste0("echange_rtvmax_by_vm_gradient17_", session, "_rslope.pdf"), height = 8, width = 12)
+print(ggplot(edf %>% filter(term %in% c("fmri_beta:rt_vmax_lag")  & model_name == "slo")) + 
+        geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, statistic, color = statistic, alpha = p_level_fdr)) + 
+        geom_violin(aes(vm_gradient17, statistic), alpha = .2) + scale_shape_manual(values = 21:25) +
+        scale_color_viridis(option = "inferno") + theme_black() + xlab("DAN region") + ylab("Convergence on RT(Vmax)") +
+        geom_text_repel(aes(vm_gradient17, statistic, alpha = p_level_fdr, label=plot_label), point.padding = 20, force = 5, color="#4FC3F7", size = 3)  +
+        guides(alpha = guide_legend(override.aes = list(color = "white"), title = expression(p[FDR]))))
+dev.off()
+
+
 }
 # }
