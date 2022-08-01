@@ -20,10 +20,23 @@ labels <- setDT(read_excel("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medus
 #all.equal(labels$network17_400, labels$network17)
 #all.equal(labels$network7_400, labels$network7)
 
-visuomotor_long <- TRUE # what we want to load in load_medusa_data_dan.R
+#visuomotor_long <- TRUE # what we want to load in load_medusa_data_dan.R
+visuomotor_long <- FALSE # no 4 visuomotor
+tall_only <- TRUE # get parcelwise
 schaefer_400 <- TRUE # indicate that we want the 400-parcel data
 
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
+
+if (isTRUE(tall_only)) {
+  # rename for internal consistency
+  rt_comb <- rt_comb %>%
+    select(id, run, run_trial, evt_time, visuomotor_side, decon_interp, label)
+    
+  rt_visuomotor_long <- rt_comb
+  clock_visuomotor_long <- clock_comb %>%
+    select(id, run, run_trial, evt_time, visuomotor_side, decon_interp, label)
+  rm(rt_comb, clock_comb)
+}
 
 # uh oh, some mismatches in original -- corrected by 5Jul2022 reprocessing of event alignment to match final N=47 400 DAN
 # setdiff(unique(labels$roi_num7), unique(rt_visuomotor_long$roi_num7))
@@ -59,15 +72,16 @@ if (alignment=="clock") {
   trial_df <- trial_df %>%
     dplyr::select(id, run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
                   v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
-    mutate(log_kld3 = log(kld3 + .00001))
+    mutate(log_kld3 = log(kld3 + .00001)) %>% select(-trial)
   
   d <- merge(trial_df, rt_visuomotor_long, by = c("id", "run", "run_trial"))
   d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")
 }
 
+# clean up a few variables to reduce memory burden
 rm(rt_visuomotor_long)
 rm(clock_visuomotor_long)
-rm(clock_visuomotor_long_online)
+#rm(clock_visuomotor_long_online)
 gc()
 
 # cor(trial_df$v_entropy_wi, trial_df$v_entropy_wi_change, use="pairwise")
@@ -101,6 +115,11 @@ if (alignment == "clock" || alignment == "clock_online") {
   enc_clock_logkld <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
                              v_entropy_wi + v_entropy_wi_change_lag + abs_pe_lag + outcome_lag + log_kld3_lag +
                              (1 | id) )
+  
+  # log version of kld given the strong skew
+  enc_clock_logkld_rslope <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
+                                       v_entropy_wi + v_entropy_wi_change_lag + abs_pe_lag + outcome_lag + log_kld3_lag +
+                                       (abs_pe_lag + v_entropy_wi + v_entropy_wi_change_lag + v_max_wi | id) )
 
   # signed PE
   enc_clock_pe <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
@@ -122,7 +141,8 @@ if (alignment == "clock" || alignment == "clock_online") {
                                rt_csv_sc*run_trial + rt_lag_sc + outcome_lag +
                                (1 | id) )
   
-  flist <- fmri.pipeline:::named_list(enc_clock_base, enc_clock_rslope, enc_clock_kld, enc_clock_logkld, enc_clock_pe, enc_clock_int, enc_clock_trial)
+  flist <- fmri.pipeline:::named_list(enc_clock_base, enc_clock_rslope, enc_clock_kld, enc_clock_logkld,
+                                      enc_clock_logkld_rslope, enc_clock_pe, enc_clock_int, enc_clock_trial)
 } else if (alignment == "rt") {
   # basal analysis
   enc_rt_base <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
@@ -142,6 +162,10 @@ if (alignment == "clock" || alignment == "clock_online") {
   enc_rt_logkld <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
                           v_entropy_wi + v_entropy_wi_change + abs_pe + outcome + log_kld3 +
                           (1 | id) )
+  
+  enc_rt_logkld_rslope <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
+                                    v_entropy_wi + v_entropy_wi_change + abs_pe + outcome + log_kld3 +
+                                    (abs_pe + v_entropy_wi + v_entropy_wi_change + v_max_wi | id) )
 
   # signed PE
   enc_rt_pe <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
@@ -168,11 +192,13 @@ if (alignment == "clock" || alignment == "clock_online") {
                            v_entropy_wi*run_trial + v_entropy_wi_change*run_trial + abs_pe*run_trial + outcome +
                            (1 | id) )
   
-  flist <- fmri.pipeline:::named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
+  flist <- fmri.pipeline:::named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, 
+                                      enc_rt_logkld_rslope, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
 }
 
 
-splits <- c("vm_gradient17", "side", "evt_time")
+# split on both vm_gradient and label so both are preserved in outputs
+splits <- c("vm_gradient17", "label", "side", "evt_time")
 
 message("Running mixed_by")
 ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist,
@@ -183,7 +209,10 @@ ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist,
                   abspe = list(outcome = "decon_interp", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
                 ))
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_400_final47_encode_medusa_fmri.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_400_final47_encode_medusa_fmri_parcelwise.rds")))
+
+table(ddf$coef_df_reml$vm_gradient17)
+table(ddf$coef_df_reml$label)
 
 # dd <- ddf$emtrends_list$abspe
 # dd <- dd[,c(-4, -5)]
