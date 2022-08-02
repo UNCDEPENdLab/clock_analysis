@@ -41,8 +41,13 @@ for (censor_ends in censor) {
   for (study in studies) {
     for (decompose_within_between_trial in decompose) {
       if (!from_cache) {
-        if (Sys.getenv("USER")=="alexdombrovski" | Sys.getenv("USER")=="Alex") {
+        if (Sys.getenv("USER")=="alexdombrovski") {
           load("~/code/clock_analysis/coxme/fMRI_MEG_coxme_objects_no_MEDUSA_Nov23_2020")
+          setwd("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final/")
+          # source("../get_trial_data.R")
+          source("parcel_brain_behavior_functions_alex.R")
+        } else if (Sys.getenv("USER")=="Alex") {
+          load("~/code/clock_analysis/coxme/fMRI_MEG_coxme_objects_Nov22_2020")
           setwd("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final/")
           # source("../get_trial_data.R")
           source("parcel_brain_behavior_functions_alex.R")
@@ -58,7 +63,7 @@ for (censor_ends in censor) {
         
         
         
-        labels_df <- setDT(read_excel("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/MNH DAN Labels 400 Good Only 47 parcels.xlsx")) %>%
+        labels_df <- setDT(read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH DAN Labels 400 Good Only 47 parcels.xlsx")) %>%
           mutate(roi_num7 = as.factor(roi7_400), 
                  mask_value = as.integer(roi7_400),
                  plot_label = mnh_label_400, 
