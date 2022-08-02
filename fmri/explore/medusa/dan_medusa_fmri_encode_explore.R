@@ -4,8 +4,8 @@ library(data.table)
 library(readxl)
 library(fmri.pipeline)
 out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/explore_medusa"
-#repo_directory <- "~/code/clock_analysis"
-repo_directory <- "~/Data_Analysis/clock_analysis"
+repo_directory <- "~/code/clock_analysis"
+# repo_directory <- "~/Data_Analysis/clock_analysis"
 
 # visuomotor_long <- TRUE # what we want to load in load_medusa_data_dan.R
 # source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
@@ -70,13 +70,17 @@ setwd(out_dir)
 forty_seven <- unique(labels$atlas_value)
 rt_visuomotor_long_400_47 <- rt_visuomotor_long %>% filter(atlas_value %in% forty_seven) %>% mutate(run = as.integer(run))
 rt_visuomotor_long_400_47 <- rt_visuomotor_long_400_47 %>% inner_join(labels, by = "atlas_value")
-
+# save
+setwd(file.path(paste0(out_dir, "/data")))
+saveRDS(rt_visuomotor_long, file = "explore_rt_decon_all_444_parcels.rds")
+saveRDS(rt_visuomotor_long_400_47, file = "explore_rt_decon_dan_400_47.rds")
 # rt_visuomotor_long <- rt_visuomotor_long %>% inner_join(dan_labels, by = "atlas_value") %>% filter(!is.na(Stream))
 
 setwd("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan")
 
 source("get_trial_data.R")
-source("medusa_final/plot_medusa.R")
+source("medusa_final/plot_medusa.R") # careful -- plot_medusa sets out_dir, need to reset
+out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/explore_medusa"
 source("~/code/fmri.pipeline/R/mixed_by.R")
 
 trial_df <- setDT(get_trial_data(dataset = "explore", repo_directory = "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/EXPLORE_Medusa/"))  
@@ -94,6 +98,10 @@ alignment <- "rt"
 
 # setDT(trial_df)
 
+# save objects and add subject_df
+setwd(file.path(paste0(out_dir, "/data")))
+sub_df <- readRDS("./explore_n146.rds") %>% select(-ipipds_total, -neoffi_total)
+
 message("Merging")
 if (alignment=="clock") {
   # subset to columns of interest
@@ -101,7 +109,7 @@ if (alignment=="clock") {
     dplyr::select(id, run, run_trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max_lag,
                   v_entropy_wi, v_entropy_wi_change_lag, kld3_lag, v_max_wi, abs_pe_lag, outcome_lag) %>%
     mutate(log_kld3_lag = log(kld3_lag + .00001))
-  
+  trial_df <- inner_join(trial_df, sub_df, by = "id")
   d <- merge(trial_df, clock_visuomotor_long, by = c("id", "run", "trial"))
   d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient", "side"), sep="_")  
 } else if (alignment == "clock_online") {
@@ -110,7 +118,7 @@ if (alignment=="clock") {
     dplyr::select(id, run, run_trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max_lag,
                   v_entropy_wi, v_entropy_wi_change_lag, kld3_lag, v_max_wi, abs_pe_lag, outcome_lag) %>%
     mutate(log_kld3_lag = log(kld3_lag + .00001))
-  
+  trial_df <- inner_join(trial_df, sub_df, by = "id")
   d <- merge(trial_df, clock_visuomotor_long_online, by = c("id", "run", "trial"))
   d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient", "side"), sep="_") 
 } else if (alignment == "rt") {
@@ -119,9 +127,9 @@ if (alignment=="clock") {
     dplyr::select(id, run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
                   v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
     mutate(log_kld3 = log(kld3 + .00001))
-  
+  trial_df <- inner_join(trial_df, sub_df, by = "id")
   d <- merge(trial_df, rt_visuomotor_long_400_47, by = c("id", "run", "trial"))
-  # d <- d %>% rename(side = "hemi")
+  d <- d %>% rename(side = "hemi")
   # d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient", "side"), sep="_")
 }
 
@@ -188,7 +196,57 @@ if (alignment == "clock" || alignment == "clock_online") {
   enc_rt_base <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
                            v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
                            (1 | id) )
-  # killed: rt_vmax
+  # explore interactions of abs_pe and v_entropy_wi_change with cognitive variables, psychopathology and group
+  enc_rt_base_age_edu_grp <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + v_entropy_wi + 
+                                            v_entropy_wi_change*education_yrs + 
+                                            v_entropy_wi_change*age + 
+                                            v_entropy_wi_change*Group + 
+                                       abs_pe*education_yrs + 
+                                       abs_pe*age + 
+                                       abs_pe*Group + 
+                                            outcome +
+                           (1 | id) )
+  enc_rt_base_age_edu_grp_mmse <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + v_entropy_wi + 
+                                       v_entropy_wi_change*education_yrs + 
+                                       v_entropy_wi_change*age + 
+                                       v_entropy_wi_change*Group + 
+                                         v_entropy_wi_change*mmse + 
+                                       abs_pe*education_yrs + 
+                                       abs_pe*age + 
+                                       abs_pe*Group +
+                                         abs_pe*mmse + 
+                                       outcome +
+                                       (1 | id) )
+  
+  enc_rt_base_age_edu_upps_anx <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + v_entropy_wi + 
+                                            v_entropy_wi_change*education_yrs + 
+                                            v_entropy_wi_change*age + 
+                                            v_entropy_wi_change*uppsp_negative_urgency + 
+                                              v_entropy_wi_change*uppsp_lack_of_premeditation + 
+                                            v_entropy_wi_change*anxiety_dx + 
+                                            abs_pe*education_yrs + 
+                                            abs_pe*age + 
+                                            abs_pe*uppsp_negative_urgency +
+                                            abs_pe*uppsp_lack_of_premeditation + 
+                                              abs_pe*anxiety_dx + 
+                                            outcome +
+                                            (1 | id) )
+  
+  enc_rt_mmse_grp_upps_anx_rslope <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + v_entropy_wi + 
+                                            v_entropy_wi_change*mmse + 
+                                            v_entropy_wi_change*uppsp_negative_urgency + 
+                                            v_entropy_wi_change*uppsp_lack_of_premeditation + 
+                                            v_entropy_wi_change*anxiety_dx + 
+                                            v_entropy_wi_change*Group + 
+                                            abs_pe*mmse + 
+                                            abs_pe*uppsp_negative_urgency +
+                                            abs_pe*uppsp_lack_of_premeditation + 
+                                            abs_pe*anxiety_dx + 
+                                            abs_pe*Group + 
+                                            outcome +
+                                            (v_entropy_wi_change + abs_pe | id) )
+  
+    
   
   # vmax_wi: targeted analysis to demonstrate MT+ (vmax-positive) versus DAN (vmax-negative)
   enc_rt_rslope <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
@@ -246,7 +304,7 @@ if (alignment == "clock" || alignment == "clock_online") {
   enc_rt_trial <- formula(~ rt_csv_sc*run_trial + rt_lag_sc + v_max_wi*run_trial +
                            v_entropy_wi*run_trial + v_entropy_wi_change*run_trial + abs_pe*run_trial + outcome +
                            (1 | id) )
-  flist <- named_list(enc_rt_rslope_logkld)
+  flist <- named_list(enc_rt_mmse_grp_upps_anx_rslope)
   # flist <- named_list(enc_rt_rslope, enc_rt_kld, enc_rt_pe)
   # flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
 }
@@ -256,7 +314,8 @@ splits <- c("parcel_group", "side", "evt_time")
 
 message("Running mixed_by")
 ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
-                split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial"),
+                split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial",
+                                                        names(sub_df)[8:25]),
                 tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
                 calculate = c("parameter_estimates_reml"), ncores = 9, refit_on_nonconvergence = 5, padjust_by = "term"#,
                 # emtrends_spec = list(
@@ -264,34 +323,34 @@ ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 #)
                 )
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_rslope_logkld_explore_400_47_encode_July19_2022.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_grp_mmse_imp_anx_rslope_explore_400_47_encode_July20_2022.rds")))
 
 # aggregate all results into one RDS
 setwd(out_dir)
-files <-  gsub("//", "/", list.files(pattern = ".*400.*47.*rds", full.names = T))
-message(paste0("Found ", length(files), " files."))
-csl <- lapply(files, function(x) {
-  print(x)
-  df <- readRDS(x) %>% Filter(Negate(is.null),.)
-  df <- df$coef_df_reml
-  # df$id <- as.integer(stringi::stri_extract_first(x, regex = "\\d+"))
-  # # if (class(df)=="list") {
-  # df$run <- stringi::stri_extract_last(x, regex = "\\d+")
-  # } else if (ncol(df)==3) {
-  # df <- df$fit_df
-  # }
-  return(df)
-})
-ddf_all <- data.table::rbindlist(csl)
-saveRDS(ddf_all, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_all_models_explore_400_47_encode_July19_2022.rds")))
-
-ddf_all <- ddf_all %>% dplyr::filter(evt_time <= 5) %>% 
+# files <-  gsub("//", "/", list.files(pattern = ".*400.*47.*rds", full.names = T))
+# message(paste0("Found ", length(files), " files."))
+# csl <- lapply(files, function(x) {
+#   print(x)
+#   df <- readRDS(x) %>% Filter(Negate(is.null),.)
+#   df <- df$coef_df_reml
+#   # df$id <- as.integer(stringi::stri_extract_first(x, regex = "\\d+"))
+#   # # if (class(df)=="list") {
+#   # df$run <- stringi::stri_extract_last(x, regex = "\\d+")
+#   # } else if (ncol(df)==3) {
+#   # df <- df$fit_df
+#   # }
+#   return(df)
+# })
+# ddf_all <- data.table::rbindlist(csl)
+# saveRDS(ddf_all, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_all_models_explore_400_47_encode_July19_2022.rds")))
+# 
+ddf <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>%
   filter(effect=="fixed") %>%
   group_by(term, model_name) %>%
   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
   ungroup() %>% setDT()
 
-plot_medusa(ddf_all, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="parcel_group", facet_by="side",
+plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="parcel_group", facet_by="side",
             out_dir=file.path(out_dir, "explore_400_47"),  p.value="padj_BY_term")
 
 
