@@ -5,12 +5,11 @@ library(naniar) # missingness
 
 data_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/explore_medusa/data/"
 setwd(data_dir)
-sub_df <- read_csv("explore_clock_indv_diff.csv")
+
+sub_df <- read_csv("explore_clock_indv_diff_8_3.csv")
 str(sub_df)
 
 
-gg_miss_var(sub_df %>% select(-registration_lethality, -total_attempts, -max_lethality, -ideation_group, -ipipds_total), show_pct = TRUE,
-            facet = registration_group)
 
 # compute groups:
 
@@ -36,22 +35,26 @@ sub_df <-  sub_df %>% mutate(
     T ~ as.character(Group)
   ),
   group_leth = factor(group_leth, levels = c("HL_Attempters", "Controls", "Depressed", "Ideators", "LL_Attempters")),
-  id = as.integer(registration_redcapid)
+  id = as.integer(registration_redcapid),
+  opioid = as.factor(ifelse(is.na(opioid), 0, opioid)),
+  sedhyp = as.factor(ifelse(is.na(sedhyp), 0, sedhyp)),
+  antipsychotic = as.factor(ifelse(is.na(antipsychotic), 0, antipsychotic))
 )
+gg_miss_var(sub_df %>% select(-registration_lethality, -total_attempts, -max_lethality, -ideation_group, -ipipds_total), show_pct = TRUE,
+            facet = registration_group)
 
 
 str(sub_df)
 
 library(compareGroups)
 
-t1 <- compareGroups(Group ~ ., data = sub_df[5:28])
+t1 <- compareGroups(Group ~ ., data = sub_df[5:58])
 createTable(t1)
 
-
-t2 <- compareGroups(Group_d ~ ., data = sub_df[c(5:29)] %>% filter(Group!="Controls"))
+t2 <- compareGroups(Group_d ~ ., data = sub_df[c(5:58)] %>% filter(Group!="Controls"))
 createTable(t2)
 
-t3 <- compareGroups(group_leth ~ ., data = sub_df[5:31] %>% filter(Group!="Controls"))
+t3 <- compareGroups(group_leth ~ ., data = sub_df[5:61] %>% filter(Group!="Controls"))
 createTable(t3)
 
 saveRDS(sub_df, file = "explore_n146.rds")
