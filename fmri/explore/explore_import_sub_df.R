@@ -59,4 +59,9 @@ createTable(t2)
 t3 <- compareGroups(group_leth ~ ., data = sub_df[5:61] %>% filter(Group!="Controls"))
 createTable(t3)
 
+# check correlations
+cmat <- sub_df %>% select_if(is.numeric) %>% psych::corr.test()
+pdf("explore_subject_characteristics_mega_corrplot.pdf", height = 20, width = 20)
+corrplot::corrplot(cmat$r, type = "upper", order = "hclust", hclust.method = "complete", p.mat = cmat$p, )
+dev.off()
 saveRDS(sub_df, file = "explore_n146.rds")
