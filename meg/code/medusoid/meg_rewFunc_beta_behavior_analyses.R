@@ -227,6 +227,16 @@ summary(meg_late_beta_only)
 Anova(meg_late_beta_only, '3')
 
 
+meg_late_beta_only_rs <-  
+  lme4::lmer(rt_csv_sc ~ 
+               rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
+               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp + 
+               (rt_lag_sc + rt_vmax_lag_sc|id/run), df %>% filter(rt_csv<4000))
+# screen.lmerTest(meg1, .01)
+summary(meg_late_beta_only_rs)
+Anova(meg_late_beta_only_rs, '3')
+
+
 meg_late_beta_rewFunc <-  
   lme4::lmer(rt_csv_sc ~ 
                rt_lag_sc * last_outcome * entropy_change_late_beta_supp * rewFunc + 
@@ -491,7 +501,7 @@ fmri_om_theta_lbeta_decomposed <-
                    rt_vmax_lag_sc * trial_neg_inv_sc * om_theta_wi * rewFunc  +
                    (1|id/run), fdf %>% filter(rt_csv<4000))
 # screen.lmerTest(fmri_om_theta_lbeta_decomposed, .01)
-anova(fmri_om_theta_lbeta_rewFunc, fmri_om_theta_lbeta_decomposed)
+# anova(fmri_om_theta_lbeta_rewFunc, fmri_om_theta_lbeta_decomposed)
 
 summary(fmri_om_theta_lbeta_decomposed)
 Anova(fmri_om_theta_lbeta_decomposed, '3')
@@ -537,6 +547,15 @@ fmri_late_beta_only <-
 # screen.lmerTest(meg1, .01)
 summary(fmri_late_beta_only)
 Anova(fmri_late_beta_only, '3')
+
+# fmri_late_beta_only_rs <-  
+#   lme4::lmer(rt_csv_sc ~ 
+#                rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
+#                rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp + 
+#                (rt_lag_sc + rt_vmax_lag_sc|id/run),fdf %>% filter(rt_csv<4000))
+# # screen.lmerTest(meg1, .01)
+# summary(fmri_late_beta_only_rs)
+# Anova(fmri_late_beta_only_rs, '3')
 
 # effect of EC late beta only in fMRI sample, by condition
 fmri_late_beta_rewFunc <-  
@@ -642,7 +661,7 @@ ec_late_beta <-
   labs(shape = "Entropy change\nlate beta\nsuppression") +
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) + 
-  scale_y_reverse(limits = c(.75, -.05)) 
+  scale_y_reverse(limits = c(.76, -.05)) 
 
 setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
 pdf("meg_ec_late_beta_to_behavior_rewFunc.pdf", height = 8, width = 8)
@@ -664,7 +683,7 @@ ec_late_beta_no_rewFunc <-
   labs(shape = "Entropy change\nlate beta\nsuppression") +
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) + 
-  scale_y_reverse(limits = c(.7, -.01)) 
+  scale_y_reverse(limits = c(.75, -.01)) 
 
 setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
 pdf("meg_ec_late_beta_to_behavior_all_conditions.pdf", height = 3, width = 5)
