@@ -474,9 +474,9 @@ dev.off()
 
 # entropy change late beta
 # df$roi_num17 <- factor(df$roi_num17)
-# m_ec_lbeta_parcel <- lmer(value ~ rewFunc * plot_label * entropy_change_late_beta_supp + (1|id), df)
-# summary(m_ec_lbeta_parcel)
-# Anova(m_ec_lbeta_parcel, '3')
+m_ec_lbeta_parcel <- lmer(value ~ learnable * plot_label * entropy_change_late_beta_supp + (1|id), df)
+summary(m_ec_lbeta_parcel)
+Anova(m_ec_lbeta_parcel, '3')
 
 
 # interaction with run?

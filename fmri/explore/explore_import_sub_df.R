@@ -10,7 +10,6 @@ sub_df <- read_csv("explore_clock_indv_diff_8_3.csv")
 str(sub_df)
 
 
-
 # compute groups:
 
 sub_df <-  sub_df %>% mutate(
@@ -40,8 +39,11 @@ sub_df <-  sub_df %>% mutate(
   sedhyp = as.factor(ifelse(is.na(sedhyp), 0, sedhyp)),
   antipsychotic = as.factor(ifelse(is.na(antipsychotic), 0, antipsychotic))
 )
+
+# check for missingness
 gg_miss_var(sub_df %>% select(-registration_lethality, -total_attempts, -max_lethality, -ideation_group, -ipipds_total), show_pct = TRUE,
             facet = registration_group)
+gg_miss_var(sub_df %>% select(-registration_lethality, -total_attempts, -max_lethality, -ideation_group, -ipipds_total), show_pct = TRUE)
 
 
 str(sub_df)
