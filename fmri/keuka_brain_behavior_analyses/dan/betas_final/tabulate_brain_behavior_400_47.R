@@ -2,6 +2,9 @@ library(dplyr)
 library(tidyr)
 library(data.table)
 library(ggcorrplot)
+library(readxl)
+library(stringr)
+library(stringi)
 # tabulate brain-behavior effects by DAN ROI
 beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas"
 setwd(beta_dir)
