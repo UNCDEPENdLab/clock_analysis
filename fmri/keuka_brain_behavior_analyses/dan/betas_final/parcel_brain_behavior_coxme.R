@@ -18,14 +18,14 @@ library(doParallel)
 library(readxl)
 source("~/code/Rhelpers/theme_black.R")
 
-from_cache = T # uses previously saved coxme output ddfs
+from_cache = F # uses previously saved coxme output ddfs
 plots = T 
 verbose = F # prints coxme model output for each parcel
 inspect = F # inspect model statistics for sanity checks
 beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas"
 source("~/code/fmri.pipeline/R/mixed_by.R")
 
-studies = c("meg")
+studies = c("fmri")
 # studies = c("meg", "fmri") # whether to include meg session replication
 
 # sensitivity analyses for fMRI sample, recommend running first 2, one at a time:
@@ -35,6 +35,8 @@ omit_value = F              # do not change, needed to check once; not necessary
 split_by_reward = F         # if "T", sensitivity analysis including interaction with last reward/omission; not necessary ex-post
 signals = c("entropychange")
 # signals = c("abspe", "echange")
+ranefs = "rslope" # "rint", testing random slopes for non-decomposed for now
+
 # loop over model versions as defined above
 
 if (omit_value) {rhs = "_no_value"} else {rhs = ""}
@@ -154,10 +156,14 @@ for (censor_ends in censor) {
                         } else {
                           if (omit_value) {
                             m  <- coxme(Surv(t1,t2,response) ~  uncertainty_wi * trial_neg_inv_sc * scale(h) + 
-                                          (1|ID), surv_df)} else {
+                                          (1|ID), surv_df)} else { if ("rslope" %in% ranefs){
+                                            m  <- coxme(Surv(t1,t2,response) ~ value_wi + uncertainty_wi + trial_neg_inv_sc + value_wi:scale(h) + uncertainty_wi:trial_neg_inv_sc + 
+                                                          uncertainty_wi : scale(h) + uncertainty_wi : trial_neg_inv_sc : scale(h) + 
+                                                          (1 + value_wi|ID), surv_df)
+                                          } else {
                                             # simplified model:
                                             m  <- coxme(Surv(t1,t2,response) ~ value_wi * scale(h) + uncertainty_wi * trial_neg_inv_sc * scale(h) + 
-                                                          (1|ID), surv_df)}
+                                                          (1|ID), surv_df)}}
                         }
                         stats <- as_tibble(insight::get_statistic(m))
                         # stats$p <- 2*(1-pnorm(stats$Statistic))
@@ -217,7 +223,7 @@ for (censor_ends in censor) {
         } else if (censor_ends) {
           out_dir <- file.path(beta_dir, "coxme/censored")}
         setwd(out_dir)
-        saveRDS(ddf, paste0("beta_coxme_", method, "_", study, rhs, "_trial.rds"))
+        saveRDS(ddf, paste0("beta_coxme_", method, "_", study, rhs, ranefs, "_trial.rds"))
         
       } else if (from_cache) {
         if (!censor_ends) {
@@ -233,7 +239,7 @@ for (censor_ends in censor) {
         uncertainty_term = "scale(h):uncertainty_wi"
         }
         setwd(out_dir)
-        ddf <- readRDS(file.path(paste0("beta_coxme_", method, "_", study, rhs, "_trial.rds")))
+        ddf <- readRDS(file.path(paste0("beta_coxme_", method, "_", study, rhs, ranefs, "_trial.rds")))
       }
       ############ Plot
       if (plots) {
