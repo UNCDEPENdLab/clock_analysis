@@ -10,6 +10,7 @@ library(RColorBrewer)
 library(emmeans)
 library(readxl)
 library(readr)
+library(data.table)
 source("~/code/Rhelpers/theme_black.R")
 # install_github("UNCDEPENdLab/dependlab")
 # library(dependlab)
@@ -24,6 +25,7 @@ fmri_dir <- '/Volumes/GoogleDrive/.shortcut-targets-by-id/1ukjK6kTlaR-LXIqX6nylY
 source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R")
 
 decompose = T # whether to decompose MEG betas into session and condition levels
+plots = F # whether to make a panel for Hallquist et al. Fig. 5
 
 # get design
 design <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_fmri", groupfixed = T) %>% select(id, run, rewFunc) %>% unique() %>%
@@ -60,7 +62,7 @@ if (decompose) {
     select(id, rewFunc, entropy_change_early_beta_supp, entropy_change_late_beta_supp, rt_shorten_late_beta_supp, 
            omission_early_theta) 
   avg <- wbetas %>% group_by(id) %>% summarise(omission_early_theta_avg = mean(omission_early_theta),
-                                                    entropy_change_late_beta_avg = mean(entropy_change_late_beta_supp)) %>%
+                                               entropy_change_late_beta_avg = mean(entropy_change_late_beta_supp)) %>%
     ungroup()
   
   wbetas <- wbetas %>%  merge(avg, by = "id") %>% mutate(
@@ -70,14 +72,14 @@ if (decompose) {
   # inspect
   
   qmeg <- wbetas %>% group_by(rewFunc) %>% summarize(omission_early_theta = quantile(omission_early_theta, c(.1, .9), names = F),
-                                                          q = c("10th %ile", "90th %ile"),
-                                                          qcolor = c("#1b3840","#4fa3b8"),
-                                                          theta_color = c("orange4", "orange"),
-                                                          entropy_change_late_beta_supp = quantile(entropy_change_late_beta_supp, c(.1, .9), names = F),
-                                                          entropy_change_late_beta_avg = quantile(entropy_change_late_beta_avg, c(.1, .9), names = F),
-                                                          omission_early_theta_avg = quantile(omission_early_theta_avg, c(.1, .9), names = F),
-                                                          ec_lbeta_wi = quantile(ec_lbeta_wi, c(.1, .9), names = F),
-                                                          om_theta_wi = quantile(om_theta_wi, c(.1, .9), names = F),
+                                                     q = c("10th %ile", "90th %ile"),
+                                                     qcolor = c("#1b3840","#4fa3b8"),
+                                                     theta_color = c("orange4", "orange"),
+                                                     entropy_change_late_beta_supp = quantile(entropy_change_late_beta_supp, c(.1, .9), names = F),
+                                                     entropy_change_late_beta_avg = quantile(entropy_change_late_beta_avg, c(.1, .9), names = F),
+                                                     omission_early_theta_avg = quantile(omission_early_theta_avg, c(.1, .9), names = F),
+                                                     ec_lbeta_wi = quantile(ec_lbeta_wi, c(.1, .9), names = F),
+                                                     om_theta_wi = quantile(om_theta_wi, c(.1, .9), names = F),
   ) %>% ungroup()
 } else {
   wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_ec_rewfunc_rt_next_reward_rewfunc_April_5_2022.RDS") %>% 
@@ -340,11 +342,11 @@ setwd(file.path(fmri_dir, 'L1m-echange'))
 ec_betas <- read_csv("Schaefer_444_final_2009c_2.3mm_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_entropy_change_feedback") %>% 
   dplyr::select(id, run_number, l1_model, mask_value, value) %>% # rename(roi_num7 = "mask_value")  %>% 
   mutate(id = as.character(id),
-  # roi_num7 = as.factor(roi_num7),
-  run_mc  = scale(run_number, center = T, scale = F),
-  beta_winsor = psych::winsor(value, trim = .05)) 
+         # roi_num7 = as.factor(roi_num7),
+         run_mc  = scale(run_number, center = T, scale = F),
+         beta_winsor = psych::winsor(value, trim = .05)) 
 df <- ec_betas %>% inner_join(design, by = c("id", "run_number")) %>% inner_join(wbetas, by = c("id", "rewFunc")) %>% inner_join(labels_df, by = "mask_value") 
-  
+
 # ec_betas <- read_csv("Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l1.csv.gz") %>% filter(l1_cope_name=="EV_entropy_change_feedback") %>% 
 #   dplyr::select(id, run_number, l1_model, mask_value, value) %>% mutate(id = as.character(id),
 #                                                                         mask_value = as.factor(mask_value),
@@ -431,13 +433,15 @@ ec_lbeta_unlearn <- ggplot(em_ec_lbeta_unlearn,
   theme(axis.title.x=element_blank(), panel.grid.major.x=element_blank(),
         axis.text=element_text(size=8.5, color="grey10")) # +
 
-setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
-pdf("lbeta_learnable_unlearnable_444_47.pdf", height = 6, width = 9, onefile = F)
-ggarrange(NULL, ec_lbeta_learn, NULL, ec_lbeta_unlearn, 
-          ncol = 1, nrow = 4, heights = c(.1, 1, .1, 1), 
-          common.legend = T, legend = "right", align = "h", 
-          labels = c("", "Learnable conditions"," ", "Unlearnable conditions"), hjust = -1.6, vjust = -.2)
-dev.off()
+if (plots){
+  setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
+  pdf("lbeta_learnable_unlearnable_444_47.pdf", height = 6, width = 9, onefile = F)
+  ggarrange(NULL, ec_lbeta_learn, NULL, ec_lbeta_unlearn, 
+            ncol = 1, nrow = 4, heights = c(.1, 1, .1, 1), 
+            common.legend = T, legend = "right", align = "h", 
+            labels = c("", "Learnable conditions"," ", "Unlearnable conditions"), hjust = -1.6, vjust = -.2)
+  dev.off()
+}
 # ggplot(em_ec_lbeta, aes(x = vm_gradient17, y=emmean, ymin=asymp.LCL, ymax=asymp.UCL, color = rewFunc, lty=as.factor(q))) +
 #   geom_point(position = position_dodge(width = .6), size=2.5) +
 #   geom_errorbar(position = position_dodge(width=0.6), width=0.4, size=0.9) + facet_wrap(~(rewFunc=="DEV" | rewFunc=="IEV")) +

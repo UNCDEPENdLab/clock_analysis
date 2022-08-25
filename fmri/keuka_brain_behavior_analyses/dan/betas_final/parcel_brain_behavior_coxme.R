@@ -25,7 +25,7 @@ inspect = F # inspect model statistics for sanity checks
 beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas"
 source("~/code/fmri.pipeline/R/mixed_by.R")
 
-studies = c("fmri")
+studies = c("meg")
 # studies = c("meg", "fmri") # whether to include meg session replication
 
 # sensitivity analyses for fMRI sample, recommend running first 2, one at a time:
@@ -121,7 +121,7 @@ for (censor_ends in censor) {
         # make cluster ----
         f <- Sys.getenv('PBS_NODEFILE')
         library(parallel)
-        ncores <- detectCores()
+        ncores <- detectCores() - 1
         nodelist <- if (nzchar(f)) readLines(f) else rep('localhost', ncores)
         
         cat("Node list allocated to this job\n")
@@ -137,7 +137,7 @@ for (censor_ends in censor) {
         df <- foreach(i = 1:length(labels), .packages=c("lme4", "tidyverse", "broom", "coxme", "car"),
                       .combine='rbind') %dopar% {
                         label <- labels[[i]]
-                        print(paste(i," ", "Processing parcel", label))
+                        # print(paste(i," ", "Processing parcel", label))
                         # for (side in c("l", "r")) {
                         # for (t in -1:10) {
                         surv_df$h <- surv_df[[label]]
@@ -176,6 +176,7 @@ for (censor_ends in censor) {
                         # stats$region <- str_remove(label, suffix)
                         # newlist[[label]]<-stats
                         if (verbose) {print(str(stats))}
+                        print(paste(i," ", "Processed parcel", label))
                         stats}
         df <- as_tibble(df)               
         stopCluster(cl)
@@ -217,7 +218,12 @@ for (censor_ends in censor) {
         # setwd(out_dir)
         
         if (decompose_within_between_trial) {method = "decomposed"
-        } else {method = "non_decomposed"}
+        value_term = "value_wi_t:scale(h)"
+        uncertainty_term = "scale(h):uncertainty_wi_t"
+        } else {method = "non_decomposed"
+        value_term = "value_wi:scale(h)"
+        uncertainty_term = "scale(h):uncertainty_wi"
+        }
         if (!censor_ends) {
           out_dir <- file.path(beta_dir, "coxme")
         } else if (censor_ends) {
@@ -245,19 +251,19 @@ for (censor_ends in censor) {
       if (plots) {
         for (beta in signals) {
           
-          pdf(paste0("value_axial_", beta, "_", method, "_", study, ".pdf"), height = 12, width = 16)
+          pdf(paste0("value_axial_", beta, "_", method, "_", study, "_", ranefs, ".pdf"), height = 12, width = 16)
           print(ggplot(ddf %>% filter(fmri_beta == beta & term == value_term),  aes(y, x, shape = network17_400_DAN)) + 
                   geom_point(size = 24, color = "white", aes(alpha = p_level_fdr, fill = Statistic)) + scale_shape_manual(values = 21:22) + geom_point(size = 24, aes(color = network17_400_DAN)) +
                   scale_fill_viridis(option = "inferno") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 8))
           dev.off()
           
-          pdf(paste0("uncertainty_axial_", beta, "_", method, "_", study, ".pdf"), height = 12, width = 16)
+          pdf(paste0("uncertainty_axial_", beta, "_", method, "_", study, "_", ranefs, ".pdf"), height = 12, width = 16)
           print(ggplot(ddf %>% filter(fmri_beta == beta & term == uncertainty_term),  aes(y, x, shape = network17_400_DAN)) + 
                   geom_point(size = 24, color = "white", aes(alpha = p_level_fdr, fill = Statistic)) + scale_shape_manual(values = 21:22) + geom_point(size = 24, aes(color = network17_400_DAN)) +
                   scale_fill_viridis(option = "turbo") + theme_black() + geom_text_repel(aes(label=plot_label), color = "white", force = 5, point.padding = 40, size = 8))
           dev.off()
           
-          pdf(paste0("value_saggital_",beta, "_",  method, "_", study, ".pdf"), height = 12, width = 16)
+          pdf(paste0("value_saggital_",beta, "_",  method, "_", study, "_", ranefs, ".pdf"), height = 12, width = 16)
           print(ggplot(ddf %>% filter(fmri_beta == beta & term == value_term ),  aes(y, z, shape = network17_400_DAN)) + 
                   geom_point(size = 32, color = "white", aes(alpha = p_level_fdr, 
                                                              fill = Statistic)) + 
@@ -265,7 +271,7 @@ for (censor_ends in censor) {
                   scale_fill_viridis(option = "inferno") + theme_black() + geom_text_repel(aes(label=plot_label),  color="blue"))
           dev.off()
           
-          pdf(paste0("uncertainty_saggital_",beta, "_",  method, "_", study, ".pdf"), height = 12, width = 16)
+          pdf(paste0("uncertainty_saggital_",beta, "_",  method, "_", study, "_", ranefs, ".pdf"), height = 12, width = 16)
           print(ggplot(ddf %>% filter(fmri_beta == beta & term == uncertainty_term),  aes(y, z, shape = network17_400_DAN)) + 
                   geom_point(size = 32, color = "white", aes(alpha = p_level_fdr, 
                                                              fill = Statistic)) + 
@@ -273,7 +279,7 @@ for (censor_ends in censor) {
                   scale_fill_viridis(option = "turbo") + theme_black() + geom_text_repel(aes(label=plot_label),  color="blue") )
           dev.off()
           
-          pdf(paste0("value_vioin_", beta, "_", method, "_", study, ".pdf"), height = 8, width = 5)
+          pdf(paste0("value_vioin_", beta, "_", method, "_", study, "_", ranefs, ".pdf"), height = 8, width = 5)
           print(ggplot(ddf %>% filter(fmri_beta == beta & term == value_term )) + 
                   geom_jitter(size = 12, width = .1, height = 0,  aes(network17_400_DAN, Statistic, color = Statistic, alpha = p_level_fdr)) + 
                   geom_violin(aes(network17_400_DAN, Statistic), alpha = .2) + scale_shape_manual(values = 21:22) +
@@ -281,7 +287,7 @@ for (censor_ends in censor) {
                   geom_text_repel(aes(network17_400_DAN, Statistic, alpha = p_level_fdr, label=plot_label),  color="blue"))
           dev.off()
           
-          pdf(paste0("value_violin_by_vm_gradient_", beta, "_", method, "_", study, ".pdf"), height = 8, width = 10)
+          pdf(paste0("value_violin_by_vm_gradient_", beta, "_", method, "_", study, "_", ranefs, ".pdf"), height = 8, width = 10)
           print(ggplot(ddf %>% filter(fmri_beta == beta & term == value_term )) + 
                   geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, Statistic, color = Statistic, alpha = p_level_fdr)) + 
                   geom_violin(aes(vm_gradient17, Statistic), alpha = .2) + scale_shape_manual(values = 21:22) +
@@ -290,7 +296,7 @@ for (censor_ends in censor) {
           dev.off()
           
           
-          pdf(paste0("uncertainty_violin_", beta, "_", method, "_", study, ".pdf"), height = 8, width = 5)
+          pdf(paste0("uncertainty_violin_", beta, "_", method, "_", study, "_", ranefs, ".pdf"), height = 8, width = 5)
           print(ggplot(ddf %>% filter(fmri_beta == beta & term == uncertainty_term)) + 
                   geom_jitter(size = 12, width = .1, height = 0,  aes(network17_400_DAN, Statistic, color = Statistic, alpha = p_level_fdr)) + 
                   geom_violin(aes(network17_400_DAN, Statistic), alpha = .2) + scale_shape_manual(values = 21:22) +
@@ -298,7 +304,7 @@ for (censor_ends in censor) {
                   geom_text_repel(aes(network17_400_DAN, Statistic, alpha = p_level_fdr, label=plot_label),  color="blue"))
           dev.off()
           
-          pdf(paste0("uncertainty_violin_by_vm_gradient_", beta, "_", method, "_", study, ".pdf"), height = 8, width = 10)
+          pdf(paste0("uncertainty_violin_by_vm_gradient_", beta, "_", method, "_", study, "_", ranefs, ".pdf"), height = 8, width = 10)
           print(ggplot(ddf %>% filter(fmri_beta == beta & term == uncertainty_term)) + 
                   geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, Statistic, color = Statistic, alpha = p_level_fdr)) + 
                   geom_violin(aes(vm_gradient17, Statistic), alpha = .2) + scale_shape_manual(values = 21:22) +
@@ -306,7 +312,7 @@ for (censor_ends in censor) {
                   geom_text_repel(aes(vm_gradient17, Statistic, alpha = p_level_fdr, label=plot_label),  color="blue"))
           dev.off()
           
-          pdf(paste0("uncertaintyBYtrial_violin_", beta, "_", method, "_", study, ".pdf"), height = 8, width = 5)
+          pdf(paste0("uncertaintyBYtrial_violin_", beta, "_", method, "_", study, "_", ranefs, ".pdf"), height = 8, width = 5)
           print(ggplot(ddf %>% filter(fmri_beta == beta & term == "scale(h):uncertainty_wi_t:trial_neg_inv_sc")) + 
                   geom_jitter(size = 12, width = .1, height = 0,  aes(network17_400_DAN, Statistic, color = Statistic, alpha = p_level_fdr)) + 
                   geom_violin(aes(network17_400_DAN, Statistic), alpha = .2) + scale_shape_manual(values = 21:22) +
@@ -314,7 +320,7 @@ for (censor_ends in censor) {
                   geom_text_repel(aes(network17_400_DAN, Statistic, alpha = p_level_fdr, label=plot_label),  color="blue"))
           dev.off()
           
-          pdf(paste0("uncertaintyBYtrial_violin_by_vm_gradient_", beta, "_", method, "_", study, ".pdf"), height = 8, width = 10)
+          pdf(paste0("uncertaintyBYtrial_violin_by_vm_gradient_", beta, "_", method, "_", study, "_", ranefs, ".pdf"), height = 8, width = 10)
           print(ggplot(ddf %>% filter(fmri_beta == beta & term == "scale(h):uncertainty_wi_t:trial_neg_inv_sc")) + 
                   geom_jitter(size = 12, width = .1, height = 0,  aes(vm_gradient17, Statistic, color = Statistic, alpha = p_level_fdr)) + 
                   geom_violin(aes(vm_gradient17, Statistic), alpha = .2) + scale_shape_manual(values = 21:22) +

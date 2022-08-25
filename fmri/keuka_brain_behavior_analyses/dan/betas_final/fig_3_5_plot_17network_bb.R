@@ -20,7 +20,7 @@ source("~/code/Rhelpers/theme_black.R")
 # library(dependlab)
 # library(stringi)
 
-signals = c("abspe", "entropychange") # what L1 betas are used
+signals = c("entropychange") # what L1 betas are used
 all_plots = F # whether to make anatomical plots in addition to the main ones; not functional yet
 # for (session in c("fmri", "meg")) {
 # clock_folder <- "~/Data_Analysis/clock_analysis" #michael
@@ -34,6 +34,8 @@ fmri_dir <- file.path(paste0(clock_folder, "/fmri/keuka_brain_behavior_analyses/
 
 # DAN palette:
 colors <- RColorBrewer::brewer.pal(4, "Dark2") %>% setNames(c("MT+", "Premotor", "Rostral PPC", "Caudal PPC"))
+
+coxme_ranef <- "rslope" # or NULL, whether to include random slopes in coxme value sensitivity models
 
 # Manual labels from June-July 2022
 
@@ -57,18 +59,19 @@ proc_df <- function(df, terms, cope) {
                                                p_level_fdr = as.factor(case_when(
                                                  # p_fdr > .1 ~ '0',
                                                  # p_fdr < .1 & p_fdr > .05 ~ '1',
-                                                 padj_BY_term > .05 ~ '1',
-                                                 padj_BY_term < .05 & padj_BY_term > .01 ~ '2',
-                                                 padj_BY_term < .01 & padj_BY_term > .001 ~ '3',
-                                                 padj_BY_term <.001 & padj_BY_term > .0001 ~ '4',
-                                                 padj_BY_term <.0001 & padj_BY_term > .00001 ~ '5',
-                                                 padj_BY_term <.00001 ~ '6'
+                                                 padj_BY_term > .05 & p.value > .05 ~ '1',
+                                                 padj_BY_term > .05 & p.value < .05 ~ '2',
+                                                 padj_BY_term < .05 & padj_BY_term > .01 ~ '3',
+                                                 padj_BY_term < .01 & padj_BY_term > .001 ~ '4',
+                                                 padj_BY_term <.001 & padj_BY_term > .0001 ~ '5',
+                                                 padj_BY_term <.0001 & padj_BY_term > .00001 ~ '6',
+                                                 padj_BY_term <.00001 ~ '7'
                                                )),
                                                reward = case_when(
                                                  term == "rt_lag:fmri_beta" ~ "Omission",
                                                  term == "rt_lag:fmri_beta:last_outcomeReward" ~ "Reward"
                                                )) %>% inner_join(labels_df, by = "roi_num7") 
-  df$p_level_fdr <- factor(df$p_level_fdr, levels = c('1', '2', '3', '4', '5', '6'), labels = c("NS","p < .05", "p < .01", "p < .001", "p < .0001", "p < .00001")) 
+  df$p_level_fdr <- factor(df$p_level_fdr, levels = c('1', '2', '3', '4', '5', '6', '7'), labels = c("NS","p_uncorr. < .05","p < .05", "p < .01", "p < .001", "p < .0001", "p < .00001")) 
   return(df)}
 
 
@@ -224,7 +227,7 @@ if ("entropychange" %in% signals) {
     # facet_wrap(~reward) + guides(alpha = guide_legend(override.aes = list(color = "white"), title = expression(p[FDR])))
   }
   echange_inset_fmri <- get_echange_inset(edf, "fMRI", "GLM") 
-  # echange_inset_meg <- get_echange_inset(edf, "MEG replication", "GLM") 
+  echange_inset_meg <- get_echange_inset(edf, "MEG replication", "GLM")
   
   # get coxme results
   # set options as in parcel_brain_behavior_coxme.R
@@ -247,22 +250,43 @@ if ("entropychange" %in% signals) {
   }
   setwd(out_dir)
   
-  meg_cox_df <- readRDS(file.path(paste0("beta_coxme_", method, "_meg", rhs, "_trial.rds"))) %>% mutate(session = "MEG replication")
-  fmri_cox_df <- readRDS(file.path(paste0("beta_coxme_", method, "_fmri", rhs, "_trial.rds"))) %>% mutate(session = "fMRI")
-  cox_df <- rbind(meg_cox_df, fmri_cox_df) %>% filter(fmri_beta %in% signals) %>% inner_join(labels_df %>% select(mask_value, vm_gradient17_names))
+  meg_cox_df <- readRDS(file.path(paste0("beta_coxme_", method, "_meg", rhs, coxme_ranef, "_trial.rds"))) %>% mutate(session = "MEG replication")
+  fmri_cox_df <- readRDS(file.path(paste0("beta_coxme_", method, "_fmri", rhs, coxme_ranef, "_trial.rds"))) %>% mutate(session = "fMRI")
+  cox_df <- rbind(meg_cox_df, fmri_cox_df) %>% filter(fmri_beta %in% signals) %>% inner_join(labels_df %>% select(mask_value, vm_gradient17_names)) %>% group_by(session, term) %>%
+    mutate(padj_BY_term = p.adjust(p, method = 'BH'),
+           p_level_fdr = as.factor(case_when(
+             # p_fdr > .1 ~ '0',
+             # p_fdr < .1 & p_fdr > .05 ~ '1',
+             padj_BY_term > .05 & p > .05 ~ '1',
+             padj_BY_term > .05 & p < .05 ~ '2',
+             padj_BY_term < .05 & padj_BY_term > .01 ~ '3',
+             padj_BY_term < .01 & padj_BY_term > .001 ~ '4',
+             padj_BY_term <.001 & padj_BY_term > .0001 ~ '5',
+             padj_BY_term <.0001 & padj_BY_term > .00001 ~ '6',
+             padj_BY_term <.00001 ~ '7'
+           )),
+           reward = case_when(
+             term == "rt_lag:fmri_beta" ~ "Omission",
+             term == "rt_lag:fmri_beta:last_outcomeReward" ~ "Reward"
+           )) %>% ungroup() 
+  cox_df$p_level_fdr <- factor(cox_df$p_level_fdr, levels = c('1', '2', '3', '4', '5', '6', '7'), labels = c("NS","p_uncorr. < .05","p < .05", "p < .01", "p < .001", "p < .0001", "p < .00001")) 
   
+  if (coxme_ranef == "rslope") {yint = 4 
+  cor_y_int = 3} else {yint = 18 
+  cor_y_int = 13.5}  
   # sanity check: do the behavioral effects correlate across sessions anatomicall?
   
   ecStats <- cox_df %>% filter(term == value_term & fmri_beta %in% "entropychange") %>% select(plot_label, Statistic, study, vm_gradient17_names) %>% 
     pivot_wider(names_from = study, values_from = Statistic) 
   cor.test(ecStats$fmri, ecStats$meg, method = c("pearson"))
   cor_inset <- ggplot(ecStats, aes(fmri, meg)) + geom_point(size  = .8) + theme_light() + geom_smooth(method = "glm", alpha = .2, color = "grey") + 
-    stat_cor(aes(label = ..r.label..), method = "pearson", cor.coef.name = "r", label.x = 0, label.y = 13.5, size = 2.8)
+    stat_cor(aes(label = ..r.label..), method = "pearson", cor.coef.name = "r", label.x = 0, label.y = cor_y_int, size = 2.8)
   # ggplot(ecStats, aes(plot_label, Statistic, color = session, groups = session)) + geom_point() + geom_line()
   
   setwd(file.path(fmri_dir, "plots"))
   
-  pdf(paste0("echange_rt_vmax_by_vm_gradient17_", "_cox_rslo_dark.pdf"), height = 5, width = 10)
+  
+  pdf(paste0("echange_rt_vmax_by_vm_gradient17_", "_cox", coxme_ranef, "_dark.pdf"), height = 5, width = 10)
   print(ggplot(cox_df %>% filter(term == value_term) ) + 
           # geom_jitter(size = 6, width = .1, height = 0,  aes(vm_gradient17, Statistic, color = Statistic, alpha = p_level_fdr), show.legend = T) + 
           geom_jitter(size = 6, width = .1, height = 0,  aes(vm_gradient17_names, Statistic, color = vm_gradient17_names, alpha = p_level_fdr), show.legend = T) + 
@@ -272,14 +296,14 @@ if ("entropychange" %in% signals) {
           scale_color_manual(values = colors ) +
           theme_minimal() + xlab(NULL) + ylab("Behavioral effect of neural response on value sensitivity, z statistic") + #labs(color = "Statistic") +
           geom_text_repel(aes(vm_gradient17_names, Statistic, alpha = p_level_fdr, label=plot_label, color = vm_gradient17_names), point.padding = 10, force = 10,  size = 2.4, show.legend = F) + 
-          geom_text(aes(vm_gradient17_names, 18, label=vm_gradient17_names, color = vm_gradient17_names),  size = 3.5) + 
+          geom_text(aes(vm_gradient17_names, yint, label=vm_gradient17_names, color = vm_gradient17_names),  size = 3.5) + 
           facet_grid(~session, labeller = as_labeller(c("fMRI" = "fMRI","MEG replication" =  "MEG, out-of-session replication"))) + geom_hline(yintercept = 0, size = .2) + 
           theme(legend.key.size = unit(.4, "cm"), strip.text.x = element_text(size = 12), axis.text.x = element_blank()) +
           guides(alpha = guide_legend(title = expression(p[FDR], shape = guide_legend(override.aes = list(size = .1)))), color = "none") + 
-          inset_element(echange_inset_fmri, .2, -.03, .45 , 0.28,  # left, bottom, right, top
-                        align_to = "panel", on_top = T) + 
-          # inset_element(echange_inset_meg, 0.82, 0.02, 1 ,0.3,  # left, bottom, right, top
-          #               align_to = "panel", on_top = T) + 
+          inset_element(echange_inset_fmri, .2, -.1, .45 , 0.25,  # left, bottom, right, top
+                        align_to = "panel", on_top = T) + {if(coxme_ranef == "rslope")
+                          inset_element(echange_inset_meg, 0.5, -0.1, 0.8 ,0.25,  # left, bottom, right, top
+                                        align_to = "panel", on_top = T)} + 
           inset_element(cor_inset, 0.87 , -0.05, 1.05, 0.28)
   )
   dev.off()
