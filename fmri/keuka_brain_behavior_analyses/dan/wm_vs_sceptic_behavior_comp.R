@@ -117,3 +117,8 @@ setwd(tab_dir)
 saveXML(tab, file = "dan_table_s1_wm.html", format = "html")
 export2html(tab, file = "dan_table_s1_wm.html")
 # save_html(paste(as.character(tab), collapse = "\n"), file = "dan_table_s1_wm.html", background = "white", lang = "en")
+
+
+# same with Coxme
+
+

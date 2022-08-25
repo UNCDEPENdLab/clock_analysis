@@ -117,7 +117,7 @@ ggplot(df %>% filter (!is.na(reward_lag)), aes(omission_early_theta, rt_swing, l
 ggplot(ldf %>% filter (!is.na(reward_lag)), aes(omission_early_theta, ev, lty = reward_lag)) + geom_smooth(method = "gam") + facet_grid(rt_lag<2~rewFunc)
 
 
-ggplot(fdf %>% filter (!is.na(reward_lag)), aes(omission_early_theta, rt_swing, lty = reward_lag)) + geom_smooth(method = "gam") + facet_grid(rt_lag<2~rewFunc)
+# ggplot(fdf %>% filter (!is.na(reward_lag)), aes(omission_early_theta, rt_swing, lty = reward_lag)) + geom_smooth(method = "gam") + facet_grid(rt_lag<2~rewFunc)
 
 
 # ev_meg3 <-  
@@ -717,4 +717,32 @@ pdf(file = "MEG_to_behavior_rs.pdf", height = 4, width = 12)
 print(ggarrange(p1, rp1))
 dev.off()
 
+# coxme models
+# MEG
+surv_mdf <- inner_join(mbb %>% mutate(id = as.character(id)), wbetas, by = "id")
+mb_cox  <- coxme(Surv(t1,t2,response) ~ value_wi + value_wi:entropy_change_late_beta_supp + uncertainty_wi  + 
+               (1|ID), surv_mdf)
+summary(mb_cox)
+mb_cox1  <- coxme(Surv(t1,t2,response) ~ value_wi + value_wi:entropy_change_late_beta_supp + uncertainty_wi  + uncertainty_wi:entropy_change_late_beta_supp +
+                   (1|ID), surv_mdf)
+summary(mb_cox1)
+# uncertainty random slope:
+mb_cox1_rsu  <- coxme(Surv(t1,t2,response) ~ value_wi + value_wi:entropy_change_late_beta_supp + uncertainty_wi  + uncertainty_wi:entropy_change_late_beta_supp +
+                    (1 + uncertainty_wi|ID), surv_mdf)
+summary(mb_cox1_rsu)
 
+# value random slope:
+mb_cox1_rsv  <- coxme(Surv(t1,t2,response) ~ value_wi + value_wi:entropy_change_late_beta_supp + uncertainty_wi  + uncertainty_wi:entropy_change_late_beta_supp +
+                        (1 + value_wi|ID), surv_mdf)
+summary(mb_cox1_rsv)
+
+
+
+# fMRI
+surv_fdf <- inner_join(bb %>% mutate(id = as.character(ID)), wbetas, by = "id")
+fb_cox  <- coxme(Surv(t1,t2,response) ~ value_wi + value_wi:entropy_change_late_beta_supp + uncertainty_wi  + 
+                   (1|ID), surv_fdf)
+summary(fb_cox)
+fb_cox1  <- coxme(Surv(t1,t2,response) ~ value_wi + value_wi:entropy_change_late_beta_supp + uncertainty_wi  + uncertainty_wi:entropy_change_late_beta_supp +
+                    (1|ID), surv_fdf)
+summary(fb_cox1)
