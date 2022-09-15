@@ -14,6 +14,7 @@ library(sjstats)
 library(sjPlot)
 library(emmeans)
 library(cowplot)
+library(broom.mixed)
 # install_github("UNCDEPENdLab/dependlab")
 # library(dependlab)
 source('~/code/Rhelpers/screen.lmerTest.R')
@@ -25,6 +26,15 @@ clock_folder <- "~/code/clock_analysis" #alex
 # source('~/code/Rhelpers/')
 setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/dan'))
 plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/meg_to_behavior/"
+
+perform_checks <- F 
+
+# function to view effects for terms of interest
+condense_model <- function (model_object, term_pattern, threshold = 2) {
+  t <- tidy(model_object) %>% filter(str_detect(term, term_pattern)) %>% select(term, statistic)
+  if (threshold) t <- t %>% filter(abs(statistic) > threshold)
+  print(t, n = 100)
+}
 
 ### load data
 source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R")
@@ -58,7 +68,7 @@ qmeg <- cond_wbetas %>% group_by(rewFunc) %>% summarize(omission_early_theta = q
                                                         omission_early_theta_avg = quantile(omission_early_theta_avg, c(.1, .9), names = F),
                                                         ec_lbeta_wi = quantile(ec_lbeta_wi, c(.1, .9), names = F),
                                                         om_theta_wi = quantile(om_theta_wi, c(.1, .9), names = F),
-                                                        ) %>% ungroup()
+) %>% ungroup()
 
 # inspect
 setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_fmri/")
@@ -67,7 +77,7 @@ cormat <- corr.test(betas_to_inspect)
 corrplot(cormat$r, p.mat = cormat$p, order = "hclust", tl.cex = .8, insig = 'blank', method = 'number')
 
 # compare with session-level betas
-wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_entropy_change_ec_sensors_v_max_reward_abspe_ec_sensors_abs_pe_Dec15_2021.RDS") %>% 
+wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_v_max_reward_abs_pe_Mar_14_2022.RDS") %>% 
   mutate(omission_early_theta_session = - reward_early_theta) %>% 
   mutate(entropy_change_early_beta_supp = -  entropy_change_early_beta_entropy_change,
          entropy_change_late_beta_supp = - entropy_change_late_beta_entropy_change
@@ -76,166 +86,171 @@ wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_entro
            entropy_change_early_beta_supp, entropy_change_late_beta_supp
   ))
 
-# merge
+# merge at condition level
 df <- df %>% inner_join(cond_wbetas, by = c("id", "rewFunc"))
 
+# merge at session level
 
-pdf("omission_early_theta_by_cond.pdf", height = 3, width = 5)
-ggplot(cond_wbetas, (aes(rewFunc, omission_early_theta, color = rewFunc))) + 
-  geom_violin(draw_quantiles = .5) + geom_jitter(alpha = .3)
-dev.off()
-summary(lm(omission_early_theta ~ rewFunc, cond_wbetas))
-
-ggplot(cond_wbetas, aes(rewFunc, rt_shorten_late_beta_supp, color = rewFunc)) + 
-  geom_violin(draw_quantiles = .5) + geom_jitter(alpha = .3)
-summary(lm(rt_shorten_late_beta_supp ~ rewFunc, cond_wbetas))
-# intercept NS, IEV<CEV,CEVR,DEV NS
-
-pdf("ec_late_beta_by_cond.pdf", height = 3, width = 5)
-ggplot(cond_wbetas, aes(rewFunc, entropy_change_late_beta_supp, color = rewFunc)) + 
-  geom_violin(draw_quantiles = .5) + geom_boxplot() + geom_jitter(alpha = .3)
-dev.off()
-Anova(lmer(entropy_change_late_beta_supp ~ rewFunc + (1|id), cond_wbetas))
-
-
-# only learnable
-ldf <- df %>% filter(rewFunc=="IEV" | rewFunc=="DEV")
-ev_meg2_rewFunc <-  
-  lmerTest::lmer(ev ~ trial_neg_inv_sc * entropy_change_late_beta_supp * rewFunc + 
-                   trial_neg_inv_sc * omission_early_theta * rewFunc +
-                   (1|id), ldf %>% filter(rt_csv<4000))
-screen.lmerTest(ev_meg2_rewFunc, .01)
-summary(ev_meg2_rewFunc)
-Anova(ev_meg2_rewFunc, '3')
-
-ev_meg3_rewFunc <-  
-  lmerTest::lmer(ev ~ 
-                   (trial_neg_inv_sc + entropy_change_late_beta_supp + 
-                      omission_early_theta + rewFunc)^3 +
-                   (1|id), ldf %>% filter(rt_csv<4000))
-screen.lmerTest(ev_meg3_rewFunc, .01)
-summary(ev_meg3_rewFunc)
-Anova(ev_meg3_rewFunc, '3')
-anova(ev_meg2_rewFunc, ev_meg3_rewFunc)
-ec1 <- ggplot(ldf, aes(trial_neg_inv_sc, ev, color = entropy_change_late_beta_supp > 0.19136, lty = reward_lag)) + geom_smooth(method = "gam") +
-  facet_wrap(~rewFunc) + scale_color_manual("Entropy change late beta suppression", values = c("1b3840", "4fa3b8"), labels = c("low", "high"))  
-o1 <- ggplot(ldf, aes(trial_neg_inv_sc, ev, color = omission_early_theta > 0.46125, lty = reward_lag)) + geom_smooth(method = "gam") +
-  facet_wrap(~rewFunc) + scale_color_manual("Omission early theta", values = c("orange4", "orange"), labels = c("low", "high"))  
-ec2 <- ggplot(df, aes(trial_neg_inv_sc, rt_csv, color = entropy_change_late_beta_supp > 0.19136, lty = reward_lag)) + geom_smooth(method = "gam") +
-  facet_wrap(~rewFunc) + scale_color_manual("Entropy change late beta suppression", values = c("1b3840", "4fa3b8"), labels = c("low", "high"))  
-o2 <- ggplot(df, aes(trial_neg_inv_sc, rt_csv, color = omission_early_theta > 0.46125, lty = reward_lag)) + geom_smooth(method = "gam") +
-  facet_wrap(~rewFunc) + scale_color_manual("Omission early theta", values = c("orange4", "orange"), labels = c("low", "high"))  
-ec3 <- ggplot(df, aes(trial_neg_inv_sc, rt_swing, color = entropy_change_late_beta_supp > 0.19136, lty = reward_lag)) + geom_smooth(method = "gam") +
-  facet_wrap(~rewFunc) + scale_color_manual("Entropy change late beta suppression", values = c("1b3840", "4fa3b8"), labels = c("low", "high"))  
-o3 <- ggplot(df, aes(trial_neg_inv_sc, rt_swing, color = omission_early_theta > 0.46125, lty = reward_lag)) + geom_smooth(method = "gam") +
-  facet_wrap(~rewFunc) + scale_color_manual("Omission early theta", values = c("orange4", "orange"), labels = c("low", "high"))  
-# setwd(plot_dir)
-# pdf("performance_by_meg_beta_rewfunc.pdf", height = 8, width = 18)
-# ggarrange(o1, o2, o3, ec1, ec2, ec3, nrow = 2, ncol = 3)
-# dev.off()
-
-# look at convergence on RT_Vmax
-df <- df %>% mutate(rt_vmax_delta  = abs(rt_csv_sc - rt_vmax_lag_sc))
-ggplot(df, aes(run_trial, rt_vmax_delta, color = omission_early_theta > 0.46125, lty = reward_lag)) + geom_smooth(method = "gam") +
-  facet_wrap(~rewFunc) + scale_color_manual("Omission early theta", values = c("orange4", "orange"), labels = c("low", "high"))  
-
-ggplot(df, aes(run_trial, rt_vmax_delta, color = entropy_change_late_beta_supp > 0.19136, lty = reward_lag)) + geom_smooth(method = "gam") +
-  facet_wrap(~rewFunc) + scale_color_manual("Entropy change late beta suppression", values = c("1b3840", "4fa3b8"), labels = c("low", "high"))  
-
-# example subjects: not revealing
-# theta
-# library(ggh4x)
-# setwd(plot_dir)
-# pdf("theta_rtswing_subject_megaplot.pdf", height = 30, width = 60)
-# ggplot(ldf %>% filter(run_trial>1)) + geom_line( aes(run_trial, log(rt_swing), color = id, group = interaction(id, run))) + geom_smooth(aes(run_trial, log(rt_swing)), method = "gam") +
-#   facet_nested((omission_early_theta > 0.46125)  ~ rewFunc + reward_lag) 
-# dev.off()
-# 
-# pdf("beta_rtswing_subject_megaplot.pdf", height = 30, width = 60)
-# ggplot(ldf %>% filter(run_trial>1)) + geom_line( aes(run_trial, log(rt_swing), color = id, group = interaction(id, run))) + geom_smooth(aes(run_trial, log(rt_swing)), method = "gam") +
-#   facet_nested((entropy_change_late_beta_supp > 0.19136)  ~ rewFunc + reward_lag) 
-# dev.off()
-# 
-# pdf("theta_rt_csv_subject_megaplot.pdf", height = 30, width = 60)
-# ggplot(ldf %>% filter(run_trial>1)) + geom_line( aes(run_trial, log(rt_csv), color = id, group = interaction(id, run))) + geom_smooth(aes(run_trial, log(rt_csv)), method = "gam") +
-#   facet_nested((omission_early_theta > 0.46125)  ~ rewFunc + reward_lag) 
-# dev.off()
-# 
-# pdf("beta_rt_csv_subject_megaplot.pdf", height = 30, width = 60)
-# ggplot(ldf %>% filter(run_trial>1)) + geom_line( aes(run_trial, log(rt_csv), color = id, group = interaction(id, run))) + geom_smooth(aes(run_trial, log(rt_csv)), method = "gam") +
-#   facet_nested((entropy_change_late_beta_supp > 0.19136)  ~ rewFunc + reward_lag) 
-# dev.off()
-
-
-# Condition effects on RT:
-cond_meg2_rewFunc <-  
-  lmerTest::lmer(rt_csv ~ 
-                   (trial_neg_inv_sc + omission_early_theta + rewFunc)^2 +
-                   (trial_neg_inv_sc + entropy_change_late_beta_supp + rewFunc)^2 +
-                 (1|id), df %>% filter(rt_csv<4000))
-screen.lmerTest(cond_meg2_rewFunc)
-summary(cond_meg2_rewFunc)
-Anova(cond_meg2_rewFunc, '3')
-
-# based on deviations
-cond_meg2_rewFunc_wi <-  
-  lmerTest::lmer(rt_csv ~ 
-                   (trial_neg_inv_sc + omission_early_theta + rewFunc)^2 +
-                   (trial_neg_inv_sc + om_theta_wi + rewFunc)^2 +
-                   (trial_neg_inv_sc + entropy_change_late_beta_supp + rewFunc)^2 +
-                   (trial_neg_inv_sc + ec_lbeta_wi + rewFunc)^2 +
-                   (1|id), df %>% filter(rt_csv<4000))
-screen.lmerTest(cond_meg2_rewFunc_wi)
-anova(cond_meg2_rewFunc, cond_meg2_rewFunc_wi)
-summary(cond_meg2_rewFunc)
-Anova(cond_meg2_rewFunc, '3')
-
-
-cond_meg3_rewFunc <-  
-  lmerTest::lmer(ev ~ 
-                   (trial_neg_inv_sc + entropy_change_late_beta_supp + 
-                      omission_early_theta + rewFunc)^3 +
-                   (1|id), ldf %>% filter(rt_csv<4000))
-screen.lmerTest(cond_meg3_rewFunc, .01)
-summary(cond_meg3_rewFunc)
-Anova(ev_meg2_rewFunc, '3')
-anova(ev_meg2_rewFunc, ev_meg3_rewFunc)
-
-
+if (perform_checks) {
+  pdf("omission_early_theta_by_cond.pdf", height = 3, width = 5)
+  ggplot(cond_wbetas, (aes(rewFunc, omission_early_theta, color = rewFunc))) + 
+    geom_violin(draw_quantiles = .5) + geom_jitter(alpha = .3)
+  dev.off()
+  summary(lm(omission_early_theta ~ rewFunc, cond_wbetas))
+  
+  ggplot(cond_wbetas, aes(rewFunc, rt_shorten_late_beta_supp, color = rewFunc)) + 
+    geom_violin(draw_quantiles = .5) + geom_jitter(alpha = .3)
+  summary(lm(rt_shorten_late_beta_supp ~ rewFunc, cond_wbetas))
+  # intercept NS, IEV<CEV,CEVR,DEV NS
+  
+  pdf("ec_late_beta_by_cond.pdf", height = 3, width = 5)
+  ggplot(cond_wbetas, aes(rewFunc, entropy_change_late_beta_supp, color = rewFunc)) + 
+    geom_violin(draw_quantiles = .5) +  geom_jitter(alpha = .3) #+ geom_boxplot() 
+  dev.off()
+  Anova(lmer(entropy_change_late_beta_supp ~ rewFunc + (1|id), cond_wbetas))
+  
+  
+  # only learnable
+  ldf <- df %>% filter(rewFunc=="IEV" | rewFunc=="DEV")
+  ev_meg_beta_rewFunc <-  
+    lmerTest::lmer(ev ~ trial_neg_inv_sc * entropy_change_late_beta_supp * rewFunc + 
+                     trial_neg_inv_sc * entropy_change_early_beta_supp * rewFunc + 
+                     (1|id/run), ldf %>% filter(rt_csv<4000))
+  screen.lmerTest(ev_meg_beta_rewFunc, .05)
+  summary(ev_meg_beta_rewFunc)
+  Anova(ev_meg_beta_rewFunc, '3')
+  
+  ev_meg2_rewFunc <-  
+    lmerTest::lmer(ev ~ trial_neg_inv_sc * entropy_change_late_beta_supp * rewFunc + 
+                     trial_neg_inv_sc * omission_early_theta * rewFunc +
+                     (1|id/run), ldf %>% filter(rt_csv<4000))
+  screen.lmerTest(ev_meg2_rewFunc, .01)
+  summary(ev_meg2_rewFunc)
+  Anova(ev_meg2_rewFunc, '3')
+  
+  
+  rt_meg2_rewFunc <-  
+    lmerTest::lmer(rt_csv_sc ~ trial_neg_inv_sc * entropy_change_late_beta_supp * rewFunc + 
+                     trial_neg_inv_sc * omission_early_theta * rewFunc +
+                     (1|id/run), ldf %>% filter(rt_csv<4000))
+  screen.lmerTest(rt_meg2_rewFunc, .01)
+  summary(ev_meg2_rewFunc)
+  Anova(ev_meg2_rewFunc, '3')
+  
+  # What are beta-suppressed subjects doing in DEV?
+  cur_dir <- getwd()
+  setwd("~/OneDrive/collected_letters/papers/meg/plots/meg_to_behavior/")
+  ldf <- ldf %>% mutate()
+  
+  ev_meg3_rewFunc <-  
+    lmerTest::lmer(ev ~ 
+                     (trial_neg_inv_sc + omission_lag + entropy_change_late_beta_supp + 
+                        + rewFunc)^3 +
+                     (1|id), ldf %>% filter(rt_csv<4000))
+  screen.lmerTest(ev_meg3_rewFunc, .01)
+  summary(ev_meg3_rewFunc)
+  Anova(ev_meg3_rewFunc, '3')
+  anova(ev_meg2_rewFunc, ev_meg3_rewFunc)
+  ec1 <- ggplot(ldf, aes(trial_neg_inv_sc, ev, color = entropy_change_late_beta_supp > 0.19136, lty = reward_lag)) + geom_smooth(method = "gam") +
+    facet_wrap(~rewFunc) + scale_color_manual("Entropy change late beta suppression", values = c("1b3840", "4fa3b8"), labels = c("low", "high"))  
+  o1 <- ggplot(ldf, aes(trial_neg_inv_sc, ev, color = omission_early_theta > 0.46125, lty = reward_lag)) + geom_smooth(method = "gam") +
+    facet_wrap(~rewFunc) + scale_color_manual("Omission early theta", values = c("orange4", "orange"), labels = c("low", "high"))  
+  ec2 <- ggplot(df, aes(trial_neg_inv_sc, rt_csv, color = entropy_change_late_beta_supp > 0.19136, lty = reward_lag)) + geom_smooth(method = "gam") +
+    facet_wrap(~rewFunc) + scale_color_manual("Entropy change late beta suppression", values = c("1b3840", "4fa3b8"), labels = c("low", "high"))  
+  o2 <- ggplot(df, aes(trial_neg_inv_sc, rt_csv, color = omission_early_theta > 0.46125, lty = reward_lag)) + geom_smooth(method = "gam") +
+    facet_wrap(~rewFunc) + scale_color_manual("Omission early theta", values = c("orange4", "orange"), labels = c("low", "high"))  
+  ec3 <- ggplot(df, aes(trial_neg_inv_sc, rt_swing, color = entropy_change_late_beta_supp > 0.19136, lty = reward_lag)) + geom_smooth(method = "gam") +
+    facet_wrap(~rewFunc) + scale_color_manual("Entropy change late beta suppression", values = c("1b3840", "4fa3b8"), labels = c("low", "high"))  
+  o3 <- ggplot(df, aes(trial_neg_inv_sc, rt_swing, color = omission_early_theta > 0.46125, lty = reward_lag)) + geom_smooth(method = "gam") +
+    facet_wrap(~rewFunc) + scale_color_manual("Omission early theta", values = c("orange4", "orange"), labels = c("low", "high"))  
+  # setwd(plot_dir)
+  # pdf("performance_by_meg_beta_rewfunc.pdf", height = 8, width = 18)
+  # ggarrange(o1, o2, o3, ec1, ec2, ec3, nrow = 2, ncol = 3)
+  # dev.off()
+  
+  # look at convergence on RT_Vmax
+  df <- df %>% mutate(rt_vmax_delta  = abs(rt_csv_sc - rt_vmax_lag_sc))
+  ggplot(df, aes(run_trial, rt_vmax_delta, color = omission_early_theta > 0.46125, lty = reward_lag)) + geom_smooth(method = "gam") +
+    facet_wrap(~rewFunc) + scale_color_manual("Omission early theta", values = c("orange4", "orange"), labels = c("low", "high"))  
+  
+  ggplot(df, aes(run_trial, rt_vmax_delta, color = entropy_change_late_beta_supp > 0.19136, lty = reward_lag)) + geom_smooth(method = "gam") +
+    facet_wrap(~rewFunc) + scale_color_manual("Entropy change late beta suppression", values = c("1b3840", "4fa3b8"), labels = c("low", "high"))  
+  
+  # example subjects: not revealing
+  # theta
+  # library(ggh4x)
+  # setwd(plot_dir)
+  # pdf("theta_rtswing_subject_megaplot.pdf", height = 30, width = 60)
+  # ggplot(ldf %>% filter(run_trial>1)) + geom_line( aes(run_trial, log(rt_swing), color = id, group = interaction(id, run))) + geom_smooth(aes(run_trial, log(rt_swing)), method = "gam") +
+  #   facet_nested((omission_early_theta > 0.46125)  ~ rewFunc + reward_lag) 
+  # dev.off()
+  # 
+  # pdf("beta_rtswing_subject_megaplot.pdf", height = 30, width = 60)
+  # ggplot(ldf %>% filter(run_trial>1)) + geom_line( aes(run_trial, log(rt_swing), color = id, group = interaction(id, run))) + geom_smooth(aes(run_trial, log(rt_swing)), method = "gam") +
+  #   facet_nested((entropy_change_late_beta_supp > 0.19136)  ~ rewFunc + reward_lag) 
+  # dev.off()
+  # 
+  # pdf("theta_rt_csv_subject_megaplot.pdf", height = 30, width = 60)
+  # ggplot(ldf %>% filter(run_trial>1)) + geom_line( aes(run_trial, log(rt_csv), color = id, group = interaction(id, run))) + geom_smooth(aes(run_trial, log(rt_csv)), method = "gam") +
+  #   facet_nested((omission_early_theta > 0.46125)  ~ rewFunc + reward_lag) 
+  # dev.off()
+  # 
+  # pdf("beta_rt_csv_subject_megaplot.pdf", height = 30, width = 60)
+  # ggplot(ldf %>% filter(run_trial>1)) + geom_line( aes(run_trial, log(rt_csv), color = id, group = interaction(id, run))) + geom_smooth(aes(run_trial, log(rt_csv)), method = "gam") +
+  #   facet_nested((entropy_change_late_beta_supp > 0.19136)  ~ rewFunc + reward_lag) 
+  # dev.off()
+  
+  
+  # Condition effects on RT:
+  cond_meg2_rewFunc <-  
+    lmerTest::lmer(rt_csv ~ 
+                     (trial_neg_inv_sc + omission_early_theta + rewFunc)^2 +
+                     (trial_neg_inv_sc + entropy_change_late_beta_supp + rewFunc)^2 +
+                     (1|id), df %>% filter(rt_csv<4000))
+  screen.lmerTest(cond_meg2_rewFunc)
+  summary(cond_meg2_rewFunc)
+  Anova(cond_meg2_rewFunc, '3')
+  
+  # based on deviations
+  cond_meg2_rewFunc_wi <-  
+    lmerTest::lmer(rt_csv ~ 
+                     (trial_neg_inv_sc + omission_early_theta + rewFunc)^2 +
+                     (trial_neg_inv_sc + om_theta_wi + rewFunc)^2 +
+                     (trial_neg_inv_sc + entropy_change_late_beta_supp + rewFunc)^2 +
+                     (trial_neg_inv_sc + ec_lbeta_wi + rewFunc)^2 +
+                     (1|id), df %>% filter(rt_csv<4000))
+  screen.lmerTest(cond_meg2_rewFunc_wi)
+  anova(cond_meg2_rewFunc, cond_meg2_rewFunc_wi)
+  summary(cond_meg2_rewFunc)
+  Anova(cond_meg2_rewFunc, '3')
+  
+  
+  cond_meg3_rewFunc <-  
+    lmerTest::lmer(ev ~ 
+                     (trial_neg_inv_sc + entropy_change_late_beta_supp + 
+                        omission_early_theta + rewFunc)^3 +
+                     (1|id), ldf %>% filter(rt_csv<4000))
+  screen.lmerTest(cond_meg3_rewFunc, .01)
+  summary(cond_meg3_rewFunc)
+  Anova(ev_meg2_rewFunc, '3')
+  anova(ev_meg2_rewFunc, ev_meg3_rewFunc)
+  
+  
+  ############# MEG
+  # Effect of MEG betas on exploration
+  # only the effects of interest
+  beh <-  
+    lme4::lmer(rt_csv_sc ~ 
+                 rt_lag_sc * last_outcome * rewFunc + 
+                 rt_vmax_lag_sc * trial_neg_inv_sc * rewFunc + 
+                 (1|id/run), df %>% filter(rt_csv<4000))
+  # screen.lmerTest(meg1, .01)
+  summary(beh)
+  Anova(beh, '3')
+}
 ############# MEG
 # Effect of MEG betas on exploration
 # only the effects of interest
-beh <-  
-  lme4::lmer(rt_csv_sc ~ 
-               rt_lag_sc * last_outcome * rewFunc + 
-               rt_vmax_lag_sc * trial_neg_inv_sc * rewFunc + 
-               (1|id/run), df %>% filter(rt_csv<4000))
-# screen.lmerTest(meg1, .01)
-summary(beh)
-Anova(beh, '3')
-
-############# MEG
-# Effect of MEG betas on exploration
-# only the effects of interest
-meg_late_beta_only <-  
-  lme4::lmer(rt_csv_sc ~ 
-               rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
-               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp + 
-               (1|id/run), df %>% filter(rt_csv<4000))
-# screen.lmerTest(meg1, .01)
-summary(meg_late_beta_only)
-Anova(meg_late_beta_only, '3')
-
-
-meg_late_beta_only_rs <-  
-  lme4::lmer(rt_csv_sc ~ 
-               rt_lag_sc * last_outcome * entropy_change_late_beta_supp + 
-               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp + 
-               (rt_lag_sc + rt_vmax_lag_sc|id/run), df %>% filter(rt_csv<4000))
-# screen.lmerTest(meg1, .01)
-summary(meg_late_beta_only_rs)
-Anova(meg_late_beta_only_rs, '3')
-
 
 meg_late_beta_rewFunc <-  
   lme4::lmer(rt_csv_sc ~ 
@@ -245,6 +260,54 @@ meg_late_beta_rewFunc <-
 # screen.lmerTest(meg1, .01)
 summary(meg_late_beta_rewFunc)
 Anova(meg_late_beta_rewFunc, '3')
+
+# add early beta to show specificity
+# remove rt_vmax
+
+meg_early_late_beta_rewFunc <-  
+  lme4::lmer(rt_csv_sc ~ 
+               rt_lag_sc * last_outcome * entropy_change_early_beta_supp * rewFunc + 
+               rt_lag_sc * last_outcome * entropy_change_late_beta_supp * rewFunc + 
+               rt_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp * rewFunc + 
+               rt_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp * rewFunc + 
+               (1|id/run), df %>% filter(rt_csv<4000))
+# screen.lmerTest(meg1, .01)
+summary(meg_early_late_beta_rewFunc)
+Anova(meg_early_late_beta_rewFunc, '3')
+Anova(meg_early_late_beta_rewFunc, '2')
+
+# add random slopes to beat the hell out of these findings
+meg_early_late_beta_rewFunc_rs <-  
+  lme4::lmer(rt_csv_sc ~ 
+               rt_lag_sc * last_outcome * entropy_change_early_beta_supp * rewFunc + 
+               rt_lag_sc * last_outcome * entropy_change_late_beta_supp * rewFunc + 
+               rt_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp * rewFunc + 
+               rt_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp * rewFunc + 
+               (1 + rt_lag_sc + rt_vmax_sc + last_outcome|id) + (1|id:run), df %>% filter(rt_csv<4000))
+while (!is.null(meg_early_late_beta_rewFunc_rs@optinfo$conv$lme4$messages)) {
+  ss <- getME(meg_early_late_beta_rewFunc_rs,c("theta","fixef"))
+  meg_early_late_beta_rewFunc_rs <- update(meg_early_late_beta_rewFunc_rs, start=ss, control=lmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)))}
+summary(meg_early_late_beta_rewFunc_rs)
+Anova(meg_early_late_beta_rewFunc_rs, '3')
+condense_model(Anova(meg_early_late_beta_rewFunc_rs, '3'), "beta")
+condense_model(meg_early_late_beta_rewFunc_rs, "beta", threshold = 1.5)
+
+# remove condition to simplify
+meg_early_late_beta_no_rewFunc_rs <-  
+  lme4::lmer(rt_csv_sc ~ 
+               rt_lag_sc * last_outcome * entropy_change_early_beta_supp  + 
+               rt_lag_sc * last_outcome * entropy_change_late_beta_supp   + 
+               rt_lag_sc * trial_neg_inv_sc * entropy_change_early_beta_supp   + 
+               rt_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp   + 
+               (1 + rt_lag_sc + rt_vmax_sc + last_outcome|id) + (1|id:run), df %>% filter(rt_csv<4000))
+while (!is.null(meg_early_late_beta_no_rewFunc_rs@optinfo$conv$lme4$messages)) {
+  ss <- getME(meg_early_late_beta_no_rewFunc_rs,c("theta","fixef"))
+  meg_early_late_beta_no_rewFunc_rs <- update(meg_early_late_beta_no_rewFunc_rs, start=ss, control=lmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)))}
+summary(meg_early_late_beta_no_rewFunc_rs)
+Anova(meg_early_late_beta_no_rewFunc_rs, '3')
+condense_model(Anova(meg_early_late_beta_no_rewFunc_rs, '3'), "beta")
+condense_model(meg_early_late_beta_no_rewFunc_rs, "beta", threshold = 1.5)
+
 
 # do RT swings decrease with trial?
 meg_late_beta_rewFunc_trial <-  
@@ -278,11 +341,11 @@ Anova(meg_all_late_beta_rewFunc, '3')
 
 meg_om_theta_lbeta_rewFunc <-
   lmerTest::lmer(rt_csv_sc ~
-               rt_lag_sc * last_outcome * entropy_change_late_beta_supp * rewFunc +
-               rt_lag_sc * last_outcome * omission_early_theta * rewFunc +
-               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp * rewFunc +
-               rt_vmax_lag_sc * trial_neg_inv_sc * omission_early_theta * rewFunc  +
-               (1|id/run), df %>% filter(rt_csv<4000))
+                   rt_lag_sc * last_outcome * entropy_change_late_beta_supp * rewFunc +
+                   rt_lag_sc * last_outcome * omission_early_theta * rewFunc +
+                   rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_supp * rewFunc +
+                   rt_vmax_lag_sc * trial_neg_inv_sc * omission_early_theta * rewFunc  +
+                   (1|id/run), df %>% filter(rt_csv<4000))
 screen.lmerTest(meg_om_theta_lbeta_rewFunc, .01)
 summary(meg_om_theta_lbeta_rewFunc)
 Anova(meg_om_theta_lbeta_rewFunc, '3')
@@ -411,6 +474,7 @@ Anova(meg_om_theta_avg_rewFunc, '3')
 fdf <- get_trial_data(repo_directory = clock_folder, dataset = "mmclock_fmri", groupfixed = T)
 fdf <- fdf %>% mutate(id = as.character(id)) %>% inner_join(cond_wbetas, by = c("id", "rewFunc"))
 
+if (perform_checks) {
 lfdf <-fdf %>% filter(rewFunc=="IEV" | rewFunc=="DEV")
 
 # descriptives
@@ -447,13 +511,21 @@ pdf("performance_by_meg_beta_rewfunc_replication.pdf", height = 6, width = 22)
 ggarrange(thetaplot, betaplot, nrow = 1, ncol = 2)
 dev.off()
 
+ev_fmri_late_beta_rewFunc <-  
+  lmerTest::lmer(ev ~ 
+                   trial_neg_inv_sc * entropy_change_late_beta_supp * rewFunc +  
+                   trial_neg_inv_sc * entropy_change_early_beta_supp * rewFunc +  
+                   (1|id/run), lfdf %>% filter(rt_csv<4000))
+screen.lmerTest(ev_fmri_late_beta_rewFunc, .01)
+summary(ev_fmri_late_beta_rewFunc)
+Anova(ev_fmri_late_beta_rewFunc, '3')
 
 
 ev_fmri2_rewFunc <-  
   lmerTest::lmer(ev ~ 
                    (trial_neg_inv_sc + entropy_change_late_beta_supp + 
                       omission_early_theta + rewFunc)^2 +
-                   (1|id), lfdf %>% filter(rt_csv<4000))
+                   (1|id/run), lfdf %>% filter(rt_csv<4000))
 screen.lmerTest(ev_fmri2_rewFunc, .01)
 summary(ev_fmri2_rewFunc)
 Anova(ev_fmri2_rewFunc, '3')
@@ -462,18 +534,18 @@ ev_fmri3_rewFunc <-
   lmerTest::lmer(ev ~ 
                    (trial_neg_inv_sc + entropy_change_late_beta_supp + 
                       omission_early_theta + rewFunc)^3 +
-                   (1|id), lfdf %>% filter(rt_csv<4000))
+                   (1|id/run), lfdf %>% filter(rt_csv<4000))
 screen.lmerTest(ev_fmri3_rewFunc, .01)
 summary(ev_fmri3_rewFunc)
 Anova(ev_fmri3_rewFunc, '3')
 anova(ev_fmri2_rewFunc, ev_fmri3_rewFunc)
-
+}
 # Condition effects:
 cond_fmri2_rewFunc <-  
   lmerTest::lmer(rt_csv ~ 
                    (trial_neg_inv_sc + entropy_change_late_beta_supp + 
                       omission_early_theta + rewFunc)^2 +
-                   (1|id),fdf %>% filter(rt_csv<4000))
+                   (1|id/run),fdf %>% filter(rt_csv<4000))
 screen.lmerTest(cond_fmri2_rewFunc)
 summary(cond_fmri2_rewFunc)
 Anova(cond_fmri2_rewFunc, '3')
@@ -491,15 +563,15 @@ anova(ev_fmri2_rewFunc, ev_fmri3_rewFunc)
 # decompose betas into subject- and condition-level
 fmri_om_theta_lbeta_decomposed <-
   lme4::lmer(rt_csv_sc ~
-                   rt_lag_sc * last_outcome * entropy_change_late_beta_avg * rewFunc +
-                   rt_lag_sc * last_outcome * ec_lbeta_wi * rewFunc +
-                   rt_lag_sc * last_outcome * omission_early_theta_avg * rewFunc +
-                   rt_lag_sc * last_outcome * om_theta_wi * rewFunc +
-                   rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_avg * rewFunc +
-                   rt_vmax_lag_sc * trial_neg_inv_sc * ec_lbeta_wi * rewFunc +
-                   rt_vmax_lag_sc * trial_neg_inv_sc * omission_early_theta_avg * rewFunc  +
-                   rt_vmax_lag_sc * trial_neg_inv_sc * om_theta_wi * rewFunc  +
-                   (1|id/run), fdf %>% filter(rt_csv<4000))
+               rt_lag_sc * last_outcome * entropy_change_late_beta_avg * rewFunc +
+               rt_lag_sc * last_outcome * ec_lbeta_wi * rewFunc +
+               rt_lag_sc * last_outcome * omission_early_theta_avg * rewFunc +
+               rt_lag_sc * last_outcome * om_theta_wi * rewFunc +
+               rt_vmax_lag_sc * trial_neg_inv_sc * entropy_change_late_beta_avg * rewFunc +
+               rt_vmax_lag_sc * trial_neg_inv_sc * ec_lbeta_wi * rewFunc +
+               rt_vmax_lag_sc * trial_neg_inv_sc * omission_early_theta_avg * rewFunc  +
+               rt_vmax_lag_sc * trial_neg_inv_sc * om_theta_wi * rewFunc  +
+               (1|id/run), fdf %>% filter(rt_csv<4000))
 # screen.lmerTest(fmri_om_theta_lbeta_decomposed, .01)
 # anova(fmri_om_theta_lbeta_rewFunc, fmri_om_theta_lbeta_decomposed)
 
@@ -825,11 +897,11 @@ lbeta_decomposed <-
   scale_y_reverse(limits = c(.75, -.09)) 
 
 wdem1 <- as_tibble(emtrends(meg_om_theta_lbeta_decomposed, data = df,  var = "rt_lag_sc", specs = c("ec_lbeta_wi", "last_outcome", "rewFunc"), 
-                           at = list(ec_lbeta_wi = unique(qmeg$ec_lbeta_wi)))) %>%  
+                            at = list(ec_lbeta_wi = unique(qmeg$ec_lbeta_wi)))) %>%  
   inner_join(qmeg, by = c("ec_lbeta_wi", "rewFunc"))
 wdem1$study = "1. MEG"
 wdem2 <- as_tibble(emtrends(fmri_om_theta_lbeta_decomposed, data =fdf, var = "rt_lag_sc", specs = c("ec_lbeta_wi", "last_outcome", "rewFunc"), 
-                           at = list(ec_lbeta_wi = unique(qmeg$ec_lbeta_wi)))) %>%  
+                            at = list(ec_lbeta_wi = unique(qmeg$ec_lbeta_wi)))) %>%  
   inner_join(qmeg, by = c("ec_lbeta_wi", "rewFunc"))
 wdem2$study = '2. fMRI replication'
 wdem1 <- rbind(wdem2, wdem1)
@@ -899,11 +971,11 @@ dev.off()
 
 # early theta across conditions
 across_conditions_1 <- as_tibble(emtrends(meg_om_theta_lbeta_decomposed, data = df,  var = "rt_lag_sc", specs = c("omission_early_theta_avg", "last_outcome"), 
-                           at = list(omission_early_theta_avg = unique(qmeg$omission_early_theta_avg)))) %>%  
+                                          at = list(omission_early_theta_avg = unique(qmeg$omission_early_theta_avg)))) %>%  
   inner_join(qmeg, by = c("omission_early_theta_avg"))
 across_conditions_1$study = "1. MEG"
 across_conditions_2 <- as_tibble(emtrends(fmri_om_theta_lbeta_decomposed, data =fdf, var = "rt_lag_sc", specs = c("omission_early_theta_avg", "last_outcome"), 
-                           at = list(omission_early_theta_avg = unique(qmeg$omission_early_theta_avg)))) %>%  
+                                          at = list(omission_early_theta_avg = unique(qmeg$omission_early_theta_avg)))) %>%  
   inner_join(qmeg, by = c("omission_early_theta_avg"))
 across_conditions_2$study = '2. fMRI replication'
 across_conditions_1 <- rbind(across_conditions_2, across_conditions_1)
@@ -919,11 +991,11 @@ etheta_decomposed <-
   scale_y_reverse(limits = c(.75, -.09)) 
 
 wacross_conditions_1 <- as_tibble(emtrends(meg_om_theta_lbeta_decomposed, data = df,  var = "rt_lag_sc", specs = c("om_theta_wi", "last_outcome"), 
-                            at = list(om_theta_wi = unique(qmeg$om_theta_wi)))) %>%  
+                                           at = list(om_theta_wi = unique(qmeg$om_theta_wi)))) %>%  
   inner_join(qmeg, by = c("om_theta_wi"))
 wacross_conditions_1$study = "1. MEG"
 wacross_conditions_2 <- as_tibble(emtrends(fmri_om_theta_lbeta_decomposed, data =fdf, var = "rt_lag_sc", specs = c("om_theta_wi", "last_outcome"), 
-                            at = list(om_theta_wi = unique(qmeg$om_theta_wi)))) %>%  
+                                           at = list(om_theta_wi = unique(qmeg$om_theta_wi)))) %>%  
   inner_join(qmeg, by = c("om_theta_wi"))
 wacross_conditions_2$study = '2. fMRI replication'
 wacross_conditions_1 <- rbind(wacross_conditions_2, wacross_conditions_1)
@@ -1226,3 +1298,117 @@ dev.off()
 
 
 ggplot(df, aes(outcome, pe_max, color = rewFunc)) + geom_boxplot()
+
+################
+# coxme models
+
+# import survival objects
+if (Sys.getenv("USER")=="alexdombrovski") {
+  load("~/code/clock_analysis/coxme/fMRI_MEG_coxme_objects_no_MEDUSA_Nov23_2020")
+  setwd("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final/")
+  # source("../get_trial_data.R")
+  source("parcel_brain_behavior_functions_alex.R")
+} else if (Sys.getenv("USER")=="Alex") {
+  load("~/code/clock_analysis/coxme/fMRI_MEG_coxme_objects_Nov22_2020")
+  setwd("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final/")
+  # source("../get_trial_data.R")
+  source("parcel_brain_behavior_functions_alex.R")
+} else {
+  setwd("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final")
+  source("../get_trial_data.R")
+  source("/Users/hallquist/Data_Analysis/r_packages/fmri.pipeline/R/mixed_by.R")
+  source("../medusa_final/plot_medusa.R")
+  analysis_dir <- "~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/betas_final"
+}
+
+library(coxme)
+surv_mdf <- inner_join(mbb %>% mutate(id = as.character(id)), cond_wbetas, by = c("id", "rewFunc"))
+mb_cox  <- coxme(Surv(t1,t2,response) ~ value_wi + value_wi:entropy_change_late_beta_supp + uncertainty_wi  + 
+                   (1|ID/run), surv_mdf)
+summary(mb_cox)
+
+mb_cox1  <- coxme(Surv(t1,t2,response) ~ value_wi + value_wi:entropy_change_late_beta_supp + uncertainty_wi  + uncertainty_wi:entropy_change_late_beta_supp +
+                    (1|ID/run), surv_mdf)
+summary(mb_cox1)
+# uncertainty random slope:
+mb_cox1_rsu  <- coxme(Surv(t1,t2,response) ~ value_wi + value_wi:entropy_change_late_beta_supp + uncertainty_wi  + uncertainty_wi:entropy_change_late_beta_supp +
+                        (1 + uncertainty_wi|ID) + (1|ID/run), surv_mdf)
+summary(mb_cox1_rsu)
+
+# value random slope:
+mb_cox1_rsv  <- coxme(Surv(t1,t2,response) ~ value_wi + value_wi:entropy_change_late_beta_supp + uncertainty_wi  + uncertainty_wi:entropy_change_late_beta_supp +
+                        (1 + value_wi|ID) , surv_mdf)
+summary(mb_cox1_rsv)
+
+mb_cox1_rsv_rewFunc  <- coxme(Surv(t1,t2,response) ~ value_wi*entropy_change_late_beta_supp*rewFunc + uncertainty_wi*entropy_change_late_beta_supp*rewFunc +
+                        (1 + value_wi|ID) , surv_mdf)
+summary(mb_cox1_rsv_rewFunc)
+
+# with decomposition
+mb_cox1_rsv_rewFunc_decomp  <- coxme(Surv(t1,t2,response) ~ value_wi_t*entropy_change_late_beta_supp*rewFunc + uncertainty_wi_t*entropy_change_late_beta_supp*rewFunc +
+                                (1 + value_wi_t|ID) , surv_mdf)
+summary(mb_cox1_rsv_rewFunc_decomp)
+
+# remove the confusing 3-way interaction
+mb_cox_simple_beta_rewFunc_decomp  <- coxme(Surv(t1,t2,response) ~ value_wi_t*entropy_change_late_beta_supp + 
+                                              value_wi_t*rewFunc + uncertainty_wi*rewFunc +
+                                  (1|ID) , surv_mdf)
+summary(mb_cox_simple_beta_rewFunc_decomp)
+
+# same, fMRI
+fmb_cox_simple_beta_rewFunc_decomp  <- coxme(Surv(t1,t2,response) ~ value_wi_t*entropy_change_late_beta_supp + 
+                                              value_wi_t*rewFunc + uncertainty_wi*rewFunc +
+                                              (1|ID) , surv_df)
+summary(fmb_cox_simple_beta_rewFunc_decomp)
+
+# add random slopes
+mb_cox_simple_beta_rewFunc_decomp_rs  <- coxme(Surv(t1,t2,response) ~ value_wi_t*entropy_change_late_beta_supp + 
+                                              value_wi_t*rewFunc + uncertainty_wi*rewFunc +
+                                              (1 + value_wi_t|ID) , surv_mdf)
+summary(mb_cox_simple_beta_rewFunc_decomp_rs)
+
+# same, fMRI
+fmb_cox_simple_beta_rewFunc_decomp_rs  <- coxme(Surv(t1,t2,response) ~ value_wi_t*entropy_change_late_beta_supp + 
+                                               value_wi_t*rewFunc + uncertainty_wi*rewFunc +
+                                               (1 + value_wi_t|ID) , surv_df)
+summary(fmb_cox_simple_beta_rewFunc_decomp_rs)
+
+# simple models without decomposition
+
+# MEG
+mb_cox_simple_beta_rewFunc_decomp_rs  <- coxme(Surv(t1,t2,response) ~ value_wi_t*entropy_change_late_beta_supp + 
+                                                 value_wi_t*rewFunc + uncertainty_wi*rewFunc +
+                                                 (1 + value_wi_t|ID) , surv_mdf)
+summary(mb_cox_simple_beta_rewFunc_decomp_rs)
+
+# same, fMRI
+fmb_cox_simple_beta_rewFunc_decomp_rs  <- coxme(Surv(t1,t2,response) ~ value_wi_t*entropy_change_late_beta_supp + 
+                                                  value_wi_t*rewFunc + uncertainty_wi*rewFunc +
+                                                  (1 + value_wi_t|ID) , surv_df)
+summary(fmb_cox_simple_beta_rewFunc_decomp_rs)
+
+
+
+# replication in fMRI
+surv_df <- inner_join(bb %>% mutate(id = as.character(ID)), cond_wbetas, by = c("id", "rewFunc"))
+fmb_cox1_rsv_rewFunc  <- coxme(Surv(t1,t2,response) ~ value_wi*entropy_change_late_beta_supp*rewFunc + uncertainty_wi*entropy_change_late_beta_supp*rewFunc +
+                                (1 + value_wi|ID) , surv_df)
+summary(fmb_cox1_rsv_rewFunc)
+
+# clarify value*condition interactions
+mb_cox_simple_rewFunc  <- coxme(Surv(t1,t2,response) ~ value_wi*rewFunc + uncertainty_wi*rewFunc +
+                                (1|ID) , surv_mdf)
+summary(mb_cox_simple_rewFunc)
+
+mb_cox_simple_wi_t_rewFunc  <- coxme(Surv(t1,t2,response) ~ value_wi_t*rewFunc + uncertainty_wi_t*rewFunc +
+                                  (1|ID) , surv_mdf)
+summary(mb_cox_simple_wi_t_rewFunc)
+
+mb_cox_simple_nondecomp_rewFunc  <- coxme(Surv(t1,t2,response) ~ v*rewFunc + u*rewFunc +
+                                       (1|ID) , surv_mdf)
+summary(mb_cox_simple_nondecomp_rewFunc)
+
+# mb_cox1_rsv_run  <- coxme(Surv(t1,t2,response) ~ value_wi + value_wi:entropy_change_late_beta_supp + uncertainty_wi  + uncertainty_wi:entropy_change_late_beta_supp +
+#                         (1 + value_wi|run) , surv_mdf)
+# summary(mb_cox1_rsv_run)
+
