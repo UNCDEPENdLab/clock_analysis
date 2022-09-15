@@ -25,6 +25,8 @@ clock_folder <- "~/code/clock_analysis" #alex
 # source('~/code/Rhelpers/')
 setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/dan'))
 
+sanity_checks = F # repeat sanity checks
+
 ### load data
 source("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R")
 #get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfixed=TRUE) 
@@ -54,6 +56,9 @@ wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_v_max
            ))
 # merge
 df <- df %>% inner_join(wbetas, by = "id")
+
+
+if (sanity_checks) {
 
 #############
 # Check correlations with earnings in learnable blocks: not the slightest
@@ -115,7 +120,7 @@ ggplot(df %>% filter(!is.na(reward_lag) & abs(omission_early_theta)>.3), aes(rt_
 
 ggplot(df %>% filter (!is.na(reward_lag)), aes(omission_early_theta, rt_swing, lty = reward_lag)) + geom_smooth(method = "gam") + facet_grid(~rewFunc)
 ggplot(ldf %>% filter (!is.na(reward_lag)), aes(omission_early_theta, ev, lty = reward_lag)) + geom_smooth(method = "gam") + facet_grid(rt_lag<2~rewFunc)
-
+}
 
 # ggplot(fdf %>% filter (!is.na(reward_lag)), aes(omission_early_theta, rt_swing, lty = reward_lag)) + geom_smooth(method = "gam") + facet_grid(rt_lag<2~rewFunc)
 
