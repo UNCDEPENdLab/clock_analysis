@@ -9,7 +9,8 @@ repo_directory <- "~/code/clock_analysis"
 
 reprocess = F
 emm = T # extract EMMEANS estimates, e.g. for hi/lo abs(PE)
-rerun_old_models = F
+rerun_old_models = T
+alignment = "rt"
 # mixed_by call
 # source("~/code/fmri.pipeline/R/mixed_by.R")
 
@@ -27,29 +28,35 @@ if (reprocess) {
   labels <- setDT(read_excel(file.path(paste0(repo_directory, "/fmri/keuka_brain_behavior_analyses/dan/MNH DAN Labels 400 Good Only 47 parcels.xlsx")))) %>%
     rename(roi_num7=roi7_400) %>%
     select(roi_num7, parcel_group, hemi) %>% mutate(atlas_value = as.integer(roi_num7))
-  
-  
-  files <-  gsub("//", "/", list.files(pattern = "interpolated", full.names = T))
-  message(paste0("Found ", length(files), " files."))
-  csl <- lapply(files, function(x) {
-    print(x)
-    df <- fread(x) 
-    df$id <- as.integer(stringi::stri_extract_first(x, regex = "\\d+"))
-    # if (class(df)=="list") {
-    df$run <- stringi::stri_extract_last(x, regex = "\\d+")
-    # } else if (ncol(df)==3) {
-    # df <- df$fit_df
-    # }
-    return(df)
-  })
-  rt_visuomotor_long <- data.table::rbindlist(csl)
-  setwd(out_dir)
+  # 
+  # 
+  # files <-  gsub("//", "/", list.files(pattern = "interpolated", full.names = T))
+  # message(paste0("Found ", length(files), " files."))
+  # csl <- lapply(files, function(x) {
+  #   print(x)
+  #   df <- fread(x) 
+  #   df$id <- as.integer(stringi::stri_extract_first(x, regex = "\\d+"))
+  #   # if (class(df)=="list") {
+  #   df$run <- stringi::stri_extract_last(x, regex = "\\d+")
+  #   # } else if (ncol(df)==3) {
+  #   # df <- df$fit_df
+  #   # }
+  #   return(df)
+  # })
+  # rt_visuomotor_long <- data.table::rbindlist(csl)
+  # setwd(out_dir)
+  rt_visuomotor_long <- read_csv("rt_aligned_444_dan.csv.gz", 
+                                     col_types = cols(id = col_integer()))
+  rt_visuomotor_long <- rt_visuomotor_long %>% mutate(run = as.integer(parse_number(run)))
   forty_seven <- unique(labels$atlas_value)
-  rt_visuomotor_long_400_47 <- rt_visuomotor_long %>% filter(atlas_value %in% forty_seven) %>% mutate(run = as.integer(run))
-  rt_visuomotor_long_400_47 <- rt_visuomotor_long_400_47 %>% inner_join(labels, by = "atlas_value")
-  # save
+  rt_visuomotor_long_400_47 <- rt_visuomotor_long %>% filter(atlas_value %in% forty_seven) %>% inner_join(labels, by = "atlas_value")
+
+  clock_visuomotor_long <- read_csv("rt_aligned_444_dan.csv.gz", 
+                                 col_types = cols(id = col_integer()))
+  
+    # save
   setwd(file.path(paste0(out_dir, "/data")))
-  saveRDS(rt_visuomotor_long, file = "explore_rt_decon_all_444_parcels.rds")
+  # saveRDS(rt_visuomotor_long, file = "explore_rt_decon_all_444_parcels.rds")
   saveRDS(rt_visuomotor_long_400_47, file = "explore_rt_decon_dan_400_47.rds")
 } else {
   rt_visuomotor_long_400_47 <-  readRDS("explore_rt_decon_dan_400_47.rds")
@@ -112,6 +119,9 @@ if (alignment=="clock") {
   d <- d %>% rename(side = "hemi")
   # d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient", "side"), sep="_")
 }
+
+## check data alignment:
+# ggplot(d, aes(evt_time, decon_mean)) + geom_smooth()
 
 # rm(rt_visuomotor_long)
 # rm(clock_visuomotor_long)
@@ -321,8 +331,8 @@ if (alignment == "clock" || alignment == "clock_online") {
     
   }
   
-  
-  flist <- named_list(rt_upps_all_subsc_rslope)
+  flist <- named_list(rt_base)
+  # flist <- named_list(rt_upps_all_subsc_rslope)
   # flist <- named_list(rt_rslope, rt_kld, rt_pe)
   # flist <- named_list(rt_base, rt_rslope, rt_kld, rt_logkld, rt_pe, rt_int, rt_int_cent, rt_trial)
 }
@@ -339,8 +349,9 @@ ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 #   abspe = list(outcome = "decon_mean", model_name = "rt_int", var = "abs_pe", specs = c("outcome"))
                 #)
 )
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_rt_base_Sept_14_2022.rds")))
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_upps_subscales_rslope_explore_400_47_encode_Aug4_2022.rds")))
+# saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_upps_subscales_rslope_explore_400_47_encode_Aug4_2022.rds")))
 
 # 
 df <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>%
