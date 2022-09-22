@@ -1,6 +1,6 @@
 # plot beta-to-behavior analysis results from the 17-network Schaeffer 2018 parcellation with 47 manual DAN labels from June-July 2022
 # abspe - rt_lag section makes bb parts of Fig. 3
-# entropy change - rt_vmax section makes bb parts of Fig. 5
+# entropy change - rt_vmax section makes bb parts of Fig. 4
 
 library(tidyverse)
 library(lme4)
@@ -35,8 +35,8 @@ fmri_dir <- file.path(paste0(clock_folder, "/fmri/keuka_brain_behavior_analyses/
 # DAN palette:
 colors <- RColorBrewer::brewer.pal(4, "Dark2") %>% setNames(c("MT+", "Premotor", "Rostral PPC", "Caudal PPC"))
 
-coxme_ranef <- "rslope" # or NULL, whether to include random slopes in coxme value sensitivity models
-
+# coxme_ranef <- "rslope" # whether to include random slopes in coxme value sensitivity models; "rslope" or "" for random intercerpt-only
+coxme_ranef <- ""
 # Manual labels from June-July 2022
 
 labels_df <- setDT(read_excel(file.path(paste0(fmri_dir, "../../MNH DAN Labels 400 Good Only 47 parcels.xlsx")))) %>%
@@ -300,9 +300,9 @@ if ("entropychange" %in% signals) {
           facet_grid(~session, labeller = as_labeller(c("fMRI" = "fMRI","MEG replication" =  "MEG, out-of-session replication"))) + geom_hline(yintercept = 0, size = .2) + 
           theme(legend.key.size = unit(.4, "cm"), strip.text.x = element_text(size = 12), axis.text.x = element_blank()) +
           guides(alpha = guide_legend(title = expression(p[FDR], shape = guide_legend(override.aes = list(size = .1)))), color = "none") + 
-          inset_element(echange_inset_fmri, .2, -.1, .45 , 0.25,  # left, bottom, right, top
+          inset_element(echange_inset_fmri, .2, -.05, .45 , 0.25,  # left, bottom, right, top
                         align_to = "panel", on_top = T) + {if(coxme_ranef == "rslope")
-                          inset_element(echange_inset_meg, 0.5, -0.1, 0.8 ,0.25,  # left, bottom, right, top
+                          inset_element(echange_inset_meg, 0.58, -0.05, 0.81 ,0.25,  # left, bottom, right, top
                                         align_to = "panel", on_top = T)} + 
           inset_element(cor_inset, 0.87 , -0.05, 1.05, 0.28)
   )
