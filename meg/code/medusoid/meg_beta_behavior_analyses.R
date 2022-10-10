@@ -26,6 +26,7 @@ plots <- F
 # source('~/code/Rhelpers/')
 setwd(file.path(clock_folder, 'fmri/keuka_brain_behavior_analyses/dan'))
 
+
 perform_checks = F # initial checks ensuring that the extracted betas are valid
 
 ### load data
@@ -58,6 +59,27 @@ wbetas <- readRDS("~/code/clock_analysis/meg/data/MEG_betas_entropy_change_v_max
 # merge
 df <- df %>% inner_join(wbetas, by = "id")
 
+
+if (perform_checks) {
+
+#############
+# Check correlations with earnings in learnable blocks: not the slightest
+sdf <- df %>% group_by(id, run) %>% filter(rewFunc=="IEV" | rewFunc=="DEV") %>% ungroup() %>%
+  select(id,  score_csv, rewFunc) %>% group_by(id, rewFunc) %>% summarize(run_earnings = mean(score_csv), .groups = "keep") %>% unique() %>% inner_join(wbetas)
+car::Anova(lm(run_earnings ~ rewFunc * omission_early_theta + rewFunc * omission_late_delta + rewFunc * abspe_late_beta_supp + rewFunc * entropy_change_early_beta_supp + 
+                rewFunc * entropy_change_late_beta_supp, sdf))
+               # rewFunc * entropy_change_late_beta_supp + rewFunc * vmax_late_alpha, sdf))
+# Performance: EV as outcome
+ldf <- df %>% filter(rewFunc=="IEV" | rewFunc=="DEV")
+ev_meg2 <-  
+  lmerTest::lmer(ev ~ 
+               (trial_neg_inv_sc + entropy_change_late_beta_supp + abspe_late_beta_supp +
+                  omission_early_theta + rewFunc)^2 +
+               (1|id), ldf %>% filter(rt_csv<4000))
+screen.lmerTest(ev_meg2, .01)
+summary(ev_meg2)
+Anova(ev_meg2, '3')
+}
 
 if (perform_checks) {
   #############
@@ -123,7 +145,64 @@ if (perform_checks) {
 }
 
 
+
+ggplot(df %>% filter(!is.na(reward_lag)), aes(trial_neg_inv_sc, rt_swing, lty = omission_early_theta>0, color = rewFunc)) + geom_smooth(method = "gam") + facet_wrap(~reward_lag)
+ggplot(df %>% filter(!is.na(reward_lag) & abs(omission_early_theta)>.3), aes(rt_swing, color = omission_early_theta>0)) + geom_boxplot(notch = T, varwidth = T) + facet_grid(rewFunc~reward_lag)
+
+ggplot(df %>% filter (!is.na(reward_lag)), aes(omission_early_theta, rt_swing, lty = reward_lag)) + geom_smooth(method = "gam") + facet_grid(~rewFunc)
+ggplot(ldf %>% filter (!is.na(reward_lag)), aes(omission_early_theta, ev, lty = reward_lag)) + geom_smooth(method = "gam") + facet_grid(rt_lag<2~rewFunc)
+
+
+# ggplot(fdf %>% filter (!is.na(reward_lag)), aes(omission_early_theta, rt_swing, lty = reward_lag)) + geom_smooth(method = "gam") + facet_grid(rt_lag<2~rewFunc)
+
+
+# ev_meg3 <-  
+#   lmerTest::lmer(ev ~ 
+#                (trial_neg_inv_sc + last_outcome + rewFunc + entropy_change_early_beta_supp)^3 +
+#                (trial_neg_inv_sc + last_outcome + rewFunc + entropy_change_late_beta_supp)^3 +
+#                (trial_neg_inv_sc + last_outcome + rewFunc + vmax_late_alpha)^3 +
+#                (trial_neg_inv_sc + last_outcome + rewFunc + omission_early_theta)^3 +
+#                (trial_neg_inv_sc + last_outcome + rewFunc + omission_late_delta)^3 +
+#                (1|id/run), ldf %>% filter(rt_csv<4000))
+# screen.lmerTest(ev_meg3, .01)
+# summary(ev_meg3)
+# Anova(ev_meg3, '3')
+# 
+############# Main analysis using Schaeffer-based betas
+
+### quick hippocampal sanity check
+# check PH PEs extracted at higher threshold
+# t <- df %>% select(id, pe_PH_r) %>% unique()
+# 
+# test <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+#                                 v_max_wi_lag + v_entropy_wi + h_HippAntL + pe_PH_r)^2 + 
+#                    rt_lag_sc:last_outcome:h_HippAntL + 
+#                    rt_lag_sc:last_outcome:pe_PH_r +
+#                    rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL + 
+#                    rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH_r  +
+#                    (1|id/run), df %>% filter(rt_csv<4000))
+# screen.lmerTest(test, .05)
+# Anova(test, '3')
+# 
+# mtest <-  lmer(rt_csv_sc ~ (trial_neg_inv_sc + rt_lag_sc + rt_vmax_lag_sc + last_outcome + 
+#                              v_max_wi_lag + v_entropy_wi + h_HippAntL + pe_PH_r)^2 + 
+#                 rt_lag_sc:last_outcome:h_HippAntL + 
+#                 rt_lag_sc:last_outcome:pe_PH_r +
+#                 rt_vmax_lag_sc:trial_neg_inv_sc:h_HippAntL + 
+#                 rt_vmax_lag_sc:trial_neg_inv_sc:pe_PH_r  +
+#                 (1|id/run), mdf)# %>% filter(rt_csv<4000))
+# screen.lmerTest(mtest, .05)
+# Anova(mtest, '3')
+
+# # compare MEG and fMRI
+# df$session <- "fMRI"
+# mdf$session <- "1. MEG"
+# bdf <- bind_rows(df, mdf)
+# ggplot(bdf, aes(run_trial, rt_csv, color = rewFunc, lty = session)) + geom_smooth()
+# ggplot(bdf, aes(run_trial, ev, color = rewFunc, lty = session)) + geom_smooth()
+
 ############# MEG
+
 # Effect of MEG betas on exploration
 # because post-omission theta and delta are correlated at 0.75, will test in different models
 mb_meg1theta <-  
