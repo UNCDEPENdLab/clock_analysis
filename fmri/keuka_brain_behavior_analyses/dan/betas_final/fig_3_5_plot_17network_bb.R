@@ -33,7 +33,7 @@ clock_folder <- "~/code/clock_analysis" #alex
 fmri_dir <- file.path(paste0(clock_folder, "/fmri/keuka_brain_behavior_analyses/dan/betas_final/bb/"))
 
 # DAN palette:
-colors <- RColorBrewer::brewer.pal(4, "Dark2") %>% setNames(c("MT+", "Premotor", "Rostral PPC", "Caudal PPC"))
+colors <- RColorBrewer::brewer.pal(4, "Dark2") %>% setNames(c("1" = "MT+","2" = "Premotor","3" = "Rostral PPC","4" = "Caudal PPC"))
 
 coxme_ranef <- "rslope" # or NULL, whether to include random slopes in coxme value sensitivity models
 

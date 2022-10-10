@@ -7,6 +7,9 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
   require(ggplot2)
   require(data.table)
   
+  colors <- RColorBrewer::brewer.pal(4, "Dark2") %>% setNames(c("1" = "MT+","2" = "Premotor","3" = "Rostral PPC","4" = "Caudal PPC"))
+  
+  
   if (is.data.frame(coef_obj)) {
     to_plot <- coef_obj
   } else if (checkmate::test_data_frame(coef_obj$coef_df_reml)) {
@@ -44,7 +47,7 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
         geom_line(size=1, position=position_dodge(width=0.4)) + 
         geom_pointrange(aes(size=p_level), position=position_dodge(width=0.4)) +
         #scale_color_brewer(palette="Dark2", labels=c("1" = "MT+, control", "2" = "Caudal post. parietal", "3" = "Rostral post. parietal", "4" = "Frontal premotor")) +
-        scale_color_discrete() +
+        scale_color_manual(values = colors) +
         geom_hline(yintercept = 0, size=1.5, alpha=0.6) +
         geom_vline(xintercept = 0, size=1.5, alpha=0.6) +
         scale_size_manual(values=c(0.5, 0.8, 1.1, 1.4)) + theme_bw(base_size=15)
@@ -52,7 +55,8 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
       g <- ggplot(data, aes_string(x=x, y=y, color=color, ymin=ymin, ymax=ymax, lty = lty_by)) +
         geom_line(size=1, position=position_dodge(width=0.4)) + 
         geom_pointrange(aes(size=p_level), position=position_dodge(width=0.4)) +
-        scale_color_brewer(palette="Dark2", labels=c("1" = "MT+, control", "2" = "Caudal post. parietal", "3" = "Rostral post. parietal", "4" = "Frontal premotor")) +
+        scale_color_manual(values = colors) +
+        # scale_color_brewer(palette="Dark2", labels=c("1" = "MT+, control", "2" = "Caudal post. parietal", "3" = "Rostral post. parietal", "4" = "Frontal premotor")) +
         geom_hline(yintercept = 0, size=1.5, alpha=0.6) +
         geom_vline(xintercept = 0, size=1.5, alpha=0.6) +
         scale_size_manual(values=c(0.5, 0.8, 1.1, 1.4)) + theme_bw(base_size=15)
