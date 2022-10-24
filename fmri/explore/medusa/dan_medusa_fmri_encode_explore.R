@@ -3,7 +3,7 @@ library(lme4)
 library(data.table)
 library(readxl)
 library(fmri.pipeline)
-out_dir <- "~/Google Drive/My Drive/SCEPTIC_fMRI/explore_medusa"
+out_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/explore_medusa"
 repo_directory <- "~/code/clock_analysis"
 # repo_directory <- "~/Data_Analysis/clock_analysis"
 
