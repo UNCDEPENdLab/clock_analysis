@@ -3,17 +3,16 @@ library(lme4)
 library(data.table)
 library(readxl)
 
-out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/bsocial_medusa"
-#repo_directory <- "~/code/clock_analysis"
-repo_directory <- "~/Data_Analysis/clock_analysis"
+out_dir <- "~/Google Drive/My Drive/SCEPTIC_fMRI/bsocial_medusa"
+repo_directory <- "~/code/clock_analysis"
+# repo_directory <- "~/Data_Analysis/clock_analysis"
 setwd("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan")
-source("get_trial_data.R")
+source("get_trial_data1.R")
 source("medusa_final/plot_medusa.R")
 source("~/code/fmri.pipeline/R/mixed_by.R")
-out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/bsocial_medusa"
-
-emm = T # extract EMMEANS estimates, e.g. for hi/lo abs(PE)
-reprocess = F
+data_dir <- "~/OneDrive - University of Pittsburgh/Documents/skinner/data/Medusa"
+emm = F # extract EMMEANS estimates, e.g. for hi/lo abs(PE)
+reprocess = T
 alignment <- "rt"
 
 # helper function to compile list of formulae
@@ -22,74 +21,32 @@ named_list <- function(...) {
   return(setNames(list(...), vnames))
 }
 
+
+
 if (!reprocess) {
   d <- readRDS("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/explore_medusa/rt_visuomotor_long_dan_only_200_trial_df.rds")
 } else {
+  setwd(data_dir)
   
-  rt_visuomotor_long <- fread("~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/bsocial_medusa/transformed_schaefer_dan_3.125mm_rt_long_decon_aligned.csv.gz") %>%
+  rt_visuomotor_long <- fread("bsoc_rt_dan.csv.gz") %>%
     mutate(atlas_value = as.character(atlas_value),
            id = as.character(id))
-  dan_labels <- setDT(read_excel("~/code/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/MNH Dan Labels.xlsx")) %>%
-    mutate(atlas_value = as.character(roinum),
-           parcel = word(MNHLabel, 2, sep = "_"),
-           hemi = substr(MNHLabel, 1,1)
-    ) %>% select(atlas_value, MNHLabel, parcel, Stream, Visuomotor_Gradient, lobe, parcel, hemi)
   
-  # add Schaefer 17 labels
-  setwd("~/code/schaefer_wb_parcellation")
-  schaefer_7 <- read.csv("labels/Schaefer2018_200Parcels_7Networks_order.csv") %>%
-    mutate(network=factor(network), net_num = as.numeric(network)) %>%
-    rename(network7=network, net_num7=net_num)
+  labels <- setDT(read_excel(file.path(paste0(repo_directory, "/fmri/keuka_brain_behavior_analyses/dan/MNH DAN Labels 400 Good Only 47 parcels.xlsx")))) %>%
+    rename(roi_num7=roi7_400) %>%
+    select(roi_num7, parcel_group, hemi) %>% mutate(atlas_value = as.integer(roi_num7))
   
-  # this has the spatial coordinate, spatial_roi_num
-  schaefer_7_lookup <- read.csv("labels/Schaefer_200_7networks_labels.csv")
+  rt_visuomotor_long <- rt_visuomotor_long %>% mutate(run = as.integer(parse_number(run)),
+                                                      atlas_value = as.integer(atlas_value))
+  forty_seven <- unique(labels$atlas_value)
+  rt_visuomotor_long_400_47 <- rt_visuomotor_long %>% filter(atlas_value %in% forty_seven) %>% inner_join(labels, by = "atlas_value")
   
-  schaefer_7 <- schaefer_7 %>% inner_join(schaefer_7_lookup, by="roi_num") %>%
-    rename(roi_num7=roi_num, subregion7=subregion)
   
-  schaefer_17 <- read.csv("labels/Schaefer2018_200Parcels_17Networks_order.csv") %>%
-    mutate(network=factor(network), net_num = as.numeric(network)) %>%
-    rename(network17=network, net_num17=net_num) %>%
-    select(-hemi) # mirrored in 7
+  trial_df <- setDT(get_trial_data(dataset = "bsocial", repo_directory))  
   
-  # this has the spatial coordinate, spatial_roi_num
-  schaefer_17_lookup <- read.csv("labels/Schaefer_200_17networks_labels.csv") %>%
-    select(roi_num, spatial_roi_num) # x,y,z and labels already duplicated in 7-network lookup
-  
-  schaefer_17 <- schaefer_17 %>% inner_join(schaefer_17_lookup, by="roi_num") %>%
-    rename(roi_num17=roi_num, subregion17=subregion)
-  
-  both <- inner_join(schaefer_7, schaefer_17, by="spatial_roi_num") %>%
-    select(spatial_roi_num, roi_num7, roi_num17, network7, network17, net_num7, net_num17, subregion7, subregion17, everything())
-  setDT(both)
-  labels <- both %>% filter(net_num7==3 & (network17=="DorsAttnA" | network17=="DorsAttnB")) %>% 
-    mutate(roi_num7 = as.factor(roi_num7)) %>% 
-    # label lobes
-    mutate(lobe = case_when(
-      str_detect(subregion17, "Temp") ~ "temporal",
-      str_detect(subregion17, "Par") | str_detect(subregion17, "SPL") | str_detect(subregion17, "PostC") |
-        str_detect(subregion17, "IPS") | str_detect(subregion17, "IPL") | str_detect(subregion17, "pCun") ~ "parietal",
-      str_detect(subregion17, "PFC") | str_detect(subregion17, "FEF") | str_detect(subregion17, "PrCv") ~ "frontal"),
-      vm_gradient17 = case_when(
-        lobe == "temporal" ~ "MT+",
-        lobe == "parietal" & network17 == "DorsAttnA" ~ "PPCcaudal",
-        lobe == "parietal" & network17 == "DorsAttnB" ~ "PPCrostral",
-        lobe == "frontal" ~ "premotor",
-        TRUE ~ as.character(network17)),
-      plot_label = sub("Focus point:\\s+", "", MNI_Glasser_HCP_v1.0, perl=TRUE),
-      mask_value = as.integer(as.character(roi_num7)),
-      atlas_value = as.character(mask_value))
-  
-  dan_labels <-  dan_labels %>% select(atlas_value, MNHLabel) %>% inner_join(labels, by = "atlas_value")
-  
-  rt_visuomotor_long <- rt_visuomotor_long %>% inner_join(labels, by = "atlas_value") #%>% filter(!is.na(Stream))
-  
-  trial_df <- setDT(get_trial_data(dataset = "bsocial", repo_directory = out_dir))  
-  
-  trial_df <- trial_df %>% dplyr::select(id, run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
-                                         v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
-    mutate(log_kld3 = log(kld3 + .00001),
-           id = as.character(id))
+  trial_df <- trial_df %>% dplyr::select(id, scanner_run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
+                                         v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome, log_kld3) %>%
+    mutate(run = scanner_run)
   # rt_visuomotor_long <- rt_visuomotor_long %>% inner_join(trial_df)
   # rt_visuomotor_long <- rt_visuomotor_long %>% filter(evt_time > -3 & evt_time < 6)
   
@@ -110,24 +67,14 @@ if (!reprocess) {
     d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")  
   } else if (alignment == "clock_online") {
     # subset to columns of interest
-    trial_df <- trial_df %>%
-      dplyr::select(id, run, run_trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max_lag,
-                    v_entropy_wi, v_entropy_wi_change_lag, kld3_lag, v_max_wi, abs_pe_lag, outcome_lag) %>%
-      mutate(log_kld3_lag = log(kld3_lag + .00001))
-    
     d <- merge(trial_df, clock_visuomotor_long_online, by = c("id", "run", "trial"))
     d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_") 
   } else if (alignment == "rt") {
     # subset to columns of interest
-    trial_df <- trial_df %>%
-      dplyr::select(id, run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
-                    v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
-      mutate(log_kld3 = log(kld3 + .00001))
-    
-    d <- merge(trial_df, rt_visuomotor_long, by = c("id", "run", "trial"))
-    d <- d %>% rename(side = "hemi")
+    d <- merge(trial_df, rt_visuomotor_long_400_47, by = c("id", "run", "trial"))
+    # d <- d %>% rename(side = "hemi")
     # d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient", "side"), sep="_")
-    saveRDS(d, "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/explore_medusa/rt_visuomotor_long_dan_only_200_trial_df.rds")
+    saveRDS(d, "~/Google Drive/My Drive/SCEPTIC_fMRI/explore_medusa/rt_visuomotor_long_dan_only_400_47_trial_df.rds")
     }
 }
 # add subject characteristics
@@ -248,25 +195,37 @@ if (alignment == "clock" || alignment == "clock_online") {
   enc_rt_trial <- formula(~ rt_csv_sc*run_trial + rt_lag_sc + v_max_wi*run_trial +
                             v_entropy_wi*run_trial + v_entropy_wi_change*run_trial + abs_pe*run_trial + outcome +
                             (1 | id) )
-  flist <- named_list(enc_rt_base, enc_rt_pe, enc_rt_base_grp, enc_rt_base_grp_age_edu)
+  flist <- named_list(enc_rt_base)
   # flist <- named_list(enc_rt_rslope, enc_rt_kld, enc_rt_pe)
   # flist <- named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
 }
 
 
-splits <- c("vm_gradient17", "side", "evt_time")
+splits <- c("parcel_group",  "evt_time")
 
 message("Running mixed_by")
 ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial", "age", "registration_edu"),
                 tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
-                calculate = c("parameter_estimates_reml"), ncores = 10, refit_on_nonconvergence = 5, padjust_by = "term"#,
+                calculate = c("parameter_estimates_reml"), ncores = parallel::detectCores() - 1, refit_on_nonconvergence = 5, padjust_by = "term"#,
                 # emtrends_spec = list(
                 #   abspe = list(outcome = "decon_mean", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
                 #)
 )
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "by_200_roi_GRP_demo", "_encode_medusa_fmri.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "by_400_47_roi_base", "_encode_medusa_fmri.rds")))
+
+
+df <- ddf$coef_df_reml %>% #dplyr::filter(abs(evt_time) <= 4) %>%
+  filter(effect=="fixed") %>%
+  group_by(term, model_name) %>%
+  mutate(p_FDR=p.adjust(p.value, method="fdr"),
+         parcel_group = factor(parcel_group, order = T, levels = c("MT+", "PPCcaudal", "PPCrostral", "Premotor"), labels = c("MT+", "Caudal PPC", "Rostral PPC", "Premotor")))  %>% 
+  ungroup() %>% setDT()
+
+plot_medusa(df, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="parcel_group", #facet_by="side",
+            out_dir=file.path(out_dir, "rt_base"),  p.value="padj_BY_term")
+
 
 dd <- ddf$emtrends_list$abspe
 dd <- dd[,c(-4, -5)]

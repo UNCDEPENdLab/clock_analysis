@@ -3,14 +3,15 @@ library(lme4)
 library(data.table)
 library(readxl)
 library(fmri.pipeline)
-out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/explore_medusa"
+out_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/explore_medusa"
 repo_directory <- "~/code/clock_analysis"
 # repo_directory <- "~/Data_Analysis/clock_analysis"
 
-reprocess = F
+reprocess = T
 emm = T # extract EMMEANS estimates, e.g. for hi/lo abs(PE)
 rerun_old_models = T
 alignment = "rt"
+bilateral = T # combine R/L, include as crossed effect with random slopes
 # mixed_by call
 # source("~/code/fmri.pipeline/R/mixed_by.R")
 
@@ -20,9 +21,8 @@ named_list <- function(...) {
   return(setNames(list(...), vnames))
 }
 
-
-setwd(file.path(paste0(out_dir,"/data/")))
-
+# setwd(file.path(paste0(out_dir,"/dan_beta_1")))
+setwd(file.path(paste0(out_dir,"/data")))
 if (reprocess) {
   # move to new 400 labels
   labels <- setDT(read_excel(file.path(paste0(repo_directory, "/fmri/keuka_brain_behavior_analyses/dan/MNH DAN Labels 400 Good Only 47 parcels.xlsx")))) %>%
@@ -51,13 +51,37 @@ if (reprocess) {
   forty_seven <- unique(labels$atlas_value)
   rt_visuomotor_long_400_47 <- rt_visuomotor_long %>% filter(atlas_value %in% forty_seven) %>% inner_join(labels, by = "atlas_value")
 
-  clock_visuomotor_long <- read_csv("rt_aligned_444_dan.csv.gz", 
-                                 col_types = cols(id = col_integer()))
+  # clock_visuomotor_long <- read_csv("clock_aligned_444_dan.csv.gz", 
+  #                                col_types = cols(id = col_integer()))
+  # 
+  # ids <- unique(clock_visuomotor_long$id)
+  # 
+  # # inspect clock-aligned more closely
+  # test <- clock_visuomotor_long %>% filter(id == ids[2] & run == "run2") 
+  pdf("check_rt_decon_alignment.pdf", height = 30, width = 60)
+  ggplot(rt_visuomotor_long, aes(evt_time, decon_mean)) + geom_smooth() + facet_wrap(id~run)
+  dev.off()
+  # 
+  # sdf <- clock_visuomotor_long %>% filter(evt_time < 6.6) %>% group_by(id, run, trial) %>% summarise(max_time_mean = evt_time[which.max(decon_mean)],
+  #                                                                         max_time_median = evt_time[which.max(decon_mean)]) %>%
+  #   group_by(id, run) %>% summarise(mean_peak = mean(max_time_mean))
+  #   hist(sdf$mean_peak)
+  # pdf("hist_max_clock_decon.pdf", height = 5, width = 8)
+  # ggplot(sdf, aes(mean_peak, color = run)) + geom_histogram() 
+  # dev.off()
+  
+  rsdf <- rt_visuomotor_long_400_47 %>% filter(evt_time < 6.6) %>% group_by(id, run, trial) %>% summarise(max_time_mean = evt_time[which.max(decon_mean)],
+                                                                                                          max_time_median = evt_time[which.max(decon_mean)]) %>%
+    group_by(id, run) %>% summarise(mean_peak = mean(max_time_mean))
+  hist(rsdf$mean_peak, 30)
+  pdf("hist_max_rt_decon.pdf", height = 5, width = 8)
+  ggplot(rsdf, aes(mean_peak, color = as.character(run))) + geom_histogram() 
+  dev.off()
   
     # save
   setwd(file.path(paste0(out_dir, "/data")))
-  # saveRDS(rt_visuomotor_long, file = "explore_rt_decon_all_444_parcels.rds")
-  saveRDS(rt_visuomotor_long_400_47, file = "explore_rt_decon_dan_400_47.rds")
+  saveRDS(rt_visuomotor_long, file = "explore_rt_decon_all_444_parcels.rds")
+  # saveRDS(rt_visuomotor_long_400_47, file = "explore_rt_decon_dan_400_47_beta_1.rds")
 } else {
   rt_visuomotor_long_400_47 <-  readRDS("explore_rt_decon_dan_400_47.rds")
 }
@@ -182,24 +206,28 @@ if (alignment == "clock" || alignment == "clock_online") {
   
   flist <- named_list(clock_base, clock_rslope, clock_kld, clock_logkld, clock_pe, clock_int, clock_trial)
 } else if (alignment == "rt") {
-  
-
-  
-  rt_upps_all_subsc_rslope <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + v_entropy_wi + 
-                                 v_entropy_wi_change*uppsp_lack_of_perseveration +
-                                 v_entropy_wi_change*uppsp_lack_of_premeditation +
-                                 v_entropy_wi_change*uppsp_negative_urgency +
-                                 v_entropy_wi_change*uppsp_positive_urgency +
-                                 abs_pe*uppsp_lack_of_perseveration +
-                                 abs_pe*uppsp_lack_of_premeditation +
-                                 abs_pe*uppsp_positive_urgency +
-                                 abs_pe*uppsp_negative_urgency + 
-                                 outcome +
-                                 (abs_pe + v_entropy_wi_change| id) )
-  
+  # main model
+  rt_rslope_logkld3_bl <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + v_entropy_wi + 
+                                 v_entropy_wi_change +
+                                 abs_pe + 
+                                 outcome + log_kld3 +
+                                 (v_entropy_wi_change + abs_pe | id) + (1 | side) )
   
   # all previously run models parked here for compactness
   if (rerun_old_models) {
+    rt_upps_all_subsc_rslope <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + v_entropy_wi + 
+                                          v_entropy_wi_change*uppsp_lack_of_perseveration +
+                                          v_entropy_wi_change*uppsp_lack_of_premeditation +
+                                          v_entropy_wi_change*uppsp_negative_urgency +
+                                          v_entropy_wi_change*uppsp_positive_urgency +
+                                          abs_pe*uppsp_lack_of_perseveration +
+                                          abs_pe*uppsp_lack_of_premeditation +
+                                          abs_pe*uppsp_positive_urgency +
+                                          abs_pe*uppsp_negative_urgency + 
+                                          outcome +
+                                          (abs_pe + v_entropy_wi_change| id) )
+    
+    
     # basal analysis
     rt_base <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
                          v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
@@ -228,6 +256,7 @@ if (alignment == "clock" || alignment == "clock_online") {
                                      abs_pe*Group + 
                                      outcome +
                                      (1 | id) )
+    
     rt_base_age_edu_grp_mmse <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + v_entropy_wi + 
                                           v_entropy_wi_change*education_yrs + 
                                           v_entropy_wi_change*age + 
@@ -332,13 +361,10 @@ if (alignment == "clock" || alignment == "clock_online") {
   }
   
   flist <- named_list(rt_base)
-  # flist <- named_list(rt_upps_all_subsc_rslope)
-  # flist <- named_list(rt_rslope, rt_kld, rt_pe)
-  # flist <- named_list(rt_base, rt_rslope, rt_kld, rt_logkld, rt_pe, rt_int, rt_int_cent, rt_trial)
 }
 
-
-splits <- c("parcel_group", "side", "evt_time")
+splits <- c("parcel_group", "evt_time") # bilateral
+# splits <- c("parcel_group", "side", "evt_time")
 message(paste0("Running mixed_by for ", print(flist)))
 ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial",
@@ -349,20 +375,30 @@ ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 #   abspe = list(outcome = "decon_mean", model_name = "rt_int", var = "abs_pe", specs = c("outcome"))
                 #)
 )
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_rt_base_Sept_14_2022.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_rt_logkld3_rslope_bilateral_Sept_27_2022.rds")))
 
 # saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_upps_subscales_rslope_explore_400_47_encode_Aug4_2022.rds")))
-
+# ddf <- readRDS()
 # 
-df <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>%
+df <- ddf$coef_df_reml %>% #dplyr::filter(abs(evt_time) <= 4) %>%
   filter(effect=="fixed") %>%
   group_by(term, model_name) %>%
-  mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
+  mutate(p_FDR=p.adjust(p.value, method="fdr"),
+         parcel_group = factor(parcel_group, order = T, levels = c("MT+", "PPCcaudal", "PPCrostral", "Premotor"), labels = c("MT+", "Caudal PPC", "Rostral PPC", "Premotor")))  %>% 
   ungroup() %>% setDT()
 
-plot_medusa(df, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="parcel_group", facet_by="side",
-            out_dir=file.path(out_dir, "explore_400_47"),  p.value="padj_BY_term")
+plot_medusa(df, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="parcel_group", #facet_by="side",
+            out_dir=file.path(out_dir, "dan_beta_1"),  p.value="padj_BY_term")
 
+# plot manually to make sure it's not in the plotting code
+colors <- RColorBrewer::brewer.pal(4, "Dark2") %>% setNames(c("1" = "MT+","2" = "Premotor","3" = "Rostral PPC","4" = "Caudal PPC"))
+ggplot(df %>% filter(term == "(Intercept)"), aes(evt_time, estimate, color=parcel_group)) +
+  geom_line(size=1, position=position_dodge(width=0.4)) + 
+  geom_point(aes(size=as.numeric(1/p_FDR)), position=position_dodge(width=0.4)) +
+  scale_color_manual(values = colors) +
+  geom_hline(yintercept = 0, size=1.5, alpha=0.6) +
+  geom_vline(xintercept = 0, size=1.5, alpha=0.6) #+
+  scale_size_manual(values=c(0.5, 0.8, 1.1, 1.4)) + theme_bw(base_size=15)
 
 # aggregate all results into one RDS
 setwd(out_dir)
