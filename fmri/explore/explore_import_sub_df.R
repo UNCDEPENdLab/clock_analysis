@@ -3,10 +3,12 @@ library(tidyverse)
 library(readr)
 library(naniar) # missingness 
 
-data_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/explore_medusa/data/"
+data_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/explore_medusa/data/"
 setwd(data_dir)
 
 sub_df <- read_csv("explore_clock_indv_diff_8_3.csv")
+# sub_df_new <- read_csv("../../explore_wholebrain/explore_clock_indv_diff_8_11.csv")
+
 str(sub_df)
 
 
@@ -44,6 +46,9 @@ sub_df <-  sub_df %>% mutate(
 gg_miss_var(sub_df %>% select(-registration_lethality, -total_attempts, -max_lethality, -ideation_group, -ipipds_total), show_pct = TRUE,
             facet = registration_group)
 gg_miss_var(sub_df %>% select(-registration_lethality, -total_attempts, -max_lethality, -ideation_group, -ipipds_total), show_pct = TRUE)
+
+
+# gg_miss_var(sub_df_new %>% select(-registration_lethality, -total_attempts, -max_lethality, -ideation_group, -ipipds_total), show_pct = TRUE)
 
 
 str(sub_df)
