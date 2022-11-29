@@ -4,6 +4,7 @@ library(dplyr)
 library(cowplot)
 library(extrafont)
 library(ggforce)
+library(tidyverse)
 
 plot_dir <- "~/OneDrive/collected_letters/papers/meg/figures/conceptual"
 #font_import()
@@ -22,6 +23,10 @@ tmax=max(tvec) + margin_offset
 #new basis plot for showing entropy etc.
 centers <- seq(tmin, tmax, by = (tmax-tmin)/(nbasis-1))
 
+gaussmat <- sapply(centers, function(x) {
+  dvec <- dnorm(x=tvec, mean=x, sd=sig)
+  dvec <- dvec/max(dvec) #renormalize to max=1
+})
 sig = (centers[2] - centers[1])/basis_overlap; #SD of the basis functions themselves
 
 
@@ -38,7 +43,7 @@ vfunc <- apply(v, 1, sum) %>% as.data.frame() %>% setNames("value") %>% mutate(t
 
 # polar version
 fsize = 6
-basis_range <- c(5) # which elements to plot
+basis_range <- c(1:24) # which elements to plot
 pdf(paste0("basis", length(basis_range), "_polar.pdf"),  height = 3, width = 3)
 {if (length(basis_range) > 2) ggplot(vm, aes(x=time, y=value, group=basis, color = basis)) + scale_color_viridis(option = "magma", discrete = T) +
     geom_rect(data=weights_df, aes(xmin=time-.04, xmax=time+.04, ymin=0, ymax=weight, y=NULL, group=NULL, color=NULL),
@@ -52,7 +57,8 @@ pdf(paste0("basis", length(basis_range), "_polar.pdf"),  height = 3, width = 3)
   annotate(geom="text", x=1, y= -5, label="1 s", size=fsize,  family=plot_font) +
   annotate(geom="text", x=2, y=- 4, label="2 s", size=fsize, family=plot_font) +
   annotate(geom="text", x=3, y=-5, label="3 s", size=fsize,  family=plot_font) +
-  annotate(geom="text", x=4, y=-3, label="4 s", size=fsize,  family=plot_font) +
+  annotate(geom="text", x=3.8, y=-3, label="4 s", size=fsize,  family=plot_font) +
+  
   annotate("segment", x = 0, y = -10, xend = 1.9, yend = -10,
            arrow = arrow(length = unit(0.5, "cm")), color = "black") +
   theme_minimal() +
@@ -84,25 +90,27 @@ dev.off()
 
 # just the selection
 fsize = 6
-pdf("rt_example_start_no_outcome.pdf", height = 4, width = 4)
+pdf("rt_example_1s_110_points_line.pdf", height = 4, width = 4)
 ggplot(vm , aes(x=time, y=value)) + 
   cowplot::theme_cowplot(font_size = 10) + #ylab("Location value") +
   geom_hline(yintercept = 0, size = 1.2, color = "black") +
   # annotate(geom="point", x=1, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen") +
-  annotate(geom="point", x=.05, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen") +
-  # annotate(geom="point", x=.05, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = .1) +
-  # annotate(geom="point", x=.2, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = .2) +
-  # annotate(geom="point", x=.4, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = .3) +
-  # annotate(geom="point", x=.6, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = .4) +
-  # annotate(geom="point", x=.8, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = .5) +
+  # annotate(geom="point", x=.05, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen") +
+  annotate(geom="point", x=.05, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = .1) +
+  annotate(geom="point", x=.2, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = .2) +
+  annotate(geom="point", x=.4, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = .3) +
+  annotate(geom="point", x=.6, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = .4) +
+  annotate(geom="point", x=.8, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = .5) +
+  annotate(geom="point", x=1, y= 3, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = 1) +
   annotate(geom="text", x=1, y= -5, label="1 s", size=fsize,  family=plot_font) +
   # annotate(geom="text", x=1.1, y= 9, label="RT = 1 s", size=fsize,  family=plot_font) +
-  # annotate(geom="text", x=1, y= -20, label="You won\n110 points", size=fsize,  family=plot_font) +
+  annotate(geom="text", x=1, y= -20, label="You won\n110 points", size=fsize,  family=plot_font) +
   annotate(geom="text", x=2, y=- 4, label="2 s", size=fsize, family=plot_font, alpha = 1) +
-  annotate(geom="text", x=3, y=-5, label="3 s", size=fsize,  family=plot_font, alpha = 1) +
-  annotate(geom="text", x=4, y=-3, label="4 s", size=fsize,  family=plot_font, alpha = 1) +
+  annotate(geom="text", x=2.95, y=-5, label="3 s", size=fsize,  family=plot_font, alpha = 1) +
+  annotate(geom="text", x=3.9, y=-4, label="4 s      ", size=fsize,  family=plot_font, alpha = 1) +
   annotate("segment", x = 0.05, y = 8, xend = .9, yend = 8,
            arrow = arrow(length = unit(0.5, "cm")), color = "darkgreen", alpha = .8) +
+  annotate(geom = "segment", x = 0, xend = 0, y = -1, yend = 7, size = 1.2, color="black", lineend="butt") +
   theme_minimal() +
   theme(
     legend.position = "none",
@@ -121,8 +129,8 @@ time = "post_update"
 weights <- runif(nbasis, min=10, max=10)
 
 if (time == "post_update") {
-  weights[6] <- 11
-  weights[7] <- 18
+  weights[6] <- 13
+  weights[7] <- 24
   weights[8] <- 30
   weights[9] <- 17
   weights[10] <- 12
@@ -134,7 +142,7 @@ v <- t(sapply(1:nrow(gaussmat), function(r) {
 weights_df <- data.frame(time=centers/1000, weight=weights) %>% filter(time > 0 & time <= 4)
 vm <- reshape2::melt(v, varnames=c("time", "basis")) %>% mutate(basis=factor(basis), time=time/1000) #seconds
 vfunc <- apply(v, 1, sum) %>% as.data.frame() %>% setNames("value") %>% mutate(time=1:length(value)/1000)
-fsize = 4
+fsize = 5
 pdf(paste0("basis_", time, "_example_1s_110points.pdf"), height = 4, width = 4)
 ggplot(vm, aes(x=time, y=value, group=basis, color = basis)) + scale_color_viridis(option = "magma", discrete = T) +
   geom_line(show.legend = FALSE, size=1.2) + #basis elements
@@ -143,10 +151,14 @@ ggplot(vm, aes(x=time, y=value, group=basis, color = basis)) + scale_color_virid
   # geom_line(data=vfunc, aes(group=NULL), color="black", size=1.5) + #integrated value
   cowplot::theme_cowplot(font_size = 12) + #ylab("Location value") +
   geom_hline(yintercept = 0, size = 1.2, color = "black") +
-  annotate(geom="text", x=1, y= -5, label="1 s", size=fsize,  family=plot_font) +
-  annotate(geom="text", x=2, y=- 4, label="2 s", size=fsize, family=plot_font) +
-  annotate(geom="text", x=3, y=-5, label="3 s", size=fsize,  family=plot_font) +
-  annotate(geom="text", x=3.85, y=-3, label="4 s", size=fsize,  family=plot_font) +
+  annotate(geom="text", x=1, y= -5, label="1 s ", size=fsize,  family=plot_font) +
+  annotate(geom="text", x=1.9, y=- 4, label="2 s", size=fsize-2, family=plot_font, alpha = .5) +
+  annotate(geom="text", x=2.9, y=-5, label="3 s", size=fsize-2,  family=plot_font, alpha = .5) +
+  annotate(geom="text", x=3.85, y=-4, label="4 s    ", size=fsize-2,  family=plot_font, alpha = .5) +
+  annotate(geom = "segment", x = 0, xend = 0, y = -4, yend = 15, size = 0.8, color="black", lineend="butt") +
+  {if(time == "pre_update")
+  annotate(geom="text", x=1, y= -20, label="You won\n110 points", size=fsize-2,  family=plot_font) +
+  annotate(geom="point", x=1, y= 15, size=fsize + 2,  shape = 16, color = "darkgreen", fill = "darkgreen", alpha = 1)} +
   # annotate("segment", x = 0, y = -10, xend = 1.9, yend = -10,
   #          arrow = arrow(length = unit(0.5, "cm")), color = "black") +
   theme_minimal() +
@@ -155,10 +167,10 @@ ggplot(vm, aes(x=time, y=value, group=basis, color = basis)) + scale_color_virid
     axis.text = element_blank(),
     axis.title = element_blank(),
     panel.grid = element_blank(),
-    plot.margin = unit(rep(-1,4), "cm") 
+    plot.margin = unit(rep(-3,4), "cm") 
   ) +
   ylim(c(-20,50)) + 
-  xlim(c(0.2, 3.85)) +
+  xlim(c(0, 3.9)) +
   coord_polar(theta = "x")
 dev.off()
 
@@ -225,7 +237,7 @@ ggplot(vm, aes(x=time, y=value, group=basis, color = basis)) + scale_color_virid
   xlab("Location (seconds within the interval)") + 
   # annotate(geom="text", x=1.21, y=38.4, label="Reward", size=9, hjust=1, family=plot_font) +
   # annotate(geom="text", x=1.25, y=22, label="RPE+", size=9, hjust=1, family=plot_font) +
-  annotate(geom="text", x=4, y=45, label="High\nentropy", size=12, hjust=1, family=plot_font, lineheight = 0.8) +
+  annotate(geom="text", x=3, y=20, label="High entropy", size=8, hjust=1, family=plot_font, lineheight = 0.8) +
   # annotate(geom="point", x=1.4, y=38, size=9, color="darkblue") +
   # annotate(geom="segment", x=1.4, xend=1.4, y=8.5, yend=35.0, size=1.5, color="gray90", lineend="butt") +
   theme(text=element_text(family=plot_font), axis.title.x = element_text(margin=margin(t=15)), 
@@ -240,57 +252,98 @@ dev.off()
 
 # low-entropy example without compression
 
-set.seed(1005)
-weights <- runif(nbasis, min=0, max=8)
-weights[1] <- 0
-weights[24] <- 0
-weights[23] <- 1
 
-
-model = "full"
-if (model == "full") {
-  weights[13] <- 10
-  weights[14] <- 11
-  weights[15] <- 20
-  weights[16] <- 11
-  weights[17] <- 10 } else if (model == "selective") {
-    weights[1] <- 0
-    weights[2] <- 0
-    weights[3:13] <- 2
+all <- list()
+for (model in c("full", "selective")) {
+  set.seed(1005)
+  weights <- runif(nbasis, min=0, max=8)
+  weights[1] <- 0
+  weights[24] <- 0
+  weights[23] <- 1
+  if (model == "full") {
+    weights[13] <- 10
     weights[14] <- 11
     weights[15] <- 20
-    weights[16] <- 11
-    weights[17:22] <- 2
-    weights[23] <- 1
-  }
-v <- t(sapply(1:nrow(gaussmat), function(r) {
-  gaussmat[r,]*weights
-}))
-weights_df <- data.frame(time=centers/1000, weight=weights) %>% filter(time > 0 & time <= 4)
-vm <- reshape2::melt(v, varnames=c("time", "basis")) %>% mutate(basis=factor(basis), time=time/1000) #seconds
-vfunc <- apply(v, 1, sum) %>% as.data.frame() %>% setNames("value") %>% mutate(time=1:length(value)/1000)
+    weights[16] <- 14
+    weights[17] <- 11 } else if (model == "selective") {
+      weights[1] <- 0
+      weights[2] <- 0
+      weights[3:13] <- runif(11, min = 1, max = 2.5)
+      weights[14] <- 8
+      weights[15] <- 20
+      weights[16] <- 11
+      weights[17:22] <- runif(6, min = 1, max = 2.5)
+      weights[23] <- 1
+    }
+  v <- t(sapply(1:nrow(gaussmat), function(r) {
+    gaussmat[r,]*weights
+  }))
+  weights_df <- data.frame(time=centers/1000, weight=weights) %>% filter(time > 0 & time <= 4)
+  vm <- reshape2::melt(v, varnames=c("time", "basis")) %>% mutate(basis=factor(basis), time=time/1000) #seconds
+  vfunc <- apply(v, 1, sum) %>% as.data.frame() %>% setNames("value") %>% mutate(time=1:length(value)/1000)
+  all[[model]] <- list("weights_df" = weights_df, "vm" = vm, "vfunc" = vfunc)
+}
 
-pdf(paste0("lo_entropy_example_linear_", model, ".pdf"), height = 2, width = 4)
-ggplot(vm, aes(x=time, y=value, group=basis, color = basis)) + scale_color_viridis(option = "magma", discrete = T) +
-  geom_rect(data=weights_df, aes(xmin=time-.04, xmax=time+.04, ymin=0, ymax=weight, y=NULL, group=NULL, color=NULL),
+# new version with single plot
+
+colors = c("Information-\ncompressing RL" = "black", "Traditional RL" = "darkgrey", "Compression" = "darkgreen")
+
+pdf(paste0("lo_entropy_example_both_models.pdf"), height = 2, width = 5)
+ggplot(data = all$selective$vm, aes(x=time, y=value)) + 
+  scale_color_manual(values = colors) +
+  geom_line(data=all$selective$vfunc, aes(group=NULL, color="Information-\ncompressing RL"), size=1.2) + #integrated value
+  geom_line(data=all$full$vfunc, aes(group=NULL , color="Traditional RL"), size=1.2) + #integrated value
+  geom_rect(data=all$selective$weights_df, aes(xmin=time-.04, xmax=time+.04, ymin=0, ymax=weight, y=NULL, group=NULL, color=NULL),
             fill="grey70", show.legend = FALSE) + #weights
-  geom_line(show.legend = FALSE, size=1.2) + #basis elements
-  geom_line(data=vfunc, aes(group=NULL), color="black", size=1.5) + #integrated value
+  labs(color = "") +
+  new_scale_color() +
+  geom_line(data = all$selective$vm, aes(group=basis, color = basis), alpha = 0.6, show.legend = FALSE, size=1.2) + #basis elements
+  scale_color_viridis(option = "magma", discrete = T) +
   cowplot::theme_cowplot(font_size = 12) + ylab("Location value") +
   xlab("Location (seconds within the interval)") + 
-  # annotate(geom="text", x=1.21, y=38.4, label="Reward", size=9, hjust=1, family=plot_font) +
-  # annotate(geom="text", x=1.25, y=22, label="RPE+", size=9, hjust=1, family=plot_font) +
-  annotate(geom="text", x=4, y=45, label="High\nentropy", size=12, hjust=1, family=plot_font, lineheight = 0.8) +
-  # annotate(geom="point", x=1.4, y=38, size=9, color="darkblue") +
-  # annotate(geom="segment", x=1.4, xend=1.4, y=8.5, yend=35.0, size=1.5, color="gray90", lineend="butt") +
+  labs(color = "") +
+  annotate(geom="text", x=4, y=26, label="Low\nentropy", size=5, hjust=1, family=plot_font, lineheight = 0.8) +
+  annotate(geom="segment", x=0.5, xend=0.5, y=7, yend=4.3, size = 0.7, color="darkgreen",    arrow = arrow(length = unit(0.15,"cm"))) +
+  annotate(geom="segment", x=2.05, xend=2.05, y=10, yend=4.6, size = 0.7, color="darkgreen",            arrow = arrow(length = unit(0.15,"cm"))) +
+  annotate(geom="segment", x=3.05, xend=3.05, y=8.5, yend=5, size = 0.7, color="darkgreen",            arrow = arrow(length = unit(0.15,"cm"))) +
+  annotate(geom="segment", x=3.4, xend=3.4, y=5.3, yend=4, size = 0.45, color="darkgreen",            arrow = arrow(length = unit(0.1,"cm"))) +
+  annotate(geom="segment", x=3.9, xend=3.9, y=10, yend=4.1, size = 0.7, color="darkgreen", arrow = arrow(length = unit(0.15,"cm"))) +
+  # annotate(geom="text", x=1.9, y=10, label="Compression", size=4.5, hjust=1, family=plot_font, lineheight = 0.8, color = "darkgreen", alpha = .8) +
+  # annotate(geom="text", x=3.86, y=6.5, label="Compression", size=2.6, hjust=1, family=plot_font, lineheight = 0.8, color = "darkgreen", alpha = .7) +
   theme(text=element_text(family=plot_font), axis.title.x = element_text(margin=margin(t=15)), 
-        axis.title.y = element_text(margin=margin(r=15))) + ylim(c(0,30)) + xlim(c(.1, 4))
+        axis.title.y = element_text(margin=margin(r=15))) + ylim(c(0,30)) + xlim(c(.1, 4)) +
   theme(plot.title = element_text(face = "plain", size=32)) + 
   theme_minimal() #+ 
 # theme(axis.text = element_blank(),
 #       axis.title = element_blank(),panel.grid = element_blank())
 # plot(g1)
 dev.off()
+
+
+
+
+# # old version with separate plots
+# pdf(paste0("lo_entropy_example_linear_", model, ".pdf"), height = 2, width = 4)
+# ggplot(vm, aes(x=time, y=value, group=basis, color = basis)) + scale_color_viridis(option = "magma", discrete = T) +
+#   geom_rect(data=weights_df, aes(xmin=time-.04, xmax=time+.04, ymin=0, ymax=weight, y=NULL, group=NULL, color=NULL),
+#             fill="grey70", show.legend = FALSE) + #weights
+#   geom_line(show.legend = FALSE, size=1.2) + #basis elements
+#   geom_line(data=vfunc, aes(group=NULL), color="black", size=1.5) + #integrated value
+#   cowplot::theme_cowplot(font_size = 12) + ylab("Location value") +
+#   xlab("Location (seconds within the interval)") + 
+#   # annotate(geom="text", x=1.21, y=38.4, label="Reward", size=9, hjust=1, family=plot_font) +
+#   # annotate(geom="text", x=1.25, y=22, label="RPE+", size=9, hjust=1, family=plot_font) +
+#   annotate(geom="text", x=4, y=45, label="High\nentropy", size=12, hjust=1, family=plot_font, lineheight = 0.8) +
+#   # annotate(geom="point", x=1.4, y=38, size=9, color="darkblue") +
+#   # annotate(geom="segment", x=1.4, xend=1.4, y=8.5, yend=35.0, size=1.5, color="gray90", lineend="butt") +
+#   theme(text=element_text(family=plot_font), axis.title.x = element_text(margin=margin(t=15)), 
+#         axis.title.y = element_text(margin=margin(r=15))) + ylim(c(0,30)) + xlim(c(.1, 4))
+# theme(plot.title = element_text(face = "plain", size=32)) + 
+#   theme_minimal() #+ 
+# # theme(axis.text = element_blank(),
+# #       axis.title = element_blank(),panel.grid = element_blank())
+# # plot(g1)
+# dev.off()
 
 
 #first choice

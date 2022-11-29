@@ -45,7 +45,7 @@ if (reprocess) {
   # })
   # rt_visuomotor_long <- data.table::rbindlist(csl)
   # setwd(out_dir)
-  rt_visuomotor_long <- read_csv("rt_aligned_444_dan.csv.gz", 
+  rt_visuomotor_long <- read_csv("rt_aligned_dan_beta_1.csv.gz", 
                                      col_types = cols(id = col_integer()))
   rt_visuomotor_long <- rt_visuomotor_long %>% mutate(run = as.integer(parse_number(run)))
   forty_seven <- unique(labels$atlas_value)
@@ -59,7 +59,7 @@ if (reprocess) {
   # # inspect clock-aligned more closely
   # test <- clock_visuomotor_long %>% filter(id == ids[2] & run == "run2") 
   pdf("check_rt_decon_alignment.pdf", height = 30, width = 60)
-  ggplot(rt_visuomotor_long, aes(evt_time, decon_mean)) + geom_smooth() + facet_wrap(id~run)
+  ggplot(rt_visuomotor_long_400_47, aes(evt_time, decon_mean)) + geom_smooth() + facet_wrap(id~run)
   dev.off()
   # 
   # sdf <- clock_visuomotor_long %>% filter(evt_time < 6.6) %>% group_by(id, run, trial) %>% summarise(max_time_mean = evt_time[which.max(decon_mean)],
@@ -70,7 +70,7 @@ if (reprocess) {
   # ggplot(sdf, aes(mean_peak, color = run)) + geom_histogram() 
   # dev.off()
   
-  rsdf <- rt_visuomotor_long_400_47 %>% filter(evt_time < 6.6) %>% group_by(id, run, trial) %>% summarise(max_time_mean = evt_time[which.max(decon_mean)],
+  rsdf <- rt_visuomotor_long_400_47 %>% filter(evt_time < 5 & evt_time > -5) %>% group_by(id, run, trial) %>% summarise(max_time_mean = evt_time[which.max(decon_mean)],
                                                                                                           max_time_median = evt_time[which.max(decon_mean)]) %>%
     group_by(id, run) %>% summarise(mean_peak = mean(max_time_mean))
   hist(rsdf$mean_peak, 30)
@@ -80,10 +80,10 @@ if (reprocess) {
   
     # save
   setwd(file.path(paste0(out_dir, "/data")))
-  saveRDS(rt_visuomotor_long, file = "explore_rt_decon_all_444_parcels.rds")
+  saveRDS(rt_visuomotor_long, file = "explore_rt_decon_all_444_parcels_beta1.rds")
   # saveRDS(rt_visuomotor_long_400_47, file = "explore_rt_decon_dan_400_47_beta_1.rds")
 } else {
-  rt_visuomotor_long_400_47 <-  readRDS("explore_rt_decon_dan_400_47.rds")
+  rt_visuomotor_long_400_47 <-  readRDS("explore_rt_decon_dan_400_47_beta1.rds")
 }
 
 # rt_visuomotor_long <- rt_visuomotor_long %>% inner_join(dan_labels, by = "atlas_value") %>% filter(!is.na(Stream))
@@ -94,7 +94,7 @@ source("get_trial_data.R")
 source("medusa_final/plot_medusa.R") # careful -- plot_medusa sets out_dir, need to reset
 # source("~/code/fmri.pipeline/R/mixed_by.R")
 
-trial_df <- setDT(get_trial_data(dataset = "explore", repo_directory = "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/EXPLORE_Medusa"))  
+trial_df <- setDT(get_trial_data(dataset = "explore", repo_directory = "~/code/clock_analysis"))  
 
 trial_df <- trial_df %>% dplyr::select(id, run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
                                        v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
