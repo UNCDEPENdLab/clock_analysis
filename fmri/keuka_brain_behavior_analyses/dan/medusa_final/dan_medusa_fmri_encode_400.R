@@ -20,9 +20,9 @@ labels <- setDT(read_excel("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medus
 #all.equal(labels$network17_400, labels$network17)
 #all.equal(labels$network7_400, labels$network7)
 
-#visuomotor_long <- TRUE # what we want to load in load_medusa_data_dan.R
-visuomotor_long <- FALSE # no 4 visuomotor
-tall_only <- TRUE # get parcelwise
+visuomotor_long <- TRUE # what we want to load in load_medusa_data_dan.R
+# visuomotor_long <- FALSE # no 4 visuomotor
+# tall_only <- TRUE # get parcelwise
 schaefer_400 <- TRUE # indicate that we want the 400-parcel data
 
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
@@ -197,8 +197,10 @@ if (alignment == "clock" || alignment == "clock_online") {
 }
 
 
-# split on both vm_gradient and label so both are preserved in outputs
-splits <- c("vm_gradient17", "label", "side", "evt_time")
+# for parcelwise only, split on both vm_gradient and label so both are preserved in outputs
+# splits <- c("vm_gradient17", "label", "side", "evt_time")
+
+splits <- c("vm_gradient17", "side", "evt_time")
 
 message("Running mixed_by")
 ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist,
@@ -209,7 +211,7 @@ ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist,
                   abspe = list(outcome = "decon_interp", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
                 ))
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_400_final47_encode_medusa_fmri_parcelwise.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_400_final47_encode_medusa_fmri.rds")))
 
 table(ddf$coef_df_reml$vm_gradient17)
 table(ddf$coef_df_reml$label)
