@@ -3,14 +3,16 @@ library(tidyverse)
 library(entropy)
 library(parallel)
 
-source("~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R")
-trial_df <- get_trial_data(repo_directory = "~/Data_Analysis/clock_analysis", dataset="mmclock_fmri", groupfixed = TRUE) %>%
+if (whoami::username() == "alexdombrovski") {repo_directory = "~/code/clock_analysis"} else {
+  repo_directory = "~/Data_Analysis/clock_analysis"}
+source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R"))
+trial_df <- get_trial_data(repo_directory, dataset="mmclock_fmri", groupfixed = TRUE) %>%
   select(id, run, trial, rt_csv, rew_om) %>%
   rename(reward=rew_om) %>%
   mutate(rt_csv = rt_csv*10) # deciseconds for alignment with basis
 
 #calculate entropy of the basis weights (as in the Cognition paper)
-basis <- read.csv("~/Data_Analysis/clock_analysis/fmri/data/mmclock_fmri_sceptic_decay_fits/mmclock_fmri_decay_factorize_selective_psequate_fixedparams_ffx_sceptic_basis.csv") %>%
+basis <- read.csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_fixedparams_ffx_sceptic_basis.csv")) %>%
   as.matrix()
 
 # port matlab
@@ -98,8 +100,7 @@ elist <- mclapply(glist, function(ss) {
 gkeys$edata <- elist
 
 edata_expand <- gkeys %>% unnest(cols = edata)
-saveRDS(edata_expand, file="~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/dan/wm_entropy/mmclock_wm_entropy.rds")
-
+saveRDS(edata_expand, file=file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/wm_entropy/mmclock_wm_entropy.rds"))
 
 # matplot(t(choice_v), type = "l")
 

@@ -17,22 +17,25 @@ reprocess <- FALSE
 # medusa_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/"
 
 if (isTRUE(schaefer_400)) {
-  medusa_dir <- "~/Library/CloudStorage/OneDrive-SharedLibraries-UniversityofPittsburgh/DNPLskinner - SCEPTIC_fMRI/dan_medusa/schaefer_400_remap"
+medusa_dir <- "~/Library/CloudStorage/OneDrive-SharedLibraries-UniversityofPittsburgh/DNPLskinner - SCEPTIC_fMRI/dan_medusa/schaefer_400_remap"
+#medusa_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap"
 } else if (use_new_pipeline) {
-  medusa_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/new_locking_compression"
+  medusa_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/dan_medusa/new_locking_compression"
 } else {
-  medusa_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa"
+  medusa_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/dan_medusa"
 }
 
 # cache_dir = "~/Box/SCEPTIC_fMRI/dan_medusa/cache"
 if (isTRUE(schaefer_400)) {
   cache_dir <- "~/Library/CloudStorage/OneDrive-SharedLibraries-UniversityofPittsburgh/DNPLskinner - SCEPTIC_fMRI/dan_medusa/cache_400"
+  #cache_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/dan_medusa/cache_400"
 } else {
   cache_dir <- "~/Library/CloudStorage/OneDrive-SharedLibraries-UniversityofPittsburgh/DNPLskinner - SCEPTIC_fMRI/dan_medusa/cache"
+  #cache_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/dan_medusa/cache"
 }
 
-# repo_directory <- "~/code/clock_analysis"
-repo_directory <- "~/Data_Analysis/clock_analysis"
+repo_directory <- "~/code/clock_analysis"
+# repo_directory <- "~/Data_Analysis/clock_analysis"
 
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R"))
 
