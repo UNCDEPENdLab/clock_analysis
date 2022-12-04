@@ -57,25 +57,46 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
     # full <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
     # u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
     
+    # these files exist in the bsocial_clock repo https://github.com/UNCDEPENdLab/bsocial_clock
     if (isTRUE(groupfixed)) {
-      load(file.path(repo_directory, "decay_merged.RData")) 
-      trial_df <- decay_merged %>% rename(id = "ID", rt_csv = "rt", score_csv = "score")
+      trial_df <- read.csv(file.path(repo_directory, "data/vba_fits/bsocial_bsocial_decay_factorize_selective_psequate_fixedparams_ffx_trial_statistics.csv.gz"))
     } else {
-      trial_df <- read_csv(file.path(repo_directory, "mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
+      trial_df <- read_csv(file.path(repo_directory, "data/vba_fits/bsocial_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
     }
-    trials_per_run <- 40
   } else {
     stop("Don't know how to interpret dataset")
   }
   
+  # calculate trial within run
+  if (dataset=="bsocial") {
+    # bsocial has some subjects with 50 per run and some with 40
+    trial_df <- trial_df %>%
+      arrange(id, trial) %>%
+      rename(scanner_run = run) %>% # scanner runs 1 and 2 contain 3 task runs each
+      mutate(
+        cond = paste0(rewFunc, emotion)
+      ) %>%
+      group_by(id) %>%
+      mutate(
+        block = as.numeric(cond != dplyr::lag(cond, default = "X")), # map transitions in condition
+        run = cumsum(block)
+      ) %>%
+      ungroup() %>%
+      group_by(id, run) %>%
+      mutate(run_trial = trial - min(trial) + 1) %>% # always start a run at trial 1
+      ungroup() %>%
+      select(-cond, -block)
+  } else {
+    trial_df <- trial_df %>%
+      mutate(run_trial = trial - (run - 1) * !!trials_per_run)
+  }
+  
   trial_df <- trial_df %>%
-    
     arrange(id, run, trial) %>% # make sure trials are consecutive
     
     # group-level mutations
     mutate(
       trial = as.numeric(trial),
-      run_trial = trial - (run - 1) * !!trials_per_run,
       trial_neg_inv = -1000 / run_trial,
       trial_neg_inv_sc = as.vector(scale(trial_neg_inv)),
       rt_csv = rt_csv / 1000, # respecify in terms of seconds
