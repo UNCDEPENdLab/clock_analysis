@@ -47,7 +47,8 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
     # u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
     
     if (isTRUE(groupfixed)) {
-      trial_df <- read.csv(file.path(repo_directory, "explore_decay_factorize_selective_psequate_fixedparams_fmri_ffx_sceptic_trial_statistics (2).csv")) %>% 
+      trial_df <- read.csv(file.path(repo_directory, "fmri/data/explore_decay_factorize_selective_psequate_fixedparams_fmri_ffx_sceptic_trial_statistics.csv")) %>%
+      # trial_df <- read.csv(file.path(repo_directory, "explore_decay_factorize_selective_psequate_fixedparams_fmri_ffx_sceptic_trial_statistics (2).csv")) %>% 
         mutate(run = run_number)
       trials_per_run <- 120
     } else {

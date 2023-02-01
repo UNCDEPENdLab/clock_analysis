@@ -360,7 +360,7 @@ if (alignment == "clock" || alignment == "clock_online") {
     
   }
   
-  flist <- named_list(rt_base)
+  flist <- named_list(rt_rslope_logkld3_bl)
 }
 
 splits <- c("parcel_group", "evt_time") # bilateral
