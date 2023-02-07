@@ -399,6 +399,8 @@ if (alignment == "clock" || alignment == "clock_online") {
   
   flist <- named_list(rt_N_C_age_ed_mmse, rt_group_att_age_ed_mmse, rt_group_leth_age_ed_mmse)
   # flist <- named_list(rt_int_only)
+  # flist <- named_list(rt_int_only)
+
   # flist <- named_list(rt_upps_all_subsc_rslope)
   # flist <- named_list(rt_rslope, rt_kld, rt_pe)
   # flist <- named_list(rt_base, rt_rslope, rt_kld, rt_logkld, rt_pe, rt_int, rt_int_cent, rt_trial)
@@ -416,6 +418,7 @@ ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 #   abspe = list(outcome = "decon_mean", model_name = "rt_int", var = "abs_pe", specs = c("outcome"))
                 #)
 )
+# saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_rt_int_Sept_2022.rds")))
 
 saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_att_leth_N_C_Nov_29_2022.rds")))
 
