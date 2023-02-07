@@ -25,7 +25,7 @@ inspect = F # inspect model statistics for sanity checks
 beta_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/wholebrain_betas"
 source("~/code/fmri.pipeline/R/mixed_by.R")
 
-studies = c("meg")
+studies = c("meg", "fmri")
 # studies = c("meg", "fmri") # whether to include meg session replication
 
 # sensitivity analyses for fMRI sample, recommend running first 2, one at a time:
@@ -35,7 +35,7 @@ omit_value = F              # do not change, needed to check once; not necessary
 split_by_reward = F         # if "T", sensitivity analysis including interaction with last reward/omission; not necessary ex-post
 signals = c("entropychange")
 # signals = c("abspe", "echange")
-ranefs = "rslope" # "rint", testing random slopes for non-decomposed for now
+ranefs = "rint"  # "rslope", "rint", testing random slopes for non-decomposed for now
 
 # loop over model versions as defined above
 

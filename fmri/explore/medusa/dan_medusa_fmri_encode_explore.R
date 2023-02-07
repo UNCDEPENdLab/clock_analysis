@@ -397,13 +397,16 @@ if (alignment == "clock" || alignment == "clock_online") {
     
   }
   
-  flist <- named_list(rt_N_C_age_ed_mmse, rt_group_att_age_ed_mmse, rt_group_leth_age_ed_mmse)
+  # flist <- named_list(rt_N_C_age_ed_mmse, rt_group_att_age_ed_mmse, rt_group_leth_age_ed_mmse)
   # flist <- named_list(rt_int_only)
   # flist <- named_list(rt_int_only)
 
   # flist <- named_list(rt_upps_all_subsc_rslope)
   # flist <- named_list(rt_rslope, rt_kld, rt_pe)
   # flist <- named_list(rt_base, rt_rslope, rt_kld, rt_logkld, rt_pe, rt_int, rt_int_cent, rt_trial)
+
+  flist <- named_list(rt_rslope_logkld3_bl)
+
 }
 
 splits <- c("parcel_group", "evt_time") # bilateral
