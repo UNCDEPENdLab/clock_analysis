@@ -264,6 +264,8 @@ if (alignment == "clock" || alignment == "clock_online") {
     
     
     # basal analysis
+    rt_int_only <- formula(~   (1 | id) )
+    
     rt_base <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
                          v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
                          (1 | id) )
@@ -396,6 +398,10 @@ if (alignment == "clock" || alignment == "clock_online") {
   }
   
   flist <- named_list(rt_N_C_age_ed_mmse, rt_group_att_age_ed_mmse, rt_group_leth_age_ed_mmse)
+  # flist <- named_list(rt_int_only)
+  # flist <- named_list(rt_upps_all_subsc_rslope)
+  # flist <- named_list(rt_rslope, rt_kld, rt_pe)
+  # flist <- named_list(rt_base, rt_rslope, rt_kld, rt_logkld, rt_pe, rt_int, rt_int_cent, rt_trial)
 }
 
 splits <- c("parcel_group", "evt_time") # bilateral
@@ -410,7 +416,11 @@ ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 #   abspe = list(outcome = "decon_mean", model_name = "rt_int", var = "abs_pe", specs = c("outcome"))
                 #)
 )
+
 saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_att_leth_N_C_Nov_29_2022.rds")))
+
+# saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_rt_int_Sept_2022.rds")))
+
 
 # saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_upps_subscales_rslope_explore_400_47_encode_Aug4_2022.rds")))
 # ddf <- readRDS()
