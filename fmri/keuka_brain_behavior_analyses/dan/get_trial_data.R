@@ -259,6 +259,15 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
       dplyr::select(-feedback_onset, -iti_ideal)
   }
   
+  # v_updated is calculated using lags in parse_sceptic_statistics without respect to the id or run (was easier)
+  # here, make sure it is NA for the first trial of every run
+  if ("v_updated" %in% names(trial_df)) {
+    trial_df <- trial_df %>%
+      group_by(id, run) %>%
+      mutate(v_updated=if_else(row_number() == 1L, NA_real_, v_updated)) %>%
+      ungroup()
+  }
+  
   # params <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")) %>%
   #   dplyr::select(-model)
   # 
