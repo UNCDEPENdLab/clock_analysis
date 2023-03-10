@@ -83,7 +83,7 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
     if (!is.null(lty_by)) {
       g <- g + facet_wrap({{facet_by}}) #?
     }
-    
+    g <- g + xlab("Seconds after outcome") + 
     return(g)
   }
   

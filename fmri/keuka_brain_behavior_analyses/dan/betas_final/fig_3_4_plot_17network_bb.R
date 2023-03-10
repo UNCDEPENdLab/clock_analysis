@@ -25,18 +25,15 @@ all_plots = F # whether to make anatomical plots in addition to the main ones; n
 # for (session in c("fmri", "meg")) {
 # clock_folder <- "~/Data_Analysis/clock_analysis" #michael
 clock_folder <- "~/code/clock_analysis" #alex
-
-# # original output here:
-# fmri_dir <- '/Volumes/GoogleDrive/MyDrive/SCEPTIC_fMRI/wholebrain_betas'
-
-# just the necessary output is here:
-fmri_dir <- file.path(paste0(clock_folder, "/fmri/keuka_brain_behavior_analyses/dan/betas_final/bb/"))
+beta_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/wholebrain_betas" # Whole-brain betas as predictor
 
 # DAN palette:
 colors <- RColorBrewer::brewer.pal(4, "Dark2") %>% setNames(c("1" = "MT+","2" = "Premotor","3" = "Rostral PPC","4" = "Caudal PPC"))
 
-# coxme_ranef <- "rslope" # whether to include random slopes in coxme value sensitivity models; "rslope" or "" for random intercerpt-only
-coxme_ranef <- ""
+# statistical options
+coxme_ranef <- "rint" # whether to include random slopes in coxme value sensitivity models; "rslope" or "" for random intercerpt-only
+censor_ends = T # whether to remove first and last second, sensitivity analysis without insets 
+
 # Manual labels from June-July 2022
 
 labels_df <- setDT(read_excel(file.path(paste0(fmri_dir, "../../MNH DAN Labels 400 Good Only 47 parcels.xlsx")))) %>%
@@ -75,7 +72,7 @@ proc_df <- function(df, terms, cope) {
   return(df)}
 
 
-if ("abspe" %in% signals) {
+if ("abspe" %in% signals) { # relic, not currently included
   setwd(file.path(fmri_dir, 'L1m-abspe'))
   # plot brain to behavior results for absolute PEs
   temp_meg <- readRDS("./parcel_maps_l2/Schaefer_400_DAN_manual_labels_47_meg__mixed_by.rds")  
@@ -198,13 +195,13 @@ if ("abspe" %in% signals) {
     # # geom_text_repel(aes(vm_gradient17, - statistic, color = -statistic, alpha = p_level_fdr, label=plot_label),  color="blue")
     # dev.off()
   }
-}
+} # relic, not currently included
 
 if ("entropychange" %in% signals) {
   # plot entropy change exploitation effect
   
   # import data
-  setwd(file.path(fmri_dir, 'L1m-echange'))
+  setwd(file.path(beta_dir, 'L1m-echange'))
   temp_meg <- readRDS("./parcel_maps_l2/Schaefer_400_DAN_manual_labels_47_meg__mixed_by.rds")  
   temp_fmri <- readRDS("./parcel_maps_l2/Schaefer_400_DAN_manual_labels_47_fmri_mixed_by.rds")
   terms <- c("fmri_beta:rt_vmax_lag")
@@ -217,13 +214,17 @@ if ("entropychange" %in% signals) {
     df <- df %>% filter(term %in% c("fmri_beta:rt_vmax_lag") & model_name == "slo" & session == study)
     ggplot(df) + 
       # geom_jitter(size = 4, width = .1, height = 0,  aes(vm_gradient17, statistic, color = statistic, alpha = p_level_fdr), show.legend = F) + 
-      geom_jitter(size = 4, width = .1, height = 0,  aes(vm_gradient17_names, statistic, color = vm_gradient17_names, alpha = p_level_fdr), show.legend = F) + 
+      geom_jitter(size = 4, width = .1, height = 0,  aes(vm_gradient17_names, statistic, color = vm_gradient17_names, alpha = p_level_fdr)) + 
       # scale_color_gradientn(colors = pal) + 
-      geom_violin(aes(vm_gradient17_names, statistic, color = vm_gradient17_names), alpha = .2, show.legend = F) + ggtitle(title) +
+      geom_violin(aes(vm_gradient17_names, statistic, color = vm_gradient17_names), alpha = .2) + ggtitle(title) +
       scale_color_manual(values = colors ) +
       theme_minimal() + geom_hline(yintercept = 0, size = .3) + 
-      scale_x_discrete(labels = c("MT+" = "MT+", "Caudal PPC" = "PPCc", "Rostral PPC" = "PPCr", "Premotor" = "Prem.")) +
-      theme(axis.text.x = element_text(size = 8, angle = 0), plot.title = element_text(size=9)) + xlab(NULL) + ylab(NULL) 
+      geom_text(aes(vm_gradient17_names, 3.8, label=vm_gradient17_names, color = vm_gradient17_names),  size = 2) +
+      # scale_x_discrete(labels = c("MT+" = "MT+", "Caudal PPC" = "PPCc", "Rostral PPC" = "PPCr", "Premotor" = "Prem.")) +
+      # theme(axis.text.x = element_text(size = 8, angle = 0), plot.title = element_text(size=9)) + 
+      theme(axis.text.x = element_blank(), plot.title = element_text(size=9)) + 
+      guides(alpha = guide_legend(title = expression(p[FDR], shape = guide_legend(override.aes = list(size = .1)))), color = "none") +
+      xlab(NULL) + ylab("Behavioral effect of neural response\non value sensitivity, t statistic") 
     # facet_wrap(~reward) + guides(alpha = guide_legend(override.aes = list(color = "white"), title = expression(p[FDR])))
   }
   echange_inset_fmri <- get_echange_inset(edf, "fMRI", "GLM") 
@@ -231,16 +232,14 @@ if ("entropychange" %in% signals) {
   
   # get coxme results
   # set options as in parcel_brain_behavior_coxme.R
-  censor_ends = F # whether to remove first and last second
-  # if "F" sensitivity analyss: don't decompose U and V into within- vs between-trial components
+  # if "F" sensitivity analysis: don't decompose U and V into within- vs between-trial components
   decompose_within_between_trial = F
   signals = c("entropychange")
-  beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas"
   rhs = "" # historic irrelevant analysis omitting value regressor
   if (!censor_ends) {
-    out_dir <- file.path(beta_dir, "coxme")
+    cox_dir <- file.path(beta_dir, "coxme")
   } else if (censor_ends) {
-    out_dir <- file.path(beta_dir, "coxme/censored")}
+    cox_dir <- file.path(beta_dir, "coxme/censored")}
   if (decompose_within_between_trial) {method = "decomposed"
   value_term = "value_wi_t:scale(h)"
   uncertainty_term = "scale(h):uncertainty_wi_t"
@@ -248,7 +247,7 @@ if ("entropychange" %in% signals) {
   value_term = "value_wi:scale(h)"
   uncertainty_term = "scale(h):uncertainty_wi"
   }
-  setwd(out_dir)
+  setwd(cox_dir)
   
   meg_cox_df <- readRDS(file.path(paste0("beta_coxme_", method, "_meg", rhs, coxme_ranef, "_trial.rds"))) %>% mutate(session = "MEG replication")
   fmri_cox_df <- readRDS(file.path(paste0("beta_coxme_", method, "_fmri", rhs, coxme_ranef, "_trial.rds"))) %>% mutate(session = "fMRI")
@@ -280,33 +279,56 @@ if ("entropychange" %in% signals) {
     pivot_wider(names_from = study, values_from = Statistic) 
   cor.test(ecStats$fmri, ecStats$meg, method = c("pearson"))
   cor_inset <- ggplot(ecStats, aes(fmri, meg)) + geom_point(size  = .8) + theme_light() + geom_smooth(method = "glm", alpha = .2, color = "grey") + 
-    stat_cor(aes(label = ..r.label..), method = "pearson", cor.coef.name = "r", label.x = 0, label.y = cor_y_int, size = 2.8)
+    stat_cor(aes(label = ..r.label..), method = "pearson", cor.coef.name = "r", label.x = 0, label.y = cor_y_int, size = 2.8) + xlab("fMRI") + ylab("MEG")
   # ggplot(ecStats, aes(plot_label, Statistic, color = session, groups = session)) + geom_point() + geom_line()
   
-  setwd(file.path(fmri_dir, "plots"))
+  g <- ggplot(cox_df %>% filter(term == value_term) ) + 
+    geom_jitter(size = 6, width = .1, height = 0,  aes(vm_gradient17_names, Statistic, color = vm_gradient17_names, alpha = p_level_fdr), show.legend = T) + 
+    geom_violin(aes(vm_gradient17_names, color = vm_gradient17_names, Statistic), alpha = .2) + # scale_shape_manual(values = 21:25) +
+    scale_color_manual(values = colors ) +
+    theme_minimal() + xlab(NULL) + ylab("Behavioral effect of neural response on value sensitivity, z statistic") + #labs(color = "Statistic") +
+    geom_text_repel(aes(vm_gradient17_names, Statistic, alpha = p_level_fdr, label=plot_label, color = vm_gradient17_names), point.padding = 10, force = 10,  size = 2.4, show.legend = F) + 
+    facet_grid(~session, labeller = as_labeller(c("fMRI" = "fMRI","MEG replication" =  "MEG, out-of-session replication"))) + geom_hline(yintercept = 0, size = .2) + 
+    theme(legend.key.size = unit(.4, "cm"), strip.text.x = element_text(size = 12), axis.text.x = element_blank()) +
+    guides(alpha = guide_legend(title = expression(p[FDR], shape = guide_legend(override.aes = list(size = .1)))), color = "none")
+  if (!censor_ends) {
+    setwd(file.path(fmri_dir, "plots"))
+    g <- g + geom_text(aes(vm_gradient17_names, yint, label=vm_gradient17_names, color = vm_gradient17_names),  size = 3.5) #+ 
+      # inset_element(echange_inset_fmri, 0, -0.5, .5 , 0,  # left, bottom, right, top;                  large version
+      #               # inset_element(echange_inset_fmri, .2, -.05, .45 , 0.25,  # left, bottom, right, top;  small version
+      #               align_to = "panel", on_top = T) + {if(coxme_ranef == "rslope")
+      #                 inset_element(echange_inset_meg, 0.5, -0.5, 0.9 , 0,  # left, bottom, right, top
+      #                               align_to = "panel", on_top = T)} + 
+      # inset_element(cor_inset, 0.75 , -0.5, 1.05, 0) 
+    plot_height = 5
+    pdf(paste0("echange_rt_vmax_by_vm_gradient17_", "_cox", coxme_ranef, "_dark.pdf"), height = plot_height, width = 10)
+    print(g)
+    dev.off()
+    
+    pdf(paste0("echange_rt_vmax_by_vm_gradient17_", "_glm_fmri", coxme_ranef, "_dark.pdf"), height = 3, width = 5)
+    print(echange_inset_fmri)
+    dev.off()
+    
+    pdf(paste0("echange_rt_vmax_by_vm_gradient17_", "_glm_meg", coxme_ranef, "_dark.pdf"), height = 3, width = 5)
+    print(echange_inset_meg)
+    dev.off()
+  
+    pdf(paste0("echange_beta_coxme_effect_corr", "_dark.pdf"), height = 1.5, width = 1.5)
+    print(cor_inset)
+    dev.off()
+    
+    
+  } else if (censor_ends) {
+    setwd(file.path(fmri_dir, "plots/censored"))
+    g <- g + geom_text(aes(vm_gradient17_names, 12.75, label=vm_gradient17_names, color = vm_gradient17_names),  size = 3.5)
+    plot_height = 5
+    pdf(paste0("echange_rt_vmax_by_vm_gradient17_", "_cox", coxme_ranef, "_dark.pdf"), height = plot_height, width = 10)
+    print(g)
+    dev.off()
+  }
   
   
-  pdf(paste0("echange_rt_vmax_by_vm_gradient17_", "_cox", coxme_ranef, "_dark.pdf"), height = 5, width = 10)
-  print(ggplot(cox_df %>% filter(term == value_term) ) + 
-          # geom_jitter(size = 6, width = .1, height = 0,  aes(vm_gradient17, Statistic, color = Statistic, alpha = p_level_fdr), show.legend = T) + 
-          geom_jitter(size = 6, width = .1, height = 0,  aes(vm_gradient17_names, Statistic, color = vm_gradient17_names, alpha = p_level_fdr), show.legend = T) + 
-          geom_violin(aes(vm_gradient17_names, color = vm_gradient17_names, Statistic), alpha = .2) + # scale_shape_manual(values = 21:25) +
-          # scale_color_viridis(option = "mako") + theme_black() +  
-          # scale_color_gradientn(colors = pal) + 
-          scale_color_manual(values = colors ) +
-          theme_minimal() + xlab(NULL) + ylab("Behavioral effect of neural response on value sensitivity, z statistic") + #labs(color = "Statistic") +
-          geom_text_repel(aes(vm_gradient17_names, Statistic, alpha = p_level_fdr, label=plot_label, color = vm_gradient17_names), point.padding = 10, force = 10,  size = 2.4, show.legend = F) + 
-          geom_text(aes(vm_gradient17_names, yint, label=vm_gradient17_names, color = vm_gradient17_names),  size = 3.5) + 
-          facet_grid(~session, labeller = as_labeller(c("fMRI" = "fMRI","MEG replication" =  "MEG, out-of-session replication"))) + geom_hline(yintercept = 0, size = .2) + 
-          theme(legend.key.size = unit(.4, "cm"), strip.text.x = element_text(size = 12), axis.text.x = element_blank()) +
-          guides(alpha = guide_legend(title = expression(p[FDR], shape = guide_legend(override.aes = list(size = .1)))), color = "none") + 
-          inset_element(echange_inset_fmri, .2, -.05, .45 , 0.25,  # left, bottom, right, top
-                        align_to = "panel", on_top = T) + {if(coxme_ranef == "rslope")
-                          inset_element(echange_inset_meg, 0.58, -0.05, 0.81 ,0.25,  # left, bottom, right, top
-                                        align_to = "panel", on_top = T)} + 
-          inset_element(cor_inset, 0.87 , -0.05, 1.05, 0.28)
-  )
-  dev.off()
+  # relic, not included
   if (all_plots) {
     pdf(paste0("echange_rtvmax_by_vm_gradient17_cox_saggital_", session, ".pdf"), height = 12, width = 16)
     print(ggplot(cox_df %>% filter(term == value_term),

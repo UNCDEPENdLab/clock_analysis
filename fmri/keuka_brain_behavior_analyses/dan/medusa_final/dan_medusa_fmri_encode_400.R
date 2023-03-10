@@ -12,7 +12,7 @@ repo_directory <- "~/code/clock_analysis"
 # repo_directory <- "~/Data_Analysis/clock_analysis"
 
 # move to new 400 labels
-labels <- setDT(read_excel("~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/MNH DAN Labels 400 Good Only 47 parcels.xlsx")) %>%
+labels <- setDT(read_excel("~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/dan_medusa/schaefer_400_remap/MNH DAN Labels 400 Good Only 47 parcels expanded gradient.xlsx")) %>%
   rename(roi_num7=roi7_400) %>%
   select(roi_num7, mnh_label_400, network7_400, network17_400, parcel_group, hemi)
 
@@ -20,13 +20,14 @@ labels <- setDT(read_excel("~/OneDrive - University of Pittsburgh/Documents/SCEP
 #all.equal(labels$network17_400, labels$network17)
 #all.equal(labels$network7_400, labels$network7)
 
+
 visuomotor_long <- TRUE # what we want to load in load_medusa_data_dan.R
 # visuomotor_long <- FALSE # no 4 visuomotor
 # tall_only <- TRUE # get parcelwise
 schaefer_400 <- TRUE # indicate that we want the 400-parcel data
 
 cleanup <- T # whether to remove big dataframes from memory or keep them for model tweaks
-wm <- TRUE # compare with working memory model
+wm <- F # compare with working memory model
 
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/load_medusa_data_dan.R"))
 
@@ -91,7 +92,7 @@ if (alignment=="clock") {
   corrplot::corrplot(corr = cormat$r, p.mat = cormat$p, order = "hclust", 
                      number.digits = 2, addCoef.col="white")
   dev.off()
-  d}
+  }
   d <- merge(trial_df, rt_visuomotor_long, by = c("id", "run", "run_trial"))
   d <- d %>% tidyr::separate(visuomotor_side, into=c("vm_gradient17", "side"), sep="_")
   if (wm) {d <- d %>% filter(!is.na(wm_entropy_wi_change))}
@@ -168,10 +169,13 @@ if (alignment == "clock" || alignment == "clock_online") {
   enc_rt_base <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
                            v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
                            (1 | id) )
-  # basal analysis
+  # basal analysis, full-maintenance
   enc_rt_base_full <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
                            v_entropy_wi_full + v_entropy_wi_change_full + abs_pe + outcome +
                            (1 | id) )
+  # base model without covariates, entropy change only
+  enc_rt_nocov <- formula(~ v_entropy_wi_change + (1 | id) )
+  
   # basal model without entropy, only entropy change
   enc_rt_change <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
                            v_entropy_wi_change + abs_pe + outcome +
@@ -221,6 +225,12 @@ if (alignment == "clock" || alignment == "clock_online") {
                              v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
                              (abs_pe + v_entropy_wi + v_entropy_wi_change + v_max_wi | id) )
   
+  # random slope of only entropy change
+  enc_rt_rslope_ec <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
+                             v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
+                             (v_entropy_wi_change | id) )
+  
+  
   enc_rt_kld <- formula(~ trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi + 
                           v_entropy_wi + v_entropy_wi_change + abs_pe + outcome + kld3 +
                           (1 | id) )
@@ -262,9 +272,9 @@ if (alignment == "clock" || alignment == "clock_online") {
                            v_entropy_wi*run_trial + v_entropy_wi_change*run_trial + abs_pe*run_trial + outcome +
                            (1 | id) )
   
-  # flist <- fmri.pipeline:::named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld, 
-  #                                     enc_rt_logkld_rslope, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
-  flist <- fmri.pipeline:::named_list(enc_rt_wm_exp_rslope, enc_rt_wm_exp_sceptic_rslope)
+  # flist <- fmri.pipeline:::named_list(enc_rt_base, enc_rt_rslope, enc_rt_kld, enc_rt_logkld,
+                                      # enc_rt_logkld_rslope, enc_rt_pe, enc_rt_int, enc_rt_int_cent, enc_rt_trial)
+  flist <- fmri.pipeline:::named_list(enc_rt_nocov, enc_rt_logkld, enc_rt_rslope_ec)
   
 }
 
@@ -278,15 +288,25 @@ message("Running mixed_by")
 ddf <- mixed_by(d, outcomes = "decon_interp", rhs_model_formulae = flist,
                 split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial"),
                 tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
-                calculate = c("parameter_estimates_reml", "fit_statistics"), ncores = 9, refit_on_nonconvergence = 5, padjust_by = "term",
-                emtrends_spec = list(
-                  abspe = list(outcome = "decon_interp", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
-                ))
-
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_400_final47_encode_medusa_fmri.rds")))
+                calculate = c("parameter_estimates_reml", "fit_statistics"), ncores = parallel::detectCores() - 1, refit_on_nonconvergence = 5, padjust_by = "term",
+                # emtrends_spec = list(
+                #   abspe = list(outcome = "decon_interp", model_name = "enc_rt_int", var = "abs_pe", specs = c("outcome"))
+                # )
+                )
+saveRDS(ddf, file=file.path(out_dir, paste0(paste(names(flist), collapse = "__"), "_400_final47_encode_medusa_fmri.rds")))
+# saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_400_final47_encode_medusa_fmri.rds")))
 # saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_400_final47_encode_medusa_fmri_parcelwise.rds")))
 # saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_400_final47_encode_medusa_fmri_wm_rslope.rds")))
+source(file.path(paste0(repo_directory, "/fmri/keuka_brain_behavior_analyses/dan/medusa_final/plot_medusa.R")))
 
+to_plot <- ddf$coef_df_reml %>% filter(effect == "fixed" & evt_time <5) %>% mutate(vm_gradient17 = case_when(
+  vm_gradient17 == "PPCcaudal" ~ "Caudal PPC",
+  vm_gradient17 == "PPCrostral" ~ "Rostral PPC", 
+  TRUE ~ vm_gradient17
+))
+
+plot_medusa(to_plot, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="vm_gradient17", facet_by="side", 
+            out_dir=file.path(out_dir, "rt_sensitivity_Jan_2023"), p.value="padj_BY_term")
 table(ddf$coef_df_reml$vm_gradient17)
 table(ddf$coef_df_reml$label)
 

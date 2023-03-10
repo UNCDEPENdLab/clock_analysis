@@ -19,23 +19,23 @@ library(readxl)
 source("~/code/Rhelpers/theme_black.R")
 
 from_cache = F # uses previously saved coxme output ddfs
-plots = T 
+plots = F
 verbose = F # prints coxme model output for each parcel
 inspect = F # inspect model statistics for sanity checks
-beta_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas"
+beta_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/wholebrain_betas"
 source("~/code/fmri.pipeline/R/mixed_by.R")
 
-studies = c("meg")
+studies = c("meg", "fmri")
 # studies = c("meg", "fmri") # whether to include meg session replication
 
 # sensitivity analyses for fMRI sample, recommend running first 2, one at a time:
-censor = c(F)            # if "T", sensitivity analysis: censor first 500 ms and last second
+censor = c(T)            # if "T", sensitivity analysis: censor first 500 ms and last second
 decompose = c(F)            # if "F" sensitivity analyss: don't decompose U and V into within- vs between-trial components
 omit_value = F              # do not change, needed to check once; not necessary ex-post
 split_by_reward = F         # if "T", sensitivity analysis including interaction with last reward/omission; not necessary ex-post
 signals = c("entropychange")
 # signals = c("abspe", "echange")
-ranefs = "rslope" # "rint", testing random slopes for non-decomposed for now
+ranefs = "rint"  # "rslope", "rint", testing random slopes for non-decomposed for now
 
 # loop over model versions as defined above
 
@@ -92,13 +92,13 @@ for (censor_ends in censor) {
         trial_df <- trial_df %>% select(ID, run, trial, rewFunc, t2, t1, run_trial, omission_lag, bin, response, trial_neg_inv_sc,
                                         value_wi, uncertainty_wi, value_wi_t, uncertainty_wi_t, value_b_t, uncertainty_b_t, value_b, uncertainty_b) 
         
-        abspe_betas <- fread("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas/L1m-abspe_plus_rew/Schaefer_444_final_2009c_2.3mm_cope_l2.csv.gz") %>%
+        abspe_betas <- fread(file.path(paste0(beta_dir, "/L1m-abspe_plus_rew/Schaefer_444_final_2009c_2.3mm_cope_l2.csv.gz"))) %>%
           filter(l2_cope_name == "overall" & !l1_cope_name  %in% c("EV_clock", "EV_feedback", "EV_rew_om")) %>% # only parametric modulators
           dplyr::select(-feat_dir, -img, -mask_name, -session, -l1_cope_number, -l2_cope_number, -l2_model) %>%
           rename(fmri_beta = value) %>%
           # merge(label_df, by = label_join_col, all.x = TRUE)
           merge(labels_df, by = "mask_value", all = FALSE)
-        echange_betas <- fread("/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/wholebrain_betas/L1m-echange/Schaefer_444_final_2009c_2.3mm_cope_l2.csv.gz") %>%
+        echange_betas <- fread(file.path(paste0(beta_dir, "/L1m-echange/Schaefer_444_final_2009c_2.3mm_cope_l2.csv.gz"))) %>%
           filter(l2_cope_name == "overall" & !l1_cope_name  %in% c("EV_clock", "EV_feedback")) %>% # only parametric modulators
           dplyr::select(-feat_dir, -img, -mask_name, -session, -l1_cope_number, -l2_cope_number, -l2_model) %>%
           rename(fmri_beta = value) %>%
