@@ -54,6 +54,9 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
     } else {
       trial_df <- read_csv(file.path(repo_directory, "mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
     }
+    
+    trial_df$id <- gsub(x = trial_df$id, pattern='881224',replacement='431224')
+    trial_df$id <- gsub(x = trial_df$id, pattern='881230',replacement='431230')
   } else if (dataset == "bsocial") {
     # full <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
     # u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
@@ -197,6 +200,7 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
         rt_csv > 1 & rt_csv <= 2 ~ "1-2s",
         rt_csv > 2 & rt_csv <= 3 ~ "2-3s",
         rt_csv > 3 & rt_csv <= 4 ~ "3-4s",
+        rt_csv > 4 & rt_csv <= 5 ~ "4-5s",
         TRUE ~ NA_character_
       ),
       first10 = run_trial < 11,
