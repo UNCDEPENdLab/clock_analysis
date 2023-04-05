@@ -3,7 +3,6 @@ library(tidyverse)
 library(entropy)
 library(parallel)
 
-
 if (whoami::username() == "alexdombrovski") {repo_directory = "~/code/clock_analysis"} else {
   repo_directory = "~/Data_Analysis/clock_analysis"}
 source(file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/get_trial_data.R"))
@@ -102,7 +101,6 @@ gkeys$edata <- elist
 
 edata_expand <- gkeys %>% unnest(cols = edata)
 saveRDS(edata_expand, file=file.path(repo_directory, "fmri/keuka_brain_behavior_analyses/dan/wm_entropy/mmclock_wm_entropy.rds"))
-
 
 # matplot(t(choice_v), type = "l")
 
