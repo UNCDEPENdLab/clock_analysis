@@ -54,6 +54,10 @@ gg_miss_var(sub_df %>% select(-registration_lethality, -total_attempts, -max_let
 str(sub_df)
 
 library(compareGroups)
+sub_df$dummy <- 1
+t0 <- compareGroups(dummy ~ ., data = sub_df %>% select(dummy, race, ethnicity, gender, age, Group))
+createTable(t0)
+
 
 t1 <- compareGroups(Group ~ ., data = sub_df[5:58])
 createTable(t1)
