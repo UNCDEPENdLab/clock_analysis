@@ -1,4 +1,9 @@
 # concatenate decons
+library(data.table)
+library(RNifti)
+library(oro.nifti)
+library(dplyr)
+
 
 filedir <- "/proj/mnhallqlab/users/michael/sceptic_decon"
 subid <- "11316"
@@ -7,7 +12,6 @@ runs <- 1:8
 files <- list.files(path = filedir, pattern = paste0("sub", subid, "_run1_.*_deconvolved.csv.gz"), recursive = TRUE, full.names=TRUE)
 files <- files[grepl("Schaefer.*", files)]
 
-library(data.table)
 all_f <- rbindlist(lapply(files, fread))
 
 # check that no xyz is duplicated
@@ -18,7 +22,6 @@ table(aa)
 
 schaefer_400 <- readNIfTI("/proj/mnhallqlab/projects/clock_analysis/fmri/pfc_entropy/original_masks/Schaefer2018_400Parcels_7Networks_order_fonov_2.3mm_ants.nii.gz", reorient = FALSE)
 schaefer_200 <- readNIfTI("/proj/mnhallqlab/projects/clock_analysis/fmri/pfc_entropy/original_masks/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants.nii.gz", reorient = FALSE)
-
 
 # get indices of mask within matrix (ijk)
 zero_thresh <- 1e-4 # for binarizing/indexing

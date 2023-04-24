@@ -54,6 +54,9 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
     } else {
       trial_df <- read_csv(file.path(repo_directory, "mmclock_fmri_decay_factorize_selective_psequate_mfx_trial_statistics.csv.gz"))
     }
+    
+    trial_df$id <- gsub(x = trial_df$id, pattern='881224',replacement='431224')
+    trial_df$id <- gsub(x = trial_df$id, pattern='881230',replacement='431230')
   } else if (dataset == "bsocial") {
     # full <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
     # u_df <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_fixed_uv_ureset_fixedparams_fmri_ffx_trial_statistics.csv.gz"))
@@ -197,6 +200,7 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
         rt_csv > 1 & rt_csv <= 2 ~ "1-2s",
         rt_csv > 2 & rt_csv <= 3 ~ "2-3s",
         rt_csv > 3 & rt_csv <= 4 ~ "3-4s",
+        rt_csv > 4 & rt_csv <= 5 ~ "4-5s",
         TRUE ~ NA_character_
       ),
       first10 = run_trial < 11,
@@ -258,6 +262,15 @@ get_trial_data <- function(repo_directory=NULL, dataset="mmclock_fmri", groupfix
       tidyr::separate(id, sep="_", into=c("id", "date")) %>%
       mutate(Subject=as.integer(id)) %>%
       dplyr::select(-feedback_onset, -iti_ideal)
+  }
+  
+  # v_updated is calculated using lags in parse_sceptic_statistics without respect to the id or run (was easier)
+  # here, make sure it is NA for the first trial of every run
+  if ("v_updated" %in% names(trial_df)) {
+    trial_df <- trial_df %>%
+      group_by(id, run) %>%
+      mutate(v_updated=if_else(row_number() == 1L, NA_real_, v_updated)) %>%
+      ungroup()
   }
   
   # params <- read_csv(file.path(repo_directory, "fmri/data/mmclock_fmri_decay_factorize_selective_psequate_mfx_sceptic_global_statistics.csv")) %>%

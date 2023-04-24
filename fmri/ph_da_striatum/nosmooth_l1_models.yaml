@@ -1,0 +1,151 @@
+# define columns that can be selected in different parts of the model specification
+onsets:
+  - clock_onset
+  - feedback_onset
+
+durations:
+  - rt_csv
+
+isis:
+  - iti_ideal
+
+wi_factors:
+  - rew_om
+
+values:
+  - pe_max
+  - rew_om_c
+  - abs_pe_c
+  - v_entropy             # overall entropy, not within-run scaled
+  - v_entropy_wi          # within-run scaled entropy
+  - v_entropy_wi_change
+
+# events must consist of name, onset, and duration. isi is optional
+events:
+
+  clock:
+    onset: clock_onset
+    duration: rt_csv    # RT convolution
+
+  feedback:
+    onset: feedback_onset
+    duration: 0.9
+    isi: iti_ideal
+
+# if not otherwise speecified, signals will default to unit height regressors with no HRF normalization
+signals:
+  clock:
+    event: clock
+    normalization: none
+    value_fixed: 1
+
+  feedback:
+    event: feedback
+    normalization: none
+    value_fixed: 1
+
+  # absolute prediction error
+  abspe:
+    event: feedback
+    trial_subset_expression: rt_csv < 4
+    normalization: evtmax_1
+    parametric_modulator: abs_pe_c
+
+  # signed prediction error
+  pe:
+    event: feedback
+    trial_subset_expression: rt_csv < 4
+    normalization: evtmax_1
+    parametric_modulator: pe_max
+
+  # reward (0.5/-0.5)
+  rew_om:
+    event: feedback
+    trial_subset_expression: rt_csv < 4
+    normalization: evtmax_1
+    parametric_modulator: rew_om_c
+   
+  # clock-aligned entropy without run centering and normalization
+  entropy_clock:
+    event: clock
+    trial_subset_expression: rt_csv < 4
+    normalization: evtmax_1
+    parametric_modulator: v_entropy
+
+  # clock-aligned entropy with run z-scoring
+  entropy_wiz_clock:
+    event: clock
+    trial_subset_expression: rt_csv < 4
+    normalization: evtmax_1
+    parametric_modulator: v_entropy_wi
+
+  entropy_change_feedback:
+    event: feedback
+    trial_subset_expression: rt_csv < 4
+    normalization: evtmax_1
+    parametric_modulator: v_entropy_wi_change # change following outcome of current trial -- RT-aligned
+
+l1_models:
+  # signed PE
+  pe:
+    signals:
+      - clock
+      - feedback
+      - pe
+    contrasts:
+      include_diagonal: yes
+
+  # reward/omission only
+  rew_om:
+    signals:
+      - clock
+      - feedback
+      - rew_om
+    contrasts:
+      include_diagonal: yes
+
+  # absolute PE
+  abspe:
+    signals:
+      - clock
+      - feedback
+      - abspe
+    contrasts:
+      include_diagonal: yes
+  
+  # overall entropy (no z-scoring)
+  entropy:
+    signals:
+      - clock
+      - feedback
+      - entropy_clock
+    contrasts:
+      include_diagonal: yes
+
+  # within-run z-scored entropy
+  entropy_wiz:
+    signals:
+      - clock
+      - feedback
+      - entropy_wiz_clock
+    contrasts:
+      include_diagonal: yes
+
+  # entropy-change, feedback aligned (change due to immediate outcome)
+  echange:
+    signals:
+      - clock
+      - feedback
+      - entropy_change_feedback
+    contrasts:
+      include_diagonal: yes
+
+  # as above, but with feedback-aligned absPE
+  echange_abspe:
+    signals:
+      - clock
+      - feedback
+      - entropy_change_feedback
+      - abspe
+    contrasts:
+      include_diagonal: yes

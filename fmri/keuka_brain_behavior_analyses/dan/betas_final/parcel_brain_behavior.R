@@ -52,7 +52,7 @@ labels <- readxl::read_excel(file.path(analysis_dir, "..", "MNH Dan Labels.xlsx"
   dplyr::rename(mask_value=roinum) %>% select(mask_value, plot_label)
 
 # BALSA parcel labels from whereami
-labels_200 <- read.csv(file.path(beta_dir, "schaefer_200_whereami.csv")) %>%
+labels_df <- read.csv(file.path(beta_dir, "schaefer_200_whereami.csv")) %>%
   dplyr::rename(mask_value = roi_num, plot_label = MNI_Glasser_HCP_v1.0) %>% dplyr::select(mask_value, plot_label) %>%
   mutate(plot_label = sub("Focus point:\\s+", "", plot_label, perl=TRUE))
 
@@ -137,7 +137,7 @@ for (ee in efiles_l2) {
     input_rdata_file = "parcel_input_snapshot.RData",
     n_nodes = 1, n_cpus = 16, wall_time = "12:00:00",
     mem_total = "64G",
-    r_code = glue("to_plot <- mixed_by_betas('{ee}', labels_200, trial_df, mask_file = 'Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
+    r_code = glue("to_plot <- mixed_by_betas('{ee}', labels_df, trial_df, mask_file = 'Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
                             rhs_model_formulae = fmri.pipeline:::named_list(int, slo), ncores = 16, afni_dir = '/proj/mnhallqlab/sw/afni',
                             calculate = c('parameter_estimates_reml', 'fit_statistics'),
                             beta_level = 2L, focal_contrast = 'overall', emtrends_spec = emtrends_spec,
@@ -150,7 +150,7 @@ for (ee in efiles_l2) {
 
 
   # local execution
-  # to_plot <- mixed_by_betas(ee, labels_200, trial_df, mask_file = "Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
+  # to_plot <- mixed_by_betas(ee, labels_df, trial_df, mask_file = "Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
   #                           rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16,
   #                           split_on = c("l1_cope_name", "l2_cope_name", "mask_value"))
 }
@@ -171,7 +171,7 @@ for (ee in seq_along(efiles_l1)) {
     input_rdata_file = "parcel_input_snapshot.RData",
     n_nodes = 1, n_cpus = 16, wall_time = "12:00:00",
     mem_total = "96G",
-    r_code = glue("to_plot <- mixed_by_betas('{efiles_l1[ee]}', labels_200, trial_df, mask_file = 'Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
+    r_code = glue("to_plot <- mixed_by_betas('{efiles_l1[ee]}', labels_df, trial_df, mask_file = 'Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz',
                             rhs_model_formulae = fmri.pipeline:::named_list(rewFunc), ncores = 16, afni_dir = '/proj/mnhallqlab/sw/afni',
                             calculate = c('parameter_estimates_reml', 'fit_statistics'),
                             trial_join_col = c('id', 'run_number'), beta_level = 1L, focal_contrast = '{l1_contrasts[ee]}', emtrends_spec = emtrends_spec,
@@ -184,7 +184,7 @@ for (ee in seq_along(efiles_l1)) {
   job$submit()
 
   # local execution
-  # to_plot <- mixed_by_betas(ee, labels_200, trial_df, mask_file = "Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
+  # to_plot <- mixed_by_betas(ee, labels_df, trial_df, mask_file = "Schaefer2018_200Parcels_7Networks_order_fonov_1mm_ants.nii.gz",
   #                           rhs_form = fmri.pipeline:::named_list(int, slo), ncores = 16,
   #                           split_on = c("l1_cope_name", "l2_cope_name", "mask_value"))
 }
@@ -237,7 +237,7 @@ onesamp_betas(echange_intermediate, mask_file="Schaefer2018_200Parcels_7Networks
 
 echange_l2_copes <- file.path(beta_dir, "L1m-echange/Schaefer2018_200Parcels_7Networks_order_fonov_2.3mm_ants_cope_l2.csv.gz")
 
-mixed_by_betas(echange_l2_copes, labels_200, trial_df)
+mixed_by_betas(echange_l2_copes, labels_df, trial_df)
 
 # subject-level
 #echange_l2_copes <- fread(file.path(beta_dir, "L1m-echange/Schaefer_DorsAttn_2.3mm_cope_l2.csv.gz")) %>%
@@ -248,7 +248,7 @@ entropy_l2_copes <- fread(file.path(beta_dir, "L1m-entropy_wiz/Schaefer2018_200P
   filter(l1_cope_name == "EV_entropy_wiz_clock" & l2_cope_name == "overall") %>%
   select(-feat_dir, -img) %>%
   rename(fmri_beta=value) %>%
-  left_join(labels_200, by="mask_value")
+  left_join(labels_df, by="mask_value")
 
 # meg effects of interest
 # meg_wide <- readRDS("MEG_betas_wide_echange_vmax_reward_Nov15_2021.RDS")
@@ -359,7 +359,7 @@ to_plot <- ddf$coef_df_reml %>%
   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
   ungroup() %>% 
   #left_join(labels, by="mask_value") %>%
-  left_join(labels_200, by="mask_value") %>%
+  left_join(labels_df, by="mask_value") %>%
   setDT()
 
 
