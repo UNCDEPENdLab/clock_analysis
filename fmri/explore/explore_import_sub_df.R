@@ -57,6 +57,7 @@ library(compareGroups)
 sub_df$dummy <- 1
 t0 <- compareGroups(dummy ~ ., data = sub_df %>% select(dummy, race, ethnicity, gender, age, Group))
 createTable(t0)
+compareGroups::export2html(x = createTable(t0), file = "explore_sample_n146.html")
 
 
 t1 <- compareGroups(Group ~ ., data = sub_df[5:58])
