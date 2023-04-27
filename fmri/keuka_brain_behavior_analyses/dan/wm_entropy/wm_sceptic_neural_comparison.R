@@ -110,15 +110,15 @@ ggplot(wdf, aes(evt_time, AIC_sceptic_minus_wm_exp1, color = vm_gradient17)) +
 dev.off()
 
 
-pdf("AIC_sceptic_selective_minus_full.pdf", height = 2.5, width = 3)
+pdf("AIC_sceptic_selective_minus_full.pdf", height = 2.9, width = 3)
 ggplot(wdf, aes(evt_time, AIC_selective_minus_full, color = vm_gradient17)) +
   geom_line(size=2) + 
   # geom_pointrange(aes(size=p_level), position=position_dodge(width=0.4)) +
   #scale_color_brewer(palette="Dark2", labels=c("1" = "MT+, control", "2" = "Caudal post. parietal", "3" = "Rostral post. parietal", "4" = "Frontal premotor")) +
-  scale_color_manual(values = colors) + ylab("AIC difference\n selective <--> full") + xlab("Seconds after outcome") +
+  scale_color_manual(values = colors) + ylab("AIC difference\ncompression <-> no compression") + xlab("Seconds after outcome") +
   geom_hline(yintercept = 0, size=1.5, alpha=0.6) +
   geom_vline(xintercept = 0, size=1.5, alpha=0.6) +
-  scale_size_manual(values=c(0.5, 0.8, 1.1, 1.4)) + theme_bw(base_size=12) +  theme(legend.title=element_blank(), legend.position="none")
+  scale_size_manual(values=c(0.5, 0.8, 1.1, 1.4)) + theme_bw(base_size=11) +  theme(legend.title=element_blank(), legend.position="none")
 dev.off()
 # 
 # pdf("AIC_sceptic_selective_minus_full_wm.pdf", height = 4, width = 6)

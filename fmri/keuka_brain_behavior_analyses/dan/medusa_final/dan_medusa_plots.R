@@ -18,17 +18,17 @@ study = "mmclock"
 
 
 if (study == "mmclock") {
-## parcelwise checks
-ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5 & effect=="fixed") %>% 
-  group_by(term, model_name) %>%
-  mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
-  ungroup() %>% setDT()
-
-out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa"
-plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", 
-            color="label", facet_by=NULL, panel_by="vm_gradient17",
-            out_dir=file.path(out_dir, "rt_encode_400_final47_20Jul2022_parcelwise"), p.value="p_FDR",
-            width = 15, height=15)
+# ## parcelwise checks
+# ddf$coef_df_reml <- ddf$coef_df_reml %>% dplyr::filter(evt_time <= 5 & effect=="fixed") %>% 
+#   group_by(term, model_name) %>%
+#   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
+#   ungroup() %>% setDT()
+# 
+# out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa"
+# plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", 
+#             color="label", facet_by=NULL, panel_by="vm_gradient17",
+#             out_dir=file.path(out_dir, "rt_encode_400_final47_20Jul2022_parcelwise"), p.value="p_FDR",
+#             width = 15, height=15)
 
 meg = F
 if (meg) {
@@ -74,7 +74,7 @@ ddf <- readRDS("~/Library/CloudStorage/OneDrive-UniversityofPittsburgh/Documents
 my_df <- get_df(ddf, "enc_rt_abspe_logkld_rslope", "abs_pe")
 
 
-pdf("/Users/hallquist/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/figures/fig_3_PE_whole_brain_medusa_bb/abs_pe_medusa.pdf", width=8, height=5)
+pdf("~/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/figures/fig_3_PE_whole_brain_medusa_bb/abs_pe_medusa.pdf", width=8, height=5)
 ggplot(my_df, aes(x=evt_time, y=estimate, ymin=estimate-std.error, ymax=estimate + std.error, color=vm_gradient17, group=vm_gradient17, size=p_level)) +
   common +
   ylab("abs(PE) coefficient (AU)") + xlab("Time relative to feedback (seconds)")
@@ -85,7 +85,7 @@ dev.off()
 # rew > om
 my_df <- get_df(ddf, "enc_rt_abspe_logkld_rslope", "outcomeReward")
 
-pdf("/Users/hallquist/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/figures/fig_3_PE_whole_brain_medusa_bb/rewom_medusa.pdf", width=8, height=5)
+pdf("~/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/figures/fig_3_PE_whole_brain_medusa_bb/rewom_medusa.pdf", width=8, height=5)
 ggplot(my_df, aes(x=evt_time, y=estimate, ymin=estimate-std.error, ymax=estimate + std.error, color=vm_gradient17, group=vm_gradient17, size=p_level)) +
   common +
   ylab("Reward > omission coefficient (AU)") + xlab("Time relative to feedback (seconds)")
@@ -94,7 +94,7 @@ dev.off()
 #rew > om simple plot (no pe in model)
 my_df <- get_df(ddf, "enc_rt_rewom_rslope", "outcomeReward")
 
-pdf("/Users/hallquist/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/figures/fig_3_PE_whole_brain_medusa_bb/rewom_nope_medusa.pdf", width=8, height=5)
+pdf("~/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/figures/fig_3_PE_whole_brain_medusa_bb/rewom_nope_medusa.pdf", width=8, height=5)
 ggplot(my_df, aes(x=evt_time, y=estimate, ymin=estimate-std.error, ymax=estimate + std.error, color=vm_gradient17, group=vm_gradient17, size=p_level)) +
   common +
   ylab("Reward > omission coefficient (AU)") + xlab("Time relative to feedback (seconds)")
@@ -104,7 +104,7 @@ dev.off()
 # signed pe
 my_df <- get_df(ddf, "enc_rt_pe_logkld_rslope", "pe_max")
 
-pdf("/Users/hallquist/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/figures/fig_3_PE_whole_brain_medusa_bb/pe_medusa.pdf", width=8, height=5)
+pdf("~/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/figures/fig_3_PE_whole_brain_medusa_bb/pe_medusa.pdf", width=8, height=5)
 ggplot(my_df, aes(x=evt_time, y=estimate, ymin=estimate-std.error, ymax=estimate + std.error, color=vm_gradient17, group=vm_gradient17, size=p_level)) +
   common +
   ylab("Prediction error coefficient (AU)") + xlab("Time relative to feedback (seconds)")
@@ -125,7 +125,7 @@ dev.off()
 my_df <- get_df(ddf, "enc_rt_abspe_logkld_rslope", "v_entropy_wi_change")
 
 
-pdf("/Users/hallquist/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/figures/fig_5_echange_whole_brain_medusa_bb_coxme/v_entropy_wi_change_medusa.pdf", width=8, height=5)
+pdf("~/Library/CloudStorage/OneDrive-Personal/collected_letters/papers/meg/figures/fig_3_echange_whole_brain_medusa/v_entropy_wi_change_medusa.pdf", width=8, height=5)
 ggplot(my_df, aes(x=evt_time, y=estimate, ymin=estimate-std.error, ymax=estimate + std.error, color=vm_gradient17, group=vm_gradient17, size=p_level)) +
   common +
   ylab("Entropy change coefficient (AU)") + xlab("Time relative to feedback (seconds)")
@@ -200,7 +200,7 @@ plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="
 # 
 # 
 # 
-# rdf <- readRDS("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/rt_prediction_rt_aligned_mixed_by.rds")
+# rdf <- readRDS("~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/rt_prediction_rt_aligned_mixed_by.rds")
 # out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/"
 # rdf$coef_df_reml <- rdf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
 #   filter(effect=="fixed") %>%
@@ -215,7 +215,7 @@ plot_medusa(ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="
 # 
 # 
 # ### CLOCK-ALIGNED RT PREDICTION
-# cdf <- readRDS("/Users/hallquist/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/rt_prediction_clock_aligned_mixed_by.rds")
+# cdf <- readRDS("~/Data_Analysis/clock_analysis/fmri/keuka_brain_behavior_analyses/rt_prediction_clock_aligned_mixed_by.rds")
 # out_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/dan_medusa/"
 # cdf$coef_df_reml <- cdf$coef_df_reml %>% dplyr::filter(evt_time <= 5) %>% 
 #   filter(effect=="fixed") %>%

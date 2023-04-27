@@ -11,7 +11,7 @@ library(RColorBrewer)
 source("~/code/Rhelpers/theme_black.R")
 
 repo_directory <- "~/code/clock_analysis"
-data_dir <- "/Volumes/GoogleDrive/My Drive/SCEPTIC_fMRI/MEG/output/"
+data_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/MEG/output/"
 plot_dir <- "~/OneDrive/collected_letters/papers/meg/plots/wholebrain/"
 
 clock_epoch_label = "Time relative to clock onset (seconds)"
@@ -21,7 +21,7 @@ rt_predict = F
 p_adjust_method = "fdr"
 uncorrected = F # whether to make uncorrected plots
 
-regressors = c("abspe_rewfunc")
+regressors = c("entropy_change_ri")
 
 # regressors = c( "v_max_ri", "entropy","entropy_change_neg_ri", "entropy_change_pos_ri", "v_max_ri", "reward", "kld", "abs_pe")
 # rt_next, reward_rewfunc, ec_rewfunc, condition
@@ -32,7 +32,7 @@ regressors = c("abspe_rewfunc")
 emt1 = F # emtrends plots for the first set (ddf$emtrends_list$emt1)
 print_filenames = T
 fixed_only = F
-reprocess = T # reprocess from uncompiled lmer output
+reprocess = F # reprocess from uncompiled lmer output
 plots = T
 diags = F
 average = F
