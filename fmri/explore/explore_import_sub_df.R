@@ -53,12 +53,17 @@ gg_miss_var(sub_df %>% select(-registration_lethality, -total_attempts, -max_let
 
 str(sub_df)
 
+# compare with MEDUSA output
+
+medusa_df <- readRDS("/Users/alexdombrovski/Library/CloudStorage/OneDrive-UniversityofPittsburgh/Documents/SCEPTIC_fMRI/explore_medusa/rt_parcel_group_rt_logkld3_rslope_bilateral_Sept_27_2022.rds")[[1]]
+ids <- unique(medusa_df$level) %>% readr::parse_integer(na = character()) %>% na.omit() %>% as.numeric()
+
+sub_df <- sub_df %>% filter(is.element(registration_redcapid, ids))
 library(compareGroups)
 sub_df$dummy <- 1
 t0 <- compareGroups(dummy ~ ., data = sub_df %>% select(dummy, race, ethnicity, gender, age, Group))
 createTable(t0)
-compareGroups::export2html(x = createTable(t0), file = "explore_sample_n146.html")
-
+export2html(createTable(t0), file = "explore_sample_n142.html")
 
 t1 <- compareGroups(Group ~ ., data = sub_df[5:58])
 createTable(t1)
