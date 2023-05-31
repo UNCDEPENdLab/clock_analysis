@@ -7,7 +7,12 @@ df <- read_csv("2023-05-17-DeepMReye-N=50.csv")[-1] %>% filter(online == T) %>%
   select(id, trial, run_trial, run, rewFunc, contains("theta"), rt_csv, rt_vmax, TR_num, dtheta, dr, c(124:135)) %>%
   mutate(tr_num_f = as.factor(TR_num)) %>% group_by(id, trial) %>% 
   mutate(trs_until_rt = max(TR_num) - TR_num,
-         trs_until_rt_f = as.factor(trs_until_rt))
+         trs_until_rt_f = as.factor(trs_until_rt),
+         theta_c = theta - pi,
+         theta_rt_c = theta_rt - pi,
+         theta_rtvmax_c = theta_rt_vmax - pi)
+
+saveRDS(df, file = "deepmreye_explore_n50_processed.rds")
 
 # something wrong with TR_num, filter big values for now
 
@@ -22,9 +27,26 @@ ggplot(df, aes(TR_num, theta, color = rewFunc)) +
   scale_y_continuous(limits = c(0, 6.33)) + facet_wrap(~run) +
   theme_bw()
 
+
+ggplot(df, aes(run_trial, theta_rt, color = rewFunc)) +
+  # geom_smooth(method = "loess") +
+  geom_smooth(method = "gam", formula = y ~ s(x, k = 4, bs = "cs")) +
+  coord_polar(theta = "y", clip = "off") +
+  scale_y_continuous(limits = c(0, 6.33)) + facet_wrap(~run) +
+  theme_bw()
+
+ggplot(df, aes(run_trial, theta_rt_vmax, color = rewFunc)) +
+  # geom_smooth(method = "loess") +
+  geom_smooth(method = "gam", formula = y ~ s(x, k = 4, bs = "cs")) +
+  coord_polar(theta = "y", clip = "off") +
+  scale_y_continuous(limits = c(0, 6.33)) + facet_wrap(~run) +
+  theme_bw()
+
+
+
 ggplot(df, aes(-trs_until_rt, theta, color = rewFunc)) +
   # geom_smooth(method = "loess") +
-  geom_smooth(method = "gam", formula = y ~ s(x, k = 8, bs = "cs")) +
+  geom_smooth(method = "gam", formula = y ~ s(x, k = 3, bs = "cs")) +
   coord_polar(theta = "y", clip = "off") +
   # scale_y_continuous(limits = c(0, 6.33)) + #facet_wrap(~run) +
   theme_bw()
