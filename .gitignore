@@ -28,3 +28,5 @@ coxme/fMRI_MEG_coxme_objects_no_MEDUSA_Nov23_2020
 coxme/fMRI_MEG_coxme_objects_with_medusa_Nov24_2020
 meg/data/mmclock_meg_fixed_fixedparams_meg_ffx_trial_statistics.csv (1).gz
 fmri/keuka_brain_behavior_analyses/dan/betas_final/.Rapp.history
+*.csv
+*.csv

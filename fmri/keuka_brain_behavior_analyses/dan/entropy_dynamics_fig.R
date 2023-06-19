@@ -54,10 +54,7 @@ ldf <- pivot_longer(df, cols = c(v_entropy, v_entropy_full), names_to = "model")
 id_df <- df %>% select(id) %>% unique() %>% mutate(
   subject_num = as.numeric(1:length(unique(df$id)))
 ) %>% merge(rand_df, by = "subject_num")
-
 rand_df <- id_df %>% merge(df, by = c("id", "trial"))
-
-
 setwd("~/OneDrive/collected_letters/papers/meg/figures/fig_1_task_model/")
 pdf(paste0("entropy_timecourse_", session, ".pdf"), height = 1.75, width = 1.75)
 ggplot(ldf, aes(trial, entropy, color = model)) + 
@@ -125,6 +122,49 @@ ggplot(rand_ldf %>% filter(run_number>1), aes(run_trial, entropy, color = model)
   annotate("text", x = 15, y = 4.2, label = "Traditional", color = "grey40") +
   coord_cartesian(ylim=c(2.67,4.35))
 dev.off()
+
+# # check WM entropy dynamics for comparison
+# edf <- readRDS("/Users/alexdombrovski/Library/CloudStorage/OneDrive-UniversityofPittsburgh/Documents/SCEPTIC_fMRI/wm/mmclock_wm_entropy.rds")
+# nats_to_bits <- function(x) (x * log2(exp(1)))
+# wm_rand_df <- rand_df %>% merge(edf, by = c("id", "trial")) %>% mutate_at(vars(matches("entropy")), nats_to_bits)
+# 
+# cormat <- psych::corr.test(wm_rand_df %>% select(matches("entropy")))
+# corrplot::corrplot(cormat$r)
+# 
+# wm_rand_ldf <- pivot_longer(wm_rand_df, cols = c(entropy_decay, entropy_fixed, choice_entropy, rewom_entropy), names_to = "model") %>%
+#   mutate(model = case_when(
+#     model=="entropy_decay" ~ "information-compressing",
+#     model=="entropy_fixed" ~ "traditional",
+#     model=="choice_entropy" ~ "WM, selection\nhistory buffer",
+#     model=="rewom_entropy" ~ "WM, reward\nhistory buffer"
+#   )) %>% rename(entropy = value)
+# 
+# ggplot(wm_rand_ldf, aes(trial, entropy, color = model)) + 
+#   # geom_smooth(method = "loess", span = .05, size = 0.75) +
+#   scale_color_grey(start = 0, end = 0.6) +
+#   geom_smooth(method = "gam", formula = y ~ s(x, k = 40, bs = "cs")) +
+#   scale_x_continuous(breaks = c(seq(from = 0, to = run_length*8, by = run_length))) + xlim(10, run_length*8) +
+#   geom_vline(xintercept = seq(from = run_length, to = run_length*8, by = run_length), lty = "dotted", size = .2) + 
+#   labs(x = "Trial across all runs", y = "Entropy, bits") +
+#   guides(color=F) +
+#   theme_minimal()
+# 
+# ggplot(wm_rand_ldf %>% filter(run_number>1), aes(run_trial, entropy, color = model)) + 
+#   # geom_smooth(method = "loess", span = .03, size = 0.75) +
+#   # scale_color_grey(start = 0, end = 0.6) +
+#   # facet_wrap(~model, scales = "free")
+#   # scale_y_break(c(3.07,4.39)) +
+#   # geom_smooth(aes(group = interaction(id, model)), se = F, size = .05, alpha = 0.03) +
+#   geom_smooth(method = "gam", formula = y ~ s(x, k = 5, bs = "cs"), size = 0.7) +
+#   labs(x = "Trial within run", y = "Entropy, bits") +
+#   # guides(color=guide_legend(override.aes=list(fill=NA))) +
+#   theme_minimal() + 
+#   # theme(legend.position = c(.6,.6), legend.background = element_rect(fill = "white", linetype = 0))
+#   # theme(legend.position = "none") + 
+#   annotate("text", x = 35, y = 3.3, label = "Information-\ncompressing") +
+#   annotate("text", x = 15, y = 4.2, label = "Traditional", color = "grey40") #+
+#   # coord_cartesian(ylim=c(2.67,4.35))
+# 
 
 # pdf(paste0("entropy_runwise_timecourse_random_uniform_zoom.pdf"), height = 1, width = 1)
 # ggplot(rand_ldf %>% filter(run_number>1 & model == "traditional"), aes(run_trial, entropy, color = model)) + 

@@ -7,9 +7,9 @@ out_dir <- "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/explore
 repo_directory <- "~/code/clock_analysis"
 # repo_directory <- "~/Data_Analysis/clock_analysis"
 
-reprocess = T
+reprocess = F
 emm = T # extract EMMEANS estimates, e.g. for hi/lo abs(PE)
-rerun_old_models = T
+rerun_old_models = F
 alignment = "rt"
 bilateral = T # combine R/L, include as crossed effect with random slopes
 # mixed_by call
@@ -83,10 +83,20 @@ if (reprocess) {
   saveRDS(rt_visuomotor_long, file = "explore_rt_decon_all_444_parcels_beta1.rds")
   # saveRDS(rt_visuomotor_long_400_47, file = "explore_rt_decon_dan_400_47_beta_1.rds")
 } else {
-  rt_visuomotor_long_400_47 <-  readRDS("explore_rt_decon_dan_400_47_beta1.rds")
-}
+  # rt_visuomotor_long_400_47 <-  readRDS("explore_rt_decon_dan_400_47_beta1.rds")
+  rt_visuomotor_long_400_47 <-  setDT(readRDS("explore_rt_decon_all_444_parcels_beta1.rds"))
+  labels <- setDT(read_excel(file.path(paste0(repo_directory, "/fmri/keuka_brain_behavior_analyses/dan/MNH DAN Labels 400 Good Only 47 parcels.xlsx")))) %>%
+    rename(roi_num7=roi7_400) %>%
+    select(roi_num7, parcel_group, hemi) %>% mutate(atlas_value = as.integer(roi_num7))
+  }
 
-# rt_visuomotor_long <- rt_visuomotor_long %>% inner_join(dan_labels, by = "atlas_value") %>% filter(!is.na(Stream))
+# get lags
+
+rt_visuomotor_long_400_47 <- rt_visuomotor_long_400_47 %>% select(!any_of(c("decon_sd", "decon_median"))) %>% group_by(id, run, trial, atlas_value) %>% arrange(id, atlas_value, run, trial, evt_time) %>%
+  mutate(decon_lag = lag(decon_mean)) %>% ungroup()
+
+
+rt_visuomotor_long_400_47 <- rt_visuomotor_long_400_47 %>%  inner_join(labels, by = "atlas_value") #%>% filter(!is.na(Stream))
 
 setwd(file.path(paste0(repo_directory, "/fmri/keuka_brain_behavior_analyses/dan/")))
 
@@ -94,7 +104,7 @@ source("get_trial_data.R")
 source("medusa_final/plot_medusa.R") # careful -- plot_medusa sets out_dir, need to reset
 # source("~/code/fmri.pipeline/R/mixed_by.R")
 
-trial_df <- setDT(get_trial_data(dataset = "explore", repo_directory = "~/OneDrive - University of Pittsburgh/Documents/SCEPTIC_fMRI/explore_wholebrain/"))  
+trial_df <- setDT(get_trial_data(dataset = "explore", repo_directory))  
 
 trial_df <- trial_df %>% dplyr::select(id, run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
                                        v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
@@ -137,7 +147,8 @@ if (alignment=="clock") {
   trial_df <- trial_df %>%
     dplyr::select(id, run, run_trial, trial, trial_neg_inv_sc, rt_csv_sc, rt_lag_sc, pe_max, rew_om_c, abs_pe_c, abspexrew,
                   v_entropy_wi, v_entropy_wi_change, kld3, v_max_wi, abs_pe, outcome) %>%
-    mutate(log_kld3 = log(kld3 + .00001))
+    mutate(log_kld3 = log(kld3 + .00001),
+           id = as.integer(id))
   trial_df <- inner_join(trial_df, sub_df, by = "id")
   d <- merge(trial_df, rt_visuomotor_long_400_47, by = c("id", "run", "trial"))
   d <- d %>% rename(side = "hemi")
@@ -404,16 +415,19 @@ if (alignment == "clock" || alignment == "clock_online") {
   # flist <- named_list(rt_upps_all_subsc_rslope)
   # flist <- named_list(rt_rslope, rt_kld, rt_pe)
   # flist <- named_list(rt_base, rt_rslope, rt_kld, rt_logkld, rt_pe, rt_int, rt_int_cent, rt_trial)
-
-  flist <- named_list(rt_rslope_logkld3_bl)
+  rt_base_lag <- formula(~ decon_lag + trial_neg_inv_sc + rt_csv_sc + rt_lag_sc + v_max_wi +
+                       v_entropy_wi + v_entropy_wi_change + abs_pe + outcome +
+                       (1 | id) )
+  
+  flist <- named_list(rt_base_lag)
+  d <- d %>% filter(!is.na(decon_lag))
 
 }
-
 splits <- c("parcel_group", "evt_time") # bilateral
 # splits <- c("parcel_group", "side", "evt_time")
 message(paste0("Running mixed_by for ", print(flist)))
 ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
-                split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial",
+                split_on = splits, scale_predictors = c("abs_pe", "abs_pe_lag", "pe_max", "pe_max_lag", "run_trial", "decon_lag",
                                                         to_scale),
                 tidy_args = list(effects = c("fixed", "ran_vals", "ran_pars", "ran_coefs"), conf.int = TRUE), 
                 calculate = c("parameter_estimates_reml"), ncores = detectCores() - 1, refit_on_nonconvergence = 5, padjust_by = "term"#,
@@ -421,9 +435,10 @@ ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = flist,
                 #   abspe = list(outcome = "decon_mean", model_name = "rt_int", var = "abs_pe", specs = c("outcome"))
                 #)
 )
-# saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_rt_int_Sept_2022.rds")))
 
-saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_att_leth_N_C_Nov_29_2022.rds")))
+saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", flist[1], "May_30_2023.rds")))
+
+# saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_att_leth_N_C_Nov_29_2022.rds")))
 
 # saveRDS(ddf, file=file.path(out_dir, paste0(alignment, "_", splits[1], "_rt_int_Sept_2022.rds")))
 

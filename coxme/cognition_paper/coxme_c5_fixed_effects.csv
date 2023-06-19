@@ -1,6 +1,3 @@
-﻿                         coef exp(coef)     se(coef)
-rtlag           -0.0004403835 0.9995597 8.080809e-06
-value            0.0302832955 1.0307465 5.015748e-04
-uncertainty     -0.0005351951 0.9994649 1.210888e-05
-entropylag      -0.0633938281 0.9385738 6.425043e-02
-distfromedgelag -0.0070949119 0.9929302 1.469761e-03
+version https://git-lfs.github.com/spec/v1
+oid sha256:cc549078d4adefd450f7364035c01527a2a407564ab38914a6291ac7b90d149b
+size 325

@@ -13,8 +13,8 @@ out_dir <- file.path(paste0(repo_directory, "/fmri/keuka_brain_behavior_analyses
 
 # read in Explore MEDUSA results
 setwd(out_dir)
-explore_ddf <- readRDS("rt_parcel_group_all_models_explore_400_47_encode_July19_2022.rds")
-
+# explore_ddf <- readRDS("rt_parcel_group_all_models_explore_400_47_encode_July19_2022.rds")
+explore_ddf <- ddf$coef_df_reml
 # FDR correction
 explore_ddf <- explore_ddf %>% dplyr::filter(evt_time <= 5) %>% 
   filter(effect=="fixed") %>%
@@ -22,6 +22,9 @@ explore_ddf <- explore_ddf %>% dplyr::filter(evt_time <= 5) %>%
   mutate(p_FDR=p.adjust(p.value, method="fdr")) %>%
   ungroup() %>% setDT()
 
+source("~/code/clock_analysis/fmri/explore/medusa/plot_medusa_explore.R")
 # plot all models
-plot_medusa(explore_ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="parcel_group", facet_by="side",
+# plot_medusa(explore_ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="parcel_group", facet_by="side",
+#             out_dir=file.path(out_dir, "explore_400_47"),  p.value="padj_BY_term")
+plot_medusa(explore_ddf, x="evt_time", y="estimate", ymin="estimate - std.error", ymax="estimate + std.error", color="parcel_group", 
             out_dir=file.path(out_dir, "explore_400_47"),  p.value="padj_BY_term")
