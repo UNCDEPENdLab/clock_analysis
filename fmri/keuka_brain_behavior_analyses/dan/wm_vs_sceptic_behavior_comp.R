@@ -112,13 +112,74 @@ tab_model(wm_rtvmax_fmri1, wm_rtvmax_meg1, order.terms = c(1,13,2,4,6,8,10,3,5,7
               "RT_lag5 * Omission_lag5", 
               "RT_Vmax * Trial"
               ), file = "dan_table_s1_wm.html", p.style = "numeric", p.threshold = c(.05, .01, .001))
-library(rio)
-setwd(tab_dir)
-saveXML(tab, file = "dan_table_s1_wm.html", format = "html")
-export2html(tab, file = "dan_table_s1_wm.html")
+# library(rio)
+# setwd(tab_dir)
+# saveXML(tab, file = "dan_table_s1_wm.html", format = "html")
+# export2html(tab, file = "dan_table_s1_wm.html")
 # save_html(paste(as.character(tab), collapse = "\n"), file = "dan_table_s1_wm.html", background = "white", lang = "en")
 
 
-# same with Coxme
+# same with Coxme (TBA)
+
+# compare fMRI and MEG samples (response to reviewers)
+
+m_supp_fmri <- lme4::lmer(rt_csv_sc ~
+                                rt_lag * omission_lag +
+                                rt_vmax_lag_sc * trial_neg_inv_sc  +
+                                (1|id/run), fdf %>% filter(rt_csv<4000 & !is.na(rt_vmax_lag_sc) & !is.na(trial_neg_inv_sc)))
+summary(m_supp_fmri)
+
+m_supp_meg <- lme4::lmer(rt_csv_sc ~
+                            rt_lag * omission_lag +
+                            rt_vmax_lag_sc * trial_neg_inv_sc  +
+                            (1|id/run), mdf %>% filter(rt_csv<4000 & !is.na(rt_vmax_lag_sc) & !is.na(trial_neg_inv_sc)))
+summary(m_supp_meg)
+
+## no need to report these models, which have inferior fits
+# m_supp_fmri_rewfunc <- lme4::lmer(rt_csv_sc ~
+#                             rt_lag * omission_lag +
+#                             rewFunc * trial_neg_inv_sc  +
+#                             (1|id/run), fdf %>% filter(rt_csv<4000 & !is.na(rt_vmax_lag_sc) & !is.na(trial_neg_inv_sc)))
+# summary(m_supp_fmri_rewfunc)
+# car::Anova()
+# 
+# m_supp_meg_rewfunc <- lme4::lmer(rt_csv_sc ~
+#                            rt_lag * omission_lag +
+#                              rewFunc * trial_neg_inv_sc  +
+#                              (1|id/run), mdf %>% filter(rt_csv<4000 & !is.na(rt_vmax_lag_sc) & !is.na(trial_neg_inv_sc)))
+# summary(m_supp_meg_rewfunc)
+
+bdf <- rbind(fdf %>% select(dataset, id, run, rt_csv_sc, trial_neg_inv_sc, rt_lag, omission_lag, rt_vmax_lag_sc, rt_csv), 
+             mdf  %>% select(dataset, id, run, rt_csv_sc, trial_neg_inv_sc, rt_lag, omission_lag, rt_vmax_lag_sc, rt_csv))
+str(bdf)
+m_supp_both <- lme4::lmer(rt_csv_sc ~
+                            rt_lag * omission_lag * dataset +
+                            rt_vmax_lag_sc * trial_neg_inv_sc * dataset  +
+                            (1|id/run), bdf %>% filter(rt_csv<4000 & !is.na(rt_vmax_lag_sc) & !is.na(trial_neg_inv_sc)))
+summary(m_supp_both)
 
 
+tab_model(m_supp_fmri, m_supp_meg, #order.terms = c(1,13,2,4,6,8,10,3,5,7,9,11,14:18,12,19), 
+          show.stat = T, show.ci = F, show.se = T, show.est = T,  show.re.var = F, dv.labels = c("fMRI session", "MEG session"), show.icc = F,  show.ngroups = F,
+          pred.labels =
+            c("Intercept",
+              "RT_lag", "Omission_lag",
+              "RT_Vmax_lag",
+              "Trial\n(neg. inverse transformed,\nscaled)",
+              "RT_lag * Omission_lag",
+              "RT_Vmax * Trial"
+            ),
+          file = "dan_table_sX_sample_comparison.html", p.style = "numeric", p.threshold = c(.05, .01, .001))
+
+tab_model(m_supp_both, #order.terms = c(1,13,2,4,6,8,10,3,5,7,9,11,14:18,12,19), 
+          show.stat = T, show.ci = F, show.se = F, show.est = F,  show.re.var = F, dv.labels = c("Contrast, MEG - fMRI"), show.icc = F,  show.ngroups = F,
+          keep = c("datasetmmclock_meg"),
+          pred.labels =
+            c("Intercept",
+              "RT_lag", "Omission_lag",
+              "RT_Vmax_lag",
+              "Trial\n(neg. inverse transformed,\nscaled)",
+              "RT_lag * Omission_lag",
+              "RT_Vmax * Trial"
+            ),
+          file = "dan_table_sX_sample_comparison_both.html", p.style = "numeric", p.threshold = c(.05, .01, .001))

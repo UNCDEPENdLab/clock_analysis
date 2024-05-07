@@ -7,7 +7,11 @@ plot_medusa <- function(coef_obj, x="evt_time", y="estimate", ymin=NULL, ymax=NU
   require(ggplot2)
   require(data.table)
   
-  colors <- RColorBrewer::brewer.pal(4, "Dark2") %>% setNames(c("1" = "MT+","2" = "Premotor","3" = "Rostral PPC","4" = "Caudal PPC"))
+  if (color == "parcel_group") {
+  colors <- RColorBrewer::brewer.pal(4, "Dark2") %>% setNames(c("1" = "MT+","2" = "Premotor","3" = "Rostral PPC","4" = "Caudal PPC"))} 
+  else if (color == "group_leth") {
+    colors <- RColorBrewer::brewer.pal(5, "Dark2")
+  }
   
   
   if (is.data.frame(coef_obj)) {
