@@ -17,13 +17,13 @@ library(fmri.pipeline)
 wm = FALSE # run working memory analyses a la DAN paper
 align_to = "RT" #options are clock or response
 # AI - these flags allow you to collapse across hemispheres and also to be able to split into networks; default is to do by ROI number (atlas_value)
-do_subregion = TRUE #this will collapse across subregions (separate hemispheres)
-do_structure = FALSE #collapses across coarser groups and hemispheres
+do_subregion = TRUE #this will collapse across subregions and hemispheres
+do_structure = FALSE  #collapses across coarser groups and hemispheres
 do_network = FALSE #this will collapse across networks and hemispheres
 do_hippocampusAP = FALSE #run hippocampus anterior vs. posterior analysis
 #models = c(5, 5.1, 5.2, 5.5, 5.6, 5.7, 7, 7.5, 7.6) #models to run, clock
 #models = c(5, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 7, 7.5, 7.6) #models to run, feedback
-models = c(5) # AD: running only the basic models
+models = c(4) # AD: running only the basic models
 region_to_run = "subcortical" #options are cortical (vmPFC) and subcortical
 do_vPFC_HC = FALSE
 split_hipp_amyg = TRUE #if want to separate out hippocampus and amygdala
@@ -229,7 +229,7 @@ for (model_to_run in models) {
     df0 <- decode_formula   #df0 <- decode_formula[[i]]
     print(df0)
     ddf <- mixed_by(d, outcomes = "decon_mean", rhs_model_formulae = df0 , split_on = splits,
-                    padjust_by = c("term", "structure"), padjust_method = "fdr", ncores = ncores, refit_on_nonconvergence = 3, #ncores put 1 less than total cores on your machine or else it will slow down
+                    padjust_by = c("term", "subregion"), padjust_method = "fdr", ncores = ncores, refit_on_nonconvergence = 3, #ncores put 1 less than total cores on your machine or else it will slow down
                     tidy_args = list(effects=c("fixed","ran_vals","ran_pars","ran_coefs"),conf.int=TRUE), #specify what output dataframe will have; will be looking mostly at fixed terms; lmer summary, will need all for that
                     #Run post-hoc tests
                     emmeans_spec = list(
