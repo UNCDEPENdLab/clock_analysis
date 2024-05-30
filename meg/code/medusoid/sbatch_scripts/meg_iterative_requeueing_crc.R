@@ -94,7 +94,7 @@ for (ee in epochs) {
             "cd ~/code/clock_analysis/meg/code/medusoid/sbatch_scripts; ",
              "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
             " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
-             " sbatch_meg_mixed_wholebrain.bash"
+             " sbatch_eeg_mixed.bash"
            )
          )
         #write compute level to temporary file
@@ -104,8 +104,8 @@ for (ee in epochs) {
         cat(
            paste0(
              "sbatch -t ", step_up$time[level], " --mem=", step_up$gb[level], "g",
-            " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
-             " sbatch_meg_mixed_wholebrain.bash\n",
+             " --export=epoch=", ee, ",sourcefilestart=", it_run[ff], ",regressor=", rr,
+             " sbatch_eeg_mixed.bash\n",
              to_run[ff], "\n"
            )
          )
